@@ -4,7 +4,7 @@ Layer 4 cuisine recovery: Haiku + web_search for entries whose website fetch fai
 
 Layer 2 (`llm_recover_cuisine.py`) tries to fetch the actual restaurant website
 and read menu words. For ~98% of remaining null-cuisine entries, that fetch
-returns no usable text — JS-only SPAs, Cloudflare-blocked, embedded ordering
+returns no usable text - JS-only SPAs, Cloudflare-blocked, embedded ordering
 iframes, image-only Squarespace shells. Headless rendering would mostly hit
 the same walls (Turnstile challenges, third-party iframes, PDF menus).
 
@@ -41,14 +41,14 @@ The restaurant's own website couldn't be read (JS shell, captcha, PDF menu, etc.
 infer cuisine from search snippets, review excerpts, blog posts, and Google Maps listings that
 Google has indexed about this place.
 
-You have access to web_search (up to 2 uses). Use Google's search operators aggressively —
+You have access to web_search (up to 2 uses). Use Google's search operators aggressively -
 they're the difference between thin generic listings and rich menu text.
 
-FIRST SEARCH — a broad probe with the name in quotes + neighborhood/street + Toronto.
+FIRST SEARCH - a broad probe with the name in quotes + neighborhood/street + Toronto.
 Look for cuisine hints in snippets: menu items in reviews, food-blog descriptors, Google
 Maps cuisine labels, "best <cuisine> in Toronto" mentions.
 
-SECOND SEARCH — only if the first surfaced no cuisine signal. Pick the highest-leverage
+SECOND SEARCH - only if the first surfaced no cuisine signal. Pick the highest-leverage
 operator combination for the failure mode:
   • Site is a JS shell hiding a PDF menu: `"<NAME>" toronto menu filetype:pdf`
     (Google indexes PDF text; this often returns the full menu when the site can't.)
@@ -79,7 +79,7 @@ CRITICAL: American Southern (Cajun, Creole, New Orleans, BBQ, soul) → unknown.
 CRITICAL: Packaged-food brand / grocery / chocolatier / distributor / factory outlet → unknown.
 CRITICAL: American/Canadian chains (Popeyes, KFC, Boston Pizza, Tim Hortons, etc.) → unknown.
 CRITICAL: If search results don't surface menu items, food-blog cuisine descriptors, or a
-Google Maps cuisine label — only generic "restaurant" / "open now" / delivery-app listings —
+Google Maps cuisine label - only generic "restaurant" / "open now" / delivery-app listings -
 return cuisine=unknown. Don't guess from the name alone."""
 
 def load_api_key():
@@ -135,7 +135,7 @@ def needs_search_recovery(entry):
     c = entry.get('cuisine')
     if c and c != 'unknown': return False
     # Only try this layer for entries the website-fetch layer already failed on.
-    # If recovery_note is absent, Layer 2 hasn't tried yet — let it run first.
+    # If recovery_note is absent, Layer 2 hasn't tried yet - let it run first.
     if not entry.get('recovery_note'):
         return False
     sra = entry.get('search_recovered_at')
@@ -155,7 +155,7 @@ def main():
     # whole backlog before we've seen the yield: `LIMIT=50 python ...`
     limit = int(os.environ.get('LIMIT', '0') or '0')
     if limit and len(targets) > limit:
-        print(f"LIMIT={limit} — capping from {len(targets)} eligible")
+        print(f"LIMIT={limit} - capping from {len(targets)} eligible")
         targets = targets[:limit]
 
     print(f"verify cache entries:               {len(cache)}")
@@ -197,7 +197,7 @@ def main():
             key, cuisine, evidence, n_searches, err, is_rate_limit = fut.result()
             total_searches += n_searches
             if is_rate_limit:
-                # Transient — don't stamp recovered_at so it's eligible to retry
+                # Transient - don't stamp recovered_at so it's eligible to retry
                 # tomorrow. Just record what happened for debugging.
                 n_rate_limited += 1
                 cache[key]['search_recovery_note'] = err[:120]
@@ -208,7 +208,7 @@ def main():
                     cache[key]['search_recovery_note'] = err[:120]
                 elif cuisine == 'unknown' or cuisine is None:
                     n_unknown += 1
-                    cache[key]['search_recovery_note'] = (evidence or 'search recovery — still unknown')[:120]
+                    cache[key]['search_recovery_note'] = (evidence or 'search recovery - still unknown')[:120]
                     if cuisine == 'unknown':
                         cache[key]['cuisine'] = 'unknown'
                 else:

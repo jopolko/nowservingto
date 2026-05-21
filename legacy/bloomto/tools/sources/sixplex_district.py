@@ -1,10 +1,10 @@
 """Sixplex-eligible district overlay (Toronto June 2025 multiplex by-law).
 
 In June 2025, Toronto City Council expanded the as-of-right multiplex
-permit pathway to allow up to 6 dwelling units (sixplex) — but ONLY in:
+permit pathway to allow up to 6 dwelling units (sixplex) - but ONLY in:
 
   1. Toronto and East York Community Council District (the central
-     pre-amalgamation Toronto + East York region — south of roughly
+     pre-amalgamation Toronto + East York region - south of roughly
      Eglinton Ave, between the Humber River and Victoria Park Ave).
   2. Ward 23 (Scarborough North).
 
@@ -12,10 +12,10 @@ Outside these zones, the citywide as-of-right cap is 4 (since 2023).
 
 We resolve eligibility per-parcel via:
 
-- Toronto Community Council Boundaries dataset (GeoJSON) — gives the
+- Toronto Community Council Boundaries dataset (GeoJSON) - gives the
   exact T&EY District polygon. Point-in-polygon test against the parcel's
   representative point.
-- Ward 23 (Scarborough North) — approximated by the lat/lng bounding
+- Ward 23 (Scarborough North) - approximated by the lat/lng bounding
   box (43.79–43.85 lat, -79.30 to -79.20 lng). The bbox is conservative
   vs the actual irregular ward shape; a developer relying on the flag
   always confirms the exact lot via the City portal before pro forma.
@@ -47,7 +47,7 @@ RESOURCE_URL = (
 # T&EY district name as it appears in the AREA_NAME field of the source.
 TEY_AREA_NAME = "Toronto and East York Community Council"
 
-# Ward 23 (Scarborough North) bounding box. Approximate — see module docstring.
+# Ward 23 (Scarborough North) bounding box. Approximate - see module docstring.
 # Conservative envelope: real ward boundary is somewhat smaller in places, so
 # this slightly over-flags. The developer's site-plan-approval check is the
 # authoritative gate; this flag is a "candidate lot" indicator.

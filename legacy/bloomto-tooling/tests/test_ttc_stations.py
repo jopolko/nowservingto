@@ -21,7 +21,7 @@ CACHE_DIR = Path(__file__).resolve().parent.parent / "cache"
 class TtcStationsTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        # Skip if the GTFS cache hasn't been hydrated — these tests are
+        # Skip if the GTFS cache hasn't been hydrated - these tests are
         # integration-flavoured and need the real TTC data.
         if not (CACHE_DIR / "ttc_gtfs.zip").exists():
             raise unittest.SkipTest("ttc_gtfs.zip not in cache; skipping")
@@ -32,7 +32,7 @@ class TtcStationsTests(unittest.TestCase):
         self.assertGreater(len(self.index.geometries), 100)
 
     def test_22_chester_ave_excluded(self):
-        # Canary case: lng=-79.35259, lat=43.67823 — Chester Station, the
+        # Canary case: lng=-79.35259, lat=43.67823 - Chester Station, the
         # parcel that ranked #1 (score 99) in the 2026-05-05 elite set
         # because TTC stations weren't in the existing institutional ETL.
         # Buffered exclusion geometry must contain a point at this location.

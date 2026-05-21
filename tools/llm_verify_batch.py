@@ -34,13 +34,12 @@ _sys.path.insert(0, str(Path(__file__).resolve().parent))
 from cuisines import VALID_CUISINE_KEYS, parse_cuisines_from_llm
 
 SYSTEM_PROMPT = """You verify a Toronto restaurant's existence AND identify its cuisine
-from web search results. Many places are brand new with only sparse online presence — that's fine.
+from web search results. Many places are brand new with only sparse online presence - that's fine.
 
-You have access to web_search (up to 2 uses). First search: confirm the place exists and
-identify cuisine. SECOND search (only if needed): if your first search did NOT surface a
-Google Maps / Google Business listing URL for this restaurant, do one targeted search like
-`"<NAME>" "<address or street>" site:google.com/maps` to find one. A Google Maps profile
-is strongly preferred over Instagram/Facebook for the `website` field — see rules below.
+You have one web_search call. Craft the query to surface both cuisine evidence and a
+Google Maps / Google Business listing URL when possible (e.g. include the address or
+street name). A Google Maps profile is strongly preferred over Instagram/Facebook for
+the `website` field - see rules below.
 
 Return a single JSON object on ONE line, no markdown, no prose:
 {"operating":"yes|no|unclear","cuisines":["<key1>","<key2>"],"website":"<url or null>","evidence":"<one short sentence>"}
@@ -67,7 +66,7 @@ latin, mexican, salvadoran, peruvian, colombian, brazilian, argentinian, venezue
 african_horn, ethiopian, eritrean, somali,
 african_west, nigerian, ghanaian, moroccan, senegalese, unknown
 
-Use search evidence (menus, reviews, owner bios, articles) to choose cuisine — NOT just the
+Use search evidence (menus, reviews, owner bios, articles) to choose cuisine - NOT just the
 operating name. Prefer the most SPECIFIC bucket (ethiopian over african_horn; mexican over latin).
 Use the umbrella only when the country isn't clear from evidence.
 
@@ -75,7 +74,7 @@ IMPORTANT: ALWAYS return a non-null cuisine value. If you find a restaurant exis
 cannot determine its cuisine from the web evidence (generic operating signals like
 delivery-platform listings but no menu/cuisine clues, or a redirected/parked website
 without informative content), explicitly return "unknown". Do NOT leave the cuisine
-field null — "unknown" is the correct response when the cuisine truly isn't clear,
+field null - "unknown" is the correct response when the cuisine truly isn't clear,
 and lets us avoid falling back to a name-only guess that may be wrong (e.g., "Tumi
 Dumpling House" sounds Tibetan from the name alone but is actually Chinese).
 
@@ -89,15 +88,15 @@ CRITICAL: American/Canadian chains = unknown regardless of theme.
 
 CRITICAL: Pan-Asian / Asia-Pacific / Asian fusion restaurants that draw from 3+ regional
 cuisines (e.g., Korean + Hawaiian + Vietnamese + Chinese) don't fit any single bucket.
-Return unknown — the directory promises a specific cuisine and fusion betrays that.
+Return unknown - the directory promises a specific cuisine and fusion betrays that.
 - "Koha Pacific Kitchen" (Korean + Hawaiian poke + bao + banh mi) → unknown
 - "Bao Banh Bowl" / "Asia-Pacific Kitchen" / "Pan-Asian Grill" → unknown
-- A Korean restaurant that ALSO has a few sushi rolls is still korean — only flag
+- A Korean restaurant that ALSO has a few sushi rolls is still korean - only flag
   when the menu spans 3+ regional cuisines as roughly equal billing.
 
 CRITICAL: American Southern themes (New Orleans, Cajun, Creole, Bayou, Soul, Memphis BBQ,
 Texas BBQ, Tex-Mex non-Mexican) are NOT Caribbean or Latin. We have no taxonomy bucket
-for US Southern cuisine — return unknown.
+for US Southern cuisine - return unknown.
 - "New Orleans Seafood & Steakhouse" → unknown (NOT caribbean, NOT latin)
 - "Bayou Bar & Grill" → unknown
 - "Memphis BBQ" → unknown
@@ -119,7 +118,7 @@ restaurants. Return cuisine=unknown.
 CRITICAL: A DineSafe (dinesafe.to) inspection record is POSITIVE evidence the
 place exists and is being inspected by Toronto Public Health at that address.
 A recent inspection date (within ~12 months) means the premise was operating
-when the inspector visited — that strongly supports operating=yes. But DineSafe
+when the inspector visited - that strongly supports operating=yes. But DineSafe
 inspects EVERY food premise (sit-down restaurants, bakeries with retail
 counters, takeout shops, AND some wholesale plants) so it is NEUTRAL on the
 consumer-vs-wholesale question and on cuisine. Use it as one signal, never as
@@ -131,56 +130,56 @@ Treatment:
   from the menu/reviews on that profile
 - DineSafe alone, no consumer signal anywhere → operating=yes (the place exists),
   cuisine=unknown (we genuinely can't tell), website=null. NOT a wholesale
-  conclusion — just incomplete data. Inject pipeline can still surface it as a
+  conclusion - just incomplete data. Inject pipeline can still surface it as a
   brand-new entry with the City data; it just won't get cuisine tagging until a
   later verify pass finds the consumer signal.
 
 CRITICAL: When your first web search returns only regulatory/inspection results
 (DineSafe, business-licence lookup pages, BIN searches) and no consumer-facing
-signal, your second search MUST target social media or local listings — try
+signal, your second search MUST target social media or local listings - try
 `"<NAME>" instagram` or `"<NAME>" "<neighborhood>"` to surface the Instagram /
 Facebook page that almost every Toronto restaurant has. Don't return
 operating=unclear, cuisine=unknown, website=None when you haven't actually
-searched for the place's consumer presence — that's a false negative that
+searched for the place's consumer presence - that's a false negative that
 drops a real restaurant from the directory.
 
 Rules for "operating":
-- "yes" — ANY plausible online evidence the place exists. The bar is LOW.
+- "yes" - ANY plausible online evidence the place exists. The bar is LOW.
   Acceptable: own website, Instagram or Facebook page matching the name, a Google Maps
   profile with the address, recent Yelp/blogTO/TripAdvisor mention, food blog write-up,
   recent news article, TikTok/YouTube video, community board mention. If a person could
   reasonably find this place from a single search, it qualifies.
 
-  CRITICAL — same-name false-positive guard: when the ONLY evidence is a social
+  CRITICAL - same-name false-positive guard: when the ONLY evidence is a social
   page (Instagram / Facebook / TikTok), the social page must plausibly tie to
   this Toronto address. Confirm at least ONE of:
   - The bio/posts explicitly mention the street, neighborhood, or postal-code area
     (e.g. "Cafe Mia Italian Bakery North York" matches our M3N address)
   - Recent posts geo-tag a Toronto location or mention the city
   - The handle is a clear variation of the licence name AND no contradicting
-    location data appears (e.g. Insta bio says "Vancouver" — that's a different
+    location data appears (e.g. Insta bio says "Vancouver" - that's a different
     business)
   If a same-name social page is for a clearly different city or address, set
   operating=unclear and website=null. Don't claim a Vancouver Cafe Mia as
   evidence for a North York licence.
-- "no" — explicit evidence it has CLOSED (announcement, successor business now at the
+- "no" - explicit evidence it has CLOSED (announcement, successor business now at the
   address, "permanently closed" notice, news about its closing).
-- "unclear" — search returned nothing at all relevant; no trace of the business anywhere
-  online. Use sparingly — most new licences will have at least an Instagram post.
+- "unclear" - search returned nothing at all relevant; no trace of the business anywhere
+  online. Use sparingly - most new licences will have at least an Instagram post.
 
 Rules for "website" (return the BEST link you find, in this STRICT order of preference):
 1. The restaurant's own website (.com / .ca etc). Always wins if it exists.
 2. The restaurant's Google Maps / Google Business listing URL
    (https://www.google.com/maps/place/... or https://maps.app.goo.gl/...).
    MANDATORY: if a Google Maps profile for this restaurant exists at this address, you MUST
-   return it over any Instagram/Facebook/TikTok page — even if the social page is more
+   return it over any Instagram/Facebook/TikTok page - even if the social page is more
    recently active. Maps profiles give hours, photos, reviews, directions, and a stable URL.
    If your first search didn't surface a Maps URL, do a second search specifically to find one
    (see instructions above) before falling back to social.
-3. An Instagram or Facebook page that clearly matches the restaurant name — ONLY if no Maps
+3. An Instagram or Facebook page that clearly matches the restaurant name - ONLY if no Maps
    listing exists or you genuinely cannot find one after a targeted Maps search.
    MUST be a real profile URL (instagram.com/<handle> or facebook.com/<handle>).
-   NEVER return Instagram's aggregate/search pages — these are NOT profiles, they
+   NEVER return Instagram's aggregate/search pages - these are NOT profiles, they
    surface other people's posts about a topic and don't represent the business:
    - instagram.com/popular/<slug>     ← search results aggregate, REJECT
    - instagram.com/explore/<anything> ← explore feed, REJECT
@@ -194,7 +193,7 @@ Rules for "website" (return the BEST link you find, in this STRICT order of pref
 5. A Yelp or TripAdvisor page for this specific restaurant.
 6. If nothing usable above, null.
 
-Evaluate each candidate URL by what KIND of page it is — judge from the
+Evaluate each candidate URL by what KIND of page it is - judge from the
 URL host + path + search snippet content together. Examples of hosts are
 illustrative, not exhaustive; apply the principle to new hosts you find.
 
@@ -211,7 +210,7 @@ APPROVE pages that are AUTHORED BY (or directly representing) the business:
 REJECT pages that are ABOUT the business but authored by someone else:
   - Inspection / regulatory / public-health records (cataloging inspection
     results, infractions, licence data). Hint hosts: dinesafe.to, public-
-    health portals, business-licence lookups. The tone is governmental —
+    health portals, business-licence lookups. The tone is governmental -
     "what we found", not "what we serve".
   - Delivery/ordering aggregators listing many restaurants. Hint hosts:
     skipthedishes, doordash, ubereats, grubhub, foodora, menulog,
@@ -266,6 +265,7 @@ def parse_d(s):
     return None
 
 from places_key import cache_key  # canonical shared helper
+from chain_filter import is_known_chain
 
 def website_tier(url):
     """1=own site (best), 2=social, 3=blog/aggregator, 4=no link"""
@@ -275,7 +275,7 @@ def website_tier(url):
     if any(d in u for d in ('blogto.com','tripadvisor.','yelp.com','toronto.com','timeout.com','google.com/maps','goo.gl/maps')): return 3
     return 1
 
-RECHECK_BY_TIER = {1: 180, 2: 30, 3: 14, 4: 14}  # days for yes-verdict at each tier
+RECHECK_BY_TIER = {1: 180, 2: 45, 3: 21, 4: 21}  # days for yes-verdict at each tier
 RECHECK_NO = 60
 RECHECK_UNCLEAR = 7
 
@@ -302,8 +302,8 @@ def build_request(name, address):
         'params': {
             'model': MODEL,
             'max_tokens': 400,
-            'system': SYSTEM_PROMPT,
-            'tools': [{'type': 'web_search_20250305', 'name': 'web_search', 'max_uses': 2}],
+            'system': [{'type': 'text', 'text': SYSTEM_PROMPT, 'cache_control': {'type': 'ephemeral'}}],
+            'tools': [{'type': 'web_search_20250305', 'name': 'web_search', 'max_uses': 1}],
             'messages': [{
                 'role': 'user',
                 'content': f"Restaurant: {name}\nAddress: {address}\n\nIs this place currently operating? What's its website if any?"
@@ -331,7 +331,7 @@ def parse_result_msg(msg):
     return {
         'status': 'ok',
         'operating': parsed.get('operating') if parsed.get('operating') in ('yes','no','unclear') else 'unclear',
-        'cuisine': primary,               # primary (first listed) — backwards compat
+        'cuisine': primary,               # primary (first listed) - backwards compat
         'cuisines': cuisines,             # full list for multi-cuisine entries
         'website': parsed.get('website') if isinstance(parsed.get('website'), str) and parsed.get('website').startswith(('http://','https://')) else None,
         'evidence': (parsed.get('evidence') or '')[:200],
@@ -402,12 +402,17 @@ def main():
             k = cache_key(name, addr)
             if k in seen: continue
             seen.add(k)
+            # Deterministic chain gate: chains never appear on the site, paying
+            # Haiku + web_search to verify them is pure waste. Belt-and-suspenders
+            # with the classify-side stub since chains can slip in via direct
+            # web_verify_cache writes or pre-existing cuisine classifications.
+            if is_known_chain(name): continue
             llm_e = llm.get(k)
             if not (llm_e and llm_e.get('status') == 'ok' and llm_e.get('cuisine') and llm_e.get('cuisine') != 'unknown'): continue
             p = places.get(k)
             # Skip web_verify ONLY when both Places confirms operating AND
             # we already have a populated verify cache entry. If verify cache
-            # is missing, run verify even with a Places match — Places often
+            # is missing, run verify even with a Places match - Places often
             # has no `website` field, and only web_verify can surface the
             # business's web presence (own site, mall directory page, etc.)
             # for the row's name-link.
@@ -443,7 +448,7 @@ def main():
     has_search_result = any(b.get('type') == 'web_search_tool_result' for b in canary_blocks)
     print(f"  canary: server_tool_use present={any(b.get('type')=='server_tool_use' for b in canary_blocks)}  web_search_tool_result present={has_search_result}")
     if not has_search_result:
-        sys.exit("ABORT: canary returned no web_search_tool_result — web_search likely not supported in Message Batches API for this model. Fall back to sync.")
+        sys.exit("ABORT: canary returned no web_search_tool_result - web_search likely not supported in Message Batches API for this model. Fall back to sync.")
 
     # Merge canary result for the matching real key
     parsed = parse_result_msg(canary_msg)

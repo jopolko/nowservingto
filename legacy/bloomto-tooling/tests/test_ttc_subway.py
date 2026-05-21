@@ -47,7 +47,7 @@ def _build_gtfs_zip(zip_path: Path) -> None:
     ]
     trips = [
         {"route_id": "LINE1", "service_id": "WK", "trip_id": "T1"},
-        {"route_id": "LINE1", "service_id": "WK", "trip_id": "T2"},  # second subway trip — exercises dedup on S1
+        {"route_id": "LINE1", "service_id": "WK", "trip_id": "T2"},  # second subway trip - exercises dedup on S1
         {"route_id": "501",   "service_id": "WK", "trip_id": "T3"},
         {"route_id": "7BUS",  "service_id": "WK", "trip_id": "T4"},
     ]
@@ -84,7 +84,7 @@ class TtcRouteTypeFilterTests(unittest.TestCase):
 
     def test_compute_subway_stops_returns_only_subway_served(self):
         points = compute_subway_stops(self.tmpdir)
-        # S1 (served by T1 + T2 — both subway) and S2 (T1 — subway).
+        # S1 (served by T1 + T2 - both subway) and S2 (T1 - subway).
         self.assertEqual(len(points), 2)
         coords = sorted((round(p.x, 4), round(p.y, 4)) for p in points)
         self.assertEqual(coords, sorted([
@@ -105,7 +105,7 @@ class TtcRouteTypeFilterTests(unittest.TestCase):
     def test_bus_stops_excluded_from_both(self):
         major = compute_major_transit_stops(self.tmpdir)
         subway = compute_subway_stops(self.tmpdir)
-        # S4 / S5 are bus-only — must never appear.
+        # S4 / S5 are bus-only - must never appear.
         bus_coords = {(-79.4000, 43.6700), (-79.4100, 43.6800)}
         major_coords = {(round(p.x, 4), round(p.y, 4)) for p in major}
         subway_coords = {(round(p.x, 4), round(p.y, 4)) for p in subway}

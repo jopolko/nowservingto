@@ -28,7 +28,7 @@ CACHE_FILENAME = "ttc_gtfs.zip"
 STOPS_MEMBER = "stops.txt"
 
 # 200m at 43.7°N: 1° lat ≈ 111 km → 200 m ≈ 0.0018°. Applied uniformly to lat/lon in
-# WGS84 — east-west stretch is acceptable for ranking since the same buffer is applied
+# WGS84 - east-west stretch is acceptable for ranking since the same buffer is applied
 # to every polygon. See README risk #1 (905-area stops fall outside all buffers).
 BUFFER_DEG = 0.0018
 
@@ -50,7 +50,7 @@ def _download_with_retries(url: str, dest: Path) -> None:
             if attempt == len(backoffs):
                 raise
             wait = backoffs[attempt]
-            _log.warning("download %s failed (attempt %d): %s — retrying in %ss",
+            _log.warning("download %s failed (attempt %d): %s - retrying in %ss",
                          url, attempt + 1, e, wait)
             time.sleep(wait)
 
@@ -72,7 +72,7 @@ def _load_stops_by_route_types(cache_dir: Path, route_types: set[int]) -> list[P
 
     Joins routes → trips → stop_times → stops. The stop_times.txt file is the
     large one (~1 M+ rows); both passes are streamed so memory stays bounded
-    by the size of the matched-route_ids / trip_ids / stop_ids sets — at most
+    by the size of the matched-route_ids / trip_ids / stop_ids sets - at most
     ~10k stops for the full TTC even if all route_types are selected.
 
     Stops are deduplicated by `stop_id` (a stop served by N trips appears
@@ -142,7 +142,7 @@ def compute_major_transit_stops(cache_dir: Path) -> list[Point]:
     """Subway (route_type=1) + streetcar (route_type=0) stops as Points.
 
     Used for the parcel-level `distSubwayStreetcarM` (Req 5.2) and the score's
-    transit_factor (Req 4.1). Excludes buses (route_type=3) — Toronto's parcel
+    transit_factor (Req 4.1). Excludes buses (route_type=3) - Toronto's parcel
     parking-waiver rules hinge on major-transit proximity, not bus proximity.
     """
     return _load_stops_by_route_types(Path(cache_dir), {0, 1})
@@ -161,7 +161,7 @@ def compute_streetcar_stops(cache_dir: Path) -> list[Point]:
     """Streetcar-only (GTFS route_type=0) stops as Points.
 
     Used for the parcel-level `distStreetcarM` (added 2026-05-03 for the
-    per-mode transit split — previously the streetcar distance was only
+    per-mode transit split - previously the streetcar distance was only
     derivable from the subway+streetcar union by inference).
     """
     return _load_stops_by_route_types(Path(cache_dir), {0})
@@ -172,7 +172,7 @@ def compute_bus_stops(cache_dir: Path) -> list[Point]:
 
     Used for the parcel-level `distBusM` (added 2026-05-03). Buses do NOT
     qualify for Toronto's major-transit parking-waiver, so this is purely
-    informational — a "is there bus service near this parcel" signal for
+    informational - a "is there bus service near this parcel" signal for
     suburban-multiplex screening (which often relies on TTC bus routes
     rather than subway/streetcar).
     """
@@ -186,7 +186,7 @@ def compute_transit(neighborhoods: list[Neighborhood], cache_dir: Path
     percentile normalization. Neighborhoods with zero stops get `transit = 0` and
     appear in `fallback_names`.
 
-    Boundary stops legitimately count for both adjacent neighborhoods — the metric is
+    Boundary stops legitimately count for both adjacent neighborhoods - the metric is
     "how many TTC stops can someone living here walk to," not a partition of stops.
     """
     cached = _ensure_cached(Path(cache_dir))
@@ -224,7 +224,7 @@ def compute_transit(neighborhoods: list[Neighborhood], cache_dir: Path
     p95_idx = int(0.95 * (len(sorted_counts) - 1))
     p95 = sorted_counts[p95_idx]
     if p95 == 0:
-        _log.error("p95 stop count is 0 — every neighborhood falls back to transit=0")
+        _log.error("p95 stop count is 0 - every neighborhood falls back to transit=0")
         scale = 1
     else:
         scale = p95

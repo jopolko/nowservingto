@@ -1,4 +1,4 @@
-# 2026-05-08 final state — afternoon update
+# 2026-05-08 final state - afternoon update
 
 ## Curated cohort: 244 picks, 94% ground-truth-grade structure type
 
@@ -7,7 +7,7 @@
 | Toronto Building Permit (`permit`) | 165 | 68% | ✓ city-recorded |
 | OpenStreetMap (`osm`) | 65 | 27% | ✓ volunteer-mapped, 96% agreement w/ permits on overlap |
 | Vacant lot (no structure) | 14 | 6% | ✓ deterministic absence |
-| Classifier heuristic | 0 | 0% | — (downgraded to broader) |
+| Classifier heuristic | 0 | 0% | - (downgraded to broader) |
 
 **Every elite pick has either a Toronto building-permit STRUCTURE_TYPE record on its address, an OpenStreetMap `building=*` tag, or is a vacant lot.** No cross-boundary classifier guesses leak into curated.
 
@@ -23,18 +23,18 @@
 
 ## Headline catches
 
-- **243 Coxwell Ave** (Royal Canadian Legion Branch #1, Baron Byng) — flagged by the user; was being curated as a fat detached candidate. Now correctly excluded via the tax-exempt gate.
-- **859 Dundas St E**, **195 Chatham Ave**, **440 Queen St E** — three other tax-exempt institutional parcels that had been leaking into curated; all now excluded.
-- **160 Dowling Ave** (caught yesterday) — the cross-boundary classifier improvement removed it; permit data confirms it's a row, so it would have been excluded by the new gate anyway.
+- **243 Coxwell Ave** (Royal Canadian Legion Branch #1, Baron Byng) - flagged by the user; was being curated as a fat detached candidate. Now correctly excluded via the tax-exempt gate.
+- **859 Dundas St E**, **195 Chatham Ave**, **440 Queen St E** - three other tax-exempt institutional parcels that had been leaking into curated; all now excluded.
+- **160 Dowling Ave** (caught yesterday) - the cross-boundary classifier improvement removed it; permit data confirms it's a row, so it would have been excluded by the new gate anyway.
 
 ## What we don't have (free-data ceiling, honestly)
 
-- **MPAC bulk roll data** — paywalled, only legit way to get 100% per-parcel structure type coverage citywide. Province itself is an MPAC customer; they don't redistribute. Confirmed via data.ontario.ca metadata: "This data is not and will not be made available."
-- **Teranet / OnLand bulk extracts** — paywalled. Per-parcel manual lookups remain a legitimate dev workflow (link out from the panel for the 3-5 parcels they're seriously pursuing).
-- **HouseSigma / TREB MLS** — ToS prohibits scraping; underlying MLS data has CREA/RECO licensing constraints. No legal path to ingest at scale.
-- **Toronto Property Tax Lookup tool** — gated by roll-number + customer-number from the property's tax bill. Only works for parcels you already own. Useless for arbitrary parcel lookups.
+- **MPAC bulk roll data** - paywalled, only legit way to get 100% per-parcel structure type coverage citywide. Province itself is an MPAC customer; they don't redistribute. Confirmed via data.ontario.ca metadata: "This data is not and will not be made available."
+- **Teranet / OnLand bulk extracts** - paywalled. Per-parcel manual lookups remain a legitimate dev workflow (link out from the panel for the 3-5 parcels they're seriously pursuing).
+- **HouseSigma / TREB MLS** - ToS prohibits scraping; underlying MLS data has CREA/RECO licensing constraints. No legal path to ingest at scale.
+- **Toronto Property Tax Lookup tool** - gated by roll-number + customer-number from the property's tax bill. Only works for parcels you already own. Useless for arbitrary parcel lookups.
 
-For everything else (the 6% of curated that's vacant, the broader cohort that's mostly classifier-derived), the cross-boundary classifier remains the residual fallback — UI marks those with "est." so the dev knows to verify via Street View.
+For everything else (the 6% of curated that's vacant, the broader cohort that's mostly classifier-derived), the cross-boundary classifier remains the residual fallback - UI marks those with "est." so the dev knows to verify via Street View.
 
 ## ETL skip stats (this build)
 

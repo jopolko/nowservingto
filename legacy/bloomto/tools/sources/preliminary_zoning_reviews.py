@@ -1,17 +1,17 @@
-"""Preliminary Zoning Reviews — daily-refreshed CKAN feed.
+"""Preliminary Zoning Reviews - daily-refreshed CKAN feed.
 
 The earliest-stage dev signal: someone (owner / broker / developer)
 asks City Planning *"what can I build at address X?"* and gets a
 preliminary zoning review back. Daily-refreshed. Filed before any
-formal application — sometimes weeks before a Committee of Adjustment
+formal application - sometimes weeks before a Committee of Adjustment
 filing, sometimes years before a building permit. By the time another
 dev sees a demo permit, this signal has long passed.
 
 The Toronto Open Data dataset `preliminary-zoning-reviews` actually
 covers five program tracks (business licences, liquor licences, sign
 permits, zoning use, zoning preliminary reviews). We filter strictly
-to `PERMIT_NUM` ending in ` ZPR` — the residential / development
-preliminary-zoning-review track — so the surfaced rows are the
+to `PERMIT_NUM` ending in ` ZPR` - the residential / development
+preliminary-zoning-review track - so the surfaced rows are the
 multiplex-relevant subset only. ~127 ZPR rows / year citywide; we
 expect ~5% to land on elite parcels.
 

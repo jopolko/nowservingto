@@ -45,7 +45,7 @@ def _download_with_retries(url: str, dest: Path) -> None:
             if attempt == len(backoffs):
                 raise
             wait = backoffs[attempt]
-            _log.warning("download %s failed (attempt %d): %s — retrying in %ss",
+            _log.warning("download %s failed (attempt %d): %s - retrying in %ss",
                          url, attempt + 1, e, wait)
             time.sleep(wait)
 
@@ -63,7 +63,7 @@ def _ensure_cached(cache_dir: Path) -> Path:
 
 def _line_length_m(geom: BaseGeometry) -> float:
     """Geodesic length in metres for the line components of `geom`. Non-line components
-    (Points, etc.) contribute 0 — useful when an intersection touches a polygon boundary
+    (Points, etc.) contribute 0 - useful when an intersection touches a polygon boundary
     at a single point.
     """
     if geom.is_empty:
@@ -111,7 +111,7 @@ def nearest_bike_lane_distance_m(parcel_geom: BaseGeometry,
     not for survey-grade distance).
     """
     pt = parcel_geom.representative_point()
-    # Expanded bounding box for the STRtree query — slightly larger than the
+    # Expanded bounding box for the STRtree query - slightly larger than the
     # actual search radius so we don't miss a line that's just beyond the
     # parcel's bbox.
     minx, miny, maxx, maxy = pt.x - max_search_deg, pt.y - max_search_deg, pt.x + max_search_deg, pt.y + max_search_deg
@@ -165,7 +165,7 @@ def compute_bike(neighborhoods: list[Neighborhood], cache_dir: Path
     p95_idx = int(0.95 * (len(sorted_km) - 1))
     p95 = sorted_km[p95_idx]
     if p95 == 0:
-        _log.error("p95 cycling km is 0 — every neighborhood falls back to bike=0")
+        _log.error("p95 cycling km is 0 - every neighborhood falls back to bike=0")
         scale = 1.0
     else:
         scale = p95

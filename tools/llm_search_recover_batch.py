@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Batch version of llm_search_recover_cuisine.py — Layer 4 cuisine recovery using
+Batch version of llm_search_recover_cuisine.py - Layer 4 cuisine recovery using
 Haiku + web_search submitted via the Message Batches API.
 
 Why batch:
-  Sync hits Anthropic's per-org web_search rate limit hard — a single recovery
+  Sync hits Anthropic's per-org web_search rate limit hard - a single recovery
   run on 2026-05-14 rate-limited 285/371 requests. Batch's per-org limits are
   dramatically higher, plus it's 50% off ($10/1K → $5/1K on web_search).
   Latency is ~hours but that's fine for a daily cron.
@@ -41,14 +41,14 @@ The restaurant's own website couldn't be read (JS shell, captcha, PDF menu, etc.
 infer cuisine from search snippets, review excerpts, blog posts, and Google Maps listings that
 Google has indexed about this place.
 
-You have access to web_search (up to 2 uses). Use Google's search operators aggressively —
+You have access to web_search (up to 2 uses). Use Google's search operators aggressively -
 they're the difference between thin generic listings and rich menu text.
 
-FIRST SEARCH — a broad probe with the name in quotes + neighborhood/street + Toronto.
+FIRST SEARCH - a broad probe with the name in quotes + neighborhood/street + Toronto.
 Look for cuisine hints in snippets: menu items in reviews, food-blog descriptors, Google
 Maps cuisine labels, "best <cuisine> in Toronto" mentions.
 
-SECOND SEARCH — only if the first surfaced no cuisine signal. Pick the highest-leverage
+SECOND SEARCH - only if the first surfaced no cuisine signal. Pick the highest-leverage
 operator combination for the failure mode:
   • Site is a JS shell hiding a PDF menu: `"<NAME>" toronto menu filetype:pdf`
     (Google indexes PDF text; this often returns the full menu when the site can't.)
@@ -88,7 +88,7 @@ CRITICAL: American Southern (Cajun, Creole, New Orleans, BBQ, soul) → unknown.
 CRITICAL: Packaged-food brand / grocery / chocolatier / distributor / factory outlet → unknown.
 CRITICAL: American/Canadian chains (Popeyes, KFC, Boston Pizza, Tim Hortons, etc.) → unknown.
 CRITICAL: If search results don't surface menu items, food-blog cuisine descriptors, or a
-Google Maps cuisine label — only generic "restaurant" / "open now" / delivery-app listings —
+Google Maps cuisine label - only generic "restaurant" / "open now" / delivery-app listings -
 return cuisine=unknown. Don't guess from the name alone."""
 
 def load_api_key():
@@ -119,7 +119,7 @@ def http(method, url, data=None):
         raise
 
 def needs_search_recovery(entry):
-    """Same gating as the sync variant — must have a failed Layer-2 attempt
+    """Same gating as the sync variant - must have a failed Layer-2 attempt
     (recovery_note set) and still be operating with null/unknown cuisine.
     Re-attempt every 30 days via search_recovered_at."""
     if entry.get('status') != 'ok' or entry.get('operating') != 'yes':
@@ -241,14 +241,14 @@ def main():
     has_search_result = any(b.get('type') == 'web_search_tool_result' for b in canary_blocks)
     print(f"  canary: server_tool_use present={any(b.get('type')=='server_tool_use' for b in canary_blocks)}  web_search_tool_result present={has_search_result}")
     if not has_search_result:
-        sys.exit("ABORT: canary returned no web_search_tool_result — web_search likely not supported in Message Batches API for this model. Fall back to sync.")
+        sys.exit("ABORT: canary returned no web_search_tool_result - web_search likely not supported in Message Batches API for this model. Fall back to sync.")
 
     def _apply_result(key, cuisines, evidence, into_cache):
         """Merge a single parse_result_msg outcome into the cache entry.
         Returns one of: 'recovered', 'unknown', 'parse_fail'."""
         real = [c for c in (cuisines or []) if c and c != 'unknown']
         if real:
-            into_cache[key]['cuisine'] = real[0]            # primary — backwards compat
+            into_cache[key]['cuisine'] = real[0]            # primary - backwards compat
             into_cache[key]['cuisines'] = real               # full list
             into_cache[key]['evidence'] = evidence
             into_cache[key]['recovery_source'] = 'web_search_batch'
@@ -256,7 +256,7 @@ def main():
         if cuisines == ['unknown']:
             into_cache[key]['cuisine'] = 'unknown'
             into_cache[key]['cuisines'] = ['unknown']
-            into_cache[key]['search_recovery_note'] = (evidence or 'search recovery — still unknown')[:120]
+            into_cache[key]['search_recovery_note'] = (evidence or 'search recovery - still unknown')[:120]
             return 'unknown'
         into_cache[key]['search_recovery_note'] = 'parse_failed'
         return 'parse_fail'

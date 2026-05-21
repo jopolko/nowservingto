@@ -94,7 +94,7 @@ def _make_feature(*, address="100 Test St", lot_area_m2=500, lng=-79.4, lat=43.7
 
 class ProjectFeaturesTests(unittest.TestCase):
     def test_surfaces_full_property_set(self):
-        # As of 2026-05-02 the projection mirrors FEATURE_PROPERTIES — the
+        # As of 2026-05-02 the projection mirrors FEATURE_PROPERTIES - the
         # listing page's badge gates and traceability links need the full
         # set (parcelId, residential, builtYear, solarScoreRaw all surfaced).
         rows, _ = project_features([_make_feature()], top_n=10)
@@ -116,7 +116,7 @@ class ProjectFeaturesTests(unittest.TestCase):
         rows, total = project_features(feats, top_n=5)
         self.assertEqual(len(rows), 5)
         self.assertEqual(total, 20)
-        # project_features preserves caller-supplied order — we don't
+        # project_features preserves caller-supplied order - we don't
         # re-sort here (build_parcels_top.py sorts by lot area before
         # projection). Just confirm the slice is the first 5.
         self.assertEqual(len(rows), 5)

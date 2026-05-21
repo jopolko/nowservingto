@@ -1,4 +1,4 @@
-"""Toronto Basement Flooding Study Areas — flood-risk overlay source.
+"""Toronto Basement Flooding Study Areas - flood-risk overlay source.
 
 The City of Toronto publishes Basement Flooding Study Areas: polygons
 delineating sanitary subsewersheds where basement flooding is a known
@@ -14,7 +14,7 @@ polygon → set `inFloodingStudyArea = True`. Mirrors the heritage spatial
 fallback shape so `build_parcels.py` consumes it via `is_in_flooding_area`.
 
 Future v1.3+: add TRCA Reg 41/24 riverine floodplain via TRCA ArcGIS portal
-(separate dataset, not on Toronto CKAN — needs ArcGIS REST integration).
+(separate dataset, not on Toronto CKAN - needs ArcGIS REST integration).
 """
 
 import logging

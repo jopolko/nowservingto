@@ -5,14 +5,14 @@ Weekly geographic digest poster for @JoshuaOpolko.
 Every Sunday rotates through Toronto's 6 districts (Downtown, East Toronto,
 Etobicoke, North York, Scarborough, West Toronto) and posts a thread of
 ~4 newly licensed restaurants from that district. The hook is "near me"
-geographic discovery — better fit for the X audience than cuisine-niche
+geographic discovery - better fit for the X audience than cuisine-niche
 posts (the cuisine niche is served by Google search hitting the per-cuisine
 SEO landing pages).
 
 Thread shape:
   Lead tweet:  "🆕 4 newly licensed East Toronto restaurants this week
-                — thread 🧵\n\n#Toronto #TOEats #EastTorontoTO"
-  Replies:     same per-listing format as the daily @nowservingto bot —
+                - thread 🧵\n\n#Toronto #TOEats #EastTorontoTO"
+  Replies:     same per-listing format as the daily @nowservingto bot -
                 each reply links to /r/<slug> and X auto-cards the
                 listing's og:image (Places photo).
 
@@ -25,8 +25,8 @@ running until those credits are burned through):
   X_JOSH_ACCESS_TOKEN_SECRET
 
 State:
-  tools/cache/x_weekly_state.json   — rotation pointer (last district idx)
-  tools/cache/x_weekly_posted.json  — slugs already posted via this thread
+  tools/cache/x_weekly_state.json   - rotation pointer (last district idx)
+  tools/cache/x_weekly_posted.json  - slugs already posted via this thread
 
 Stdlib only.
 """
@@ -46,7 +46,7 @@ POSTED_PATH      = ROOT / 'tools' / 'cache' / 'x_weekly_posted.json'
 SECRETS_PATH     = Path('/var/secrets/nowservingto.env')
 SITE_BASE        = 'https://nowservingto.com'
 
-# Fixed rotation order — every district gets one slot in a 6-week cycle.
+# Fixed rotation order - every district gets one slot in a 6-week cycle.
 # Order is alphabetical except Downtown gets the lead slot (highest-traffic
 # district most weeks, so we start each cycle with the strongest material).
 DISTRICTS = [
@@ -144,7 +144,7 @@ def _licensed_line(days):
 
 def build_lead_tweet(district, count):
     return (f"🆕 {count} newly licensed {district} restaurants this week "
-            f"— thread 🧵\n\n#Toronto #TOEats")
+            f"- thread 🧵\n\n#Toronto #TOEats")
 
 
 def build_reply_tweet(entry, idx, total):
@@ -174,7 +174,7 @@ def build_reply_tweet(entry, idx, total):
 
 
 def pick_district(state, candidates_by_district, min_count):
-    """Returns (district_name, advance_pointer_to) — the district to post and
+    """Returns (district_name, advance_pointer_to) - the district to post and
     the index to record in state. If the natural-rotation district has >=
     min_count candidates we use it; otherwise we scan forward for one that
     does and use that, leaving the rotation pointer where the scan started
@@ -199,7 +199,7 @@ def main():
     ap.add_argument('--target', type=int, default=4,
                     help='target number of listings in the thread (default 4)')
     ap.add_argument('--min',    type=int, default=3,
-                    help='minimum listings to post — skip if district has fewer (default 3)')
+                    help='minimum listings to post - skip if district has fewer (default 3)')
     ap.add_argument('--since-days', type=int, default=30,
                     help='only consider entries licensed in last N days (default 30)')
     ap.add_argument('--district', help='force a specific district instead of rotation')
@@ -253,10 +253,10 @@ def main():
     reply_texts = [build_reply_tweet(e, i, total) for i, e in enumerate(selected, 1)]
 
     if args.dry_run:
-        print('\n--- DRY RUN — lead tweet ---')
+        print('\n--- DRY RUN - lead tweet ---')
         print(lead_text)
         for i, t in enumerate(reply_texts, 1):
-            print(f'\n--- DRY RUN — reply {i}/{total} ({len(t)} chars) ---')
+            print(f'\n--- DRY RUN - reply {i}/{total} ({len(t)} chars) ---')
             print(t)
         return
 
@@ -271,7 +271,7 @@ def main():
     lead_id = lead.get('data', {}).get('id')
     print(f"  → lead_id={lead_id}  https://x.com/JoshuaOpolko/status/{lead_id}")
 
-    # Post replies — chain each reply to the lead (not to previous reply), so
+    # Post replies - chain each reply to the lead (not to previous reply), so
     # all reply cards appear at the same depth under the lead in X's UI.
     reply_ids = []
     for i, (e, text) in enumerate(zip(selected, reply_texts), 1):

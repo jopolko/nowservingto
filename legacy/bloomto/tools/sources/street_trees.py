@@ -1,4 +1,4 @@
-"""Toronto Street Tree General — per-parcel mature-canopy signal.
+"""Toronto Street Tree General - per-parcel mature-canopy signal.
 
 City of Toronto's "Street Tree Data" CKAN dataset is a per-tree point cloud
 of every city-owned street tree (~700K points), each carrying its botanical
@@ -6,7 +6,7 @@ name and DBH_TRUNK (diameter at breast height, in cm). For BloomTO's
 parcel-level developer use case, DBH ≥ 30 cm matters because:
 
 - Toronto's Tree Bylaw (Municipal Code Chapter 813) makes any tree of DBH
-  ≥ 30 cm on private property a permit gate for removal — a developer
+  ≥ 30 cm on private property a permit gate for removal - a developer
   intending to demolish the existing structure typically needs a Section 7
   permit to remove a regulated street tree adjacent to the work site.
 - City-owned trees with DBH ≥ 40 cm on city land qualify as "heritage trees"
@@ -23,7 +23,7 @@ canopy"), and emits two per-parcel fields:
 This is a TRUE per-parcel canopy signal, not the dissolved-by-neighborhood
 proxy from the FLC dataset. Private-side trees are not in this feed (Toronto
 Open Data only inventories city-owned trees), so a parcel with 0 hits may
-still have private mature canopy — the field is "city-side mature canopy
+still have private mature canopy - the field is "city-side mature canopy
 on/near the lot," not "all canopy."
 """
 
@@ -117,7 +117,7 @@ def count_for_parcel(parcel_geom, idx: StreetTreeIndex,
                      buffer_deg: float = 5.4e-5) -> tuple[int, int]:
     """Return (streetTreeCount, matureTreeCount) for one parcel.
 
-    `buffer_deg = 5.4e-5` ≈ 6 metres at Toronto's latitude — captures street
+    `buffer_deg = 5.4e-5` ≈ 6 metres at Toronto's latitude - captures street
     trees on the immediate curb fronting the parcel without bleeding into
     next-door lots' contributions.
     """

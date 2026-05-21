@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sources & API spend — NowServingTO</title>
+<title>Sources & API spend - NowServingTO</title>
 <meta name="description" content="Where NowServingTO pulls data + AI judgement from, and what each component costs.">
 <meta name="robots" content="noindex">
 <link rel="canonical" href="https://nowservingto.com/usage">
@@ -60,19 +60,19 @@
 <main class="wrap">
   <h1>Where the data comes from</h1>
   <p>NowServingTO pulls from a handful of paid + free APIs. This page tracks
-     our own usage of each — what we've called and what it's cost — so you
+     our own usage of each - what we've called and what it's cost - so you
      can see exactly where the budget goes.</p>
 
   <div class="totals">
     <div class="card">
       <div class="lbl">Total spent</div>
-      <div class="num" id="all-cost">—</div>
-      <div class="calls" id="all-calls">— calls since <span id="first-day">—</span></div>
+      <div class="num" id="all-cost">-</div>
+      <div class="calls" id="all-calls">- calls since <span id="first-day">-</span></div>
     </div>
     <div class="card">
       <div class="lbl">Today</div>
-      <div class="num" id="today-cost">—</div>
-      <div class="calls" id="today-calls">— calls</div>
+      <div class="num" id="today-cost">-</div>
+      <div class="calls" id="today-calls">- calls</div>
     </div>
   </div>
 
@@ -88,7 +88,7 @@
     <a href="https://jina.ai/api-dashboard" rel="noopener">Jina dashboard</a>,
     <a href="https://developer.x.com/en/portal/dashboard" rel="noopener">X developer portal</a>.
   </p>
-  <p class="stamp">Snapshot: <span id="stamp">—</span></p>
+  <p class="stamp">Snapshot: <span id="stamp">-</span></p>
 </main>
 
 <script>
@@ -97,10 +97,10 @@ fetch('/data/usage.json?v=' + Date.now()).then(r => r.json()).then(data => {
   const fmtFine = n => '$' + (Math.round((n||0) * 10000) / 10000).toFixed(4);
   const fmtCalls = n => (n||0).toLocaleString();
   document.getElementById('all-cost').textContent   = fmt(data.totals?.all?.cost);
-  document.getElementById('all-calls').innerHTML    = `${fmtCalls(data.totals?.all?.calls)} calls since <span id="first-day">${data.first || '—'}</span>`;
+  document.getElementById('all-calls').innerHTML    = `${fmtCalls(data.totals?.all?.calls)} calls since <span id="first-day">${data.first || '-'}</span>`;
   document.getElementById('today-cost').textContent = fmt(data.totals?.today?.cost);
   document.getElementById('today-calls').textContent= `${fmtCalls(data.totals?.today?.calls)} calls today`;
-  document.getElementById('stamp').textContent      = (data.generatedAt || '—').replace('T', ' ').slice(0, 19) + ' UTC';
+  document.getElementById('stamp').textContent      = (data.generatedAt || '-').replace('T', ' ').slice(0, 19) + ' UTC';
   const labels = {
     google_places: 'Google Places',
     google_streetview: 'Google Street View',

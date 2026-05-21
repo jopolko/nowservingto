@@ -1,4 +1,4 @@
-"""Development Applications — daily-refreshed CKAN feed.
+"""Development Applications - daily-refreshed CKAN feed.
 
 Toronto's `development-applications` dataset lists every Community Planning
 + Committee of Adjustment application filed since 2008-01-01. ~26K records
@@ -9,14 +9,14 @@ approved Site Plan / rezoning application means *somebody is already trying
 to build here*. Two-way utility for our small-builder/infill-developer
 audience:
 
-- **Negative**: parcel is already taken — strike from active hunting
+- **Negative**: parcel is already taken - strike from active hunting
 - **Positive**: comparable activity 200m away validates underwriting
 
 Slots into `signals.json` alongside severance / demo permit / violation /
 preliminary zoning review. Same address join, same daily refresh cadence.
 
 Filtering scope:
-- `APPLICATION_TYPE in {"SA", "OZ"}` — Site Plan + Zoning Bylaw Amendment.
+- `APPLICATION_TYPE in {"SA", "OZ"}` - Site Plan + Zoning Bylaw Amendment.
   These are the multiplex-relevant tracks. CD/SB/PL skew toward
   large-format development that's not our audience.
 - Optional `since_iso` filter on `DATE_SUBMITTED` for last-N-day windows.
@@ -89,7 +89,7 @@ class DevelopmentApp:
     date_submitted: str           # yyyy-mm-dd
     status: str                   # raw status string (whitespace-tolerated)
     status_group: str             # "active" | "approved" | "closed" | "unknown"
-    description: str              # free text — sometimes hints at structure
+    description: str              # free text - sometimes hints at structure
     application_url: str | None
     contact_name: str | None
     contact_email: str | None
@@ -202,7 +202,7 @@ def fetch_development_applications(
         if not norm_addr:
             continue
         status = (rec.get("STATUS") or "").strip()
-        # Truncate description aggressively — the wire-format upper bound
+        # Truncate description aggressively - the wire-format upper bound
         # for free text is 200 chars (matches our pattern for severance
         # description). Full text is one click away via APPLICATION_URL.
         desc = (rec.get("DESCRIPTION") or "").strip()[:200]
@@ -231,7 +231,7 @@ def fetch_development_applications(
 def index_by_address(apps: list[DevelopmentApp]) -> dict[str, DevelopmentApp]:
     """Most-recent-by-DATE_SUBMITTED wins per normalized address.
 
-    Status priority is *not* applied — the latest filing is the most
+    Status priority is *not* applied - the latest filing is the most
     actionable signal even if it's a status downgrade ("Closed" beats
     a stale "Under Review" from 5 years ago).
     """

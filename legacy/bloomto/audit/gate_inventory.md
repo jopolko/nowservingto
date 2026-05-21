@@ -1,4 +1,4 @@
-# Gate inventory — what filters a parcel out of the BloomTO wire
+# Gate inventory - what filters a parcel out of the BloomTO wire
 
 Every condition that affects whether a parcel of Toronto's 528K-parcel canonical universe makes it onto `data/parcels-top.json` or `data/parcels-broader.json`. Generated from a code read of the v1.2 ETL on 2026-05-05.
 
@@ -72,7 +72,7 @@ Bill 185 (Jan 2025: parking minimums eliminated citywide) and the June 2025 sixp
 
 If BloomTO's positioning is *"the best multiplex sites for net-zero outcomes"* (transit-friendly + walkable), then 500m is correct and the 91% miss rate is fine. If positioning is *"all multiplex-legal sites, ranked"*, then 500m is wildly tight and the wire is missing most of the action.
 
-The page provenance currently says "528K parcels ranked for as-of-right multiplex development" — implying the second framing. The actual gate enforces the first. **Mismatch worth resolving.**
+The page provenance currently says "528K parcels ranked for as-of-right multiplex development" - implying the second framing. The actual gate enforces the first. **Mismatch worth resolving.**
 
 **C. softScore extends the buffer to 1500m but is then re-filtered out by the frontend.**
 

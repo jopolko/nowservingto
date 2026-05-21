@@ -1,14 +1,14 @@
-"""Permits backtest — recall of BloomTO's gates against approved multiplex permits.
+"""Permits backtest - recall of BloomTO's gates against approved multiplex permits.
 
 For every approved 3-6 unit residential permit since `--since` (default
 2024-01-01), check whether BloomTO would have surfaced the parcel as elite
 (parcels-top.json) or broader (parcels-broader.json). The fraction caught
-is the recall — how predictive BloomTO is of where developers actually
+is the recall - how predictive BloomTO is of where developers actually
 build multiplexes.
 
 Address-join: both sides are normalized via `tools.sources._address.normalize_address`.
 The permits CSV has no lat/lng so spatial join isn't possible without first
-geocoding — out of scope for this script.
+geocoding - out of scope for this script.
 
 What this DOES NOT measure (yet):
   - Whether a "missed" parcel was excluded by gate vs simply scored too low
@@ -206,7 +206,7 @@ def render_md(results, top_count, broader_count, since_date, units_min, units_ma
             lines.append(f"| {y} | {yn:,} | {ye:,} | {yb:,} | {ym:,} | {rec:.0%} |")
         lines.append("")
 
-    # Units breakdown — does sixplex range have weaker recall than 4plex?
+    # Units breakdown - does sixplex range have weaker recall than 4plex?
     lines.append("## Recall by units_created\n")
     lines.append("| Units | Permits | Elite | Broader | Missed | Combined recall |")
     lines.append("|---|---:|---:|---:|---:|---:|")
@@ -222,7 +222,7 @@ def render_md(results, top_count, broader_count, since_date, units_min, units_ma
         lines.append(f"| {u} | {un:,} | {ue:,} | {ub:,} | {um:,} | {rec:.0%} |")
     lines.append("")
 
-    # Top-N missed permits — these are the recall failures most worth investigating.
+    # Top-N missed permits - these are the recall failures most worth investigating.
     missed_rows = [r for r in results if r["tier"] == "missed"]
     if missed_rows:
         lines.append(f"## Sample of missed permits ({len(missed_rows):,} total)\n")
@@ -243,7 +243,7 @@ def render_md(results, top_count, broader_count, since_date, units_min, units_ma
             lines.append(f"\n_…and {len(missed_rows) - 25:,} more not shown_")
         lines.append("")
 
-    # Hits — useful for sanity-checking that we joined correctly
+    # Hits - useful for sanity-checking that we joined correctly
     hit_rows = [r for r in results if r["tier"] != "missed"]
     if hit_rows:
         lines.append(f"## Sample of caught permits ({len(hit_rows):,} total)\n")

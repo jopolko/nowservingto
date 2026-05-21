@@ -9,7 +9,7 @@ Cache: tools/cache/web_verify_cache.json
 Caches all verdicts with a verified_at timestamp. Re-runs:
   - Always re-fetch entries that are missing or older than RECHECK_DAYS
     AND that were not previously 'yes' (those stay verified).
-  - 'yes' entries stay cached forever — once verified open, we trust it.
+  - 'yes' entries stay cached forever - once verified open, we trust it.
 
 Cost: ~$0.011 per call (1 web_search + small Haiku token use).
 """
@@ -59,7 +59,7 @@ def load_api_key():
 API_KEY = load_api_key()
 
 SYSTEM_PROMPT = """You verify a Toronto restaurant's existence AND identify its cuisine
-from web search results. Many places are brand new with only sparse online presence — that's fine.
+from web search results. Many places are brand new with only sparse online presence - that's fine.
 
 You have access to web_search. Use one search to find evidence.
 
@@ -77,7 +77,7 @@ latin, mexican, salvadoran, peruvian, colombian, brazilian,
 african_horn, ethiopian, eritrean, somali,
 african_west, nigerian, ghanaian, moroccan, unknown
 
-Use search evidence (menus, reviews, owner bios, articles) to choose cuisine — NOT just the
+Use search evidence (menus, reviews, owner bios, articles) to choose cuisine - NOT just the
 operating name. Prefer the most SPECIFIC bucket (ethiopian over african_horn; mexican over latin).
 Use the umbrella only when the country isn't clear from evidence.
 
@@ -90,21 +90,21 @@ CRITICAL: American/Canadian chains = unknown regardless of theme.
 - A surname-only name without other ethnic signal → unknown.
 
 Rules for "operating":
-- "yes" — ANY plausible online evidence the place exists. The bar is LOW.
+- "yes" - ANY plausible online evidence the place exists. The bar is LOW.
   Acceptable: own website, Instagram or Facebook page matching the name, a Google Maps
   profile with the address, recent Yelp/blogTO/TripAdvisor mention, food blog write-up,
   recent news article, TikTok/YouTube video, community board mention. If a person could
   reasonably find this place from a single search, it qualifies.
-- "no" — explicit evidence it has CLOSED (announcement, successor business now at the
+- "no" - explicit evidence it has CLOSED (announcement, successor business now at the
   address, "permanently closed" notice, news about its closing).
-- "unclear" — search returned nothing at all relevant; no trace of the business anywhere
-  online. Use sparingly — most new licences will have at least an Instagram post.
+- "unclear" - search returned nothing at all relevant; no trace of the business anywhere
+  online. Use sparingly - most new licences will have at least an Instagram post.
 
 Rules for "website" (return the BEST link you find, in this order of preference):
 1. The restaurant's own website (.com / .ca etc).
 2. The restaurant's Google Maps / Google Business listing URL
    (https://www.google.com/maps/place/... or https://maps.app.goo.gl/...).
-   Maps profiles give hours, photos, reviews, directions — strongly prefer over social.
+   Maps profiles give hours, photos, reviews, directions - strongly prefer over social.
 3. An Instagram or Facebook page that clearly matches the restaurant name.
 4. A specific blogTO / Eater / Toronto Star / food-blog article about THIS restaurant
    (not a generic "best of" list mentioning many places).
@@ -117,7 +117,7 @@ def verify_one(name, address, retries=2):
     body = json.dumps({
         'model': MODEL,
         'max_tokens': 400,
-        'system': SYSTEM_PROMPT,
+        'system': [{'type': 'text', 'text': SYSTEM_PROMPT, 'cache_control': {'type': 'ephemeral'}}],
         'tools': [{'type': 'web_search_20250305', 'name': 'web_search', 'max_uses': 1}],
         'messages': [{
             'role': 'user',
@@ -186,7 +186,7 @@ def website_tier(url):
     if any(d in u for d in ('blogto.com','tripadvisor.','yelp.com','toronto.com','timeout.com','google.com/maps','goo.gl/maps')): return 3
     return 1
 
-RECHECK_BY_TIER = {1: 180, 2: 30, 3: 14, 4: 14}
+RECHECK_BY_TIER = {1: 180, 2: 45, 3: 21, 4: 21}
 RECHECK_NO = 60
 RECHECK_UNCLEAR = 7
 
@@ -267,12 +267,12 @@ def main():
             k = cache_key(name, addr)
             if k in seen_keys: continue
             seen_keys.add(k)
-            # Must be cuisine-tagged (LLM-ok-not-unknown OR keyword would match — we'll just
+            # Must be cuisine-tagged (LLM-ok-not-unknown OR keyword would match - we'll just
             # trust the LLM cache here as the canonical cuisine source)
             llm_entry = llm.get(k)
             if not (llm_entry and llm_entry.get('status') == 'ok' and llm_entry.get('cuisine') and llm_entry.get('cuisine') != 'unknown'):
                 continue
-            # Skip if Places already verified OPERATIONAL — no need to web-verify
+            # Skip if Places already verified OPERATIONAL - no need to web-verify
             p = places.get(k)
             if p and p.get('status') == 'ok' and p.get('businessStatus') == 'OPERATIONAL':
                 continue

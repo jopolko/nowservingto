@@ -68,7 +68,7 @@ def report():
             print(f"  [hit: {h}]  {n[:48]:48s} → {c}")
         print()
     if generic_tagged:
-        print(f"== GENERIC NAME + SPECIFIC ETHNIC TAG ({len(generic_tagged)}) — high false-positive risk ==")
+        print(f"== GENERIC NAME + SPECIFIC ETHNIC TAG ({len(generic_tagged)}) - high false-positive risk ==")
         for n, c in generic_tagged[:30]:
             print(f"  {n[:48]:48s} → {c}")
         print()

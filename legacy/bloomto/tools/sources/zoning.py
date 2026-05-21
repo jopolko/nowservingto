@@ -4,7 +4,7 @@ multiplying by the per-zone unit cap from `tools/zoning_multipliers.json`.
 
 Also exposes the two v1.2 building blocks `iter_parcels` and `load_zone_index`,
 consumed by the parcel-level ETL (`tools/build_parcels.py`). `compute_potential`
-itself is refactored on top of these helpers — behavior is byte-identical to v1.1.
+itself is refactored on top of these helpers - behavior is byte-identical to v1.1.
 
 See `tools/README.md` § Zoning + Property Source for resource ids, schema, and risks.
 """
@@ -56,23 +56,23 @@ class ZoneRecord:
     we extract for per-parcel max-units derivation.
 
     Field semantics:
-      `zone_class`         — ZN_ZONE prefix (e.g., "RM", "RD"). The high-
+      `zone_class`         - ZN_ZONE prefix (e.g., "RM", "RD"). The high-
                              level category. Always set (empty string when
                              zoning has no record for the parcel).
-      `zone_string`        — Full ZN_STRING with all parameters (e.g.
+      `zone_string`        - Full ZN_STRING with all parameters (e.g.
                              "RM (f18.0; a665; u4) (x252)"). Surface to
                              the dev so they see the actual by-law text.
-      `units`              — Explicit per-lot unit cap from `UNITS` field
+      `units`              - Explicit per-lot unit cap from `UNITS` field
                              when set (e.g., `u4`). `None` when -1/missing.
-      `fsi`                — `FSI_TOTAL` Floor Space Index (e.g., `d0.85`).
+      `fsi`                - `FSI_TOTAL` Floor Space Index (e.g., `d0.85`).
                              `None` when -1/missing.
-      `min_lot_frontage_m` — `FRONTAGE` minimum from `f12.0`. `None` when
+      `min_lot_frontage_m` - `FRONTAGE` minimum from `f12.0`. `None` when
                              not set; doesn't apply to the parcel.
-      `min_lot_area_m2`    — `ZN_AREA` minimum from `a665`. `None` when
+      `min_lot_area_m2`    - `ZN_AREA` minimum from `a665`. `None` when
                              not set.
-      `coverage_max`       — `COVERAGE` max coverage ratio (0–1).
+      `coverage_max`       - `COVERAGE` max coverage ratio (0–1).
                              Currently surfaced for downstream use.
-      `pct_residential`    — `PRCNT_RES` as a 0–100 number; `None` when
+      `pct_residential`    - `PRCNT_RES` as a 0–100 number; `None` when
                              not specified (e.g. pure residential = 100).
     """
     zone_class: str
@@ -122,7 +122,7 @@ class Parcel:
     """One Property Boundaries feature, normalized for downstream scoring.
 
     `geometry` is the WGS84 polygon/multipolygon as parsed by shapely.
-    `centroid` is `(lon, lat)` of the shapely centroid (NOT representative_point —
+    `centroid` is `(lon, lat)` of the shapely centroid (NOT representative_point -
     consumers needing a topology-safe interior point should call
     `geometry.representative_point()` directly). `area_m2` is geodesic, computed
     via `pyproj.Geod.geometry_area_perimeter` so it's correct at Toronto's
@@ -150,7 +150,7 @@ def _download_with_retries(url: str, dest: Path) -> None:
             if attempt == len(backoffs):
                 raise
             wait = backoffs[attempt]
-            _log.warning("download %s failed (attempt %d): %s — retrying in %ss",
+            _log.warning("download %s failed (attempt %d): %s - retrying in %ss",
                          url, attempt + 1, e, wait)
             time.sleep(wait)
 
@@ -189,7 +189,7 @@ def _load_multipliers() -> dict[str, int]:
 def lookup_multiplier(zone_class: str, multipliers: dict[str, int]) -> int:
     """Resolve `zone_class` to a per-lot unit cap.
 
-    Returns 0 when `zone_class` is empty (parcel sits outside any zoning polygon —
+    Returns 0 when `zone_class` is empty (parcel sits outside any zoning polygon -
     a known no-op state, not an unknown-code state). Raises `KeyError` when
     `zone_class` is non-empty but absent from `multipliers`, with a message
     pointing the operator at `tools/zoning_multipliers.json`.
@@ -205,7 +205,7 @@ def lookup_multiplier(zone_class: str, multipliers: dict[str, int]) -> int:
 
 
 def _clean_address_field(v: object) -> str | None:
-    """Coerce blanks / "None" strings to actual None — see the rationale in
+    """Coerce blanks / "None" strings to actual None - see the rationale in
     iter_parcels comments. Pulled out so iter_parcel_records can share it.
     """
     if v is None:
@@ -229,8 +229,8 @@ def _build_address(props: dict) -> str | None:
 
 def parcel_from_record(record: dict) -> "Parcel | None":
     """Materialize a Parcel from a lightweight record dict (parcel_id, address,
-    geometry_dict). Does the slow GEOS work — shapely shape() + geodesic
-    area — that iter_parcel_records intentionally defers to the per-parcel
+    geometry_dict). Does the slow GEOS work - shapely shape() + geodesic
+    area - that iter_parcel_records intentionally defers to the per-parcel
     consumer. Returns None when the geometry can't be parsed (caller skips).
 
     Used in the multiprocessing fast-path: parent thread streams cheap dicts
@@ -268,7 +268,7 @@ def iter_parcel_records(cache_dir: Path) -> Iterator[dict]:
     `parcel_from_record`. Net effect: parsing parallelizes across cores
     instead of bottlenecking the parent.
 
-    For sequential mode use the eager `iter_parcels` instead — it's the
+    For sequential mode use the eager `iter_parcels` instead - it's the
     same I/O cost but materializes Parcels in-process so the loop body can
     use `parcel.geometry` directly without a per-call `parcel_from_record`.
     """
@@ -278,7 +278,7 @@ def iter_parcel_records(cache_dir: Path) -> Iterator[dict]:
 
     with property_path.open("rb") as fp:
         # use_float=True coerces ijson's default Decimal coords to plain
-        # floats inline — avoids a json.dumps/loads roundtrip per record
+        # floats inline - avoids a json.dumps/loads roundtrip per record
         # (saves ~30s on 528K parcels) and shrinks pickle size by ~30%.
         for feat in ijson.items(fp, "features.item", use_float=True):
             geom = feat.get("geometry")
@@ -297,12 +297,12 @@ def iter_parcel_records(cache_dir: Path) -> Iterator[dict]:
 def iter_parcels(cache_dir: Path) -> Iterator[Parcel]:
     """Stream Property Boundaries features as `Parcel` records.
 
-    Eager variant — does the shapely/geodesic work in the iterator. Used by
+    Eager variant - does the shapely/geodesic work in the iterator. Used by
     the sequential per-parcel path (`workers <= 1`) and by tests. The
     multiprocessing fast-path uses `iter_parcel_records` + `parcel_from_record`
     instead so the GEOS work parallelizes.
 
-    Skips features with missing or unparseable geometry silently — those are
+    Skips features with missing or unparseable geometry silently - those are
     dropped by the same defensive guards v1.1's `compute_potential` already used.
     """
     cache = Path(cache_dir)
@@ -393,7 +393,7 @@ def compute_potential(neighborhoods: list[Neighborhood],
 
     # `load_zone_index` returns `(STRtree, list[ZoneRecord])` after the FSI
     # envelope refactor (2026-05-07). For neighborhood-rollup `compute_potential`
-    # we only need the high-level zone class string — extract it from each record.
+    # we only need the high-level zone class string - extract it from each record.
     zone_tree, zone_records = load_zone_index(cache)
     zone_classes = [r.zone_class for r in zone_records]
 
@@ -455,7 +455,7 @@ def compute_potential(neighborhoods: list[Neighborhood],
             fallback_names.append(nb.name)
             continue
         if pot < existing:
-            _log.info("zoning floor: %s pot=%d < existing=%d — clamping to existing",
+            _log.info("zoning floor: %s pot=%d < existing=%d - clamping to existing",
                       nb.name, pot, existing)
             pot = existing
             floor_applied += 1

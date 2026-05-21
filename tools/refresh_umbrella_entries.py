@@ -4,7 +4,7 @@ One-shot: refresh every umbrella-tagged entry's Places data + re-classify via
 Layer 2. Targets the cases like La Rumba where the broad bucket (caribbean,
 latin, south_asian, middle_east, african_horn, african_west, eastern_eu) hides
 a more specific country that the Places editorialSummary or reviews would have
-revealed — IF that field had existed in our local cache.
+revealed - IF that field had existed in our local cache.
 
 Re-fetches Places (free at our scale, populates editorialSummary + reviews),
 then runs the same Layer 2 classifier we already use, which now reads:
@@ -45,7 +45,7 @@ def main():
     print(f"  estimated cost: ~${len(targets) * 0.005:.2f}")
     if not targets: return
 
-    # Phase 1: re-fetch Places for all targets — populates editorialSummary + reviews.
+    # Phase 1: re-fetch Places for all targets - populates editorialSummary + reviews.
     # Sequential because Places has its own rate limits (modest at our scale).
     print()
     print("=== Phase 1: refresh Places ===")
@@ -63,7 +63,7 @@ def main():
     PLACES_PATH.write_text(json.dumps(pc, separators=(',', ':')))
     print(f"  refresh done in {time.time()-t0:.0f}s")
 
-    # Phase 2: re-classify each via Layer 2 — uses website + Places extras + new prompt.
+    # Phase 2: re-classify each via Layer 2 - uses website + Places extras + new prompt.
     print()
     print("=== Phase 2: re-classify via Layer 2 ===")
     n_split_to_specific = n_stayed_umbrella = n_flipped_unknown = n_err = 0
@@ -102,7 +102,7 @@ def main():
             old_cuisine = wv[key].get('cuisine')
             if cuisines == ['unknown']:
                 # Layer 2 examined richer evidence and decided: not classifiable.
-                # Keep the existing umbrella tag — the fallback rule will still
+                # Keep the existing umbrella tag - the fallback rule will still
                 # surface it. (Could be a non-restaurant we'd want to drop, but
                 # that's a separate decision.)
                 n_flipped_unknown += 1

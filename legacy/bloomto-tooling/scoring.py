@@ -1,12 +1,12 @@
 """Composite Net-Zero Score formula for BloomTO neighborhoods (v1.1).
 
 Six real inputs, weighted to sum to 1.0:
-  - heatPump (SolarTO)        — 0.30
-  - canopy (Forest/Land Cover) — 0.20, scaled ×2 since urban canopy maxes ~50%
-  - walk (Centreline density)  — 0.15
-  - transit (TTC stops)        — 0.15
-  - bike (Cycling Network)     — 0.10
-  - Missing-Middle headroom    — 0.10, derived from (potential/existing − 1) × 50
+  - heatPump (SolarTO)        - 0.30
+  - canopy (Forest/Land Cover) - 0.20, scaled ×2 since urban canopy maxes ~50%
+  - walk (Centreline density)  - 0.15
+  - transit (TTC stops)        - 0.15
+  - bike (Cycling Network)     - 0.10
+  - Missing-Middle headroom    - 0.10, derived from (potential/existing − 1) × 50
 """
 
 ENERGY_WEIGHT = 0.30

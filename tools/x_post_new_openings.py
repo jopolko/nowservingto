@@ -50,12 +50,12 @@ def _load_secrets():
 
 
 def _pct(s):
-    """OAuth 1.0a percent-encoding — RFC 3986 unreserved chars only."""
+    """OAuth 1.0a percent-encoding - RFC 3986 unreserved chars only."""
     return quote(str(s), safe='-._~')
 
 
 def _oauth1_sign(method, url, oauth_params, body_params, consumer_secret, token_secret):
-    """RFC 5849 §3.4 — HMAC-SHA1 signature over (method, base URL, sorted params)."""
+    """RFC 5849 §3.4 - HMAC-SHA1 signature over (method, base URL, sorted params)."""
     all_params = sorted((_pct(k), _pct(v)) for k, v in (list(oauth_params.items()) + list(body_params.items())))
     param_str = '&'.join(f'{k}={v}' for k, v in all_params)
     base = '&'.join([method.upper(), _pct(url), _pct(param_str)])
@@ -127,7 +127,7 @@ def build_tweet(entry):
     socials = entry.get('socials') or {}
     handle_at = socials.get('x')   # only true @-mention if X handle is known
     handle_ig = socials.get('instagram') if not handle_at else None
-    # Use the nowservingto listing URL — X auto-cards from the listing's
+    # Use the nowservingto listing URL - X auto-cards from the listing's
     # og:image (the Places photo) and the WHOLE card is one click-target.
     # Most user-friendly pattern on mobile: tap image = tap link. Attached
     # media would open the photo fullscreen on tap, which is a dead-end.
@@ -135,7 +135,7 @@ def build_tweet(entry):
     licensed_lead = _licensed_line(entry.get('daysOpen'))
 
     # Suffix the cuisine label with a contextual word from the restaurant's
-    # own name when available — "LA RUMBA RESTAURANT ... · Dominican
+    # own name when available - "LA RUMBA RESTAURANT ... · Dominican
     # Restaurant" reads more naturally than "Dominican Cuisine" when the
     # name already says Restaurant. Fall back to "Cuisine" otherwise.
     if primary_lbl:
@@ -145,7 +145,7 @@ def build_tweet(entry):
     else:
         name_line = name
     lines = [licensed_lead, name_line]
-    # Region only — no street address. Creates a curiosity gap that
+    # Region only - no street address. Creates a curiosity gap that
     # pushes readers to click through for the full details.
     lines.append(district or 'Toronto')
     if handle_at:
@@ -155,7 +155,7 @@ def build_tweet(entry):
     lines.append(listing_url)
     lines.append('#Toronto #TOEats')
     text = '\n'.join(lines)
-    # X 280-char limit — trim address/handle lines first, keep the temporal
+    # X 280-char limit - trim address/handle lines first, keep the temporal
     # hook + name + URL + hashtags as the irreducible core.
     if len(text) > 280:
         keep = [licensed_lead, name_line, listing_url, '#Toronto #TOEats']
@@ -168,7 +168,7 @@ def build_tweet(entry):
 
 def upload_media(png_bytes, creds):
     """Upload a PNG to X's media endpoint and return the media_id_string.
-    Uses v1.1 multipart/form-data — X v2 doesn't yet expose media upload."""
+    Uses v1.1 multipart/form-data - X v2 doesn't yet expose media upload."""
     url = 'https://upload.twitter.com/1.1/media/upload.json'
     boundary = 'NSTO' + secrets.token_hex(12)
     body = (
@@ -213,7 +213,7 @@ def main():
     ap.add_argument('--dry-run', action='store_true', help='print the tweet, do not POST')
     ap.add_argument('--attach-card', action='store_true',
                     help='attach the rendered PNG card to the tweet via /media/upload. '
-                         'Default OFF — X auto-renders the og:image from the listing page, '
+                         'Default OFF - X auto-renders the og:image from the listing page, '
                          'which makes the image clickable and routes to the site.')
     ap.add_argument('--card-only', action='store_true', help='render card SVG/PNG to /tmp and exit (for design iteration)')
     args = ap.parse_args()
@@ -261,11 +261,11 @@ def main():
         print(f"posting: {e['slug']} ({len(text)} chars)")
         # Default: text-only tweet. X auto-renders a Twitter Card from the
         # listing page's og:image (the Places photo we set). Whole card
-        # becomes one click-target — taps the image OR title → goes to
+        # becomes one click-target - taps the image OR title → goes to
         # nowservingto.com/r/<slug>. Most user-friendly pattern.
         #
         # --attach-card flag forces the SVG fallback as attached media
-        # (fullscreen-on-tap behavior). Rarely needed — kept for manual
+        # (fullscreen-on-tap behavior). Rarely needed - kept for manual
         # use when X's scraper is mis-rendering the auto-card.
         media_ids = None
         if args.attach_card:
@@ -290,7 +290,7 @@ def main():
             n_posted += 1
         except Exception as ex:
             print(f"  FAIL: {ex}")
-            # Don't break — try the next candidate.
+            # Don't break - try the next candidate.
     print(f"done. {n_posted} posted.")
 
 

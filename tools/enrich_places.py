@@ -129,7 +129,7 @@ def streetview_image(lat, lng, size='640x640', fov=80, heading=None, pitch=0):
     """Fetch the Street View Static JPEG bytes for the given coords. Costs
     ~$0.007 per call (Street View Static SKU). Standard tier caps each
     dimension at 640. Returns (bytes, content_type) or (None, None).
-    Use streetview_metadata() first to gate this — paying $0.007 only on
+    Use streetview_metadata() first to gate this - paying $0.007 only on
     coords Google has imagery for."""
     from urllib.request import Request, urlopen
     from urllib.parse import urlencode
@@ -156,6 +156,7 @@ def streetview_image(lat, lng, size='640x640', fov=80, heading=None, pitch=0):
         return None, None
 
 from places_key import cache_key  # canonical shared helper
+from chain_filter import is_known_chain, chain_set_summary
 
 def _address_matches(queried_addr, matched_addr):
     """Sanity-check that Google's match actually sits on the same street as the
@@ -171,7 +172,7 @@ def _address_matches(queried_addr, matched_addr):
     return num in addr_up and street in addr_up
 
 def _coords_from_geocode(operating_name, address):
-    """Pull lat/lng from the Nominatim geocode cache when find_place fails — we
+    """Pull lat/lng from the Nominatim geocode cache when find_place fails - we
     can then use Places Nearby Search to find the actual business at those
     coords, which works even when the name is run-together or has hidden
     keywords like 'Premium' that wreck the text-based queries."""
@@ -193,7 +194,7 @@ def _coords_from_geocode(operating_name, address):
 
 def _name_tokens(s):
     """Tokenize a business name for fuzzy comparison. Strips diacritics so
-    'Ôi BÁNH MÌ' and 'OI BANH MI' produce identical token sets — Haiku can read
+    'Ôi BÁNH MÌ' and 'OI BANH MI' produce identical token sets - Haiku can read
     those as the same, but our regex can't unless we normalize."""
     import re, unicodedata
     # NFD splits "ô" → "o" + combining-circumflex; the Mn-category filter then
@@ -242,7 +243,7 @@ def enrich_one(operating_name, address):
     # If the text query missed the actual restaurant (very common when the name
     # is run-together like "SONARBANGLA" or has hidden marketing keywords like
     # "Premium"), fall back to Nearby Search around the geocoded coords.
-    # Also reject when address matches but the name overlap is too thin — Places
+    # Also reject when address matches but the name overlap is too thin - Places
     # will happily return a CAR WASH at "828 Eastern Ave" when we queried for
     # "Eastern 828 Cafe & Grill" (real example, 2026-05-14). Address alone isn't
     # enough; require some substantive name-token agreement too.
@@ -261,7 +262,7 @@ def enrich_one(operating_name, address):
     if not details:
         return {'status': 'no_details', 'place_id': cand['place_id'], 'query': query}
     loc = (details.get('geometry') or {}).get('location') or {}
-    # Trim reviews to text-only and cap length — full review objects are bulky
+    # Trim reviews to text-only and cap length - full review objects are bulky
     # (author photos, profile URLs, timestamps) and we only need the prose for
     # cultural-marker extraction downstream.
     reviews_raw = details.get('reviews') or []
@@ -270,7 +271,7 @@ def enrich_one(operating_name, address):
         t = (r.get('text') or '').strip()
         if t: reviews_text.append(t[:600])
     editorial = (details.get('editorial_summary') or {}).get('overview') if isinstance(details.get('editorial_summary'), dict) else None
-    # First photo reference (if any) — downloading the bytes is a separate
+    # First photo reference (if any) - downloading the bytes is a separate
     # billable Places Photo SKU; we cache the ref here and download on demand.
     photos = details.get('photos') or []
     photo_ref = photos[0].get('photo_reference') if photos else None
@@ -287,9 +288,9 @@ def enrich_one(operating_name, address):
         'lat': loc.get('lat'),
         'lng': loc.get('lng'),
         'businessStatus': details.get('business_status'),
-        'reviews': reviews_text,             # list[str] — up to 5 trimmed review texts
-        'editorialSummary': editorial,       # str or None — Google's curated description
-        'photoRef': photo_ref,               # str or None — first photo_reference for og:image
+        'reviews': reviews_text,             # list[str] - up to 5 trimmed review texts
+        'editorialSummary': editorial,       # str or None - Google's curated description
+        'photoRef': photo_ref,               # str or None - first photo_reference for og:image
         'query': query,
     }
 
@@ -297,10 +298,16 @@ def main():
     data = json.loads(DATA_PATH.read_text())
     no = data.get('newOpenings')
     if not no:
-        sys.exit("data/corridors.json has no newOpenings key — run inject_openings.py first")
+        sys.exit("data/corridors.json has no newOpenings key - run inject_openings.py first")
 
     cache = json.loads(CACHE_PATH.read_text()) if CACHE_PATH.exists() else {}
     print(f"cache: {len(cache)} entries already enriched")
+    print(chain_set_summary())
+
+    # Pull validator verdicts so we can skip Places for entries already
+    # known to be non-restaurants.
+    wv_path = ROOT / 'tools' / 'cache' / 'web_verify_cache.json'
+    wv = json.loads(wv_path.read_text()) if wv_path.exists() else {}
 
     # Collect unique (name, address) pairs across the recent feed and per-cuisine recent5 lists
     pairs = {}
@@ -313,8 +320,26 @@ def main():
         ne = c.get('newest')
         if ne: add(ne)
 
-    to_fetch = [(k, e) for k, e in pairs.items() if k not in cache]
-    print(f"openings to enrich: {len(to_fetch)} (skipping {len(pairs) - len(to_fetch)} already cached)")
+    # Apply chain + validator-drop gates BEFORE issuing any API call.
+    # These are the single biggest cost savers (added 2026-05-20 after a
+    # cron run spent ~$4 looking up Pokeworks/Marugame/Popeyes/etc., all
+    # of which the validator drops downstream).
+    def _skip_reason(k, e):
+        name = e.get('operatingName') or k.split('||', 1)[0]
+        if is_known_chain(name): return 'chain'
+        if (wv.get(k) or {}).get('validator_drop'): return 'validator-drop'
+        return None
+    n_chain = n_drop = 0
+    to_fetch = []
+    for k, e in pairs.items():
+        if k in cache: continue
+        reason = _skip_reason(k, e)
+        if reason == 'chain': n_chain += 1; continue
+        if reason == 'validator-drop': n_drop += 1; continue
+        to_fetch.append((k, e))
+    n_cached = sum(1 for k in pairs if k in cache)
+    print(f"openings to enrich: {len(to_fetch)}")
+    print(f"  (skipping: {n_cached} cached + {n_chain} known chains + {n_drop} validator-rejected)")
     est_cost = len(to_fetch) * COST_PER_PAIR
     print(f"estimated API spend: ${est_cost:.2f}")
     if est_cost > COST_HARD_CAP:
@@ -325,7 +350,7 @@ def main():
     t0 = time.time()
     for i, (k, e) in enumerate(to_fetch, 1):
         if spent + COST_PER_PAIR > COST_HARD_CAP:
-            print(f"  HARD CAP HIT at ${spent:.2f} after {i-1} requests — stopping")
+            print(f"  HARD CAP HIT at ${spent:.2f} after {i-1} requests - stopping")
             break
         try:
             result = enrich_one(e.get('operatingName'), e.get('address'))

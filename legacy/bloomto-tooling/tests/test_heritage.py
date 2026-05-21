@@ -1,7 +1,7 @@
 """Tests for `tools/sources/heritage.py`.
 
 Builds a tiny SHP zip programmatically in `setUp` rather than committing a
-binary fixture — the source-of-truth is the test code itself, not a checked-in
+binary fixture - the source-of-truth is the test code itself, not a checked-in
 SHP file whose vintage might drift from the production reader expectations.
 """
 
@@ -29,7 +29,7 @@ from tools.sources.heritage import (
 )
 
 # Hand-placed Toronto-area points, well-separated. Each tuple is (lon, lat,
-# DBF STATUS, DBF ADDRESS) — fixtures cover all three known tiers plus the
+# DBF STATUS, DBF ADDRESS) - fixtures cover all three known tiers plus the
 # address-collision case in TestHeritageAddressCollision below.
 HERITAGE_FIXTURES = [
     (-79.3667, 43.6669, "Part IV", "17  SALISBURY AVE"),
@@ -37,7 +37,7 @@ HERITAGE_FIXTURES = [
     (-79.5000, 43.7000, "Listed",  "4 SOUTH KINGSWAY"),
 ]
 
-# Minimal WGS84 .prj content — real Toronto registry uses GCS_WGS_1984.
+# Minimal WGS84 .prj content - real Toronto registry uses GCS_WGS_1984.
 _PRJ_BYTES = (
     b'GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",'
     b'SPHEROID["WGS_1984",6378137.0,298.257223563]],'

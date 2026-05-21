@@ -4,7 +4,7 @@ Expand Google Places coverage for entries that don't yet have an own-website.
 
 Why this exists:
   `llm_recover_cuisine.py` prefers `places_cache[k].website` over the verify
-  cache's website when classifying cuisine — Places frequently knows the real
+  cache's website when classifying cuisine - Places frequently knows the real
   restaurant URL even when our verifier was only able to find the operator's
   Instagram. But `llm_recover_cuisine` can only USE Places data if it's already
   cached. `places_enrich_socials.py` covers entries whose verify-website is on
@@ -14,7 +14,7 @@ Why this exists:
   (An earlier version of this script tried to map Places' `types` field to our
   cuisine taxonomy directly. A full sweep recovered 0/496 cuisines because
   Google tags most Toronto restaurants with generic types like `restaurant`,
-  `food`, `establishment` — not `italian_restaurant` etc. We dropped that
+  `food`, `establishment` - not `italian_restaurant` etc. We dropped that
   approach in favour of fetching the real own-website Places knows about.)
 
 Cost: ~$0.017 per Places lookup. Daily delta is ~2-5 entries → pennies.
@@ -23,6 +23,7 @@ import sys, time, json
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from enrich_places import enrich_one, CACHE_PATH as PLACES_CACHE_PATH
+from chain_filter import is_known_chain, chain_set_summary
 
 ROOT = Path(__file__).resolve().parent.parent
 WEB_VERIFY_PATH = ROOT / 'tools' / 'cache' / 'web_verify_cache.json'
@@ -31,16 +32,28 @@ SOCIAL_DOMAINS = ('instagram.com', 'facebook.com', 'tiktok.com')
 
 def _is_social(u): return bool(u) and any(d in u.lower() for d in SOCIAL_DOMAINS)
 
-def needs_lookup(verify_entry, places_entry):
+def needs_lookup(key, verify_entry, places_entry):
     """Target: any operating entry not yet in places_cache. Previously gated
     on `cuisine is null/unknown`, but that skipped entries with weak name-
     only LLM guesses (e.g. OGUZ UYGHUR POLOV → tibetan), which then never
     got Places data + dropped at the validator. Dropping the cuisine check
-    means any fresh operating=yes entry gets a Places shot — Places data
-    is the most authoritative signal we have."""
+    means any fresh operating=yes entry gets a Places shot - Places data
+    is the most authoritative signal we have.
+
+    Two cost-gating filters added 2026-05-20: (1) skip entries already
+    flagged by the validator as not-a-restaurant - they will be dropped
+    downstream regardless of Places data, so paying for Places is waste;
+    (2) skip known restaurant chains (OSM + Wikidata sets via
+    chain_filter) - chains never surface on the site anyway and were
+    burning ~$1-2/day in Places lookups on Pokeworks / Marugame / etc."""
     if verify_entry.get('status') != 'ok' or verify_entry.get('operating') != 'yes':
         return False
-    if places_entry:  # already queried (status doesn't matter — don't pay twice)
+    if places_entry:  # already queried (status doesn't matter - don't pay twice)
+        return False
+    if verify_entry.get('validator_drop'):  # validator already said skip this one
+        return False
+    name = key.split('||', 1)[0]
+    if is_known_chain(name):
         return False
     return True
 
@@ -48,9 +61,10 @@ def main():
     verify_cache = json.loads(WEB_VERIFY_PATH.read_text())
     places_cache = json.loads(PLACES_CACHE_PATH.read_text()) if PLACES_CACHE_PATH.exists() else {}
 
+    print(chain_set_summary())
     targets = [(k, e) for k, e in verify_cache.items()
-               if needs_lookup(e, places_cache.get(k))]
-    print(f"Places lookups needed (cuisine=null, no Places cache yet): {len(targets)}")
+               if needs_lookup(k, e, places_cache.get(k))]
+    print(f"Places lookups needed (cuisine=null, no Places cache yet, not chain, not validator-rejected): {len(targets)}")
     print(f"  estimated cost: ${len(targets)*0.017:.2f}")
     if not targets:
         return

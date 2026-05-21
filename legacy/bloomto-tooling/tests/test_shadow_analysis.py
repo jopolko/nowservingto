@@ -1,6 +1,6 @@
 """Tests for `tools/shadow_analysis.py` (Task 21).
 
-All fixtures are built inline — no real 3D Massing data needed. Coordinates
+All fixtures are built inline - no real 3D Massing data needed. Coordinates
 are placed at Toronto's latitude (~43.7°N) so the planar approximation
 constants (`_M_PER_DEG_LAT/LON`) reflect realistic shadow lengths.
 
@@ -55,7 +55,7 @@ def _massing_index(buildings: list[Building]) -> tuple[STRtree, list[Building]]:
 class ShadowAnalysisTests(unittest.TestCase):
     def test_zero_candidates_returns_one_measured(self):
         parcel = _make_parcel("P", _square_polygon(-79.400, 43.700, 0.0005))
-        # Massing index has buildings, but they're 1km away — outside the 75m search radius.
+        # Massing index has buildings, but they're 1km away - outside the 75m search radius.
         far_building = Building(
             geometry=_square_polygon(-79.380, 43.700, 0.0001),
             height_m=30.0,
@@ -90,7 +90,7 @@ class ShadowAnalysisTests(unittest.TestCase):
     def test_tier2_envelope_marks_quality_estimated(self):
         # Tier 2 = height present but footprint unusable. The load-time filter
         # in massing.py drops degenerate footprints, so this case is rare in
-        # production — but the algorithm must still classify correctly.
+        # production - but the algorithm must still classify correctly.
         # We synthesize a degenerate footprint (zero-area polygon) here.
         parcel = _make_parcel("P", _square_polygon(-79.400, 43.700, 0.0005))
         degenerate = Polygon([
@@ -145,12 +145,12 @@ class ShadowAnalysisTests(unittest.TestCase):
         self.assertGreater(len(buildings), MAX_CANDIDATES_PER_PARCEL)
 
         result = analyze_parcel(parcel, _massing_index(buildings))
-        # Quality stays measured (all tier1) — cap is just a candidate selector.
+        # Quality stays measured (all tier1) - cap is just a candidate selector.
         self.assertEqual(result.quality, "measured")
         self.assertIsNotNone(result.unshadowed_fraction)
 
     def test_short_circuit_at_high_elevation_means_smaller_shadow(self):
-        # Compare winter (22°) vs summer (70°) elevation — summer should have
+        # Compare winter (22°) vs summer (70°) elevation - summer should have
         # less shadow → higher unshadowed fraction.
         parcel = _make_parcel("P", _square_polygon(-79.400, 43.7000, 0.00045))
         building = Building(

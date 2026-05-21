@@ -2,15 +2,15 @@
 
 Catches parcels that are TTC subway-station infrastructure (station boxes,
 entrances, headhouses, surface kiosks). The Toronto Property Boundaries
-dataset assigns civic addresses to these — e.g., "22 Chester Ave" is
-Chester Station — so they slip through the existing institutional ETL
+dataset assigns civic addresses to these - e.g., "22 Chester Ave" is
+Chester Station - so they slip through the existing institutional ETL
 (`tools/sources/institutions.py`) which only pulls schools / parks /
 places-of-worship / fire-police-ambulance / LTC / child-care / libraries /
 parks-and-rec / community-facilities.
 
 ## Approach
 
-Use the GTFS subway-stops point set (already cached and loaded — 148 points
+Use the GTFS subway-stops point set (already cached and loaded - 148 points
 across ~75 stations) and buffer each point by `STATION_BUFFER_M` (30m). A
 parcel intersecting any buffered point is treated as TTC infrastructure and
 excluded from the wire.
@@ -21,7 +21,7 @@ from a stop). Tighter than 30m starts missing subway-station headhouses set
 back from the platform stop; looser starts catching truly-residential
 corner lots adjacent to stations.
 
-## Limitation (not 100% — documented)
+## Limitation (not 100% - documented)
 
 Point + buffer is heuristic. The authoritative source would be TTC station
 POLYGONS, but Toronto Open Data's `ttc-subway-shapefile` (resource
@@ -29,12 +29,12 @@ POLYGONS, but Toronto Open Data's `ttc-subway-shapefile` (resource
 publish station polygons. Future improvement: swap to a station-polygon
 source if/when one is published. For now, the 30m buffer minimizes the
 false-positive rate at the cost of occasionally excluding a corner-lot
-residential parcel that genuinely abuts a station — acceptable trade given
+residential parcel that genuinely abuts a station - acceptable trade given
 the alternative was 22 Chester Ave ranked #1 multiplex pick.
 
 ## Wire impact
 
-No new wire field — this is a hard-exclusion gate. `meta.stats` gains
+No new wire field - this is a hard-exclusion gate. `meta.stats` gains
 `skippedTtcStation` so a rebuild can verify how many parcels the gate
 caught. Mirrors the institutional-exclusion pattern in
 `tools/build_parcels.py` for consistency.

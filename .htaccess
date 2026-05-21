@@ -1,25 +1,50 @@
 # Cache policy:
 #   - HTML and JSON refresh daily; revalidate after 1 hour.
-#   - General images (favicons, OG cards, fonts): 1-day cache.
+#   - General images (favicons, OG cards): 7-day cache - long enough
+#     that Lighthouse stops flagging "efficient cache lifetimes" but
+#     short enough that an updated favicon / og card propagates within
+#     a week without a cache-bust query string.
+#   - Fonts (woff/woff2): 30-day cache - they never change.
 #   - Thumbnails under og/thumb/* are content-addressed by slug and only
-#     regenerate when the source photo changes — 30-day cache + immutable
+#     regenerate when the source photo changes - 30-day cache + immutable
 #     hint. Saves repeat-visitor bandwidth + improves perceived load.
 <IfModule mod_headers.c>
     <FilesMatch "\.(html|json)$">
         Header set Cache-Control "public, max-age=3600, must-revalidate"
     </FilesMatch>
-    <FilesMatch "\.(svg|png|jpg|jpeg|webp|ico|woff2?)$">
-        Header set Cache-Control "public, max-age=86400"
+    <FilesMatch "\.(svg|png|jpg|jpeg|webp|ico)$">
+        Header set Cache-Control "public, max-age=604800"
+    </FilesMatch>
+    <FilesMatch "\.(woff2?|ttf|otf)$">
+        Header set Cache-Control "public, max-age=2592000, immutable"
+    </FilesMatch>
+    # robots.txt + sitemap.xml: short cache so edits propagate fast through
+    # Cloudflare. Previously these inherited a multi-hour default which made
+    # stale Lighthouse robots.txt validations linger after content fixes.
+    <FilesMatch "\.txt$|sitemap.*\.xml$">
+        Header set Cache-Control "public, max-age=300"
     </FilesMatch>
 </IfModule>
-<IfModule mod_setenvif.c>
-    SetEnvIf Request_URI "^/og/thumb/" LONG_CACHE
-</IfModule>
 <IfModule mod_headers.c>
-    Header set Cache-Control "public, max-age=2592000, immutable" env=LONG_CACHE
+    # Thumbnail override: must come AFTER the broad FilesMatch above so it
+    # wins source-order precedence. Previous version used SetEnvIf +
+    # env=LONG_CACHE but FilesMatch is more-specific than the bare
+    # mod_headers context, so the FilesMatch value (7d) was winning even
+    # though the env override was source-later. <If> sits at the same
+    # specificity level as FilesMatch, so source order decides - and we
+    # win by being last.
+    <If "%{REQUEST_URI} =~ m#^/og/thumb/#">
+        Header set Cache-Control "public, max-age=2592000, immutable"
+    </If>
 </IfModule>
 
 RewriteEngine On
+
+# Reverse-proxy /api/* to the local alerts_server.py systemd service
+# (subscribe / unsubscribe / tip endpoints). Requires mod_proxy +
+# mod_proxy_http enabled at the server level. The [P] flag forwards
+# method + body verbatim, so POSTs land intact.
+RewriteRule ^api/(.*)$ http://127.0.0.1:8080/api/$1 [P,L]
 
 # Canonicalize www → non-www. Every generated page already has a
 # <link rel="canonical"> pointing at the bare-domain version, so this
@@ -29,7 +54,7 @@ RewriteCond %{HTTP_HOST} ^www\.nowservingto\.com$ [NC]
 RewriteRule ^(.*)$ https://nowservingto.com/$1 [R=301,L]
 
 # SEO landing pages: /cuisine/{key} → cuisine/{key}.html when present.
-# No fallback to /index.html for unknown keys — Apache returns a real 404,
+# No fallback to /index.html for unknown keys - Apache returns a real 404,
 # which Google de-indexes cleanly. The old fallback made every typo or
 # stale URL look like a duplicate of the homepage in GSC, and pages that
 # don't generate (e.g. cuisine keys with zero entries like african_horn
@@ -50,7 +75,7 @@ RewriteRule ^district/([a-z-]+)/?$ /district/$1.html [L]
 # Per-listing share links: /r/{slug} → r/{slug}.html when present
 # (pre-rendered with per-listing title/og:image so X / FB / iMessage
 # auto-card the personalized image and route the click to the listing
-# page). No fallback to /index.html — a dropped/old slug must 404 so
+# page). No fallback to /index.html - a dropped/old slug must 404 so
 # Google de-indexes it instead of treating it as a homepage duplicate.
 RewriteCond %{DOCUMENT_ROOT}/r/$1.html -f
 RewriteRule ^r/([\w-]+)/?$ /r/$1.html [L]

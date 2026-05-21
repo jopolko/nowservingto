@@ -31,7 +31,7 @@ The restaurant's own website couldn't be read (JS shell, captcha, PDF menu, etc.
 infer cuisine from search snippets, blog posts, Google Maps listings, and any PDF menus that
 Google has indexed about this place.
 
-You have access to web_search and MUST use BOTH searches available — even if the first feels
+You have access to web_search and MUST use BOTH searches available - even if the first feels
 sufficient. The second search MUST use a different operator combination than the first,
 chosen from:
   • `"<NAME>" toronto menu filetype:pdf`  (Google indexes PDF text; this often returns the

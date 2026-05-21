@@ -8,7 +8,7 @@ This is what we use to decide whether the tightened prompt is good enough to
 restore the conditional fallback rule in inject_openings.py (i.e., trust
 name-only cuisine when web_verify ran but couldn't pin one).
 
-Read-only — does NOT modify llm_cuisine_cache. Uses the batch API for cost +
+Read-only - does NOT modify llm_cuisine_cache. Uses the batch API for cost +
 rate-limit reasons.
 
 Cost: ~$0.20-0.40 for 389 entries on Haiku batch.
@@ -20,7 +20,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 # Re-use the production classify prompt + valid-keys (the thing under test)
 # from llm_classify_batch, and the shared batch HTTP helpers from
-# llm_verify_batch (which has them modularized as standalone functions —
+# llm_verify_batch (which has them modularized as standalone functions -
 # llm_classify_batch's are inline in main()).
 from llm_classify_batch import SYSTEM_PROMPT, MODEL, VALID_KEYS
 from llm_verify_batch import submit_batch, poll, download_results
@@ -59,7 +59,7 @@ def main():
           and e.get('cuisine') and e.get('cuisine') != 'unknown']
     print(f"Ground-truth pool: {len(gt)} entries")
     if not gt:
-        sys.exit("No ground truth available — verify cache is empty?")
+        sys.exit("No ground truth available - verify cache is empty?")
 
     id_to = {}
     requests = []
@@ -112,7 +112,7 @@ def main():
         if pred == true_c:
             agree += 1
         elif pred == 'unknown':
-            # classifier abstained on a verified-cuisine entry — not "wrong",
+            # classifier abstained on a verified-cuisine entry - not "wrong",
             # just unhelpful. Treat as miss for recovery purposes.
             disagree.append((name, pred, true_c, 'abstained'))
         elif in_same_family(true_c, pred):

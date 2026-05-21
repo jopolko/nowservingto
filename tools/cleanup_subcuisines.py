@@ -2,7 +2,7 @@
 """
 One-shot cleanup for cuisine keys Haiku missed collapsing under the
 parent-country rule. Walks web_verify_cache and rewrites specific
-leaker keys to their parents. Idempotent — safe to run repeatedly.
+leaker keys to their parents. Idempotent - safe to run repeatedly.
 
 Run on the VPS where the active wv cache lives:
   cd /var/www/html/nowservingto && python3 tools/cleanup_subcuisines.py
@@ -11,7 +11,7 @@ HTML with the cleaned cuisine assignments.
 
 Bounded scope: only the specific leaker keys listed below are rewritten.
 Other dynamically-registered cuisines (Uyghur, Tibetan, Cape Verdean,
-etc.) are left untouched — those are legit country-level distinctions.
+etc.) are left untouched - those are legit country-level distinctions.
 """
 import json, sys
 from pathlib import Path
@@ -21,7 +21,7 @@ WV   = ROOT / 'tools' / 'cache' / 'web_verify_cache.json'
 
 # Specific known-leaker rewrites. Each entry is a one-time correction to
 # fix Haiku's prior judgments that the new prompt now forbids. Not a
-# general-purpose mapping — only here so we don't have to burn another
+# general-purpose mapping - only here so we don't have to burn another
 # $2 batch to re-judge entries Haiku will now classify correctly anyway.
 REWRITES = {
     # Sub-cuisines → parent country
@@ -37,14 +37,14 @@ REWRITES = {
     'gujarati':        'indian',
     'hyderabadi':      'indian',
     'rajasthani':      'indian',
-    'indian_chinese':  'indian',   # fusion — fold to dominant tradition
+    'indian_chinese':  'indian',   # fusion - fold to dominant tradition
     'indian_hakka':    'indian',
     'southern_italian':'italian',
     'sicilian':        'italian',
     # Duplicate slugs of seed cuisines (canonical taxonomy uses LHS)
     'middle_eastern':  'middle_east',
     'nepali':          'nepalese',
-    # Overly umbrella labels — fold to the closest seed cuisine
+    # Overly umbrella labels - fold to the closest seed cuisine
     'mediterranean':   'middle_east',
     # Audience-misfits (not the diaspora ethnic-cuisine focus). Mark as
     # validator_drop so inject removes them from the feed.

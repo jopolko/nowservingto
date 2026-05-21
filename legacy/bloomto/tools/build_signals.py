@@ -1,4 +1,4 @@
-"""Build data/signals.json — the daily fast-signals overlay.
+"""Build data/signals.json - the daily fast-signals overlay.
 
 Three CKAN-fresh signals (refreshed daily by Toronto Open Data):
   - Severance applications (Committee of Adjustment, Consent type)
@@ -10,11 +10,11 @@ This script:
   2. Address-normalizes each record.
   3. Loads the *latest* `data/parcels-top.json` + `data/parcels-broader.json`
      and builds a {normalized_address → parcelId} index. We deliberately
-     restrict the join to parcels we actually surface in the UI — joining
+     restrict the join to parcels we actually surface in the UI - joining
      against the full 528K-parcel master would be noise.
   4. Writes `data/signals.json` keyed by parcelId.
 
-The output is small (~50–200 KB), the run is ~30 seconds — runs nightly
+The output is small (~50–200 KB), the run is ~30 seconds - runs nightly
 on the VPS via cron. No full ETL rebuild required to refresh signals.
 
 CLI:
@@ -67,7 +67,7 @@ DEFAULT_SINCE_DAYS_PERMITS = 365
 DEFAULT_SINCE_DAYS_VIOLATIONS = 365
 DEFAULT_SINCE_DAYS_SEVERANCE = 365
 # ZPR (preliminary zoning review) is the earliest pre-application
-# signal — owner / dev pings the City "what can I build at X?". The
+# signal - owner / dev pings the City "what can I build at X?". The
 # hottest of the four signals decays quickly: after 365 days, whoever
 # pulled the ZPR has either moved (formal app, deal flow) or moved
 # on. Keep the same window for consistency.
@@ -77,14 +77,14 @@ DEFAULT_SINCE_DAYS_PZR = 365
 def _load_parcel_index(*paths: Path) -> tuple[dict, dict]:
     """Build {normalized_address → parcelId} + {parcelId → row} from the
     given projection JSONs. Later files in the list override earlier ones
-    for any address conflict — but elite/broader use the same parcelIds,
+    for any address conflict - but elite/broader use the same parcelIds,
     so this is effectively a union.
     """
     addr_to_id: dict[str, str] = {}
     id_to_row: dict[str, dict] = {}
     for path in paths:
         if not path.exists():
-            _log.warning("missing %s — skipping", path)
+            _log.warning("missing %s - skipping", path)
             continue
         payload = json.loads(path.read_text(encoding="utf-8"))
         rows = payload.get("rows", []) or []
@@ -123,7 +123,7 @@ def _join_to_parcels(records, address_index: dict) -> tuple[dict, int, int]:
 
 
 def _severance_payload(apps) -> dict:
-    """Per-parcel severance payload — at most one active application per
+    """Per-parcel severance payload - at most one active application per
     parcel is realistic; if several, take the most recent."""
     apps = sorted(apps, key=lambda a: a.in_date or "", reverse=True)
     a = apps[0]
@@ -191,7 +191,7 @@ def _build_builder_activity_counter(permits) -> dict[str, int]:
 
 
 def _demo_payload(permits, builder_counter: dict[str, int] | None = None) -> dict:
-    """Per-parcel demo-permit payload — surface the most recent + count.
+    """Per-parcel demo-permit payload - surface the most recent + count.
 
     `builder_counter` is the citywide `{normalized_builder: count}` map.
     Attaches `builderActivityCount` + `builderActivityLabel` to the
@@ -230,7 +230,7 @@ def _demo_payload(permits, builder_counter: dict[str, int] | None = None) -> dic
 
 
 def _pzr_payload(pzrs) -> dict:
-    """Per-parcel preliminary-zoning-review payload — pick most recent."""
+    """Per-parcel preliminary-zoning-review payload - pick most recent."""
     pzrs = sorted(pzrs, key=lambda p: p.application_date or "", reverse=True)
     p = pzrs[0]
     return {
@@ -243,7 +243,7 @@ def _pzr_payload(pzrs) -> dict:
 
 
 def _violation_payload(viols) -> dict:
-    """Per-parcel violation payload — surface the most-severe + most-recent."""
+    """Per-parcel violation payload - surface the most-severe + most-recent."""
     # Sort by (severity desc, in_date desc).
     viols = sorted(viols, key=lambda v: (-v.severity, v.in_date or ""), reverse=False)
     # Re-sort: severity DESC, then in_date DESC
@@ -264,7 +264,7 @@ def _violation_payload(viols) -> dict:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Build data/signals.json — daily fast-signals overlay.",
+        description="Build data/signals.json - daily fast-signals overlay.",
     )
     parser.add_argument("--cache", type=Path, default=DEFAULT_CACHE)
     parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
@@ -280,11 +280,11 @@ def main():
     )
     parser.add_argument(
         "--since-days-severance", type=int, default=DEFAULT_SINCE_DAYS_SEVERANCE,
-        help="filter severance applications by filing date — last N days (default 365)",
+        help="filter severance applications by filing date - last N days (default 365)",
     )
     parser.add_argument(
         "--since-days-pzr", type=int, default=DEFAULT_SINCE_DAYS_PZR,
-        help="filter preliminary zoning reviews by application date — last N days (default 365)",
+        help="filter preliminary zoning reviews by application date - last N days (default 365)",
     )
     args = parser.parse_args()
 
@@ -296,7 +296,7 @@ def main():
 
     addr_index, _id_to_row = _load_parcel_index(args.top, args.broader)
     if not addr_index:
-        _log.error("empty parcel index — run build_parcels_top.py first")
+        _log.error("empty parcel index - run build_parcels_top.py first")
         return 1
 
     # Fetch the four CKAN feeds
@@ -316,11 +316,11 @@ def main():
     builder_counter_since = (date.today() - timedelta(days=5*365)).isoformat()
     demos_for_counter = demo_src.fetch_demo_permits(args.cache, since_iso=builder_counter_since)
     # Building-permit counter (CSV pass, ~80MB). Independent of the
-    # multiplex-relevance filter used for compute_permits — every permit
+    # multiplex-relevance filter used for compute_permits - every permit
     # with a BUILDER_NAME counts.
     building_counter_5y = bperm_src.compute_builder_counter_all_permits(args.cache, window_years=5)
     _log.info(
-        "builder_activity_window: 5-year fetch — %d demo permits + %d builder-named active permits",
+        "builder_activity_window: 5-year fetch - %d demo permits + %d builder-named active permits",
         len(demos_for_counter), sum(building_counter_5y.values()),
     )
 
@@ -342,7 +342,7 @@ def main():
     by_parcel: dict[str, dict] = {}
     for pid, apps in sev_by_pid.items():
         by_parcel.setdefault(pid, {})["severance"] = _severance_payload(apps)
-    # Build the citywide builder-activity counter — UNION of demo
+    # Build the citywide builder-activity counter - UNION of demo
     # permits + building permits, 5-year window. Each permit row counts
     # once (multi-trade permits inflate counts slightly, but that's
     # correct: a builder filing 4 trade permits IS more committed than

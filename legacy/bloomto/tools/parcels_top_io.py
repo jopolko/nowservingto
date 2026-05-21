@@ -2,13 +2,13 @@
 
 The GeoJSON FeatureCollection at `data/parcels.geojson` is the canonical ETL
 artifact (validated, provenanced, ~95 MB). The browser doesn't need geometry,
-doesn't need GeoJSON ceremony, and doesn't need 95 MB — it needs a flat
+doesn't need GeoJSON ceremony, and doesn't need 95 MB - it needs a flat
 sortable table. This module projects the top-N features by score into a
 table-friendly shape (one flat object per row, lat/lng inlined, geometry
 collapsed) and writes it atomically.
 
 Atomic-write pattern mirrors `tools/parcel_io.py` and `tools/io.py`. The
-projection is the full FEATURE_PROPERTIES set as of 2026-05-02 —
+projection is the full FEATURE_PROPERTIES set as of 2026-05-02 -
 `solarScoreRaw` powers the "Shadow-Free" badge, `residential`,
 `parcelId`, and `builtYear` are now surfaced for badge gates and
 client-side traceability.
@@ -53,8 +53,8 @@ ROW_KEYS = (
     "permitsRecentValueTotal",
     "permitsRecentMostRecentDate",
     "permitsDenominatorSource",
-    # Nearby-multiplex-permit comp (2026-05-12 — 83 Twenty Seventh case).
-    # Flat versions of the nested `nearbyMultiplexPermits` object — null
+    # Nearby-multiplex-permit comp (2026-05-12 - 83 Twenty Seventh case).
+    # Flat versions of the nested `nearbyMultiplexPermits` object - null
     # when no qualifying permits within 250m.
     "nearbyMultiplexCount",
     "nearbyMultiplexNearestDistM",
@@ -114,7 +114,7 @@ def project_features(features, top_n):
 
     `lotAreaM2` uses `.get` so pre-2026-05-02 GeoJSON files (built before the
     field was added to FEATURE_PROPERTIES) project to `None` instead of
-    KeyError. The UI surfaces null as "—". Re-run `build_parcels.py` to
+    KeyError. The UI surfaces null as "-". Re-run `build_parcels.py` to
     populate the field.
     """
     total = len(features)
@@ -177,7 +177,7 @@ def project_features(features, top_n):
             "solarScoreRaw": props["solarScoreRaw"],
             "solarShadowQuality": props["solarShadowQuality"],
             "postwarNeighborhood": props["postwarNeighborhood"],
-            # ── Architect / dev panel — flattened from nested GeoJSON props.
+            # ── Architect / dev panel - flattened from nested GeoJSON props.
             # `.get` chains use `or {}` for forward-compat: pre-2026-05-05
             # GeoJSON files (built before these fields existed) project to
             # None gracefully instead of KeyError'ing the whole projection.

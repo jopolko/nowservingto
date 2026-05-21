@@ -4,7 +4,7 @@ Composes the v1.2 source modules (heritage, building_outlines, massing, plus
 extensions to ttc/streets/solar_to/zoning) into a single per-parcel score
 and emits `data/parcels.geojson` atomically.
 
-This is the parcel sibling of `tools/build_neighborhoods.py` — same shape:
+This is the parcel sibling of `tools/build_neighborhoods.py` - same shape:
 CLI in, GeoJSON out, no PHP, no plugin, no build step. Run on a workstation
 only (downloads ~1.4 GB of cached data and may peak at ~1 GB resident memory
 during the per-parcel loop).
@@ -64,7 +64,7 @@ DEFAULT_CACHE = PROJECT_ROOT / "tools" / "cache"
 # Worker module-globals used when the per-parcel loop runs under
 # multiprocessing. Set by `_init_worker(state)` in each child process at
 # Pool startup. Sequential runs also call _init_worker locally so the same
-# `_W`-driven `_process_parcel` function works in both modes — single source
+# `_W`-driven `_process_parcel` function works in both modes - single source
 # of truth for the per-parcel logic.
 _W: dict = {}
 
@@ -73,7 +73,7 @@ def _init_worker(state: dict) -> None:
     """Pool initializer. Stash shared inputs in module-global `_W` so
     `_process_parcel` can use them without re-passing on every call.
     Linux fork() COW means workers share the parent's loaded indexes
-    until/unless they're written to — read-only `_W` stays cheap.
+    until/unless they're written to - read-only `_W` stays cheap.
     """
     global _W
     _W = state
@@ -83,12 +83,12 @@ def _process_parcel(parcel_or_record) -> dict:
     """Process one parcel, return a result dict the parent aggregates.
 
     Accepts either a `Parcel` object (sequential path) OR a lightweight
-    record dict (multiprocessing path — parent streams cheap dicts so the
+    record dict (multiprocessing path - parent streams cheap dicts so the
     GEOS-heavy `shape()` + geodesic-area work parallelizes across workers
     instead of bottlenecking the parent's iter_parcels generator).
 
     Pure read of `_W` (the shared state set by `_init_worker`). No outer
-    state mutation — claims sets and stats counters are RETURNED, not
+    state mutation - claims sets and stats counters are RETURNED, not
     mutated, so workers under multiprocessing don't fight over shared sets.
 
     Result shape:
@@ -106,7 +106,7 @@ def _process_parcel(parcel_or_record) -> dict:
       permits_address_join (count, not bool), permits_unjoined_per_parcel
     """
     # If we received a record dict from a parent's iter_parcel_records stream,
-    # materialize the Parcel here in the worker — this is the GEOS-heavy
+    # materialize the Parcel here in the worker - this is the GEOS-heavy
     # `shape()` + geodesic area work that we want parallelized.
     if isinstance(parcel_or_record, dict):
         parcel = zoning_src.parcel_from_record(parcel_or_record)
@@ -174,7 +174,7 @@ def _process_parcel(parcel_or_record) -> dict:
 
     # --- gate stage 3d: tax-exempt institutional address ---
     # Catches Royal Canadian Legion halls, registered charities, city-
-    # owned community facilities, universities, etc. — institutional uses
+    # owned community facilities, universities, etc. - institutional uses
     # whose zoning permits residential redevelopment but which won't sell
     # to a multiplex dev. 677 unique addresses citywide; the gate is
     # address-join (parcel.address normalized → exempt set lookup).
@@ -182,7 +182,7 @@ def _process_parcel(parcel_or_record) -> dict:
         return {'skip': 'tax_exempt'}
 
     # --- gate stage 3c: tall existing building (3D Massing) ---
-    # Excludes parcels already carrying a 5+ storey structure — apartment
+    # Excludes parcels already carrying a 5+ storey structure - apartment
     # buildings and mid-rises where teardown economics fail vs the 4–6 unit
     # multiplex envelope. Computed once, reused below for the wire field
     # so the frontend can show "currently a 4-storey building" inline.
@@ -218,7 +218,7 @@ def _process_parcel(parcel_or_record) -> dict:
             if _building_area_m2 > 0:
                 _storeys = max(1, round(existing_max_h / 3.0))
                 _implied_fsi = (_building_area_m2 * _storeys) / parcel.area_m2
-                # 3× threshold tuned 2026-05-09 — catches 1 Leonard Crcl /
+                # 3× threshold tuned 2026-05-09 - catches 1 Leonard Crcl /
                 # 324 Riverside Dr (~3.4× over) without nuking legit pre-
                 # WW2 detached stock with steeply pitched roofs (commonly
                 # 2.0-2.5× over their RD d=0.35 cap because 3D Massing
@@ -239,24 +239,24 @@ def _process_parcel(parcel_or_record) -> dict:
 
     sixplex_eligible = sixplex_src.is_sixplex_eligible(parcel.geometry, sixplex_index)
     # Sixplex carve-out (T&EY/Ward 23, June 2025) lifts the cap to 6 only
-    # when the by-law's own number is below 6 — RM/RA/CR with explicit
+    # when the by-law's own number is below 6 - RM/RA/CR with explicit
     # higher caps already exceed 6 and shouldn't be reduced.
     if sixplex_eligible and residential and max_units < 6:
         max_units = 6
         max_units_rationale = "sixplex_carveout"
 
     # Heritage: in sequential mode `_W['claimed_heritage_indices']` IS the
-    # parent's shared set — mutations stick, address-join takes precedence
+    # parent's shared set - mutations stick, address-join takes precedence
     # over point-in-parcel exactly like the legacy code. In parallel mode
     # each worker has its own copy via fork-COW; cross-worker dedup is
     # approximate (documented in --workers help). Return the snapshot for
-    # parent merge — set-union is idempotent so the parallel merge stays
+    # parent merge - set-union is idempotent so the parallel merge stays
     # correct even when multiple workers hit overlapping claims.
     shared_claims = _W['claimed_heritage_indices']
     heritage_status = _resolve_heritage_status(parcel, heritage_index, shared_claims)
     local_heritage_claims = set(shared_claims)
 
-    # Build the early-stats dict — these counters fire on EVERY parcel that
+    # Build the early-stats dict - these counters fire on EVERY parcel that
     # got far enough to compute residential/sixplex/heritage, even if it
     # later short-circuits via the eligibility gate. Without this the
     # parallel run would report 0 Part IV (because Part IV parcels are
@@ -278,7 +278,7 @@ def _process_parcel(parcel_or_record) -> dict:
 
     # Eligibility gates (replaces the prior synthesised score-zero gate).
     # Each is a binary check on a city primitive; passing means the parcel
-    # is multiplex-eligible. Identical exclusion shape as before — the
+    # is multiplex-eligible. Identical exclusion shape as before - the
     # *combined* gate was previously expressed as `score == 0`.
     is_eligible = (
         residential
@@ -336,7 +336,7 @@ def _process_parcel(parcel_or_record) -> dict:
         shadow_result = shadow_analysis.analyze_parcel(parcel, massing_index)
     except Exception as e:
         _log.warning(
-            "shadow_analysis failed for parcel %s (%s): %s — marking unavailable",
+            "shadow_analysis failed for parcel %s (%s): %s - marking unavailable",
             parcel.parcel_id, parcel.address, e,
         )
         shadow_result = shadow_analysis.ShadowResult(None, 'unavailable')
@@ -345,7 +345,7 @@ def _process_parcel(parcel_or_record) -> dict:
     else:
         solar_score = max(0, min(100, round(solar_raw * shadow_result.unshadowed_fraction)))
 
-    # Address-points spatial query — done up-front because the count is
+    # Address-points spatial query - done up-front because the count is
     # surfaced as its own wire field (`addressPointCount`) regardless of
     # whether it overrides anything below. AP=1 + structure=detached →
     # frontend "True Detached" badge. AP≥2 → "multi-unit existing" signal
@@ -367,12 +367,12 @@ def _process_parcel(parcel_or_record) -> dict:
             ap_test_geom = parcel.geometry
         ap_records = ap_src.points_in_parcel(address_points_index, ap_test_geom)
         # Distinct addresses (a parcel can host duplicate point records for
-        # the same address — e.g., front-door + side-door — which we don't
+        # the same address - e.g., front-door + side-door - which we don't
         # want to double-count).
         distinct = {pt.address_full.upper().strip() for pt in ap_records}
         address_point_count = len(distinct)
         ap_attached_verdict, _ = ap_src.classify_attachment_from_points(ap_records)
-        # Address-record drift gate (added 2026-05-11 — 106 Eastwood Rd
+        # Address-record drift gate (added 2026-05-11 - 106 Eastwood Rd
         # case: parcel polygon's ADDRESS field said "106 Eastwood Rd" but
         # the Address Points inside the polygon resolved to a different
         # street ("143 Edgewood Ave"). The wire-attached address was
@@ -385,9 +385,9 @@ def _process_parcel(parcel_or_record) -> dict:
             parcel_addr_norm = heritage_src.normalize_address(parcel.address)
             ap_addrs_norm = {pt.address_norm for pt in ap_records}
             if parcel_addr_norm and parcel_addr_norm not in ap_addrs_norm:
-                # No matching address point inside the polygon — drift.
+                # No matching address point inside the polygon - drift.
                 # Mark on the wire so elite gate + frontend can react.
-                # We DON'T outright skip here — leave the parcel in
+                # We DON'T outright skip here - leave the parcel in
                 # broader tier with a flag; elite tier rejects via gate.
                 address_drift_suspect = True
             else:
@@ -397,18 +397,18 @@ def _process_parcel(parcel_or_record) -> dict:
     else:
         address_drift_suspect = False
 
-    # Structure type — four-tier waterfall:
-    #   1. Permit-derived (city building-permit STRUCTURE_TYPE record) — ~32 %
+    # Structure type - four-tier waterfall:
+    #   1. Permit-derived (city building-permit STRUCTURE_TYPE record) - ~32 %
     #      coverage citywide, ~43 % of curated. Highest confidence.
-    #   2. OSM-derived (OpenStreetMap `building=*` tag, volunteer-mapped) —
+    #   2. OSM-derived (OpenStreetMap `building=*` tag, volunteer-mapped) -
     #      ~12 % citywide additional coverage, complementary to permits
     #      (4 % overlap). 96 % agreement with permits where they overlap.
-    #   3. Cross-boundary classifier fallback — ~82 % accuracy heuristic,
+    #   3. Cross-boundary classifier fallback - ~82 % accuracy heuristic,
     #      always available.
     #   4. Address-points override (added 2026-05-09): when the classifier
     #      verdict is in play (no permit/OSM ground truth) AND the parcel
     #      polygon contains ≥2 distinct address points, flip the verdict
-    #      with high confidence — multiple municipal addresses on one
+    #      with high confidence - multiple municipal addresses on one
     #      polygon is near-deterministic for attached housing. Source flips
     #      to "address_points". Conservative: never overrides permit/OSM,
     #      never overrides "vacant".
@@ -444,7 +444,7 @@ def _process_parcel(parcel_or_record) -> dict:
             and ap_attached_verdict is not None):
         existing_structure_type = ap_attached_verdict
         existing_structure_source = "address_points"
-    # Classifier-on-low-coverage demotion (added 2026-05-09 — 158 Dufferin
+    # Classifier-on-low-coverage demotion (added 2026-05-09 - 158 Dufferin
     # St case). The cross-boundary side-yard classifier returns "detached"
     # whenever the building has clear side-yards, regardless of whether
     # the building is plausibly residential. On parcels with very low
@@ -459,9 +459,9 @@ def _process_parcel(parcel_or_record) -> dict:
             and coverage < 0.10):
         existing_structure_type = "unknown"
         existing_structure_source = "classifier_low_cov_demotion"
-    # Classifier-on-CR-zone demotion (added 2026-05-09 — 581 Parliament
+    # Classifier-on-CR-zone demotion (added 2026-05-09 - 581 Parliament
     # St case). CR / CRE / RAC / RA / CL are commercial-residential and
-    # mid-rise residential zones — typically mainstreet retail with
+    # mid-rise residential zones - typically mainstreet retail with
     # apartment-above or mid-rise apartment buildings, NOT detached SFHs.
     # When the classifier guesses "detached" on a CR-zoned parcel without
     # permit/OSM ground truth, the verdict is unreliable: a real detached
@@ -473,13 +473,13 @@ def _process_parcel(parcel_or_record) -> dict:
             and zone_class in ("CR", "CRE", "RAC", "RA", "CL")):
         existing_structure_type = "unknown"
         existing_structure_source = "classifier_cr_zone_demotion"
-    # False-vacant demotion (added 2026-05-11 — 106 Eastwood Rd / 14 elite
+    # False-vacant demotion (added 2026-05-11 - 106 Eastwood Rd / 14 elite
     # parcels surfaced). The geometry classifier returns "vacant" when no
     # qualifying building polygon is found in 3D Massing OR Building
     # Outlines. Both datasets have coverage gaps, so "vacant" can mean
     # "geometry data missed it" rather than "really no structure." If
     # Toronto Address Points registers ≥1 municipal address inside the
-    # parcel polygon, a structure exists per the city's own records —
+    # parcel polygon, a structure exists per the city's own records -
     # demote to "unknown" so the parcel drops from the elite cohort
     # (which gates on detached+vacant only) instead of falsely claiming
     # "no demolition required."
@@ -493,7 +493,7 @@ def _process_parcel(parcel_or_record) -> dict:
     # Distance from the parcel's representative point (rep_pt) to the
     # nearest centreline geometry. Surfaces as `addrToStreetM` on the wire;
     # combined with `abutsLaneway` it exposes back-lot residue parcels
-    # (1030 Danforth / 1558 Davenport pattern — address geocodes to a
+    # (1030 Danforth / 1558 Davenport pattern - address geocodes to a
     # frontage that this parcel sits BEHIND, accessed only by laneway).
     addr_to_street_m = streets_src.dist_addr_to_centreline_m(rep_pt, centreline_tree)
     in_flooding_area = flood_src.is_in_flooding_area(parcel.geometry, flood_index)
@@ -521,16 +521,16 @@ def _process_parcel(parcel_or_record) -> dict:
         permit_claims_by_nb[nb.name] = list(local_permit_claims)
 
     # Existing-units derivation (Item 4, 2026-05-09). Three-tier precedence:
-    #   1. Permits — DWELLING_UNITS_EXISTING from the most-recent permit
+    #   1. Permits - DWELLING_UNITS_EXISTING from the most-recent permit
     #      joined to this parcel's address. Highest confidence.
-    #   2. Height × footprint — storeys × footprint / 90 m²/unit (CMHC
+    #   2. Height × footprint - storeys × footprint / 90 m²/unit (CMHC
     #      residential per-unit average). Medium confidence; misjoins or
     #      spillover would inflate the count.
-    #   3. Height band — pure height-bucket fallback when footprint is
+    #   3. Height band - pure height-bucket fallback when footprint is
     #      missing. Low confidence; surfaces "any structure at all" rough
     #      tier.
     # Vacant lots emit 0/'vacant' explicitly. No-signal parcels emit
-    # null/'unknown' — frontend renders "—" when basis is unknown.
+    # null/'unknown' - frontend renders "-" when basis is unknown.
     existing_units_approx: int | None = None
     existing_units_basis = "unknown"
     if existing_structure_type == "vacant":
@@ -546,7 +546,7 @@ def _process_parcel(parcel_or_record) -> dict:
         elif (existing_max_h is not None and existing_max_h > 0
                 and building_area_m2 > 0):
             storeys = max(1, round(existing_max_h / 3.0))
-            if storeys <= 20:  # sanity cap — taller suggests massing misjoin
+            if storeys <= 20:  # sanity cap - taller suggests massing misjoin
                 floor_area = building_area_m2 * storeys
                 existing_units_approx = max(1, round(floor_area / 90.0))
                 existing_units_basis = "height_x_footprint"
@@ -650,11 +650,11 @@ def _process_parcel(parcel_or_record) -> dict:
             'addressDriftSuspect': bool(address_drift_suspect),
             # Geometry-suspect flag (added 2026-05-11). True when the
             # height-attribution likely reflects a catastrophic polygon
-            # mis-draw in Toronto's Property Boundaries dataset — either:
-            #   (a) Tall (≥12 m) on low coverage (<20%) — 807 Glencairn
+            # mis-draw in Toronto's Property Boundaries dataset - either:
+            #   (a) Tall (≥12 m) on low coverage (<20%) - 807 Glencairn
             #       pattern (apartment-neighbour spillover)
             #   (b) Existing height exactly matches a neighbour-height
-            #       (within 0.1 m) — 177 Symons pattern
+            #       (within 0.1 m) - 177 Symons pattern
             # Used by `is_elite` in build_parcels_top.py as a hard reject.
             # Affected parcels drop to broader tier (still reachable) so
             # devs willing to verify on Street View can find them, but
@@ -667,7 +667,7 @@ def _process_parcel(parcel_or_record) -> dict:
             # OSM commercial-holdover amenity (added 2026-05-09): the
             # `amenity` tag (e.g., "fast_food", "restaurant", "bank") of
             # any building substantially sitting on this parcel. None
-            # for residential / vacant lots. NOT a hard exclusion — the
+            # for residential / vacant lots. NOT a hard exclusion - the
             # 505 Jarvis case (A&W on R-zoned land) is a legitimate
             # teardown candidate; the dev needs to know about the
             # commercial holdover before they walk up to it.
@@ -711,7 +711,7 @@ def _process_parcel(parcel_or_record) -> dict:
 def _iterate_parcels(parcels, *, workers: int, state: dict):
     """Yield `_process_parcel` results for every parcel, sequentially or via
     multiprocessing.Pool. Always yields in the order workers complete (i.e.
-    NOT input order under parallel mode — caller must not rely on order).
+    NOT input order under parallel mode - caller must not rely on order).
     """
     import multiprocessing
     if workers <= 1:
@@ -725,7 +725,7 @@ def _iterate_parcels(parcels, *, workers: int, state: dict):
     ctx = multiprocessing.get_context('fork')
     with ctx.Pool(workers, initializer=_init_worker, initargs=(state,)) as pool:
         # chunksize=500: with 528K parcels and 8 workers, that's ~130 chunks
-        # per worker — coarse enough to keep pickle/IPC overhead under 5%,
+        # per worker - coarse enough to keep pickle/IPC overhead under 5%,
         # fine enough that the slowest worker doesn't stall the tail by more
         # than ~1 chunk's worth of work. Decimal heuristic: rule of thumb is
         # `total_items / (workers * 100)` ≈ 660; we round down to 500 to
@@ -738,10 +738,10 @@ DISTANCE_CAP_M = 5000.0
 POSTWAR_BUILT_YEAR_MIN = 1945
 POSTWAR_BUILT_YEAR_MAX = 1960
 
-# Eligibility gate constants (2026-05-07 — replaces synthesised
+# Eligibility gate constants (2026-05-07 - replaces synthesised
 # score/softScore filter). A parcel must be residential, not Part IV
 # heritage, within the wide transit window, and meet a minimum lot
-# size — every condition is a binary check on a city primitive, no
+# size - every condition is a binary check on a city primitive, no
 # weighting. ELIGIBLE_TRANSIT_BUFFER_M is intentionally wide (matches
 # the prior softScore window): downstream `_passes_shared` in
 # build_parcels_top.py applies tighter binary gates for ELITE / BROADER
@@ -750,7 +750,7 @@ ELIGIBLE_TRANSIT_BUFFER_M = 1500
 ELIGIBLE_MIN_LOT_AREA_M2 = 100
 
 # Wire-format coordinate precision. At Toronto's latitude (~43.7°N), 5 decimals
-# resolves to roughly 1.1 m — far below parcel-edge resolution (median Toronto
+# resolves to roughly 1.1 m - far below parcel-edge resolution (median Toronto
 # parcel is ~10 m wide), and the geometry on the wire is the representative
 # point, not the polygon, so sub-meter precision is meaningless for the UI.
 # Trims ~150–250 KB gzipped off `data/parcels.geojson` vs. shapely's 14-decimal
@@ -797,7 +797,7 @@ def _distance_to_nearest_stop_m(
     """Distance (m) from `parcel_centroid` (lng, lat in WGS84) to nearest stop.
 
     `stops_tree` MUST be built on stops *projected to EPSG:26917* (NAD83 /
-    UTM Zone 17N — Toronto's metres-based CRS) by `_build_stops_tree_m`
+    UTM Zone 17N - Toronto's metres-based CRS) by `_build_stops_tree_m`
     below. This function projects the parcel point the same way, then
     `STRtree.nearest` returns the truly-nearest stop because planar
     Euclidean in projected metres equals geodesic metres (within ~10 cm
@@ -805,7 +805,7 @@ def _distance_to_nearest_stop_m(
 
     Was previously `STRtree.nearest()` against an **unprojected** tree
     (lng/lat degrees). At Toronto's 43.65°N latitude 1° lat ≈ 111 km vs
-    1° lng ≈ 80 km, so degree-space planar Euclidean ≠ geodesic — verified
+    1° lng ≈ 80 km, so degree-space planar Euclidean ≠ geodesic - verified
     to mis-rank 15.7% of elite parcels' `distSubwayM` by 20-983 m.
 
     Caps at `DISTANCE_CAP_M` (5 km) to bound the wire format's int.
@@ -823,7 +823,7 @@ def _distance_to_nearest_stop_m(
 def _build_stops_tree_m(stops_lonlat: list[Point]) -> STRtree:
     """Project (lng, lat) Points to EPSG:26917 metres and build an STRtree.
 
-    Pairs with `_distance_to_nearest_stop_m` — both sides must be in the
+    Pairs with `_distance_to_nearest_stop_m` - both sides must be in the
     same projected CRS for `STRtree.nearest` to be exact in metres.
     """
     return STRtree([
@@ -861,15 +861,15 @@ def _derive_max_units(zone_record, multipliers: dict[str, int], lot_area_m2: flo
     """Per-parcel max-units derivation from the by-law's actual parameters.
 
     Returns `(max_units, rationale)` where `rationale` is one of:
-      'by_law_units'  — explicit UNITS field set in the zoning polygon
-      'fsi_derived'   — derived from FSI_TOTAL × lot_area / typical_unit_area
-      'zone_average'  — fallback to per-class average (zoning_multipliers.json)
+      'by_law_units'  - explicit UNITS field set in the zoning polygon
+      'fsi_derived'   - derived from FSI_TOTAL × lot_area / typical_unit_area
+      'zone_average'  - fallback to per-class average (zoning_multipliers.json)
                         when the polygon's by-law parameters are absent
-      'unzoned'       — no zone record (parcel outside zoning boundary)
+      'unzoned'       - no zone record (parcel outside zoning boundary)
 
     Per-class average is the LOWER bound; if the by-law's actual cap is
     higher (e.g. by_law_units = 4 on RD lot, but zone_average says 4 too),
-    we use the per-class. The point of the upgrade is honesty — if the
+    we use the per-class. The point of the upgrade is honesty - if the
     by-law SAYS u4, surface that explicitly and label it `by_law_units`.
     """
     if zone_record is None:
@@ -879,7 +879,7 @@ def _derive_max_units(zone_record, multipliers: dict[str, int], lot_area_m2: flo
         return 0, "unzoned"
     # 0. Non-residential zones short-circuit FIRST. Employment / Institutional /
     #    Open Space / Utility classes have multipliers[zone] == 0 in the
-    #    zoning_multipliers.json table — they're not multiplex territory
+    #    zoning_multipliers.json table - they're not multiplex territory
     #    regardless of what FSI_TOTAL the zoning polygon happens to carry
     #    (Employment polygons carry FSI for commercial massing, not housing).
     #    Without this guard, an 80,000 m² industrial lot at FSI 2.86 derives
@@ -900,7 +900,7 @@ def _derive_max_units(zone_record, multipliers: dict[str, int], lot_area_m2: flo
     # 3. Per-class average fallback (legacy behavior)
     if zone_class in multipliers:
         return multipliers[zone_class], "zone_average"
-    # Truly unknown zone class — surface loudly, with a pointer to the file
+    # Truly unknown zone class - surface loudly, with a pointer to the file
     # the operator needs to update (matches legacy `lookup_multiplier` text
     # so a future Toronto by-law amendment fails closed with an actionable
     # error rather than a silent wrong score).
@@ -918,14 +918,14 @@ def _resolve_heritage_status(parcel, heritage_index, claimed: set[int]) -> str |
       1. Address-join: normalize the parcel's address and look it up in
          `heritage_index.address_to_status`. If hit, mark every record index
          whose normalized address matches in `claimed` (via the pre-built
-         `address_to_indices` reverse index — O(1) lookup, not an O(n) scan)
+         `address_to_indices` reverse index - O(1) lookup, not an O(n) scan)
          and return the pre-folded status.
 
       2. Point-in-parcel fallback: if the address-join missed (parcel address
          is empty, or not in the heritage dict), STRtree-query the parcel's
          geometry, fold contained candidates' statuses via `more_restrictive`,
          mark the contained indices in `claimed`, and return the fold. Records
-         already claimed by an earlier address-join are skipped — the
+         already claimed by an earlier address-join are skipped - the
          address-join is authoritative, and the geocoded point landing on a
          neighbour is exactly the false-positive the address-join was added
          to fix.
@@ -973,7 +973,7 @@ def _load_rapidto_index(cache_dir: Path) -> STRtree:
     from shapely.geometry import shape as _shape
     cached = cache_dir / "centreline.geojson"
     if not cached.exists():
-        _log.warning("centreline.geojson not cached — RapidTO index will be empty")
+        _log.warning("centreline.geojson not cached - RapidTO index will be empty")
         return STRtree([])
     buffers: list = []
     with cached.open(encoding="utf-8") as fp:
@@ -1086,17 +1086,17 @@ def _lot_geometry(parcel) -> tuple[float | None, float | None, float | None]:
 
 
 # Buildings-context radius for `_neighbor_heights`. 30 m matches typical Toronto
-# block-face geometry — a parcel's south-side neighbour casting winter shadow,
+# block-face geometry - a parcel's south-side neighbour casting winter shadow,
 # the rear-neighbour limiting massing, etc. Larger radii dilute the signal.
 _NEIGHBOR_RADIUS_M = 30.0
 _NEIGHBOR_RADIUS_DEG = _NEIGHBOR_RADIUS_M / 111_000  # ≤1.4× over-bound for bbox query at 43°N
 
 # Existing-building height threshold for the multiplex-teardown gate.
 # 18m ≈ 6 storeys at 3m floor-to-floor. At/above this the existing
-# structure is a real apartment building — teardown economics fail.
+# structure is a real apartment building - teardown economics fail.
 # Below this, the lot may carry a 1–5 storey structure that's still a
 # legitimate teardown candidate. Bumped 2026-05-07 from 15m after user
-# spot-check found 614 Dovercourt Rd at 14.5m — a real single-family
+# spot-check found 614 Dovercourt Rd at 14.5m - a real single-family
 # Dufferin Grove home on a 2300m² lot with a steeply pitched roof
 # (Toronto's pre-WW2 detached stock peaks 14–17m at the roof while
 # being only 2.5–3 habitable storeys). 15m was over-blocking that
@@ -1105,13 +1105,13 @@ EXISTING_BUILDING_HEIGHT_THRESHOLD_M = 18.0
 # Overlap-ratio gate for crediting a 3D Massing building's height to a
 # parcel: the building's footprint must sit at least 80% inside the
 # parcel polygon. Bumped 2026-05-09 from 0.5 after the 177 Symons St
-# spillover case — a 3-4 storey apartment block on the neighbouring
+# spillover case - a 3-4 storey apartment block on the neighbouring
 # parcel had its footprint clip ~10-30% into 177 Symons via boundary
 # fuzziness, and the prior 0.5 gate let the 9.1m height get credited to
 # 177 Symons (actually a 1-storey bungalow per Street View). 0.80
 # tightens the gate so a building must SUBSTANTIALLY sit on this parcel
 # before its height counts. Cleanly excludes shared / clipped-neighbour
-# structures from BOTH parcels — better to read "vacant or no recorded
+# structures from BOTH parcels - better to read "vacant or no recorded
 # structure" than a wrong height.
 EXISTING_BUILDING_OVERLAP_RATIO = 0.80
 # Boundary-fuzziness inset applied to the parcel polygon before testing
@@ -1124,7 +1124,7 @@ EXISTING_BUILDING_OVERLAP_RATIO = 0.80
 # Slight asymmetry between N-S and E-W is acceptable at this scale.
 ADDRESS_POINT_INSET_DEG = 0.5 / 111_000
 
-# Cross-boundary classifier (2026-05-08 — replaces the side-yard test
+# Cross-boundary classifier (2026-05-08 - replaces the side-yard test
 # against parcel edges, which was over-claiming detached because Toronto's
 # Building Outlines polygons are drawn ~1m INSIDE the property line).
 #
@@ -1137,10 +1137,10 @@ ADDRESS_POINT_INSET_DEG = 0.5 / 111_000
 #   - 50 m² outbuilding filter improves separation: detached median 5.93m vs
 #     attached median 0.22m
 #   - 1.5m threshold: 90% precision on excluding attached, 74% recall on
-#     detached. Asymmetric on purpose — we accept missing some true detached
+#     detached. Asymmetric on purpose - we accept missing some true detached
 #     in exchange for very few attached leaking through.
 SIDE_YARD_CLEAR_M = 1.5  # cross-building threshold (was 0.4 against parcel edge)
-# Outbuilding cutoff for "is this a real residence" — sheds bottom at ~14m²,
+# Outbuilding cutoff for "is this a real residence" - sheds bottom at ~14m²,
 # detached single-car garages ~18m², larger garages 25-50m². 50m² catches
 # only main residences + larger granny suites / coach houses. Same threshold
 # applies to MY building (must be ≥ this to count as classifier subject) and
@@ -1164,7 +1164,7 @@ def _existing_max_building_height(parcel, massing_index, address_points_index=No
     For each candidate building, ask "where is the nearest registered
     address to this building's centroid?" If that address sits inside
     THIS parcel's polygon, the building belongs here. If it sits in a
-    neighbour's polygon, the building belongs to the neighbour — even if
+    neighbour's polygon, the building belongs to the neighbour - even if
     our own polygon also (wrongly) contains the building's centroid.
 
     Algorithm:
@@ -1177,7 +1177,7 @@ def _existing_max_building_height(parcel, massing_index, address_points_index=No
       6. Among eligible buildings, return the tallest height.
 
     Falls back to the centroid-proximity rule when `address_points_index`
-    is None (defensive — should not happen in normal builds).
+    is None (defensive - should not happen in normal builds).
     """
     tree, buildings = massing_index
     parcel_geom = parcel.geometry
@@ -1195,7 +1195,7 @@ def _existing_max_building_height(parcel, massing_index, address_points_index=No
             if ap_tree is not None:
                 # STRtree.nearest returns the index of the geometry nearest
                 # to the query point. The result is one of the ~750K
-                # city-registered address points — the city's authoritative
+                # city-registered address points - the city's authoritative
                 # record of "where is the front door for this number?"
                 nearest_idx = ap_tree.nearest(centroid)
                 nearest_ap = ap_points[nearest_idx]
@@ -1222,12 +1222,12 @@ def _compute_geometry_suspect(existing_max_h, coverage, neighbor_heights) -> boo
           A 4-storey-ish building on what reads as a small footprint is
           geometrically incoherent for typical residential teardown
           candidates. 807 Glencairn (14.5 m / 17.2%) is the canonical
-          case — the height comes from a neighbour's apartment block
+          case - the height comes from a neighbour's apartment block
           whose footprint lies inside our mis-drawn polygon.
 
       (b) **Exact neighbour match on a tall reading**: existing height
           ≥ 9 m AND matches one of the four neighbor-direction averages
-          within 0.1 m. The 9 m floor matters — two adjacent 2-storey
+          within 0.1 m. The 9 m floor matters - two adjacent 2-storey
           detached homes (typical Toronto stock at ~6 m) routinely share
           a height by virtue of being similar buildings, NOT because of
           spillover. The spillover hypothesis only makes sense when the
@@ -1248,11 +1248,11 @@ def _compute_geometry_suspect(existing_max_h, coverage, neighbor_heights) -> boo
     # BOTH height ≥ 9 m AND coverage < 25%. Both conditions matter:
     # - Real 3-storey detached homes on full residential lots have
     #   25%+ coverage (large footprint) and often share heights with
-    #   neighbouring same-vintage 3-storey homes — that's natural
+    #   neighbouring same-vintage 3-storey homes - that's natural
     #   uniform-stock pattern, not spillover (46 High Park Blvd case,
     #   11.7m exact-match on 25.8% cov).
     # - Spillover cases combine a tall reading with a SMALL footprint
-    #   — the bungalow is real, the height comes from a neighbour's
+    #   - the bungalow is real, the height comes from a neighbour's
     #   apartment block creeping into the polygon (177 Symons St, 9.1m
     #   on 21.4% cov; 1030 Danforth Ave, 9.2m on 20.0% cov).
     if existing_max_h >= 9.0 and coverage < 0.25 and neighbor_heights:
@@ -1269,7 +1269,7 @@ def _classify_existing_structure(parcel, building_tree, building_geoms) -> str:
     Returns "detached" | "semi" | "row" | "vacant" | "unknown".
 
     Algorithm: find this parcel's main building polygon (largest >= 50 m²
-    polygon overlapping the parcel). Find FOREIGN building polygons —
+    polygon overlapping the parcel). Find FOREIGN building polygons -
     polygons within ~10 m of the parcel that are not the main building and
     don't substantially overlap the parcel themselves. Filter foreign
     polygons to >= 50 m² (drops garages, sheds, decks; keeps main
@@ -1283,7 +1283,7 @@ def _classify_existing_structure(parcel, building_tree, building_geoms) -> str:
       2+ close → "row"
 
     Calibrated 2026-05-08 against 200 known-detached + 200 known-attached
-    parcels — best separation at 1.5 m threshold + 50 m² outbuilding filter
+    parcels - best separation at 1.5 m threshold + 50 m² outbuilding filter
     (90 % precision on excluding attached, 74 % recall on detached).
     Asymmetric by design: better to miss a true detached than to include
     an attached parcel in the elite cohort.
@@ -1318,11 +1318,11 @@ def _classify_existing_structure(parcel, building_tree, building_geoms) -> str:
     except Exception:
         return "unknown"
     if main_m.area < MIN_CLASSIFIER_BUILDING_M2:
-        # Edge case — outbuilding survives the geodesic check but fails
+        # Edge case - outbuilding survives the geodesic check but fails
         # the projected-area sanity filter. Treat as vacant.
         return "vacant"
 
-    # 2.5. Merged-polygon case — Toronto's Building Outlines sometimes draws
+    # 2.5. Merged-polygon case - Toronto's Building Outlines sometimes draws
     # one polygon spanning multiple parcels (a semi-pair as one building).
     # If MY main building extends >15% outside my parcel, it's clearly
     # attached. > 40% outside = three-or-more parcel span = row.
@@ -1387,7 +1387,7 @@ def _neighbor_heights(rep_pt, massing_index) -> dict:
         N: 315°..45°    E: 45°..135°    S: 135°..225°    W: 225°..315°
 
     Returns a dict with keys `nAvgM`, `sAvgM`, `eAvgM`, `wAvgM`. A quadrant with
-    no buildings returns `None` (not 0.0 — distinguishes "open sky" from "low
+    no buildings returns `None` (not 0.0 - distinguishes "open sky" from "low
     bungalow"). `massing_index` must be `(STRtree, list[Building])` from
     `tools.sources.massing.load_massing_index`; buildings without a height (e.g.
     Toronto 3D Massing records lacking MAX_HEIGHT) are skipped.
@@ -1528,7 +1528,7 @@ def assemble_parcel_payload(
     stats_address_point_flips = 0
     stats_osm_amenity_holdover = 0
 
-    # Build the worker state dict — every shared input the per-parcel loop
+    # Build the worker state dict - every shared input the per-parcel loop
     # body needs. Both sequential and parallel paths use the same
     # `_process_parcel` function, so the per-parcel logic is single-source.
     # IMPORTANT: `claimed_heritage_indices` is the same Python set object
@@ -1576,7 +1576,7 @@ def assemble_parcel_payload(
         'include_non_eligible': include_non_eligible,
     }
 
-    # No materialization. Generators stream directly to the pool — workers
+    # No materialization. Generators stream directly to the pool - workers
     # spawn immediately and parsing+processing run in parallel. The 2026-05-06
     # multiproc fast-path swaps `parcels` (eager Parcel objects) for cheap
     # record dicts via `iter_parcel_records`; workers do the GEOS work.
@@ -1604,7 +1604,7 @@ def assemble_parcel_payload(
                 stats_skipped_non_buildable += 1
             elif reason == 'unparseable_geometry':
                 stats_skipped_unparseable += 1
-            # 'not_eligible' is the bulk of skips — not counted in its own
+            # 'not_eligible' is the bulk of skips - not counted in its own
             # bucket. Residential / sixplex / heritage counters DO need to
             # fire on these via the early_stats dict because the legacy
             # behavior incremented them BEFORE the score-zero (now
@@ -1650,11 +1650,11 @@ def assemble_parcel_payload(
             permits_claims_by_neighborhood.setdefault(nb_name, []).extend(claims)
 
     # Loop body fully extracted to `_process_parcel` (2026-05-06 multiproc
-    # refactor). The legacy inline body is gone — single source of truth.
+    # refactor). The legacy inline body is gone - single source of truth.
 
 
     # Default sort: lot area desc (replaces prior score-desc sort that
-    # used a synthesised composite). Bigger lots first — single primitive,
+    # used a synthesised composite). Bigger lots first - single primitive,
     # multiplex-prospect signal (more land = more units = more revenue).
     # Frontend may re-sort by any other primitive; this is just the
     # canonical write-order.
@@ -1701,7 +1701,7 @@ def assemble_parcel_payload(
     # `permits_claims_by_neighborhood` dict (which IS up-to-date in the
     # parent), not from `permit_index.claimed` (whose mutations stay
     # worker-local under fork-COW). For sequential runs the two are
-    # equivalent — `_W['claimed_heritage_indices']` is the parent set.
+    # equivalent - `_W['claimed_heritage_indices']` is the parent set.
     all_claimed_permits = set()
     for claims in permits_claims_by_neighborhood.values():
         all_claimed_permits.update(claims)
@@ -1723,7 +1723,7 @@ def assemble_parcel_payload(
         },
         # Solar normalization constants surfaced so the frontend can re-derive
         # absolute kWh from `solarScoreRaw` if it ever needs to (the wire also
-        # ships `solarYieldKwhPerYr` directly per-parcel — these are for any
+        # ships `solarYieldKwhPerYr` directly per-parcel - these are for any
         # downstream consumer that wants the math itself).
         "solarConstants": {
             "p95Kwh": int(round(solar_p95)) if solar_p95 else 0,
@@ -1731,14 +1731,14 @@ def assemble_parcel_payload(
             "pvYieldNote": (
                 "Toronto-latitude rule of thumb: 1 kW of installed PV generates "
                 "~1,150 kWh/yr south-facing, 30° tilt, unshaded. Use as a back-of-"
-                "envelope conversion only — actual yield varies with tilt, azimuth, "
+                "envelope conversion only - actual yield varies with tilt, azimuth, "
                 "shading, panel efficiency, and inverter losses."
             ),
         },
         "permits": {
             "totalPermitsKept": len(permit_index.permits),
             "joinedByAddress": len(permit_index.claimed),
-            "joinedBySpatialFallback": 0,  # source has no lat/lng — see building_permits.py
+            "joinedBySpatialFallback": 0,  # source has no lat/lng - see building_permits.py
             "unjoined": permits_unjoined_count,
             "freshnessYears": permits_src.DEFAULT_FRESHNESS_YEARS,
             "sanityCeilingCad": permits_src.SANITY_VALUE_CEILING_CAD,
@@ -1805,7 +1805,7 @@ def _parse_args(argv):
     p.add_argument("--workers", type=int, default=1,
                    help="number of parallel worker processes for the per-parcel loop. "
                         f"1 = sequential (default, safest). Try {_os.cpu_count() or 8} to use all cores. "
-                        "Linux fork+COW means heavy indexes are shared across workers — memory grows ~1.5×, not N×. "
+                        "Linux fork+COW means heavy indexes are shared across workers - memory grows ~1.5×, not N×. "
                         "Stats counters are slightly approximate under parallel mode (heritage/permit "
                         "deduplication crosses worker boundaries imperfectly), but per-parcel data is bit-identical.")
     return p.parse_args(argv)
@@ -1933,7 +1933,7 @@ def main(argv=None) -> int:
         permit_index, ap_records_by_norm,
     )
     # Citywide builder-activity counter (same algorithm as build_signals.py
-    # for demo permits) — tags the nearest-comp builder so the dev sees
+    # for demo permits) - tags the nearest-comp builder so the dev sees
     # "by 270 SHE BUILD LP · active operator (6)" inline on the comp.
     nearby_builder_counter = permits_src.build_builder_activity_counter_from_permits(
         permit_index.permits,
@@ -1959,7 +1959,7 @@ def main(argv=None) -> int:
     # Pre-compute neighborhood canopy lookup so the assembly loop reads it
     # by name in O(1). Source is the v1.1 wire format `data/neighborhoods.json`
     # (NOT the Neighborhood dataclass, which only carries spatial-join fields).
-    # Falls back to None per neighborhood when the file is absent or stale —
+    # Falls back to None per neighborhood when the file is absent or stale -
     # build_parcels emits null for those parcels' `neighborhoodCanopyPct`.
     nb_canopy_by_name: dict[str, int] = {}
     try:
@@ -1973,12 +1973,12 @@ def main(argv=None) -> int:
             _log.info("nb_canopy: %d neighborhood canopy values loaded from data/neighborhoods.json",
                       len(nb_canopy_by_name))
         else:
-            _log.warning("nb_canopy: data/neighborhoods.json absent — canopy passthrough will be null per parcel")
+            _log.warning("nb_canopy: data/neighborhoods.json absent - canopy passthrough will be null per parcel")
     except Exception as e:
-        _log.warning("nb_canopy: could not load data/neighborhoods.json (%s) — passthrough null", e)
+        _log.warning("nb_canopy: could not load data/neighborhoods.json (%s) - passthrough null", e)
 
     t = _stage("assemble parcel features (streaming iter_parcels)")
-    # Stream parcels via the generator — never materializing the ~500k list.
+    # Stream parcels via the generator - never materializing the ~500k list.
     # The corner-lot test is now inline (`streets.is_corner_lot`), eliminating
     # the up-front `compute_corner_lots(list(iter_parcels(...)))` peak that
     # previously held all parcel geometries in memory at once.

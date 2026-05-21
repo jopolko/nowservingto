@@ -57,7 +57,7 @@ CORRIDOR_HOODS = {
     'moss-park':         ['Moss Park (73)'],
 }
 
-# FSA → corridor mapping (for business licence cancellations — FSA-only geocoding).
+# FSA → corridor mapping (for business licence cancellations - FSA-only geocoding).
 CORRIDOR_FSAS = {
     'little-jamaica':    {'M6E','M6C','M6B'},
     'west-chinatown':    {'M5T'},
@@ -204,7 +204,7 @@ for ft in bia_geo['features']:
 # Convert buffer from meters to degrees (rough: 1deg ≈ 111km, but at Toronto's latitude 43.7N, lng deg ≈ 80.5km)
 BUF_DEG_LAT = CORRIDOR_BUFFER_M / 111_000
 BUF_DEG_LNG = CORRIDOR_BUFFER_M / 80_500
-# Use the average — shapely buffer is isotropic in degrees; we'll accept the asymmetry
+# Use the average - shapely buffer is isotropic in degrees; we'll accept the asymmetry
 BUF_DEG = (BUF_DEG_LAT + BUF_DEG_LNG) / 2
 
 # Load neighbourhood polygons (city's 158 nbhds) for residential-mode communities
@@ -233,7 +233,7 @@ for c in CORRIDORS:
             continue
         geoms.append(shape(ft['geometry'])); src_kinds.append('NBHD')
     if not geoms:
-        log(f"  ⚠ NO POLYGONS for corridor '{c['slug']}' — skipping")
+        log(f"  ⚠ NO POLYGONS for corridor '{c['slug']}' - skipping")
         c['_shape'] = None; c['_bbox'] = None; continue
     # For nbhd-only corridors, don't apply the buffer (they're already big polygons covering residential blocks)
     has_bia = 'BIA' in src_kinds
@@ -460,7 +460,7 @@ heritage_per_parcel = [
     (c['heritageDesignated'] / c['parcels']) if c['parcels'] > 0 else 0
     for c in out['corridors']
 ]
-# Risk Index — 50% developer upside, 30% inverse heritage protection, 20% carbon at stake
+# Risk Index - 50% developer upside, 30% inverse heritage protection, 20% carbon at stake
 n_upside = normalize(upside)
 n_carbon = normalize(carbon)
 n_heritage_inv = normalize(heritage_per_parcel, invert=True)  # low protection = high risk
@@ -615,7 +615,7 @@ with open('/tmp/business_licences_alt.csv', encoding='utf-8', errors='replace') 
 log(f"  scanned {n_bl:,} business licences, {n_bl_matched:,} cancellations matched (last 90d, storefronts)")
 
 # ---------------------------------------------------------------
-# CENSUS 2021 — Neighbourhood Profiles (158 nbhd model)
+# CENSUS 2021 - Neighbourhood Profiles (158 nbhd model)
 # Pulls tenure, income, indigenous identity, visible minority, immigrant status per nbhd,
 # then aggregates across each corridor's constituent nbhds.
 # ---------------------------------------------------------------
@@ -761,7 +761,7 @@ for c in CORRIDORS:
 log(f"  census aggregated for {sum(1 for c in CORRIDORS if c.get('_census'))} corridors")
 
 # ---------------------------------------------------------------
-# SHELTER OCCUPANCY — daily, group by postal-code FSA, get most-recent snapshot
+# SHELTER OCCUPANCY - daily, group by postal-code FSA, get most-recent snapshot
 # ---------------------------------------------------------------
 log("Loading Daily Shelter Occupancy…")
 shelter_latest = {}  # (shelter_id, location_id) → most-recent record
@@ -792,7 +792,7 @@ for row in shelter_latest.values():
 log(f"  shelter data aggregated to {len(shelter_by_fsa)} FSAs")
 
 # ---------------------------------------------------------------
-# APARTMENT BUILDING REGISTRATION + RENTSAFETO — join by WARD (apt/rentsafe have ward not FSA/postal)
+# APARTMENT BUILDING REGISTRATION + RENTSAFETO - join by WARD (apt/rentsafe have ward not FSA/postal)
 # ---------------------------------------------------------------
 # Ward → corridor mapping. Toronto's 25 wards; each corridor sits in 1-2.
 CORRIDOR_WARDS = {
@@ -871,7 +871,7 @@ with open('/tmp/rentsafe.csv', encoding='utf-8', errors='replace') as f:
 log(f"  scanned {n_rs:,} evals, aggregated to {len(rs_by_ward)} wards")
 
 # ---------------------------------------------------------------
-# BUSINESS LICENCES — per-corridor breakdown by CATEGORY (active + legacy)
+# BUSINESS LICENCES - per-corridor breakdown by CATEGORY (active + legacy)
 # ---------------------------------------------------------------
 log("Building per-corridor business-category breakdown…")
 BIZ_CATS = {
@@ -1012,7 +1012,7 @@ for c in CORRIDORS:
     c['_biz'] = biz_breakdown.get(slug, {})
 
 # ---------------------------------------------------------------
-# HERITAGE REGISTER — proper spatial join (the parcels.geojson heritageStatus field is stale)
+# HERITAGE REGISTER - proper spatial join (the parcels.geojson heritageStatus field is stale)
 # ---------------------------------------------------------------
 log("Spatial-joining Heritage Register designations (proper count, supersedes parcels.geojson value)…")
 import zipfile as _zf
@@ -1048,7 +1048,7 @@ with _zf.ZipFile('/tmp/heritage_register.zip') as zf:
 log(f"  {n_matched} of {n_pts} heritage points matched into 24 corridors")
 
 # ---------------------------------------------------------------
-# RECENT CANCELLATIONS FEED — named businesses, last 90 days, storefronts only
+# RECENT CANCELLATIONS FEED - named businesses, last 90 days, storefronts only
 # ---------------------------------------------------------------
 log("Building cancellations feed…")
 cancel_feed = []
@@ -1084,7 +1084,7 @@ out['recentCancellations'] = cancel_feed[:30]
 log(f"  {len(cancel_feed)} named cancellations in last 90 days; keeping top-30 by years operating")
 
 # ---------------------------------------------------------------
-# CUISINE CLOSURE INDEX — citywide cuisine-tagged closures (not BIA-bounded).
+# CUISINE CLOSURE INDEX - citywide cuisine-tagged closures (not BIA-bounded).
 # Same classifier as the active-business tagger (CUISINE_PATTERNS above), applied
 # to the cancelled-licence feed. Produces a ranked leaderboard + named-ledger
 # for the "what's actually closing" homepage section.
@@ -1158,7 +1158,7 @@ out['closuresByCuisine'] = {
 log(f"  cuisine closure index: {len(cuisines_out)} cuisines, {len(cc_named_dedup)} named (tag rate {out['closuresByCuisine']['tagRate90d']}%)")
 
 # ---------------------------------------------------------------
-# NEW OPENINGS · "Now open" — citywide cuisine-tagged restaurants licensed
+# NEW OPENINGS · "Now open" - citywide cuisine-tagged restaurants licensed
 # in the last 365 days (Issued recent, no Cancel Date). Positive-frame
 # counterpart to the closure index; this is what makes the page returnable.
 # ---------------------------------------------------------------
@@ -1182,7 +1182,7 @@ _web_verify_cache = {}
 if _WEB_VERIFY_PATH.exists():
     _web_verify_cache = json.loads(_WEB_VERIFY_PATH.read_text())
 
-# Chain denylist — substring match against UPPERCASE operating name. Forces None.
+# Chain denylist - substring match against UPPERCASE operating name. Forces None.
 _CHAIN_DENYLIST = (
     'POPEYES','POPEYE\'S','KFC','CHURCH\'S CHICKEN','CHURCHS CHICKEN','MARY BROWN',
     'WENDY','BURGER KING','MCDONALD','HARVEY','A&W','TIM HORTON','COFFEE TIME',
@@ -1204,7 +1204,7 @@ _CHAIN_DENYLIST = (
 )
 import re as _re_chain
 def _is_chain(name_upper):
-    """Start-of-name match only — avoids false positives like 'X & THAI EXPRESS' being
+    """Start-of-name match only - avoids false positives like 'X & THAI EXPRESS' being
     matched as the 'THAI EXPRESS' chain."""
     n = (name_upper or '').strip()
     for c in _CHAIN_DENYLIST:
@@ -1282,7 +1282,7 @@ with open('/tmp/business_licences_alt.csv', encoding='utf-8', errors='replace') 
         }
         for k in ('website', 'mapsUrl', 'rating', 'reviewCount', 'matchedName', 'lat', 'lng'):
             if pdata.get(k) is not None: entry[k] = pdata[k]
-        # Dedupe by (name, address) — keep earliest issuedDate (true opening, not renewal)
+        # Dedupe by (name, address) - keep earliest issuedDate (true opening, not renewal)
         dkey = (op_raw.upper(), addr1.upper())
         existing = _seen_for_dedup.get(dkey)
         if existing is None or entry['issuedDate'] < existing['issuedDate']:
@@ -1322,7 +1322,7 @@ out['newOpenings'] = {
 log(f"  new openings: {n_tagged_365} tagged & verified in 12mo, {n_tagged_30} in 30d, across {len(no_cuisines)} cuisines (dropped {n_drop_unverified} unverified + {n_drop_closed} closed)")
 
 # ---------------------------------------------------------------
-# RECENT DEV APPLICATIONS FEED — last 90 days, in any corridor
+# RECENT DEV APPLICATIONS FEED - last 90 days, in any corridor
 # ---------------------------------------------------------------
 log("Building dev apps feed…")
 dev_feed = []
@@ -1360,7 +1360,7 @@ out['recentDevApps'] = dev_feed[:30]
 log(f"  {len(dev_feed)} dev apps in 12 corridors over last 6 months; keeping latest 30")
 
 # ---------------------------------------------------------------
-# HEADLINE FINDINGS — computed insights for the homepage
+# HEADLINE FINDINGS - computed insights for the homepage
 # (placed AFTER risk-index + ranks attachment so all per-corridor fields exist)
 # ---------------------------------------------------------------
 # Make sure activeDevApps12m, etc. are attached to out['corridors'] before reading.
@@ -1383,7 +1383,7 @@ by_devapps = sorted([c for c in out['corridors'] if c['parcels'] >= 5], key=lamb
 
 total_lost_90d = sum((c.get('storefrontCancellations90d') or 0) for c in out['corridors'])
 
-# Spread findings across DIFFERENT corridors — avoid having one corridor dominate the page.
+# Spread findings across DIFFERENT corridors - avoid having one corridor dominate the page.
 USED_CORRIDORS = set()
 def first_unused(sorted_list, exclude=None):
     """Return the first corridor not yet used in a finding; falls back to first."""
@@ -1393,8 +1393,8 @@ def first_unused(sorted_list, exclude=None):
             return c
     return sorted_list[0] if sorted_list else None
 
-# Finding 1: Heritage asymmetry — explicit ethnic-commercial-corridor contrast against well-protected one.
-# Prefer a contrast between racialized commercial (low heritage) and protected (high heritage) — both ≥30 parcels.
+# Finding 1: Heritage asymmetry - explicit ethnic-commercial-corridor contrast against well-protected one.
+# Prefer a contrast between racialized commercial (low heritage) and protected (high heritage) - both ≥30 parcels.
 hi_h = by_heritage_high[0]
 # Pick lowest-heritage corridor that ALSO has a clearly-ethnic community (not Regent Park area)
 ETHNIC_COMMERCIAL = {'little-jamaica','little-italy','little-portugal','little-india','corso-italia','greektown','koreatown','west-chinatown','east-chinatown','kensington-market','roncesvalles','parkdale'}
@@ -1402,15 +1402,15 @@ lo_h_candidates = [c for c in by_heritage_low if c['slug'] in ETHNIC_COMMERCIAL]
 lo_h = lo_h_candidates[0] if lo_h_candidates else by_heritage_low[0]
 USED_CORRIDORS.add(hi_h['slug']); USED_CORRIDORS.add(lo_h['slug'])
 
-# Finding 2: Highest displacement pressure — use #1 risk, OR #2 if it's already in used
+# Finding 2: Highest displacement pressure - use #1 risk, OR #2 if it's already in used
 risk_choice = first_unused(by_risk) or by_risk[0]
 USED_CORRIDORS.add(risk_choice['slug'])
 
-# Finding 3: Most dev apps — pick a corridor not yet used
+# Finding 3: Most dev apps - pick a corridor not yet used
 dev_choice = first_unused(by_devapps) or by_devapps[0]
 USED_CORRIDORS.add(dev_choice['slug'])
 
-# Finding 4: Most cancellations — pick a corridor not yet used
+# Finding 4: Most cancellations - pick a corridor not yet used
 cancel_choice = first_unused(by_cancel) or by_cancel[0]
 
 findings = [
@@ -1421,17 +1421,17 @@ findings = [
     },
     {
         'headline': "The cultural corridor most exposed to development",
-        'body': f"{risk_choice['title']} carries a Risk Index of {risk_choice['riskIndex']:.0f} — among the highest displacement pressures in the city. ${risk_choice['developerUpsideCAD']/1e6:.0f}M in unused buildable envelope, {risk_choice.get('storefrontCancellations90d',0)} storefronts closed in the last 90 days, {risk_choice.get('heritageDesignated',0)} heritage protections.",
+        'body': f"{risk_choice['title']} carries a Risk Index of {risk_choice['riskIndex']:.0f} - among the highest displacement pressures in the city. ${risk_choice['developerUpsideCAD']/1e6:.0f}M in unused buildable envelope, {risk_choice.get('storefrontCancellations90d',0)} storefronts closed in the last 90 days, {risk_choice.get('heritageDesignated',0)} heritage protections.",
         'kind': "leader",
     },
     {
         'headline': "Where developer money is filing in 2026",
-        'body': f"{dev_choice['title']}: {dev_choice.get('activeDevApps12m',0)} new development applications filed in the last twelve months. The applicants are public record — names appear in the live ledger below.",
+        'body': f"{dev_choice['title']}: {dev_choice.get('activeDevApps12m',0)} new development applications filed in the last twelve months. The applicants are public record - names appear in the live ledger below.",
         'kind': "pressure",
     },
     {
         'headline': f"{total_lost_90d} storefronts closed in 90 days",
-        'body': f"{cancel_choice['title']}: {cancel_choice.get('storefrontCancellations90d',0)} cancellations in the last quarter — among the fastest erosion in the city. Named businesses and ages-at-closure in the live ledger.",
+        'body': f"{cancel_choice['title']}: {cancel_choice.get('storefrontCancellations90d',0)} cancellations in the last quarter - among the fastest erosion in the city. Named businesses and ages-at-closure in the live ledger.",
         'kind': "loss",
     },
 ]
@@ -1476,7 +1476,7 @@ for c in out['corridors']:
 log(f"  legacy business lists built for {sum(1 for v in legacy_by_corridor.values() if v)} corridors")
 
 # ---------------------------------------------------------------
-# LEAD STORY — pick one dramatic specific business to anchor the homepage
+# LEAD STORY - pick one dramatic specific business to anchor the homepage
 # Criteria: oldest legacy business in the corridor with the LOWEST heritage protection
 # (i.e., the corridor most likely to demolish a 50+-year institution)
 # ---------------------------------------------------------------

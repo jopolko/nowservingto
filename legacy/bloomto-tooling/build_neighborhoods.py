@@ -1,7 +1,7 @@
 """Offline ETL orchestrator: fetch all Toronto Open Data sources, score every
 neighborhood, and write `data/neighborhoods.json` atomically.
 
-This is the v1.1 "all-real" pipeline — every numeric field is grounded in a
+This is the v1.1 "all-real" pipeline - every numeric field is grounded in a
 CKAN-published dataset. The script is read-only against the host (only writes
 to `--cache-dir` and `--out`); intended to run on a developer workstation,
 not on the VPS.
@@ -80,7 +80,7 @@ def _aggregate_permits_by_neighborhood(parcels_path: Path) -> dict[str, int]:
     absent (first-ever build, or when `build_neighborhoods.py` is run alone).
     """
     if not parcels_path.exists():
-        _log.warning("permits aggregate: %s not found — emitting zeros", parcels_path)
+        _log.warning("permits aggregate: %s not found - emitting zeros", parcels_path)
         return {}
     from collections import defaultdict
     counts: dict[str, int] = defaultdict(int)
@@ -151,8 +151,8 @@ def assemble_payload(
             "existing": e_existing,
             "potential": e_potential,
         }
-        # 2026-05-07 evening — household income, dwelling value, and unit-creating
-        # permit rate per 1k dwellings. Optional — only present when the caller
+        # 2026-05-07 evening - household income, dwelling value, and unit-creating
+        # permit rate per 1k dwellings. Optional - only present when the caller
         # passes the dicts. Wire fields keyed `nb*` so the frontend lookup map
         # follows the same convention as `nbHeatPump` / `nbPermitMedianCostPerUnit`.
         if income_med is not None:

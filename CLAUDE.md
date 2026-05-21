@@ -7,14 +7,14 @@ Guidance for Claude Code working in this repository.
 - Execute first, explain only when asked. No "want me to" or "shall I" trailers.
 - One-sentence updates max while building. Show progress through actions, not paragraphs.
 - "tmp.png" convention: when the user says tmp.png / screenshot / "check this", immediately Read `/mnt/c/Users/josh/Desktop/tmp.png` without confirming.
-- Design references over iteration. When a visual is wrong, ask ONCE for a reference site/style — never iterate blind through 3 versions.
+- Design references over iteration. When a visual is wrong, ask ONCE for a reference site/style - never iterate blind through 3 versions.
 - Match register. No PC softening, no diplomatic vocabulary, match user intensity.
 - Don't volunteer caveats unless they affect the decision in front of the user.
 - Pivots are pivots. When direction changes, drop the prior thread silently.
 
 ## Project
 
-**NowServingTO** — a daily-fresh directory of restaurants newly licensed in Toronto, classified by cuisine via Claude Haiku + web_search and surfaced as a single-page, no-build, static-HTML directory. Audience-first framing: an **immigrant looking for the newest Ethiopian / Tamil / Filipino / Salvadoran spot**, not a tourist looking for "ethnic food."
+**NowServingTO** - a daily-fresh directory of restaurants newly licensed in Toronto, classified by cuisine via Claude Haiku + web_search and surfaced as a single-page, no-build, static-HTML directory. Audience-first framing: an **immigrant looking for the newest Ethiopian / Tamil / Filipino / Salvadoran spot**, not a tourist looking for "ethnic food."
 
 The displacement-mapping framing was the previous iteration; it's been moved off the public surface (the data is still produced by `build_corridors.py` and available in `data/corridors.json`, but the page no longer leads with it).
 
@@ -25,18 +25,18 @@ The displacement-mapping framing was the previous iteration; it's been moved off
 Python ETL → JSON wire file → Apache + vanilla HTML/JS. No backend, no DB, no build step, no React, no Node.
 
 The pipeline:
-- `tools/cron_daily_openings.sh` — daily cron entry point on the VPS
-- `tools/llm_classify*.py` — name-only cuisine classifier (Haiku, cheap fallback)
-- `tools/llm_verify*.py` — web_search verifier (cuisine + operating + website in one Haiku call)
-- `tools/check_link_health.py` — HEAD-probes every cached URL; flags 4xx/5xx
-- `tools/inject_openings.py` — applies chain denylist, gates to verified-open, writes `data/corridors.json`
-- `index.html` — fetches `data/corridors.json`, renders the dropdown + opening feed
+- `tools/cron_daily_openings.sh` - daily cron entry point on the VPS
+- `tools/llm_classify*.py` - name-only cuisine classifier (Haiku, cheap fallback)
+- `tools/llm_verify*.py` - web_search verifier (cuisine + operating + website in one Haiku call)
+- `tools/check_link_health.py` - HEAD-probes every cached URL; flags 4xx/5xx
+- `tools/inject_openings.py` - applies chain denylist, gates to verified-open, writes `data/corridors.json`
+- `index.html` - fetches `data/corridors.json`, renders the dropdown + opening feed
 
-`tools/build_corridors.py` is the heavier weekly ETL that still produces corridor stats (closures, dev pressure, heritage gaps) — kept for the legacy data feed but not currently rendered on the page.
+`tools/build_corridors.py` is the heavier weekly ETL that still produces corridor stats (closures, dev pressure, heritage gaps) - kept for the legacy data feed but not currently rendered on the page.
 
 ## Tagging hierarchy (most authoritative first)
 
-1. **Chain denylist** in `inject_openings.py` (and mirrored in `build_corridors.py`). Substring match — known American/Canadian chains (Popeyes, KFC, Tim Hortons, Boston Pizza, Fat Bastard Burrito, etc.) always return `unknown`. Deterministic, no LLM call.
+1. **Chain denylist** in `inject_openings.py` (and mirrored in `build_corridors.py`). Substring match - known American/Canadian chains (Popeyes, KFC, Tim Hortons, Boston Pizza, Fat Bastard Burrito, etc.) always return `unknown`. Deterministic, no LLM call.
 2. **web_search-informed cuisine** (`web_verify_cache.json`). Haiku reads search results (menus, blogTO articles, Instagram, owner bios) and returns cuisine alongside the operating/website verdict.
 3. **Name-only LLM** (`llm_cuisine_cache.json`). Cheap classification when web_search hasn't run yet.
 4. **Keyword pattern match**. Last resort, mostly only fires for entries with no LLM cache at all.
@@ -63,7 +63,7 @@ As Google/Bing index new places, the next cron re-check picks up the better link
 
 ## Cuisine taxonomy (~50 keys)
 
-Specific country buckets are preferred over umbrellas. Where a cuisine is meaningfully different from its parent region, it gets its own bucket. Umbrellas get the suffix `(other)` in the dropdown (e.g. "Caribbean (other)" = Bahamian, Bajan, multi-island; "Middle Eastern (other)" = Mediterranean Grill, generic). Full list in `CUISINE_LABEL` dicts in `tools/inject_openings.py`, `tools/build_corridors.py`, and `index.html` — all three must stay in sync.
+Specific country buckets are preferred over umbrellas. Where a cuisine is meaningfully different from its parent region, it gets its own bucket. Umbrellas get the suffix `(other)` in the dropdown (e.g. "Caribbean (other)" = Bahamian, Bajan, multi-island; "Middle Eastern (other)" = Mediterranean Grill, generic). Full list in `CUISINE_LABEL` dicts in `tools/inject_openings.py`, `tools/build_corridors.py`, and `index.html` - all three must stay in sync.
 
 ## Cost model
 
@@ -77,11 +77,11 @@ Specific country buckets are preferred over umbrellas. Where a cuisine is meanin
 
 ## Hosting
 
-- Apache on `nowservingto.com`. Prod URL: **https://nowservingto.com/**. Old URL `joshuaopolko.com/rootedto/` 301-redirects to the new domain.
-- Prod path: `/var/www/html/rootedto/` (same dir as cron working dir — `cp` deploy step is a no-op)
+- Apache on `nowservingto.com`. Prod URL: **https://nowservingto.com/**.
+- Prod path: `/var/www/html/nowservingto/` (same dir as cron working dir - `cp` deploy step is a no-op)
 - VPS: DigitalOcean droplet, San Francisco. SSH `john@143.110.236.86:34522` via `~/.ssh/nowservingto_deploy`
 - File ownership `john:www-data`. `.htaccess` default-denies everything except the explicit allow-list.
-- Crontab on VPS: `17 5 * * * /var/www/html/rootedto/tools/cron_daily_openings.sh` (UTC; runs ~1:17 AM Toronto)
+- Crontab on VPS: `17 5 * * * /var/www/html/nowservingto/tools/cron_daily_openings.sh` (UTC; runs ~1:17 AM Toronto)
 
 ## Survey reference
 
@@ -94,5 +94,5 @@ Specific country buckets are preferred over umbrellas. Where a cuisine is meanin
 - Don't add user-submitted content (reviews, claims, ethnicity self-tagging). The whole moat is that the source-of-truth is the City's licence feed, not user input.
 - Don't break the "verified-open only" gate. A licence ≠ an operating restaurant; show only what's confirmed.
 - Don't classify Toronto chains as ethnic cuisine (Popeyes is not Caribbean). When a name suggests theme-without-substance, prefer `unknown`.
-- Don't hardcode `/home/josh/nowservingto` paths in `tools/*.py` — derive from `Path(__file__).resolve().parent.parent` so dev (WSL) and prod (VPS) share the same code.
+- Don't hardcode `/home/josh/nowservingto` paths in `tools/*.py` - derive from `Path(__file__).resolve().parent.parent` so dev (WSL) and prod (VPS) share the same code.
 - Don't commit anything matching `*.env` or anything in `/var/secrets/`.

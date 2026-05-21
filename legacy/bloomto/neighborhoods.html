@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="BloomTO — Discover Your Net-Zero Neighborhood in Toronto. Retrofit potential, urban canopy, transit access, and Missing Middle housing capacity.">
+    <meta name="description" content="BloomTO - Discover Your Net-Zero Neighborhood in Toronto. Retrofit potential, urban canopy, transit access, and Missing Middle housing capacity.">
     <meta name="theme-color" content="#2f6a4f">
-    <title>BloomTO — Discover Your Net-Zero Neighborhood</title>
+    <title>BloomTO - Discover Your Net-Zero Neighborhood</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -284,7 +284,7 @@
                 <div>
                     <h2 class="text-2xl font-bold gradient-text flex items-center gap-2">
                         <i class="fas fa-building"></i>
-                        Multiplex Readiness — find as-of-right gold-mine lots
+                        Multiplex Readiness - find as-of-right gold-mine lots
                     </h2>
                     <p class="text-sm text-gray-600 mt-1">Click to load the parcel map (~600 KB Leaflet + parcel data).</p>
                 </div>
@@ -311,9 +311,9 @@
                     </aside>
                 </div>
                 <p class="multiplex-caveat">
-                    <strong>Scope:</strong> Multiplex Readiness is a zoning + heritage + transit + shadow screen, NOT a building-permit pre-clearance. A non-zero score means the parcel passes the as-of-right gates we can model from public data — confirm with a planner before acting.
+                    <strong>Scope:</strong> Multiplex Readiness is a zoning + heritage + transit + shadow screen, NOT a building-permit pre-clearance. A non-zero score means the parcel passes the as-of-right gates we can model from public data - confirm with a planner before acting.
                     <br><br>
-                    <strong>Parcel data:</strong> Toronto Open Data — Property Boundaries, Zoning By-law, Heritage Register, TTC GTFS, Building Outlines, 3D Massing (consumed offline for shadow analysis only).
+                    <strong>Parcel data:</strong> Toronto Open Data - Property Boundaries, Zoning By-law, Heritage Register, TTC GTFS, Building Outlines, 3D Massing (consumed offline for shadow analysis only).
                 </p>
             </div>
         </div>
@@ -324,7 +324,7 @@
             <div class="flex flex-wrap items-start justify-between gap-3">
                 <div class="min-w-0">
                     <span class="tag mb-2"><i class="fas fa-map-pin"></i> <span id="detail-tag">Toronto</span></span>
-                    <h2 id="detail-name" class="text-2xl md:text-3xl font-bold gradient-text">—</h2>
+                    <h2 id="detail-name" class="text-2xl md:text-3xl font-bold gradient-text">-</h2>
                     <p id="detail-address" class="text-sm text-gray-700 font-medium mt-1 hidden break-words"><i class="fas fa-location-dot mr-1 text-emerald-700"></i><span id="detail-address-text"></span></p>
                     <p id="detail-subtitle" class="text-sm text-gray-600 mt-1">Net-Zero summary</p>
                 </div>
@@ -347,20 +347,20 @@
             <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-5">
                 <div class="stat-tile">
                     <div class="text-xs text-gray-500 uppercase tracking-wide font-semibold">Composite</div>
-                    <div id="stat-score" class="text-3xl font-bold gradient-text">—</div>
+                    <div id="stat-score" class="text-3xl font-bold gradient-text">-</div>
                     <div class="text-xs text-gray-500 mt-1">out of 100</div>
                 </div>
                 <div class="stat-tile">
                     <div class="text-xs text-gray-500 uppercase tracking-wide font-semibold">Heat-Pump Ready</div>
-                    <div id="stat-heatpump" class="text-2xl font-bold text-gray-800">—</div>
+                    <div id="stat-heatpump" class="text-2xl font-bold text-gray-800">-</div>
                 </div>
                 <div class="stat-tile">
                     <div class="text-xs text-gray-500 uppercase tracking-wide font-semibold">Tree Canopy</div>
-                    <div id="stat-canopy" class="text-2xl font-bold text-gray-800">—</div>
+                    <div id="stat-canopy" class="text-2xl font-bold text-gray-800">-</div>
                 </div>
                 <div class="stat-tile">
                     <div class="text-xs text-gray-500 uppercase tracking-wide font-semibold">Median Built</div>
-                    <div id="stat-builtyear" class="text-2xl font-bold text-gray-800">—</div>
+                    <div id="stat-builtyear" class="text-2xl font-bold text-gray-800">-</div>
                 </div>
             </div>
             <div>
@@ -375,15 +375,15 @@
             <div class="grid md:grid-cols-3 gap-3 mb-5">
                 <div class="stat-tile">
                     <div class="text-xs text-gray-500 uppercase tracking-wide font-semibold">Existing units</div>
-                    <div id="stat-existing" class="text-2xl font-bold text-gray-800">—</div>
+                    <div id="stat-existing" class="text-2xl font-bold text-gray-800">-</div>
                 </div>
                 <div class="stat-tile">
                     <div class="text-xs text-gray-500 uppercase tracking-wide font-semibold">As-of-right potential</div>
-                    <div id="stat-potential" class="text-2xl font-bold gradient-text">—</div>
+                    <div id="stat-potential" class="text-2xl font-bold gradient-text">-</div>
                 </div>
                 <div class="stat-tile">
                     <div class="text-xs text-gray-500 uppercase tracking-wide font-semibold">Hidden Density</div>
-                    <div id="stat-multiplier" class="text-2xl font-bold text-gray-800">—</div>
+                    <div id="stat-multiplier" class="text-2xl font-bold text-gray-800">-</div>
                 </div>
             </div>
             <div style="position: relative; height: 220px;"><canvas id="middleChart"></canvas></div>
@@ -396,15 +396,15 @@
                 <span class="section-divider mb-5"></span>
                 <div class="space-y-4">
                     <div>
-                        <div class="flex justify-between text-sm mb-1"><span class="text-gray-700 font-semibold">Walkability (street density)</span><span id="walk-score" class="font-bold text-gray-800">—</span></div>
+                        <div class="flex justify-between text-sm mb-1"><span class="text-gray-700 font-semibold">Walkability (street density)</span><span id="walk-score" class="font-bold text-gray-800">-</span></div>
                         <div class="w-full bg-gray-100 rounded-full h-2"><div id="walk-bar" class="h-2 rounded-full transition-all duration-700" style="background: linear-gradient(90deg, #2f6a4f, #4f9d7d); width: 0%;"></div></div>
                     </div>
                     <div>
-                        <div class="flex justify-between text-sm mb-1"><span class="text-gray-700 font-semibold">Transit Score</span><span id="transit-score" class="font-bold text-gray-800">—</span></div>
+                        <div class="flex justify-between text-sm mb-1"><span class="text-gray-700 font-semibold">Transit Score</span><span id="transit-score" class="font-bold text-gray-800">-</span></div>
                         <div class="w-full bg-gray-100 rounded-full h-2"><div id="transit-bar" class="h-2 rounded-full transition-all duration-700" style="background: linear-gradient(90deg, #2f6a4f, #4f9d7d); width: 0%;"></div></div>
                     </div>
                     <div>
-                        <div class="flex justify-between text-sm mb-1"><span class="text-gray-700 font-semibold">Bike Score</span><span id="bike-score" class="font-bold text-gray-800">—</span></div>
+                        <div class="flex justify-between text-sm mb-1"><span class="text-gray-700 font-semibold">Bike Score</span><span id="bike-score" class="font-bold text-gray-800">-</span></div>
                         <div class="w-full bg-gray-100 rounded-full h-2"><div id="bike-bar" class="h-2 rounded-full transition-all duration-700" style="background: linear-gradient(90deg, #2f6a4f, #4f9d7d); width: 0%;"></div></div>
                     </div>
                 </div>
@@ -414,15 +414,15 @@
                 <span class="section-divider mb-5"></span>
                 <div class="stat-tile">
                     <div class="text-xs text-gray-500 uppercase tracking-wide font-semibold">Canopy</div>
-                    <div id="stat-canopy2" class="text-2xl font-bold text-gray-800">—</div>
+                    <div id="stat-canopy2" class="text-2xl font-bold text-gray-800">-</div>
                 </div>
-                <p class="text-xs text-gray-500 mt-4" id="canopy-note">—</p>
+                <p class="text-xs text-gray-500 mt-4" id="canopy-note">-</p>
             </div>
         </div>
     </section>
 
     <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center text-xs text-gray-500">
-        <p><strong>BloomTO v0 prototype.</strong> <span>Data: <a href="data/neighborhoods.json">Toronto Open Data</a></span> — composite of SolarTO, Tree Canopy 2018, TTC GTFS, Centreline, Cycling Network, Neighbourhood Profiles 2021, Zoning By-law, and Property Boundaries.</p>
+        <p><strong>BloomTO v0 prototype.</strong> <span>Data: <a href="data/neighborhoods.json">Toronto Open Data</a></span> - composite of SolarTO, Tree Canopy 2018, TTC GTFS, Centreline, Cycling Network, Neighbourhood Profiles 2021, Zoning By-law, and Property Boundaries.</p>
     </footer>
 
     <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
@@ -485,7 +485,7 @@
                 </div>`;
             const s = $('search-input');
             s.disabled = true;
-            s.placeholder = 'Data unavailable — try again later';
+            s.placeholder = 'Data unavailable - try again later';
             $('locate-button').disabled = true;
         }
 
@@ -538,7 +538,7 @@
             $('stat-builtyear').textContent = n.builtYear;
             $('canopy-note').textContent =
                 n.canopy >= 30 ? 'Strong canopy already insulates this area against extreme heat.' :
-                n.canopy >= 20 ? 'Moderate canopy — targeted street tree planting could move the needle.' :
+                n.canopy >= 20 ? 'Moderate canopy - targeted street tree planting could move the needle.' :
                                  'Low canopy puts this area at higher heat-island risk; aggressive tree planting is high-leverage.';
 
             $('stat-existing').textContent = n.existing.toLocaleString();
@@ -721,7 +721,7 @@
         async function searchByText(text) {
             if (!text.trim() || text.length < 2) return;
             try {
-                // Try forward geocoding first — works for addresses and place names
+                // Try forward geocoding first - works for addresses and place names
                 const data = await callProxy('geocode', { query: text });
                 const { lat, lng } = data.location;
                 const address = data.formatted_address || text;
@@ -782,7 +782,7 @@
                         if (address) search.value = address;
                     } catch (err) {
                         console.warn('reverse geocode failed:', err);
-                        // Carry on without an address — still show nearest neighborhood
+                        // Carry on without an address - still show nearest neighborhood
                     }
                     restore();
                     if (window.bloomtoMultiplex && window.bloomtoMultiplex.open) {
@@ -818,7 +818,7 @@
             let markersById = new Map();
             const activeChips = new Set();
             // Chips that ADD to the visible set rather than restricting it.
-            // Currently only `heritage_friction` — toggling it on includes
+            // Currently only `heritage_friction` - toggling it on includes
             // Part V and Listed parcels (which are hidden by default).
             const inclusiveChips = new Set();
 
@@ -875,9 +875,9 @@
                 listed: 'Listed',
             };
             const HERITAGE_LONG = {
-                part_iv: 'Part IV — individually designated by by-law (hard block)',
-                part_v: 'Part V — Heritage Conservation District (design review applies)',
-                listed: 'Listed — on the watchlist; demolition allowed after 60-day notice',
+                part_iv: 'Part IV - individually designated by by-law (hard block)',
+                part_v: 'Part V - Heritage Conservation District (design review applies)',
+                listed: 'Listed - on the watchlist; demolition allowed after 60-day notice',
             };
             const HERITAGE_COLOR = {
                 part_iv: '#dc2626',  // red
@@ -912,7 +912,7 @@
                         </div>
                         <div style="color:#6b7280;font-size:0.78rem;margin-top:2px">${props.neighborhood || ''}</div>
                         <hr style="margin:8px 0;border:none;border-top:1px solid #e5e7eb">
-                        <div><strong>Zoning:</strong> ${props.zoneClass || '—'} · max ${props.maxUnits}u${heritageBadge}</div>
+                        <div><strong>Zoning:</strong> ${props.zoneClass || '-'} · max ${props.maxUnits}u${heritageBadge}</div>
                         <div style="margin-top:6px"><strong>Solar:</strong> ${solarLine}</div>
                         ${shadowLine}
                         <div style="margin-top:6px"><strong>Transit:</strong> subway ${props.distSubwayM}m · streetcar+subway ${props.distSubwayStreetcarM}m</div>
@@ -974,7 +974,7 @@
                             <span><strong>#${rank}</strong> ${p.address || '(no address)'} · R · ${p.maxUnits}u${tags.length ? ' · ' + tags.join(' · ') : ''}</span>
                             <span class="multiplex-pill ${t.cls}">${t.emoji} ${p.score}</span>
                         </div>
-                        <div class="row-line2">${segs.join(' · ') || '—'}</div>
+                        <div class="row-line2">${segs.join(' · ') || '-'}</div>
                     </div>
                 `;
             }
@@ -984,7 +984,7 @@
                 const n = parseInt(document.getElementById('multiplex-n').value, 10) || 20;
                 const filtered = filterFeatures(parcels);
                 if (!filtered.length) {
-                    list.innerHTML = '<div style="color:#6b7280;font-size:0.85rem">No parcels match these filters — try fewer chips.</div>';
+                    list.innerHTML = '<div style="color:#6b7280;font-size:0.85rem">No parcels match these filters - try fewer chips.</div>';
                     return;
                 }
                 const rows = filtered.slice(0, n).map((f, i) => rowHtml(f, i + 1)).join('');

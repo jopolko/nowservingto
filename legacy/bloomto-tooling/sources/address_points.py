@@ -1,4 +1,4 @@
-"""Address Points — Toronto One Address Repository (CKAN, daily).
+"""Address Points - Toronto One Address Repository (CKAN, daily).
 
 Toronto's `address-points-municipal-toronto-one-address-repository` dataset
 publishes every municipal address point as a GeoJSON feature with the
@@ -30,7 +30,7 @@ classifier:
     permit  →  osm  →  address_points  →  classifier  →  vacant
 
 The address_points tier ONLY produces "semi" or "row" verdicts (never
-"detached" — single-point parcels just pass through to the next tier so
+"detached" - single-point parcels just pass through to the next tier so
 the classifier still gets to weigh in on their detached/attached call).
 That preserves the precision of the existing ground-truth sources while
 filling the suburban-detached false-attached gap with new attached truth.
@@ -84,7 +84,7 @@ class AddressPoint:
 class AddressPointIndex(NamedTuple):
     """Spatial index for "how many address points fall inside this parcel?".
 
-    `points[i]` and `records[i]` align — STRtree.query returns indices
+    `points[i]` and `records[i]` align - STRtree.query returns indices
     into `points`, which we map back to `records` for the AddressPoint data.
     """
     tree: STRtree
@@ -253,7 +253,7 @@ def classify_attachment_from_points(
 
     Rules:
     - Deduplicate on `address_full` (a parcel can have duplicate point
-      records for the same address — e.g., front-door + side-door).
+      records for the same address - e.g., front-door + side-door).
     - 1 distinct address → no verdict (`None, "single_address"`).
     - 2 distinct addresses → "semi".
     - 3+ distinct addresses → "row".

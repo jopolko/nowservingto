@@ -5,17 +5,17 @@ that's still available for download, last updated 2012) and returns a set of
 normalized addresses where the property is tax-exempt or tax-rebated under
 one of seven categories:
 
-    Municipal Capital Facility           — city-owned community facilities
-    Charity Rebate                       — registered charities (schools,
+    Municipal Capital Facility           - city-owned community facilities
+    Charity Rebate                       - registered charities (schools,
                                             social services, religious orgs)
-    Veteran Rebate                       — Royal Canadian Legion halls,
+    Veteran Rebate                       - Royal Canadian Legion halls,
                                             Army/Navy/Air Force veterans clubs
-    Exemption under Private Legislation  — universities, hospitals, etc.
-    Ethno-Cultural Rebate                — cultural community organizations
-    Exemption for Exhibition Buildings   — Exhibition Place / CNE / similar
+    Exemption under Private Legislation  - universities, hospitals, etc.
+    Ethno-Cultural Rebate                - cultural community organizations
+    Exemption for Exhibition Buildings   - Exhibition Place / CNE / similar
 
 677 unique addresses citywide (verified 2026-05-08 against parcels-top.json:
-4 curated parcels matched, all institutional/non-residential — Royal Canadian
+4 curated parcels matched, all institutional/non-residential - Royal Canadian
 Legion Branch #1 at 243 Coxwell Ave being the headline catch).
 
 Used as a HARD exclusion gate in `tools/build_parcels.py` (parallel to the
@@ -26,7 +26,7 @@ use makes them non-multiplex teardown candidates regardless.
 Stable-but-stale: the city retired the dataset in ~2012, but the property
 types it covers (Legion halls, registered charities, city facilities,
 universities) rarely change ownership. Address-join is durable for the
-overwhelming majority. New additions since 2012 are missed — we'd need a
+overwhelming majority. New additions since 2012 are missed - we'd need a
 manual blacklist or a successor city dataset to catch those.
 """
 
@@ -47,7 +47,7 @@ RESOURCE_URL = (
     "127ce7ff-f64d-4446-98cb-7df38b05dce1/download/tax-rebates-tax-exemptions.xls"
 )
 
-# All seven categories are excluded — every one represents an institutional
+# All seven categories are excluded - every one represents an institutional
 # / non-residential / community-tenant use that's not a multiplex play.
 EXCLUDED_CATEGORIES = frozenset({
     "Municipal Capital Facility",
@@ -86,7 +86,7 @@ def build_exempt_address_set(cache_dir: Path) -> set[str]:
       6: bylaw / citation reference
       7: misc
 
-    We dedupe by normalized address — multiple rows for the same address
+    We dedupe by normalized address - multiple rows for the same address
     (different years, different programs) collapse to one entry.
     """
     cached = _ensure_cached(Path(cache_dir))

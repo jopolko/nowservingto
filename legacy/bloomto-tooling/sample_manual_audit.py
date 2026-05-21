@@ -55,7 +55,7 @@ def _bands(top_rows, broader_rows):
 
 
 def _diversity_key(row):
-    """Tuple a sample's diversity is measured against — prefer not to repeat."""
+    """Tuple a sample's diversity is measured against - prefer not to repeat."""
     return (row.get("neighborhood"), row.get("zoneClass"))
 
 
@@ -141,7 +141,7 @@ def pick_sample(top_rows, broader_rows, n=10, seed=1729):
 # --- Output ---------------------------------------------------------------
 
 VERIFIER_LINKS_NOTE = (
-    "Most City lookups don't accept deep-link by address — open the page, "
+    "Most City lookups don't accept deep-link by address - open the page, "
     "paste the address from the row above."
 )
 
@@ -199,7 +199,7 @@ def _wire_audit_findings(top_rows):
     if hs_null == n:
         findings.append(
             "<strong>heritageStatus is None on all "
-            f"{n:,} elite rows</strong> — either the gate hard-excludes any "
+            f"{n:,} elite rows</strong> - either the gate hard-excludes any "
             "Listed/Designated parcel (expected behaviour, but should still appear "
             "on the wire so the page can <em>say</em> &ldquo;not on the Heritage "
             "Register&rdquo; affirmatively) or the column is being dropped before "
@@ -209,7 +209,7 @@ def _wire_audit_findings(top_rows):
     if flood_true == n:
         findings.append(
             "<strong>inFloodingStudyArea is True on all "
-            f"{n:,} elite rows</strong> — the basement-flooding-study-areas "
+            f"{n:,} elite rows</strong> - the basement-flooding-study-areas "
             "dataset hits 100% wire-wide; carries no signal. TRCA Reg 41/24 "
             "riverine was the discriminating layer (per project memory)."
         )
@@ -217,7 +217,7 @@ def _wire_audit_findings(top_rows):
     if reg_false == n:
         findings.append(
             "<strong>inRegulatedArea is False on all "
-            f"{n:,} elite rows</strong> — either the gate excludes regulated "
+            f"{n:,} elite rows</strong> - either the gate excludes regulated "
             "parcels (then this column shouldn&rsquo;t be on the wire) or the "
             "TRCA layer never wired through. Same root cause as the flood column."
         )
@@ -399,7 +399,7 @@ def main(argv=None):
     log.info("\nSample summary (band / score / address / neighborhood):")
     for i, r in enumerate(sample, 1):
         log.info(
-            "  %2d. [%s] score=%s %s — %s",
+            "  %2d. [%s] score=%s %s - %s",
             i, r["_band"], r.get("score"),
             r.get("address") or "(no address)",
             r.get("neighborhood") or "?",

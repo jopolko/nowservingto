@@ -52,7 +52,7 @@ PROVIDER = {
 
 def main():
     if not LEDGER.exists():
-        print(f"no ledger at {LEDGER} — writing empty usage.json")
+        print(f"no ledger at {LEDGER} - writing empty usage.json")
         OUT.write_text(json.dumps({
             'generatedAt': datetime.now(timezone.utc).isoformat(),
             'totals': {'all':{'cost':0,'calls':0}, 'today':{'cost':0,'calls':0}},
@@ -120,7 +120,7 @@ def main():
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(payload, indent=2))
-    print(f"wrote {OUT} — total ${total_cost:.2f} across {int(total_calls)} calls "
+    print(f"wrote {OUT} - total ${total_cost:.2f} across {int(total_calls)} calls "
           f"({len(byProvider)} providers, {len(byDay)} days)")
 
 if __name__ == '__main__':

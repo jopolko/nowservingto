@@ -1,6 +1,6 @@
 """End-to-end test for `tools/build_parcels.py:assemble_parcel_payload` (Task 27).
 
-All fixtures are built inline (no committed binaries — same convention as
+All fixtures are built inline (no committed binaries - same convention as
 `test_heritage.py`, `test_corner_lots.py`, etc.). The fixture set deliberately
 exercises every eligibility / quality branch:
 
@@ -52,7 +52,7 @@ def _square(lon: float, lat: float, side: float) -> Polygon:
 def _heritage_index(*, points, statuses, addresses, address_to_status):
     """Build a HeritageIndex with the address_to_indices reverse map auto-derived.
 
-    Keeps the e2e fixtures concise — tests only need to specify the four
+    Keeps the e2e fixtures concise - tests only need to specify the four
     primary lists, the reverse index is computed from `addresses`.
     """
     address_to_indices: dict[str, list[int]] = {}
@@ -127,7 +127,7 @@ class ParcelE2ETests(unittest.TestCase):
         self.multipliers = {"RD": 4}
 
         # Transit: streetcar/subway stops within 25 m of parcels A and B.
-        # 1° lon ≈ 80 km at this latitude — 0.0001° ≈ 8 m.
+        # 1° lon ≈ 80 km at this latitude - 0.0001° ≈ 8 m.
         # Stops trees are projected to EPSG:26917 metres via
         # `_build_stops_tree_m` so `_distance_to_nearest_stop_m` can rank
         # nearest stops in true metres rather than degree-space planar.
@@ -168,7 +168,7 @@ class ParcelE2ETests(unittest.TestCase):
         self.built_year_by_name = {"Test Hood": 1955}  # postwar window
 
     def _build(self, *, include_non_eligible: bool = False):
-        # Empty institutions / flood / rapidto / per-mode-transit indices —
+        # Empty institutions / flood / rapidto / per-mode-transit indices -
         # synthetic fixtures don't exercise these layers; real rebuilds load
         # the live datasets via the relevant compute_* factories.
         from tools.sources.institutions import InstitutionsIndex
@@ -241,7 +241,7 @@ class ParcelE2ETests(unittest.TestCase):
         addresses = [f["properties"]["address"] for f in payload["features"]]
         # Parcel A: residential, near transit, no heritage → eligible.
         # Parcel B: Part IV heritage → blocked by eligibility gate.
-        # Parcel C: ~700m from transit — within the wide ELIGIBLE buffer
+        # Parcel C: ~700m from transit - within the wide ELIGIBLE buffer
         #   (1500m) so it stays on the wire; downstream projection will
         #   apply the tighter 500m ELITE gate.
         # Parcel D: outside neighborhood polygon → skipped before eligibility.
@@ -278,7 +278,7 @@ class ParcelE2ETests(unittest.TestCase):
         self.assertEqual(c["properties"]["existingStructureType"], "vacant")
 
     def test_existing_structure_type_semi_when_building_extends_past_one_side(self):
-        # Merged-polygon case — one building polygon spans parcel A and its
+        # Merged-polygon case - one building polygon spans parcel A and its
         # eastern neighbour (semi-pair drawn as a single Building Outline).
         # ~25% of the polygon's area is outside parcel A (15–40% range
         # triggers "semi" per the cross-boundary classifier; >40% would
@@ -293,7 +293,7 @@ class ParcelE2ETests(unittest.TestCase):
         feats_by_addr = {f["properties"]["address"]: f for f in payload["features"]}
         a = feats_by_addr["100 A St"]
         # Either semi (15–40% outside) or row (>40% outside) is acceptable
-        # — both correctly identify the parcel as attached. The old side-yard
+        # - both correctly identify the parcel as attached. The old side-yard
         # test would have returned "semi" specifically; the new cross-
         # boundary test sometimes produces "row" depending on the exact
         # outside-ratio, but the elite gate excludes both.
@@ -366,7 +366,7 @@ class ParcelE2ETests(unittest.TestCase):
     def test_non_residential_zone_short_circuits_fsi_derivation(self):
         # Zone class "E" (Employment) has multiplier=0 in zoning_multipliers.
         # Even when the zone polygon carries a non-zero FSI_TOTAL (Employment
-        # polygons routinely do — FSI applies to commercial massing too),
+        # polygons routinely do - FSI applies to commercial massing too),
         # max_units must come back as 0 with rationale "non_residential".
         # Without this gate, an FSI-bearing E polygon previously derived
         # nonsense unit counts (e.g., 1,134 on an industrial parcel) and
@@ -392,7 +392,7 @@ class ParcelE2ETests(unittest.TestCase):
 
     def test_unknown_zone_class_raises_loudly(self):
         # Replace the recognized "RD" zone label with an unrecognized "XXX".
-        # The orchestrator must not silently fall through to a default — see
+        # The orchestrator must not silently fall through to a default - see
         # zone-class-coverage bug analysis.
         zone_polygon = self.zone_index[0].geometries[0]
         self.zone_index = (STRtree([zone_polygon]), [_zone_record("XXX")])
@@ -402,7 +402,7 @@ class ParcelE2ETests(unittest.TestCase):
         self.assertIn("zoning_multipliers.json", str(ctx.exception))
 
     def test_part_v_parcel_records_status(self):
-        # 2026-05-07 — score formula dropped. Heritage tier is now just a
+        # 2026-05-07 - score formula dropped. Heritage tier is now just a
         # surfaced city primitive; downstream projections (build_parcels_top)
         # use it as a binary "heritage clear" gate, not a score multiplier.
         a_pt = Point(-79.39998, 43.70025)  # inside parcel A
@@ -454,7 +454,7 @@ class ParcelE2ETests(unittest.TestCase):
         # matches parcel A, but its geocoded point fell on parcel B's polygon
         # (perhaps the original lot was subdivided after the register was
         # last updated). Per Req 3.2, parcel A (address match) MUST receive
-        # the status, and parcel B (false-positive geometry hit) MUST NOT —
+        # the status, and parcel B (false-positive geometry hit) MUST NOT -
         # the address-join is authoritative and `claimed` blocks the
         # point-in-parcel fallback from re-flagging B.
         b_pt = Point(-79.40075, 43.70025)  # inside parcel B

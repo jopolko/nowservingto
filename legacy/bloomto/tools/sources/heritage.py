@@ -1,13 +1,13 @@
-"""Toronto Heritage Register source — tiered status + address points.
+"""Toronto Heritage Register source - tiered status + address points.
 
 The CKAN resource ships as a zipped Esri Shapefile (`HRAP_<YYYYMMDD>_OpenData.shp`,
 POINT geometry, ~12,327 records, WGS84). Each record is the geocoded centroid of
 one listed property's primary street address.
 
 The DBF carries three legally-distinct protection levels under the `STATUS` field:
-  - `Part IV`: individually designated by by-law (hard block — demolition prohibited
+  - `Part IV`: individually designated by by-law (hard block - demolition prohibited
     without an OMB hearing). Canonical wire value: `"part_iv"`.
-  - `Part V`: in a Heritage Conservation District (friction, not blocker — design
+  - `Part V`: in a Heritage Conservation District (friction, not blocker - design
     review applies but multiplex conversion is often approvable). Canonical: `"part_v"`.
   - `Listed`: on the watchlist, not legally designated (demolition allowed after a
     60-day notice). Canonical: `"listed"`.
@@ -31,7 +31,7 @@ Consumer pattern (see `tools/build_parcels.py:_resolve_heritage_status`):
                 status = more_restrictive(status, idx.statuses[i])
 
 Loud-failure invariant: an unrecognized DBF `STATUS` raises `ValueError` per the
-same convention as the zone-class-coverage helper — a future Toronto schema change
+same convention as the zone-class-coverage helper - a future Toronto schema change
 surfaces as an ETL crash, not a silently-wrong output.
 """
 
@@ -89,7 +89,7 @@ def more_restrictive(a: str | None, b: str | None) -> str | None:
     """Return the higher-precedence status between `a` and `b`.
 
     Treats `None` as zero precedence. On equal precedence, returns `a` (deterministic).
-    Raises `KeyError` if either argument is a non-None string outside `KNOWN_STATUSES` —
+    Raises `KeyError` if either argument is a non-None string outside `KNOWN_STATUSES` -
     that's a loud-failure path; callers must canonicalize before invoking.
     """
     return a if STATUS_PRECEDENCE[a] >= STATUS_PRECEDENCE[b] else b
@@ -103,13 +103,13 @@ def more_restrictive(a: str | None, b: str | None) -> str | None:
 class HeritageIndex(NamedTuple):
     """Bundle of heritage state consumed by `tools/build_parcels.py`.
 
-    All list-shaped fields align by index — `points[i]`, `statuses[i]`,
+    All list-shaped fields align by index - `points[i]`, `statuses[i]`,
     `addresses[i]` describe the same record. `point_tree` is the spatial index
     over `points` (used for the point-in-parcel fallback). `address_to_status`
     is the address-join lookup table; collisions on the same normalized address
     are resolved by `more_restrictive` so the dict deterministically holds the
-    strictest tier. `address_to_indices` is the reverse index — mapping each
-    normalized address to the list of record indices that share it — so the
+    strictest tier. `address_to_indices` is the reverse index - mapping each
+    normalized address to the list of record indices that share it - so the
     orchestrator can mark claimed indices in O(1) per address-join hit.
 
     Fields:
@@ -148,10 +148,10 @@ def _iter_records_from_zip(zip_path: Path):
     Reads SHP + SHX + DBF in lockstep via `pyshp`'s `iterShapeRecords()`; the
     DBF read is required for tier classification (Part IV / Part V / Listed).
 
-    Skips records with no/bad geometry silently — the caller (`compute_heritage`)
+    Skips records with no/bad geometry silently - the caller (`compute_heritage`)
     is responsible for the count and the INFO log line.
 
-    Raises `ValueError` for any DBF `STATUS` value outside `_DBF_STATUS_MAP` —
+    Raises `ValueError` for any DBF `STATUS` value outside `_DBF_STATUS_MAP` -
     loud-failure pattern (a future Toronto schema change surfaces as ETL crash,
     not silently-wrong output).
 
@@ -230,7 +230,7 @@ def compute_heritage(cache_dir: Path) -> HeritageIndex:
     STRtree over the points.
 
     Loud-failure: any unrecognized DBF `STATUS` value propagates as `ValueError`
-    from the iterator. No partial state is materialized — the caller crashes
+    from the iterator. No partial state is materialized - the caller crashes
     cleanly before any downstream consumer sees the index.
 
     Caller pattern (see `tools/build_parcels.py:_resolve_heritage_status`):

@@ -12,7 +12,7 @@ can correct most of those errors, since reviews carry cultural markers
 ("their kunafa is the best" / "authentic Salvadoran pupusas") that name
 alone misses.
 
-Cost: ~175 Places calls (Atmosphere Data SKU — within 10K/month free tier
+Cost: ~175 Places calls (Atmosphere Data SKU - within 10K/month free tier
 on our account at ~700 lookups/month total) + free cache writes.
 """
 import json, sys, time
@@ -43,7 +43,7 @@ def main():
 
     print(f"Fallback-tagged entries to re-evaluate: {len(targets)}")
     print(f"  estimated Places re-fetches: {len(targets)}")
-    print(f"  free tier coverage: well within 10K/month — $0 expected")
+    print(f"  free tier coverage: well within 10K/month - $0 expected")
     if not targets:
         return
 
@@ -84,7 +84,7 @@ def main():
     print(f"  Layer 2 will now reclassify these {ok} entries using:")
     print(f"    • Their website (when fetchable)")
     print(f"    • Google Places editorialSummary")
-    print(f"    • Up to 5 Google reviews per place — the new cultural-marker source")
+    print(f"    • Up to 5 Google reviews per place - the new cultural-marker source")
 
 if __name__ == '__main__':
     main()

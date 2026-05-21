@@ -2,8 +2,8 @@
 
 Centreline fixture is built programmatically as a small GeoJSON file in setUp
 (no committed binary). Three streets:
-  - Yonge St   (north–south, LINEAR_NAME_ID = 100) — runs along x = -79.400
-  - Bloor St   (east–west,   LINEAR_NAME_ID = 200) — runs along y = 43.700
+  - Yonge St   (north–south, LINEAR_NAME_ID = 100) - runs along x = -79.400
+  - Bloor St   (east–west,   LINEAR_NAME_ID = 200) - runs along y = 43.700
   - Lane (laneway, LINEAR_NAME_ID = -1 / unnamed)
 
 Parcels:
@@ -52,7 +52,7 @@ def _build_centreline_geojson(out_path: Path) -> None:
         "type": "LineString",
         "coordinates": [[-79.400, 43.700], [-79.400, 43.710]],
     }
-    yonge_south = {  # south of intersection (digitization break — same LINEAR_NAME_ID)
+    yonge_south = {  # south of intersection (digitization break - same LINEAR_NAME_ID)
         "type": "LineString",
         "coordinates": [[-79.400, 43.690], [-79.400, 43.700]],
     }
@@ -131,7 +131,7 @@ class CornerLotTests(unittest.TestCase):
 
     def test_laneway_only_does_not_count(self):
         # Parcel touches Yonge to the west and the unnamed laneway to the east.
-        # Only Yonge is a named street — laneway alone shouldn't promote to corner.
+        # Only Yonge is a named street - laneway alone shouldn't promote to corner.
         laneway_parcel = _make_parcel("lane", Polygon([
             (-79.40004, 43.6948),
             (-79.40046, 43.6948),
@@ -154,7 +154,7 @@ class CornerLotTests(unittest.TestCase):
             (-79.40005, 43.6985),
         ]))
         # NB: this parcel ALSO touches Bloor (which crosses 43.700) at its
-        # midpoint — so it actually IS a corner. Use a parcel that only spans
+        # midpoint - so it actually IS a corner. Use a parcel that only spans
         # below the intersection, on Yonge's segment-break side.
         below_parcel = _make_parcel("below", Polygon([
             (-79.40005, 43.6989),

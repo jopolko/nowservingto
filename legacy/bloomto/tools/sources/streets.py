@@ -55,7 +55,7 @@ def _download_with_retries(url: str, dest: Path) -> None:
             if attempt == len(backoffs):
                 raise
             wait = backoffs[attempt]
-            _log.warning("download %s failed (attempt %d): %s — retrying in %ss",
+            _log.warning("download %s failed (attempt %d): %s - retrying in %ss",
                          url, attempt + 1, e, wait)
             time.sleep(wait)
 
@@ -138,7 +138,7 @@ def compute_walk(neighborhoods: list[Neighborhood], cache_dir: Path
     p95_idx = int(0.95 * (len(sorted_d) - 1))
     p95 = sorted_d[p95_idx]
     if p95 == 0:
-        _log.error("p95 intersection density is 0 — every neighborhood falls back")
+        _log.error("p95 intersection density is 0 - every neighborhood falls back")
         scale = 1.0
     else:
         scale = p95
@@ -167,7 +167,7 @@ def load_centreline_index(
     """Load the Centreline GeoJSON as `(STRtree, linear_name_ids, laneway_idx)`.
 
     Each tree element is a LineString / MultiLineString geometry; the parallel
-    list carries the feature's `LINEAR_NAME_ID` (a stable numeric street id —
+    list carries the feature's `LINEAR_NAME_ID` (a stable numeric street id -
     chosen over `LINEAR_NAME_FULL` because two segments of the same street
     written with different name spellings still share the ID, so the
     corner-lot "≥2 distinct streets" test is robust to digitization noise).
@@ -234,9 +234,9 @@ def dist_addr_to_centreline_m(
     laneway → parcel polygon sits behind a frontage building).
 
     Implementation: shapely planar `distance()` in WGS84 degrees, scaled
-    by the mean Toronto degree-to-metre factor. Accuracy ~5% — sufficient
+    by the mean Toronto degree-to-metre factor. Accuracy ~5% - sufficient
     for the 15m threshold-based caution. Returns 0.0 on empty inputs or
-    nearest-query failure (defensive — never raises in the hot loop).
+    nearest-query failure (defensive - never raises in the hot loop).
     """
     if point is None or point.is_empty:
         return 0.0
@@ -280,7 +280,7 @@ def is_corner_lot(
             continue
         nid = centreline_name_ids[idx]
         if nid < 0:
-            continue  # laneway / unnamed — skip per docstring
+            continue  # laneway / unnamed - skip per docstring
         seen_named_ids.add(nid)
         if len(seen_named_ids) >= 2:
             return True
@@ -295,7 +295,7 @@ def compute_corner_lots(
 ) -> dict[str, bool]:
     """Return `{parcel_id: is_corner}` based on centreline-touching the parcel.
 
-    `buffer_deg = 7.5e-5` ≈ 8.3 m at Toronto's latitude — wide enough to
+    `buffer_deg = 7.5e-5` ≈ 8.3 m at Toronto's latitude - wide enough to
     bridge the typical Toronto road from property-line to centreline
     (curb-to-centreline ~5m + setback ~0-1m). The earlier 2.7e-5 (~3m)
     only reached the centreline of narrow laneways, missing virtually
@@ -304,7 +304,7 @@ def compute_corner_lots(
     next-block-over road across the way.
 
     Algorithm: for each parcel, buffer the boundary linestring (not the
-    interior — interior buffer would catch streets crossing through the lot,
+    interior - interior buffer would catch streets crossing through the lot,
     not abutting it) by `buffer_deg`, query the centreline STRtree, count
     *distinct* `LINEAR_NAME_ID` values among lines whose geometry intersects
     the buffered boundary. ≥ 2 distinct ids → corner lot. Same-street

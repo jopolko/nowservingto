@@ -1,4 +1,4 @@
-"""Toronto institutional-points source — schools, places of worship, parks, etc.
+"""Toronto institutional-points source - schools, places of worship, parks, etc.
 
 Loads a curated set of Toronto Open Data CKAN datasets that publish
 non-residential land uses as point features (and the parks dataset as
@@ -9,20 +9,20 @@ The build pipeline (`tools/build_parcels.py`) consumes this index to force
 `score = 0` on any parcel whose polygon contains an institutional point
 (or intersects an institutional polygon for parks). This replaces the
 frontend bandaid (`looksInstitutional()` in index.html) with an
-ETL-side, data-grounded filter — the proper fix per the 2026-05-02
+ETL-side, data-grounded filter - the proper fix per the 2026-05-02
 brainstorm-list item #1.
 
 Categories included (per the deep TransformTO crawl + CKAN survey):
-  - school              — TDSB + TCDSB + private (school-locations-all-types)
-  - place_of_worship    — places-of-worship
-  - park                — parks (POLYGONS — only intersects test, not contains)
-  - library             — library-branch-general-information
-  - fire                — fire-station-locations
-  - police              — police-facility-locations
-  - ambulance           — ambulance-station-locations
-  - long_term_care      — long-term-care-locations-city-operated
-  - community_facility  — parks-and-recreation-facilities
-  - child_care          — licensed-child-care-centres
+  - school              - TDSB + TCDSB + private (school-locations-all-types)
+  - place_of_worship    - places-of-worship
+  - park                - parks (POLYGONS - only intersects test, not contains)
+  - library             - library-branch-general-information
+  - fire                - fire-station-locations
+  - police              - police-facility-locations
+  - ambulance           - ambulance-station-locations
+  - long_term_care      - long-term-care-locations-city-operated
+  - community_facility  - parks-and-recreation-facilities
+  - child_care          - licensed-child-care-centres
 
 NOT included (deferred for v1.3+ or out of scope):
   - Hospitals: no clean Toronto Open Data dataset; the existing addressed-mall
@@ -60,7 +60,7 @@ _log = logging.getLogger(__name__)
 
 # Dataset registry. Each entry: (category, cache_filename, download_url, format).
 # Format ∈ {"geojson", "shp_zip"}. URLs resolved via CKAN package_show on
-# 2026-05-02 — re-resolve if Toronto rotates resource IDs (rare but possible).
+# 2026-05-02 - re-resolve if Toronto rotates resource IDs (rare but possible).
 _DATASETS: tuple[tuple[str, str, str, str], ...] = (
     (
         "school",
@@ -130,7 +130,7 @@ CATEGORIES: tuple[str, ...] = tuple(d[0] for d in _DATASETS)
 class InstitutionsIndex(NamedTuple):
     """Bundle of institutional geometries consumed by `tools/build_parcels.py`.
 
-    Three lists align by index — `geometries[i]`, `categories[i]`,
+    Three lists align by index - `geometries[i]`, `categories[i]`,
     `is_polygon[i]` describe the same record. `tree` is the spatial index
     over `geometries`.
 
@@ -268,9 +268,9 @@ def is_institutional(parcel_geom: BaseGeometry, idx: InstitutionsIndex) -> tuple
 
     Returns `(True, category)` on first hit, `(False, None)` otherwise.
     Point-vs-polygon dispatch is per-record via `idx.is_polygon[i]`:
-      - Points: parcel.contains(point) — fires when the institution's
+      - Points: parcel.contains(point) - fires when the institution's
         registered address geocodes inside this parcel.
-      - Polygons (parks): institution_polygon.contains(parcel_rep_point) —
+      - Polygons (parks): institution_polygon.contains(parcel_rep_point) -
         fires when the parcel's representative point sits INSIDE the
         institution polygon. Crucially NOT a plain `intersects` test,
         because plenty of real residences share a boundary with parks

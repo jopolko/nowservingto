@@ -76,7 +76,7 @@ def main():
             out_tsv.write('\t'.join(clean) + '\n')
             n += 1
 
-            # Pre-filtered food + last 365d + not-cancelled — no shell date math needed
+            # Pre-filtered food + last 365d + not-cancelled - no shell date math needed
             if len(clean) < 18: continue
             category   = clean[1] if len(clean) > 1 else ''
             issued     = clean[4] if len(clean) > 4 else ''

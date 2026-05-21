@@ -1,0 +1,187 @@
+{
+  "_doc": "Per-cuisine intro paragraphs (1-2 sentences) and 3 related cuisines, used by inject_openings.py to differentiate /cuisine/* SEO landing pages. Toronto-specific where possible; avoid templated phrasing. Edit freely; the next cron run picks up changes.",
+  "afghan": {
+    "intro": "Afghan kabob houses cluster along the GTA's western edge - Etobicoke, Mississauga, the Queensway - where the diaspora settled in waves from the 1980s on. Look for chapli kabob, mantu dumplings, and long basmati pilafs studded with raisins and carrots.",
+    "related": ["pakistani", "persian", "tibetan"]
+  },
+  "african_west": {
+    "intro": "Catch-all for places drawing on multiple West African traditions - Nigerian, Ghanaian, Senegalese - that share a kitchen rather than committing to one. The country-specific pages cover the more focused spots.",
+    "related": ["nigerian", "ghanaian", "senegalese"]
+  },
+  "argentinian": {
+    "intro": "Steak and chimichurri lead, but a strong empanada subculture has grown across the west end and Bloor West. Toronto's Argentinian rooms tend to be small and family-run rather than the big asado halls you'd find in Buenos Aires.",
+    "related": ["brazilian", "peruvian", "colombian"]
+  },
+  "armenian": {
+    "intro": "Armenian kitchens here often overlap with Persian and Lebanese influences - lahmajun, manti, dolma - reflecting the diaspora's long path through the Levant before landing in Canada. The community concentrates in North York and Thornhill.",
+    "related": ["persian", "lebanese", "turkish"]
+  },
+  "bangladeshi": {
+    "intro": "Distinct from Indian and Pakistani despite frequent confusion: Bangladeshi menus lean on fish (especially hilsa), mustard-oil pungency, and a different spice profile. The community sits heaviest along Scarborough's Danforth-Victoria Park stretch.",
+    "related": ["indian", "pakistani", "sri_lankan"]
+  },
+  "brazilian": {
+    "intro": "Coxinhas, picanha, and pão de queijo show up across a small but growing scene, mostly bakery-cafés and churrascarias rather than regional Bahian or Nordeste cooking. Anchored downtown and in Mississauga.",
+    "related": ["argentinian", "portuguese", "peruvian"]
+  },
+  "caribbean": {
+    "intro": "Multi-island spots that don't commit to one country - or places where the menu spans Jamaican, Trinidadian, and Guyanese without favouring one. The country-specific pages cover the more focused kitchens.",
+    "related": ["jamaican", "trinidadian", "guyanese"]
+  },
+  "chinese": {
+    "intro": "Several distinct scenes: old Chinatown on Spadina (Cantonese, Toishanese), the Markham-Scarborough corridor (Hong Kong + northern), and a newer wave of mainland regional cooking - Sichuan, Hunan, Yunnan - opening downtown and at Yonge & Finch.",
+    "related": ["japanese", "korean", "tibetan"]
+  },
+  "colombian": {
+    "intro": "Bandeja paisa, arepas, and slow-cooked sancocho across a community settled mostly in the west end. The round, griddle-cooked Colombian arepa is a different animal from the flatter Venezuelan one - both surface on the same blocks.",
+    "related": ["venezuelan", "peruvian", "mexican"]
+  },
+  "dominican": {
+    "intro": "Mangú, sancocho, and small bachata-cooking rooms that have started appearing across North York. A younger scene compared to most other Latin cuisines in Toronto - most spots are first-generation immigrant-owned.",
+    "related": ["caribbean", "jamaican", "latin"]
+  },
+  "eritrean": {
+    "intro": "Often paired with Ethiopian on the same menu, but the cuisines diverge: more raw beef (kitfo), more zigni-style stews, and an Italian inheritance that surfaces as pasta dishes. The community overlaps with the Ethiopian one along Bloor West.",
+    "related": ["ethiopian", "ghanaian", "middle_east"]
+  },
+  "ethiopian": {
+    "intro": "Injera-and-stew kitchens have anchored the Bloor-Ossington intersection since the 1980s. Newer openings push east along the Danforth and into Scarborough, with a growing number leaning explicitly vegetarian (kik alicha, gomen, atakilt wat).",
+    "related": ["eritrean", "african_west", "middle_east"]
+  },
+  "filipino": {
+    "intro": "Adobo, sinigang, lechon kawali. The community is large but the restaurant scene is younger than the population - most openings are recent, often kakanin (rice-cake) counters or small lunch spots in North York and Mississauga.",
+    "related": ["indonesian", "vietnamese", "chinese"]
+  },
+  "french": {
+    "intro": "From classical brasseries downtown to neighbourhood bistros along Queen West and Ossington. Recent openings have leaned Lyonnais and bouchon rather than the Paris-by-default model that dominated the 2000s.",
+    "related": ["italian", "spanish", "portuguese"]
+  },
+  "ghanaian": {
+    "intro": "Jollof rice (the perennial Ghana-Nigeria debate continues), banku with tilapia, waakye. A small scene anchored along Jane and Finch and pushing west along Eglinton.",
+    "related": ["nigerian", "senegalese", "african_west"]
+  },
+  "greek": {
+    "intro": "The Danforth's Greektown is the historical anchor - souvlaki houses going back to the 1960s - but new openings have spread to Etobicoke and the Junction, often leaning more Cretan or Aegean than the standard pita-grill template.",
+    "related": ["italian", "turkish", "lebanese"]
+  },
+  "guyanese": {
+    "intro": "Pepperpot, roti, chow mein flavoured with cumin and pepper. Guyanese cooking is its own thing despite the broader Caribbean grouping - look for the Indo-Caribbean influences that distinguish it from Jamaican. Concentrated in Scarborough and the eastern 401 corridor.",
+    "related": ["trinidadian", "jamaican", "caribbean"]
+  },
+  "indian": {
+    "intro": "The most-represented cuisine on the site by a wide margin. Gerrard India Bazaar is the historic anchor; newer regional kitchens (Hyderabadi, Chettinad, Goan, Bengali) keep splintering into their own buckets - we tag those separately when the menu commits to a region.",
+    "related": ["pakistani", "tamil", "sri_lankan"]
+  },
+  "indonesian": {
+    "intro": "A small scene - rendang, gado-gado, nasi goreng - but a few recent openings have brought serious Padang and Javanese cooking to the city. Most spots cluster downtown.",
+    "related": ["thai", "vietnamese", "filipino"]
+  },
+  "italian": {
+    "intro": "Two Italies in Toronto: the postwar Calabrian and Sicilian one along Corso Italia and College, and a younger Roman/Bolognese wave downtown. New openings lean toward the second - single-dish pastificios, focaccerias, gelaterias.",
+    "related": ["french", "spanish", "greek"]
+  },
+  "jamaican": {
+    "intro": "Patties, jerk, ackee and saltfish. Eglinton West (Little Jamaica) is the cultural spine; Scarborough and the western 401 are where most new takeout counters open. Goat curry is a useful gauge of seriousness.",
+    "related": ["trinidadian", "guyanese", "caribbean"]
+  },
+  "japanese": {
+    "intro": "Sushi led the wave in the 90s; now ramen, izakaya, and small-counter omakase rooms dominate new openings. Chef-owned single-counter ramen shops are pushing past the chain-ramen model that used to define the city.",
+    "related": ["korean", "chinese", "thai"]
+  },
+  "jewish_deli": {
+    "intro": "Smoked meat, knishes, latkes, matzo ball soup. Toronto's deli scene is smaller than Montreal's but a few long-running rooms anchor it, and a recent revival-style wave has opened across the west end.",
+    "related": ["polish", "french", "italian"]
+  },
+  "korean": {
+    "intro": "Bloor Koreatown (Bathurst to Christie) holds the original cluster - BBQ houses, ssam joints, late-night anju spots. Newer openings lean toward sundubu, Korean fried chicken, and pojangmacha-style street food.",
+    "related": ["japanese", "chinese", "vietnamese"]
+  },
+  "latin": {
+    "intro": "Catch-all for multi-country Latin American kitchens. The country-specific pages - Mexican, Peruvian, Colombian, Venezuelan, Dominican - cover most of the scene; this bucket holds spots that genuinely don't commit to one national tradition.",
+    "related": ["mexican", "peruvian", "colombian"]
+  },
+  "lebanese": {
+    "intro": "Shawarma, manakeesh, mezze. Toronto's Lebanese scene runs from corner shawarma counters to family-run rooms doing kibbe and warak enab. The community concentrates in North York and Mississauga.",
+    "related": ["middle_east", "turkish", "armenian"]
+  },
+  "mexican": {
+    "intro": "Long underrepresented in Toronto, only recently catching up. Look for the distinctions: birria places, taquerias serving real al pastor on a trompo, vs the chain Tex-Mex that dominated the 2000s. The west end clusters the newer wave.",
+    "related": ["latin", "colombian", "peruvian"]
+  },
+  "middle_east": {
+    "intro": "Multi-tradition spots that don't fit cleanly into Lebanese, Turkish, Persian, or Egyptian - Mediterranean grills, generic kebab houses, mall-style shawarma counters. The country-specific pages capture the more committed kitchens.",
+    "related": ["lebanese", "turkish", "persian"]
+  },
+  "nepalese": {
+    "intro": "Momos, dal bhat, sel roti. A small scene clustered in Parkdale (where Nepalese and Tibetan kitchens often share a block) and increasingly in Etobicoke.",
+    "related": ["tibetan", "indian", "sri_lankan"]
+  },
+  "nigerian": {
+    "intro": "Jollof, egusi, suya, pounded yam. The community grew quickly in the 2000s and the restaurant scene has caught up - mostly concentrated along Jane-Finch and Eglinton West.",
+    "related": ["ghanaian", "senegalese", "african_west"]
+  },
+  "pakistani": {
+    "intro": "Often shares a kitchen with Indian, but there's a distinct character - more grilled meats (boti, seekh), Mughlai-leaning curries, and Pakistani-Punjabi rather than Punjabi-Indian inflection. Brampton is the regional anchor; Scarborough has the densest Toronto-proper presence.",
+    "related": ["indian", "afghan", "bangladeshi"]
+  },
+  "persian": {
+    "intro": "North York holds one of the largest Persian diasporas in North America, and the food shows it: kabab koobideh, ghormeh sabzi, fesenjoon, tahdig. Yonge between Steeles and Finch is the densest stretch.",
+    "related": ["armenian", "middle_east", "afghan"]
+  },
+  "peruvian": {
+    "intro": "Ceviche, lomo saltado, anticuchos. The scene has grown noticeably in the last five years - most spots are first-generation owned and lean coastal-Lima rather than highland.",
+    "related": ["colombian", "mexican", "venezuelan"]
+  },
+  "polish": {
+    "intro": "Roncesvalles is the historic Polish street and the deli/pierogi counters there still anchor the scene. Newer openings have pushed into Etobicoke and Mississauga.",
+    "related": ["jewish_deli", "french", "italian"]
+  },
+  "portuguese": {
+    "intro": "Little Portugal (Dundas West, College West) is the historic cluster - bifana counters, churrasqueiras, pastel de nata bakeries. The community has been in Toronto since the 1950s and the food shows it.",
+    "related": ["spanish", "brazilian", "italian"]
+  },
+  "senegalese": {
+    "intro": "Thieboudienne, yassa, mafé. A small scene anchored downtown - a handful of West African spots run by Senegalese chefs, often shared with broader West African menus.",
+    "related": ["nigerian", "ghanaian", "african_west"]
+  },
+  "south_asian": {
+    "intro": "Catch-all for kitchens spanning Indian, Pakistani, Bangladeshi, Sri Lankan, or Nepalese without committing to one. Where a place leans heavily into one country's tradition, we tag it on that page instead.",
+    "related": ["indian", "pakistani", "sri_lankan"]
+  },
+  "spanish": {
+    "intro": "Tapas bars, paella spots, pintxos counters. Smaller than the Portuguese scene that often shares the same streets - newer Spanish openings in Toronto lean Basque-influenced.",
+    "related": ["portuguese", "italian", "french"]
+  },
+  "sri_lankan": {
+    "intro": "Kothu roti, hoppers, lamprais. The community concentrates in Scarborough and the food does too - most kitchens are first-generation owned and don't compromise the spice levels.",
+    "related": ["tamil", "indian", "bangladeshi"]
+  },
+  "tamil": {
+    "intro": "Scarborough holds one of the largest Tamil diasporas outside South Asia. Idli, dosa, biryani, and the sour-tamarind kuzhambu curries that won't show up on a generic 'Indian' menu - most Tamil spots announce themselves clearly.",
+    "related": ["sri_lankan", "indian", "south_asian"]
+  },
+  "thai": {
+    "intro": "From the long-running pad-thai houses that opened in the 90s to newer Isan-leaning kitchens doing larb, som tum, and grilled tilapia. The scene has matured noticeably since 2020.",
+    "related": ["vietnamese", "indonesian", "japanese"]
+  },
+  "tibetan": {
+    "intro": "Parkdale (sometimes called Little Tibet) is the heart of the scene - momos, thukpa, butter tea. Toronto is said to hold the largest Tibetan community in North America.",
+    "related": ["nepalese", "chinese", "indian"]
+  },
+  "trinidadian": {
+    "intro": "Doubles, roti, pelau, bake-and-shark. Distinct from Jamaican despite the shared 'Caribbean' label - Trinidadian cooking carries a heavier Indo-Caribbean influence. Spots cluster in Scarborough and west of the 427.",
+    "related": ["guyanese", "jamaican", "caribbean"]
+  },
+  "turkish": {
+    "intro": "Lahmacun, döner, pide. Toronto's Turkish scene runs from corner döner counters to small kebab houses doing iskender and köfte. Several recent openings have leaned more Anatolian than Istanbul-default.",
+    "related": ["lebanese", "greek", "armenian"]
+  },
+  "venezuelan": {
+    "intro": "Arepas (flatter and crispier than the Colombian round version), cachapas, tequeños. A small but growing scene driven by post-2015 migration - mostly owner-operated, mostly in the west end.",
+    "related": ["colombian", "peruvian", "brazilian"]
+  },
+  "vietnamese": {
+    "intro": "Pho counters along Spadina opened in the 80s; the newer wave is along Bloor East where banh mi, bun bo Hue, and com tam spots have pushed past the pho-default. Vietnam's three regions are starting to show up on individual menus.",
+    "related": ["thai", "indonesian", "filipino"]
+  }
+}

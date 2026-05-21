@@ -32,11 +32,11 @@ Two-tier design is ambiguous. Either top should be a strict subset of broader (m
 
 ### 1. `cornerLot` is 0.3% `False` in top
 
-51/18,854 rows are `False`. Near-constant boolean — verify the gate isn't already excluding the minority.
+51/18,854 rows are `False`. Near-constant boolean - verify the gate isn't already excluding the minority.
 
 ### 2. `cornerLot` is 0.1% `False` in broader
 
-26/20,000 rows are `False`. Near-constant boolean — verify the gate isn't already excluding the minority.
+26/20,000 rows are `False`. Near-constant boolean - verify the gate isn't already excluding the minority.
 
 ### 3. `lotAreaM2` outside [50, 20000] on 1 rows in broader
 
@@ -50,43 +50,43 @@ parcelId=5483768  lotAreaM2=28438
 
 ## LOW
 
-### 1. `heritageStatus` is null on all 18,854 rows in top (expected — gate-filtered)
+### 1. `heritageStatus` is null on all 18,854 rows in top (expected - gate-filtered)
 
 Reason: _passes_shared excludes any heritage tier.
 
-### 2. `inFloodingStudyArea` is constant `True` on 18,854 rows in top (expected — gate-filtered)
+### 2. `inFloodingStudyArea` is constant `True` on 18,854 rows in top (expected - gate-filtered)
 
 Reason: basement-flooding-study-areas covers ~all pre-1990 residential Toronto; this dataset is non-discriminating (see memory: project_flood_dataset_choice). Replace with TRCA Reg 41/24 riverine when endpoint is confirmed..
 
-### 3. `inRegulatedArea` is constant `False` on 18,854 rows in top (expected — gate-filtered)
+### 3. `inRegulatedArea` is constant `False` on 18,854 rows in top (expected - gate-filtered)
 
 Reason: _passes_shared excludes TRCA-regulated parcels.
 
-### 4. `residential` is constant `True` on 18,854 rows in top (expected — gate-filtered)
+### 4. `residential` is constant `True` on 18,854 rows in top (expected - gate-filtered)
 
 Reason: elite gate requires residential zoning.
 
-### 5. `solarShadowQuality` is constant `'measured'` on 18,854 rows in top (expected — gate-filtered)
+### 5. `solarShadowQuality` is constant `'measured'` on 18,854 rows in top (expected - gate-filtered)
 
 Reason: elite parcels generally have measured shadow quality (synthetic gate).
 
-### 6. `heritageStatus` is null on all 20,000 rows in broader (expected — gate-filtered)
+### 6. `heritageStatus` is null on all 20,000 rows in broader (expected - gate-filtered)
 
 Reason: _passes_shared excludes any heritage tier.
 
-### 7. `inFloodingStudyArea` is constant `True` on 20,000 rows in broader (expected — gate-filtered)
+### 7. `inFloodingStudyArea` is constant `True` on 20,000 rows in broader (expected - gate-filtered)
 
 Reason: basement-flooding-study-areas covers ~all pre-1990 residential Toronto; this dataset is non-discriminating (see memory: project_flood_dataset_choice). Replace with TRCA Reg 41/24 riverine when endpoint is confirmed..
 
-### 8. `inRegulatedArea` is constant `False` on 20,000 rows in broader (expected — gate-filtered)
+### 8. `inRegulatedArea` is constant `False` on 20,000 rows in broader (expected - gate-filtered)
 
 Reason: _passes_shared excludes TRCA-regulated parcels.
 
-### 9. `residential` is constant `True` on 20,000 rows in broader (expected — gate-filtered)
+### 9. `residential` is constant `True` on 20,000 rows in broader (expected - gate-filtered)
 
 Reason: elite gate requires residential zoning.
 
-### 10. `solarShadowQuality` is constant `'measured'` on 20,000 rows in broader (expected — gate-filtered)
+### 10. `solarShadowQuality` is constant `'measured'` on 20,000 rows in broader (expected - gate-filtered)
 
 Reason: elite parcels generally have measured shadow quality (synthetic gate).
 

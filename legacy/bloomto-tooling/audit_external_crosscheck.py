@@ -119,7 +119,7 @@ def check_zone_class(sample, tree, zone_classes):
                 derived = zone_classes[i]
                 break
         if derived is None:
-            # No polygon — counts as a disagreement (wire claims SOMETHING,
+            # No polygon - counts as a disagreement (wire claims SOMETHING,
             # source has no polygon at this lat/lng → suspicious).
             if wire is not None:
                 n_disagree += 1

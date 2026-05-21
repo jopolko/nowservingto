@@ -3,15 +3,15 @@
 Replaces the dead Address Points USE_CODE path (Toronto Open Data nullified
 GENERALUSE / GENERALUSE_CODE on 2021-07-29). Scope: parcels that are
 *physically* parking lots, light industrial, active construction, or
-brownfields — none of which are valid multiplex teardown candidates.
+brownfields - none of which are valid multiplex teardown candidates.
 
 ## Commercial-holdover detection (added 2026-05-09)
 
 Separate from the hard-exclusion gate above, this module also tags
 commercial-holdover parcels (the 505 Jarvis A&W case): a fast-food /
 restaurant / bank / pharmacy on residentially-zoned land. We do NOT
-exclude these — the underlying R-zone permits residential, so they're
-legitimate teardown candidates once the dev buys out the lease — but we
+exclude these - the underlying R-zone permits residential, so they're
+legitimate teardown candidates once the dev buys out the lease - but we
 surface the OSM amenity tag via `osmAmenityType` on the wire so the
 listing row can flag "Currently A&W (commercial holdover)" before the dev
 clicks through to Street View.
@@ -26,12 +26,12 @@ clicks through to Street View.
 | `amenity=bus_garage` / `taxi`          | Transit infra (bus_station handled in osm_ttc_stations.py) |
 | `landuse=industrial` / `building=industrial` / `warehouse` | Light industrial |
 | `landuse=brownfield`                   | Environmental remediation, special case |
-| `landuse=construction` / `building=construction` | Already developing — too late |
+| `landuse=construction` / `building=construction` | Already developing - too late |
 | `power=substation` / `power=plant` / `landuse=utility` | Hydro substations & utility yards (added 2026-05-12, 109 Shaw case) |
 
 ## What we KEEP IN (deliberate carve-out)
 
-`retail` and `commercial` polygons stay in the elite set — a CR-zoned
+`retail` and `commercial` polygons stay in the elite set - a CR-zoned
 single-storey storefront with `building=retail` covering 100% of the lot is
 the prime multiplex teardown target (tear down for a 6-plex above ground-floor
 retail). Excluding those would kill the high-value pipeline. Validated against
@@ -40,7 +40,7 @@ storefronts.
 
 ## Threshold
 
-`COVERAGE_THRESHOLD = 0.50` — the parcel's polygon must have ≥50% of its
+`COVERAGE_THRESHOLD = 0.50` - the parcel's polygon must have ≥50% of its
 area covered by a single excluded category before the gate fires.
 
 Calibrated against the full 3,737-elite set:
@@ -112,7 +112,7 @@ OVERPASS_QUERY = f"""
   // POINT geometries (school center), so multi-parcel complexes
   // (school + playing field + community centre on adjacent lots) only
   // flag the parcel containing the point. The OTHER parcels (playing
-  // fields, side yards) appear as "vacant" lots — see 185 Close Ave
+  // fields, side yards) appear as "vacant" lots - see 185 Close Ave
   // (Parkdale Collegiate playing field) for a representative case.
   way["amenity"="school"]({TORONTO_BBOX[0]},{TORONTO_BBOX[1]},{TORONTO_BBOX[2]},{TORONTO_BBOX[3]});
   way["amenity"="kindergarten"]({TORONTO_BBOX[0]},{TORONTO_BBOX[1]},{TORONTO_BBOX[2]},{TORONTO_BBOX[3]});
@@ -142,7 +142,7 @@ OVERPASS_QUERY = f"""
   way["landuse"="education"]({TORONTO_BBOX[0]},{TORONTO_BBOX[1]},{TORONTO_BBOX[2]},{TORONTO_BBOX[3]});
   way["landuse"="recreation_ground"]({TORONTO_BBOX[0]},{TORONTO_BBOX[1]},{TORONTO_BBOX[2]},{TORONTO_BBOX[3]});
   // Commercial holdover (added 2026-05-09): hospitality + retail
-  // services on what may be residentially-zoned land. NOT excluded —
+  // services on what may be residentially-zoned land. NOT excluded -
   // surfaced on the wire as `osmAmenityType` so the row can flag the
   // commercial reality (505 Jarvis A&W case) before Street View click.
   way["amenity"="fast_food"]({TORONTO_BBOX[0]},{TORONTO_BBOX[1]},{TORONTO_BBOX[2]},{TORONTO_BBOX[3]});
@@ -154,7 +154,7 @@ OVERPASS_QUERY = f"""
   way["amenity"="pharmacy"]({TORONTO_BBOX[0]},{TORONTO_BBOX[1]},{TORONTO_BBOX[2]},{TORONTO_BBOX[3]});
   way["amenity"="post_office"]({TORONTO_BBOX[0]},{TORONTO_BBOX[1]},{TORONTO_BBOX[2]},{TORONTO_BBOX[3]});
   // Shop tags (added 2026-05-09): liquor stores, convenience, hardware,
-  // car dealerships, etc — physical retail on what may be R-zoned land.
+  // car dealerships, etc - physical retail on what may be R-zoned land.
   // User direction: hard-exclude all commercial uses, not just amenity-
   // tagged hospitality. Same intersection-ratio gate as fast_food etc.
   way["shop"="alcohol"]({TORONTO_BBOX[0]},{TORONTO_BBOX[1]},{TORONTO_BBOX[2]},{TORONTO_BBOX[3]});
@@ -167,7 +167,7 @@ OVERPASS_QUERY = f"""
   way["shop"="department_store"]({TORONTO_BBOX[0]},{TORONTO_BBOX[1]},{TORONTO_BBOX[2]},{TORONTO_BBOX[3]});
   // Utility infrastructure (added 2026-05-12): Hydro / power substations
   // and utility yards. 109 Shaw St case: parcel is the Toronto Hydro
-  // Bellwoods substation but city zoning reads "R (d1.0) (x806)" — the
+  // Bellwoods substation but city zoning reads "R (d1.0) (x806)" - the
   // x806 use-exception isn't parsed by our ETL, and the classifier sees
   // the substation building footprint as "detached." OSM tags substations
   // as `power=substation`; folding them into the exclusion query catches
@@ -183,7 +183,7 @@ out body geom tags;
 
 # Amenity tags that flag a parcel as a commercial holdover (i.e., a
 # business sitting on land that may be residentially zoned). NOT used
-# for hard exclusion — the dev can buy out the lease and redevelop.
+# for hard exclusion - the dev can buy out the lease and redevelop.
 # Surfaced via `osm_amenity_type()` for the row's "Currently A&W"
 # badge. Mutually exclusive with the exclusion `_classify()` set:
 # fuel/car_wash/car_rental/truck_rental are EXCLUDED (auto cluster);
@@ -202,14 +202,14 @@ HOLDOVER_SHOPS = {
     'car', 'car_repair', 'furniture', 'department_store',
 }
 
-# Holdover overlap threshold — the AMENITY building's footprint must sit
+# Holdover overlap threshold - the AMENITY building's footprint must sit
 # at least this fraction inside the parcel polygon for the parcel to be
 # tagged. Same intersection-ratio principle as EXISTING_BUILDING_OVERLAP_RATIO
 # in build_parcels.py: if the amenity building is mostly on this parcel,
 # the dev needs to know.
 HOLDOVER_OVERLAP_RATIO = 0.50
 
-# Coverage threshold — parcel area covered by exclusion polygons must
+# Coverage threshold - parcel area covered by exclusion polygons must
 # reach this fraction before the gate fires. See module docstring.
 COVERAGE_THRESHOLD = 0.50
 # Stricter threshold for leisure / institutional categories. Parks,
@@ -250,7 +250,7 @@ def _classify(tags: dict) -> str | None:
         return "industrial"
     if l == "brownfield":
         return "brownfield"
-    # Utility (added 2026-05-12 — 109 Shaw St Toronto Hydro Bellwoods
+    # Utility (added 2026-05-12 - 109 Shaw St Toronto Hydro Bellwoods
     # substation case). OSM tags Hydro substations as power=substation
     # and increasingly landuse=utility. Catches the physical-use truth
     # without relying on Toronto's Schedule of Exceptions (x806 etc.).
@@ -258,7 +258,7 @@ def _classify(tags: dict) -> str | None:
     m = tags.get("man_made", "")
     if p in ("substation", "plant") or m == "substation" or l == "utility":
         return "utility"
-    # Institutional umbrella — government / hospital / university / college /
+    # Institutional umbrella - government / hospital / university / college /
     # courthouse / townhall / prison / school / kindergarten / place of
     # worship / library / community centre / fire station / religious or
     # education buildings + landuse, plus recreational polygons (parks,
@@ -281,7 +281,7 @@ def _classify(tags: dict) -> str | None:
             "sports_centre", "recreation_ground", "track",
         )):
         return "institutional"
-    return None  # retail / commercial / office — kept for mainstreet teardowns
+    return None  # retail / commercial / office - kept for mainstreet teardowns
 
 
 def _classify_amenity(tags: dict) -> str | None:
@@ -313,7 +313,7 @@ def _fetch_overpass(cache_path: Path) -> dict:
         with cache_path.open(encoding="utf-8") as fp:
             return json.load(fp)
     _log.info("osm_landuse: fetching from Overpass API…")
-    # POST not GET — the query string grew past the Overpass GET URI limit
+    # POST not GET - the query string grew past the Overpass GET URI limit
     # after the 2026-05-12 utility-infra additions. Overpass accepts either
     # method with `data=` as form body or URL param.
     resp = requests.post(
@@ -358,7 +358,7 @@ def compute_landuse_exclusion_index(
     """Return (STRtree, polys, cats) for exclusion polygons in EPSG:26917
     metres. `cats[i]` is the coarse `_classify` category for `polys[i]`
     (e.g., "parking", "industrial", "institutional"). Categories enable
-    the per-category coverage threshold in `is_landuse_excluded` —
+    the per-category coverage threshold in `is_landuse_excluded` -
     institutional / leisure polygons fire at a stricter 25% overlap
     (catches partial-parkette residue), other categories stay at 50%.
     """
@@ -425,7 +425,7 @@ def osm_amenity_type(
 
     `parcel_geom` may be in WGS84 (lon/lat) or EPSG:26917; we re-project
     to UTM if it looks like lon/lat (matches `is_landuse_excluded`).
-    Returns the FIRST match by overlap ratio — multi-amenity parcels
+    Returns the FIRST match by overlap ratio - multi-amenity parcels
     are vanishingly rare.
     """
     tree, polys, types = amenity_index
@@ -469,7 +469,7 @@ def is_landuse_excluded(
 
     Per-category thresholds (as of 2026-05-09):
       - "institutional" (schools, parks, religious, recreation): fires at
-        ≥`leisure_threshold` (default 25%) — catches partial-parkette /
+        ≥`leisure_threshold` (default 25%) - catches partial-parkette /
         school-edge residue parcels (107 Indian Rd case).
       - All other categories (parking, industrial, brownfield,
         construction, auto, transit): fires at ≥`threshold` (default 50%).

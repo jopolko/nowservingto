@@ -47,7 +47,7 @@ except FileNotFoundError:
 # with osmCount = how many OSM nodes carry that brand tag. Any Toronto
 # licence whose operating name matches one of these names is by definition
 # a multi-location chain and disqualified from the directory regardless of
-# what the per-entry validator decides — the validator can miss chains
+# what the per-entry validator decides - the validator can miss chains
 # when an entry's specific website/Places data is incomplete, but OSM
 # crowd-tagging across many cities never has that gap. Free pre-filter
 # that's also cheaper than a Haiku batch call (the dropped entries skip
@@ -78,17 +78,28 @@ def url_is_alive(url):
 WINDOW_365 = REFERENCE_DATE - timedelta(days=365)
 WINDOW_30  = REFERENCE_DATE - timedelta(days=30)
 
-# (CUISINE_PATTERNS regex-keyword dictionary removed 2026-05-14 — it was a
+# (CUISINE_PATTERNS regex-keyword dictionary removed 2026-05-14 - it was a
 # pre-LLM fallback that pattern-matched operating names to cuisines. Now that
 # every entry passes through name-only Haiku in llm_classify_batch.py, the
-# regex layer is duplicative AND coarser — Haiku reads "Jollof King" + Places
+# regex layer is duplicative AND coarser - Haiku reads "Jollof King" + Places
 # context and decides; the regex would have committed to african_west on
 # substring "JOLLOF" alone with no nuance. Let Haiku do the work.)
 
-# Canonical cuisine taxonomy — defined in tools/cuisines.py so recovery scripts
+# Canonical cuisine taxonomy - defined in tools/cuisines.py so recovery scripts
 # share the same set. Adding a bucket there is enough; do NOT re-declare here.
 from cuisines import CUISINE_LABEL, normalize_cuisines, cuisine_color
 from places_key import cache_key
+
+# Per-cuisine hand-written intro + 3 related cuisines for SEO differentiation
+# of /cuisine/* landing pages. Editable in tools/data/cuisine_intros.json -
+# next cron run picks up changes. Falls back to empty (markers collapse) when
+# the file is missing or a cuisine isn't covered.
+_CUISINE_INTROS_PATH = Path(__file__).resolve().parent / 'data' / 'cuisine_intros.json'
+try:
+    _CUISINE_INTROS = json.loads(_CUISINE_INTROS_PATH.read_text())
+    _CUISINE_INTROS.pop('_doc', None)
+except FileNotFoundError:
+    _CUISINE_INTROS = {}
 FOOD_CATS = {
     'EATING OR DRINKING ESTABLISHMENT',
     'TAKE-OUT OR RETAIL FOOD ESTABLISHMENT',
@@ -139,7 +150,7 @@ def district_from_postal(addr_with_postal):
 # None of these belong in a "newest INDEPENDENT cultural-cuisine restaurants"
 # directory. This complements is_chain() (which keys off the consumer brand
 # name) by catching B2B operators whose Operating Name isn't a known consumer
-# brand at all — Aramark cafeterias inside hospitals, TMU food courts, etc.
+# brand at all - Aramark cafeterias inside hospitals, TMU food courts, etc.
 # REMOVED 2026-05-14: hardcoded ≥10-licence Client Name threshold. The
 # validator now sees Client Name directly and judges institutional/chain
 # from corporation identity + Places types + reviews. No magic threshold.
@@ -152,7 +163,7 @@ _CUISINE_LABEL_GAP = set()
 
 # Brand-level website inheritance: when a multi-location operator (LENA'S ROTI,
 # OSMOW'S, etc.) opens a NEW location, the brand-new licence has no Places match
-# yet and no own-website verification — but an EARLIER licence at a different
+# yet and no own-website verification - but an EARLIER licence at a different
 # address may have the brand site cached. Walk web_verify_cache once at startup;
 # for each operating name, find the most-common verified non-aggregator website
 # across all its rows. Inject can then inherit that website onto rows that
@@ -187,13 +198,13 @@ def get_cuisine(name, address):
       1. web_verify cache (search-informed by Haiku + web_search, then refined
          by the unified validator that sees the full City row + Places data)
       2. name-only LLM cache (Haiku on operating name alone)
-    No chain-denylist short-circuit here — the validator marks chains and
+    No chain-denylist short-circuit here - the validator marks chains and
     institutional operators with `validator_drop` directly; inject just honors
     that flag in the main loop.
     """
     key = cache_key(name, address)
 
-    # 1. Web-verified cuisines — richest signal (web search + page content + Places extras).
+    # 1. Web-verified cuisines - richest signal (web search + page content + Places extras).
     w = WEB_VERIFY_CACHE.get(key)
     if w and w.get('status') == 'ok' and w.get('operating') == 'yes':
         cs = normalize_cuisines(w)
@@ -202,12 +213,12 @@ def get_cuisine(name, address):
             if c not in VALID_LLM_KEYS: _CUISINE_LABEL_GAP.add(c)
         if valid:
             return valid, 'web_search'
-        # Verifier returned unknown OR null cuisine — fall through to name-only.
+        # Verifier returned unknown OR null cuisine - fall through to name-only.
 
-    # 2. Name-only LLM cache — fallback when web_verify is null/unknown.
+    # 2. Name-only LLM cache - fallback when web_verify is null/unknown.
     # This IS Haiku (just operating on name alone). The unified validator gives
     # Haiku the full Places + verify context when it runs, so high-quality entries
-    # should rarely fall through to this layer alone — but the layer remains for
+    # should rarely fall through to this layer alone - but the layer remains for
     # entries Places couldn't match and web_verify never visited.
     llm = LLM_CACHE.get(key)
     if llm and llm.get('status') == 'ok':
@@ -221,7 +232,7 @@ def get_cuisine(name, address):
             return valid, 'llm'
 
     # NOTE: removed the regex keyword_classify fallback (it pattern-matched
-    # operating names against CUISINE_PATTERNS — duplicative of what the
+    # operating names against CUISINE_PATTERNS - duplicative of what the
     # name-only LLM already sees, and a "dumb" signal user explicitly asked to
     # drop on 2026-05-14). Without web_verify or llm cache classification, the
     # entry has no Haiku-evaluated cuisine → drop.
@@ -287,14 +298,14 @@ from urllib.parse import quote_plus
 # Dedupe by (operating_name, street_address). When Toronto's MLS issues two licence rows
 # for the same physical business (e.g. "Take-Out" + "Eating Establishment" categories, or
 # a renewed licence overlapping the old one), we want one entry. Keep the EARLIEST
-# Issued date — that's when the kitchen actually opened, not just when a category was added.
+# Issued date - that's when the kitchen actually opened, not just when a category was added.
 seen_entries = {}
 n_food_active = 0; n_food_active_365 = 0; n_tagged_365 = 0; n_tagged_30 = 0
 n_dropped_unverified = 0; n_dropped_closed = 0; n_deduped = 0; n_dropped_instore = 0; n_dropped_institutional = 0; n_dropped_weak_match = 0; n_dropped_brand_new_unverified = 0; n_dropped_validator = 0; n_dropped_chain_osm = 0
 
 # Grocery/retail chains whose in-store sushi/sandwich counters are NOT consumer-
 # destination restaurants. Three orthogonal signals catch them:
-#   1. City's "Free Form Conditions" — "LOCATED INSIDE FORTINO'S", "WITHIN SOBEYS"
+#   1. City's "Free Form Conditions" - "LOCATED INSIDE FORTINO'S", "WITHIN SOBEYS"
 #   2. Operating name = grocery-counter franchise brand (AFC, Zenshi, Bento Nouveau)
 #   3. Client Name = franchisor corp (Advanced Fresh Concepts)
 INSTORE_CHAINS = (
@@ -350,7 +361,7 @@ with open(CSV_PATH, encoding='utf-8', errors='replace') as f:
         # Unified-validator drop: Haiku looked at name + Places match + types +
         # editorial + reviews and concluded this is not a consumer restaurant
         # (institutional caterer, packaged-food brand, grocery counter, etc.).
-        # Authoritative — trumps the cuisine signal.
+        # Authoritative - trumps the cuisine signal.
         wv_e = WEB_VERIFY_CACHE.get(cache_key(op_raw, address_full))
         if wv_e and wv_e.get('validator_drop'):
             n_dropped_validator += 1   # Haiku-judged: chain, institutional, ghost, etc.
@@ -359,12 +370,12 @@ with open(CSV_PATH, encoding='utf-8', errors='replace') as f:
         # Verification gate: Places=OPERATIONAL OR web_search verified-yes.
         verification = verification_for(op_raw, address_full)
         if verification is None:
-            n_dropped_unverified += 1   # no Places + no web_verify yet — pending pipeline data
+            n_dropped_unverified += 1   # no Places + no web_verify yet - pending pipeline data
             continue
 
         # Build candidate entry
         days_open = max(0, (REFERENCE_DATE - iss).days)
-        # Stable, URL-safe slug — kebab-case the name + leading address number for
+        # Stable, URL-safe slug - kebab-case the name + leading address number for
         # disambiguation across multi-location chains/branches.
         name_part = _re.sub(r'[^\w\s-]', '', op_raw or '').strip().lower()
         name_part = _re.sub(r'[\s_]+', '-', name_part).strip('-')
@@ -373,8 +384,8 @@ with open(CSV_PATH, encoding='utf-8', errors='replace') as f:
         slug = (name_part + (f'-{addr_num}' if addr_num else ''))[:80]
         entry = {
             'operatingName': op_raw,
-            'cuisine': cuisines[0],          # primary — backwards-compat for any consumer that reads `cuisine`
-            'cuisines': cuisines,             # full multi-cuisine list — what the front-end filters on
+            'cuisine': cuisines[0],          # primary - backwards-compat for any consumer that reads `cuisine`
+            'cuisines': cuisines,             # full multi-cuisine list - what the front-end filters on
             'cuisineSource': source,
             'issuedDate': iss.isoformat(),
             'daysOpen': days_open,
@@ -413,13 +424,13 @@ with open(CSV_PATH, encoding='utf-8', errors='replace') as f:
         # Places match OR website). After 2026-05-19's gate refinement let
         # web-verify-only entries through (e.g. CAFEMIA: DineSafe + Yelp
         # confirmed but no Places profile yet), a name+address search no
-        # longer reliably lands on the right business — Google Maps returns
+        # longer reliably lands on the right business - Google Maps returns
         # OTHER businesses at nearby addresses (Messina/Amico/Tre Mari
         # bakeries instead of CAFEMIA), which is worse UX than no link at
         # all. The row renderer now shows the address as plain text when no
         # Places-backed mapsUrl exists.
 
-        # (REMOVED 2026-05-14: brand-website inheritance dict — the validator
+        # (REMOVED 2026-05-14: brand-website inheritance dict - the validator
         # returns best_website per entry directly, computed from full evidence.)
 
         # Weak-match drop: if NONE of Places / a working website / a real cuisine
@@ -430,16 +441,16 @@ with open(CSV_PATH, encoding='utf-8', errors='replace') as f:
         #   - no Places match (no matchedName / no mapsUrl), AND
         #   - no working website (already dropped by url_is_alive if broken), AND
         #   - cuisine came from name-only LLM or keyword guess (no real evidence).
-        # These entries will be re-queued for the next cron — their caches'
+        # These entries will be re-queued for the next cron - their caches'
         # recovered_at timestamps gate the 30-day re-attempt window, by which
         # point Google/Yelp/blogs may have indexed the place and a stronger
         # signal will arrive.
-        # Drop only when there's literally no evidence the place exists —
+        # Drop only when there's literally no evidence the place exists -
         # no Places match AND no website AND cuisine came from name-only
         # (no web_search evidence the operator is real). For multi-location
         # indies where validator cleared an address-mismatched Places match
         # but web_verify found the brand online (cuisine source = web_search),
-        # KEEP the entry — they may show in a brand-search even if Google
+        # KEEP the entry - they may show in a brand-search even if Google
         # hasn't indexed this specific location yet.
         if (not entry.get('matchedName')
             and not entry.get('mapsUrl')
@@ -451,11 +462,11 @@ with open(CSV_PATH, encoding='utf-8', errors='replace') as f:
         # No-destination gate (tightened 2026-05-19 per user directive).
         # Drop entries with NO Places match AND NO website at ANY age.
         # Earlier iterations allowed "web_verify says operating=yes" to
-        # carry an entry through even without a destination URL — that
+        # carry an entry through even without a destination URL - that
         # produced rows whose name + thumbnail had to fall back to our
         # own /r/<slug> internal page (no Maps, no website to send users
         # to). User feedback: "verification too thin, social only and not
-        # even relevant social — I'll risk the clicks." Better to have
+        # even relevant social - I'll risk the clicks." Better to have
         # fewer high-quality listings than ones we can't link anywhere
         # useful. Re-verify will pick the entry up on a future cron once
         # Places indexes the business or a real website is found.
@@ -471,13 +482,13 @@ with open(CSV_PATH, encoding='utf-8', errors='replace') as f:
         else:
             n_deduped += 1
             if iss.isoformat() < existing['issuedDate']:
-                seen_entries[dedup_key] = entry  # this row is earlier — keep it
+                seen_entries[dedup_key] = entry  # this row is earlier - keep it
 
 # Now bucket the deduped entries by cuisine and compute counts.
 # Multi-cuisine entries (e.g., "Afghan + Pakistani + Indian") appear in EACH
-# of their cuisine buckets — totalTagged365d counts entries (not bucket-rows),
+# of their cuisine buckets - totalTagged365d counts entries (not bucket-rows),
 # so a 3-cuisine place still counts as 1 toward the total.
-# Photo pre-pass — download Place/Street View photos NOW (before serializing
+# Photo pre-pass - download Place/Street View photos NOW (before serializing
 # corridors.json and rendering static feeds) so each entry can carry a
 # `photo` field that the frontend renders as a row thumbnail. Same priority
 # order as the og:image: cached Places photoRef → Place Details re-fetch
@@ -537,7 +548,7 @@ for entry in seen_entries.values():
     if not photo_path.exists():
         pe = PLACES_CACHE.get(entry.get('_cacheKey', '')) or {}
         photo_ref = pe.get('photoRef')
-        # Backfill photoRef from place_details when missing — every kept
+        # Backfill photoRef from place_details when missing - every kept
         # entry deserves a thumbnail, not just bot-eligible ones. Costs
         # ~$0.025 per first-time fetch then cached forever.
         if (pe.get('status') == 'ok' and pe.get('place_id') and not photo_ref):
@@ -595,7 +606,7 @@ cuisines_out = []
 for c, entries in opens_365_by_cuisine.items():
     # Color: prefer the curated palette below; fall back to a deterministic
     # hash-derived color for novel/dynamic cuisines (Hakka, Uyghur, Cape
-    # Verdean, etc. — anything Haiku surfaced that wasn't in the seed list).
+    # Verdean, etc. - anything Haiku surfaced that wasn't in the seed list).
     color = PALETTE_HEX.get(c) or cuisine_color(c)
     cuisines_out.append({
         'key': c,
@@ -608,11 +619,11 @@ for c, entries in opens_365_by_cuisine.items():
     })
 cuisines_out.sort(key=lambda r: -r['count365d'])
 
-# Prune cuisines_dynamic.json — keep only keys that are actually IN USE by
+# Prune cuisines_dynamic.json - keep only keys that are actually IN USE by
 # the current feed. Sub-cuisines collapsed by the prompt's parent-country
 # rule (e.g., Sichuan → Chinese) leave orphan entries in the dynamic dict
 # that would otherwise clutter the cuisine dropdown forever. Seed
-# (curated) cuisines in CUISINE_LABEL are never pruned — they may have 0
+# (curated) cuisines in CUISINE_LABEL are never pruned - they may have 0
 # entries today but reappear tomorrow.
 try:
     from cuisines import _load_dynamic, _save_dynamic, _DYNAMIC_PATH
@@ -626,15 +637,15 @@ except Exception as ex:
     print(f"  WARN: dynamic-cuisine prune failed: {ex}")
 
 # Flat feed: all openings, newest first. Iterate seen_entries directly (NOT the
-# per-cuisine buckets) so multi-cuisine entries — which appear in multiple cuisine
-# buckets by design — are NOT duplicated in the flat feed.
+# per-cuisine buckets) so multi-cuisine entries - which appear in multiple cuisine
+# buckets by design - are NOT duplicated in the flat feed.
 all_recent = sorted(seen_entries.values(),
                     key=lambda r: r['issuedDate'], reverse=True)[:1500]
 
 # Inject
 from datetime import timezone
 data = json.load(open(DATA_PATH))
-# Stamp top-level generatedAt too — daily inject regenerates the dataset, so the
+# Stamp top-level generatedAt too - daily inject regenerates the dataset, so the
 # subtitle "updated <date>" should reflect today, not the last build_corridors run.
 data['generatedAt'] = datetime.now(timezone.utc).isoformat()
 data['newOpenings'] = {
@@ -668,9 +679,11 @@ def _esc(s):
             .replace('"', '&quot;').replace("'", '&#39;'))
 
 def _ago(days):
-    # Time-only labels — dropped the "licensed" prefix as redundant
-    # (every site entry is licensed by definition; the masthead already
-    # says "newest licensed restaurants"). User-flagged 2026-05-19.
+    # Time-only labels. The masthead carries the "newest registered"
+    # anchor so rows don't need to repeat it. Word "licensed" was
+    # deliberately avoided in user-facing copy because in Ontario it
+    # ambiguously implies LLBO/alcohol licensing - most entries here
+    # don't have an alcohol licence.
     if days <= 1: return 'today'
     if days <= 60: return f'{days}d ago'
     if days <= 365: return f'{round(days/30)}mo ago'
@@ -683,7 +696,7 @@ def build_static_rows(entries):
     """Pre-rendered HTML rows for the top-N feed. Same markup the JS renderer
     produces so visitors / crawlers see real content before JS hydrates."""
     out = []
-    for r in entries:
+    for i, r in enumerate(entries):
         cuisine_keys = r.get('cuisines') or ([r['cuisine']] if r.get('cuisine') else [])
         pills = ''.join(
             f'<span class="pill" style="background:{PALETTE_HEX.get(k) or cuisine_color(k)}">{_esc(CUISINE_LABEL.get(k, k))}</span>'
@@ -693,7 +706,7 @@ def build_static_rows(entries):
         addr = _esc(r.get('address') or '')
         district = _esc(r.get('district') or '')
         # Address link: ONLY the Places CID deep-link (mapsUrl). When there's
-        # no Places match, show plain text — a name+address search lands on
+        # no Places match, show plain text - a name+address search lands on
         # neighboring businesses and an address-only search lands on a
         # generic building. Plain text is more honest.
         addr_url = r.get('mapsUrl') or ''
@@ -715,11 +728,15 @@ def build_static_rows(entries):
         multi_attr = ' data-multi' if len(cuisine_keys) > 1 else ''
         thumb = r.get('thumb')
         thumb_target = r.get('mapsUrl') or r.get('website') or internal_url
+        # First row is the LCP candidate above the fold - eager-load it
+        # with high priority so Lighthouse / real users get a fast LCP.
+        # Subsequent rows stay lazy to keep total image weight low.
+        load_attrs = 'loading="eager" fetchpriority="high"' if i == 0 else 'loading="lazy"'
         thumb_html = (f'<a class="row-pic-link" href="{_esc(thumb_target)}" rel="noopener" aria-label="View {_esc(r["operatingName"])}">'
-                      f'<img class="row-pic" src="{_esc(thumb)}" alt="" loading="lazy" decoding="async">'
+                      f'<img class="row-pic" src="{_esc(thumb)}" alt="" {load_attrs} decoding="async">'
                       f'</a>'
                       if thumb and thumb_target else
-                      f'<img class="row-pic" src="{_esc(thumb)}" alt="" loading="lazy" decoding="async">'
+                      f'<img class="row-pic" src="{_esc(thumb)}" alt="" {load_attrs} decoding="async">'
                       if thumb else '')
         out.append(
             f'<div class="open-row{ " has-pic" if thumb else "" }"{multi_attr}>'
@@ -740,7 +757,7 @@ def build_ld_itemlist(entries, name, description):
             'name': r['operatingName'],
             'address': {'@type': 'PostalAddress', 'streetAddress': r.get('address') or '', 'addressLocality': 'Toronto', 'addressRegion': 'ON', 'addressCountry': 'CA'},
             'servesCuisine': [CUISINE_LABEL.get(k, k) for k in (r.get('cuisines') or [r.get('cuisine')]) if k],
-            'dateOpened': r.get('issuedDate'),
+            'foundingDate': r.get('issuedDate'),
         }
         if r.get('website'): rest['url'] = r['website']
         if r.get('rating'): rest['aggregateRating'] = {'@type': 'AggregateRating', 'ratingValue': r['rating'], 'reviewCount': r.get('reviewCount') or 1}
@@ -757,7 +774,7 @@ def build_ld_itemlist(entries, name, description):
 def build_ld_collectionpage(itemlist, *, url, dateModified):
     """Wrap an ItemList in CollectionPage so it carries url + dateModified
     (ItemList itself has no dateModified property). Boosts the freshness
-    signal Google reads — the whole point of the daily refresh."""
+    signal Google reads - the whole point of the daily refresh."""
     return {
         '@context': 'https://schema.org',
         '@type': 'CollectionPage',
@@ -774,7 +791,7 @@ def build_ld_collectionpage(itemlist, *, url, dateModified):
 
 def build_ld_breadcrumb(parts):
     """parts: list of (name, url) tuples in trail order. Returns a
-    schema.org BreadcrumbList — drives the breadcrumb display Google
+    schema.org BreadcrumbList - drives the breadcrumb display Google
     sometimes substitutes for the URL in SERP results, generally lifting CTR."""
     return {
         '@context': 'https://schema.org',
@@ -809,47 +826,6 @@ def _district_slug(label):
     return _re.sub(r'[^a-z0-9]+', '-', label.lower()).strip('-')
 
 
-def build_xaxis_strip(entries, *, group_fn, anchor_template, link_fn, intro):
-    """Compound-query SEO via a single-line nav strip.
-
-    Buckets `entries` by group_fn(entry), then emits a one-line `<nav>` like:
-        Pakistani by district: <a>Pakistani in Downtown (3)</a> · <a>...</a> · ...
-    Each anchor's text contains the compound query phrase ("<Cuisine> in
-    <District>") so Google reads it as a strong topical signal; the href
-    points to the cross-axis page (district pages link from cuisine pages,
-    cuisine pages link from district pages), giving the site a clean
-    internal-linking graph between the two surface dimensions.
-
-    Replaced the previous <details>/<h3> implementation 2026-05-19. The
-    earlier version emitted full restaurant sub-lists per district which
-    duplicated content already on the page; this version keeps the SEO
-    signal (compound phrase in anchor text) without re-listing entries.
-
-    - `group_fn(entry)` → group label string or None
-    - `anchor_template` → f-string-compatible with {label} and {count}
-       for the link text (e.g. f"{cuisine_label} in {{label}} ({{count}})")
-    - `link_fn(label)` → URL the link should point to
-    - `intro` → text shown before the link list (e.g. "Pakistani by district:")
-    """
-    buckets = defaultdict(list)
-    for e in entries:
-        k = group_fn(e)
-        if k: buckets[k].append(e)
-    if not buckets: return ''
-    sorted_groups = sorted(buckets.items(), key=lambda kv: (-len(kv[1]), kv[0]))
-
-    links = []
-    for label, ents in sorted_groups:
-        n = len(ents)
-        href = link_fn(label)
-        text = anchor_template.format(label=label, count=n)
-        links.append(f'<a href="{_esc(href)}">{_esc(text)}</a>')
-    return (f'<nav class="xa-strip" aria-label="{_esc(intro)}">'
-            f'<span class="xa-intro">{_esc(intro)}</span> '
-            f'{" · ".join(links)}'
-            f'</nav>')
-
-
 def build_breadcrumb_html(parts):
     """Visible breadcrumb HTML matching the BreadcrumbList JSON-LD. parts:
     list of (name, url-or-None); the last entry has url=None (current page,
@@ -867,13 +843,18 @@ def build_breadcrumb_html(parts):
 
 import re
 
-def inject_into_html(html, *, static_block, ld_payloads, breadcrumb_html='', xaxis_html=''):
-    """Replace STATIC-FEED, LD-ITEMLIST, and BREADCRUMB marker blocks.
+def inject_into_html(html, *, static_block, ld_payloads, breadcrumb_html='',
+                     page_intro_html='', related_html='', lcp_preload_url=''):
+    """Replace STATIC-FEED, LD-ITEMLIST, BREADCRUMB, PAGE-INTRO,
+    RELATED-CUISINES, and LCP-PRELOAD marker blocks.
 
     `ld_payloads` is a list of schema.org dicts (ItemList / CollectionPage /
-    BreadcrumbList / FAQPage). Each is emitted as its own <script> tag —
+    BreadcrumbList / FAQPage). Each is emitted as its own <script> tag -
     Google parses them all independently and never penalizes multiple
     JSON-LD blocks on a page.
+
+    Empty page_intro_html / related_html collapses the markers cleanly
+    (used on the homepage where the editorial blocks don't apply).
 
     Lambda replacements keep backslash sequences in the replacement (e.g.
     \\uXXXX in JSON-LD) from being interpreted as regex backreferences.
@@ -899,11 +880,95 @@ def inject_into_html(html, *, static_block, ld_payloads, breadcrumb_html='', xax
         html, count=1, flags=re.DOTALL,
     )
     html = re.sub(
-        r'(<!-- XAXIS-START -->).*?(<!-- XAXIS-END -->)',
-        lambda m: m.group(1) + xaxis_html + m.group(2),
+        r'(<!-- PAGE-INTRO-START -->).*?(<!-- PAGE-INTRO-END -->)',
+        lambda m: m.group(1) + page_intro_html + m.group(2),
+        html, count=1, flags=re.DOTALL,
+    )
+    html = re.sub(
+        r'(<!-- RELATED-CUISINES-START -->).*?(<!-- RELATED-CUISINES-END -->)',
+        lambda m: m.group(1) + related_html + m.group(2),
+        html, count=1, flags=re.DOTALL,
+    )
+    # LCP preload: tells the browser to fetch the above-the-fold first
+    # row image before it parses past the <head>. Combined with
+    # fetchpriority="high" on the actual <img>, this is the biggest
+    # lever for LCP on the static-feed pages.
+    preload_tag = (
+        f'<link rel="preload" as="image" href="{_esc(lcp_preload_url)}" fetchpriority="high">'
+        if lcp_preload_url else ''
+    )
+    html = re.sub(
+        r'(<!-- LCP-PRELOAD-START -->).*?(<!-- LCP-PRELOAD-END -->)',
+        lambda m: m.group(1) + preload_tag + m.group(2),
         html, count=1, flags=re.DOTALL,
     )
     return html
+
+
+def build_alert_section(kind, value, label):
+    """Email signup section. Drops into the newsletter-cta slot on every
+    page; cuisine/district pages get a per-axis instant-alert form,
+    listing + home pages get the weekly all-Toronto digest form.
+
+    kind:  'cuisine', 'district', or 'digest_all'
+    value: the URL key - cuisine key, district slug, or 'toronto' for
+           digest_all. Stored by alerts_server so dispatch can route.
+    label: human display label - surfaces in pitch copy.
+
+    Submit handler lives in index.html (a single block scoped to
+    `form.alert-form`); we only emit the form markup.
+    """
+    if kind == 'cuisine':
+        title = f"Get an email when a new {label} restaurant opens"
+        blurb = (f"You'll get one email the moment a new {label} restaurant "
+                 f"is registered with the City of Toronto - typically a handful of times "
+                 f"per year. No weekly digest, no spam, one-click unsub.")
+    elif kind == 'digest_all':
+        title = "The week's newest Toronto restaurants, in your inbox"
+        blurb = ("Every Sunday, the top 5 restaurants newly registered with the City "
+                 "of Toronto over the past 7 days. One email a week, never more. "
+                 "One-click unsub.")
+    else:
+        title = f"Get an email when a new restaurant opens in {label}"
+        blurb = (f"You'll get one email the moment a new restaurant is "
+                 f"registered with the City in {label}. No weekly digest, no spam, "
+                 f"one-click unsub.")
+    # IDs on the title / blurb let the in-page JS morph copy when the
+    # user filters by the cross-axis - so on /cuisine/argentinian, picking
+    # Scarborough flips the form to an "Argentine in Scarborough"
+    # intersection signup without reloading the page.
+    return (
+        '<section class="newsletter-cta" aria-label="Email alert signup">'
+        '<div class="nl-pitch">'
+        f'<h2 id="alert-title">{_esc(title)}</h2>'
+        f'<p id="alert-blurb">{_esc(blurb)}</p>'
+        '</div>'
+        f'<form class="alert-form" data-kind="{_esc(kind)}" '
+        f'data-value="{_esc(value)}" data-label="{_esc(label)}" '
+        f'data-base-kind="{_esc(kind)}" data-base-value="{_esc(value)}" '
+        f'data-base-label="{_esc(label)}" novalidate>'
+        '<input type="email" required autocomplete="email" '
+        'placeholder="you@example.com" aria-label="Email address">'
+        '<button type="submit">Subscribe</button>'
+        '<div class="alert-status" role="status" aria-live="polite"></div>'
+        '<div class="alert-hp" aria-hidden="true">'
+        '<label>Website (leave blank): <input type="text" name="website" '
+        'tabindex="-1" autocomplete="off"></label></div>'
+        '</form>'
+        '</section>'
+    )
+
+
+def swap_newsletter_cta(html, section_html):
+    """Replace the homepage's default `<section class="newsletter-cta">`
+    block with a targeted alert section (per-cuisine, per-district, or
+    digest_all). The lambda keeps backslashes in `section_html` from
+    being interpreted as regex backrefs."""
+    return re.sub(
+        r'<section class="newsletter-cta"[^>]*>.*?</section>',
+        lambda m: section_html,
+        html, count=1, flags=re.DOTALL,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -914,22 +979,48 @@ static_block = build_static_rows(top_for_static)
 home_url = 'https://nowservingto.com/'
 home_itemlist = build_ld_itemlist(
     top_for_static,
-    name="Toronto's newest licensed restaurants by cuisine",
-    description='Restaurants newly licensed in Toronto in the past 365 days, classified by cuisine. Updated weekly from City of Toronto Open Data.',
+    name="Toronto's newest registered restaurants by cuisine",
+    description='Restaurants newly registered with the City of Toronto in the past 365 days, classified by cuisine. Updated daily from City of Toronto Open Data.',
 )
 home_collection = build_ld_collectionpage(
     home_itemlist, url=home_url, dateModified=REFERENCE_DATE.isoformat(),
 )
 try:
     home_html = open(INDEX_PATH).read()
-    # Homepage gets no breadcrumb (it IS the root) — just the CollectionPage
+    # Homepage gets no breadcrumb (it IS the root) - just the CollectionPage
     # wrapper to carry dateModified + url; no extra BreadcrumbList script.
+    home_lcp_thumb = (top_for_static[0].get('thumb') if top_for_static else '') or ''
     home_html = inject_into_html(home_html,
-        static_block=static_block, ld_payloads=[home_collection], breadcrumb_html='')
+        static_block=static_block, ld_payloads=[home_collection], breadcrumb_html='',
+        lcp_preload_url=home_lcp_thumb)
     open(INDEX_PATH, 'w').write(home_html)
     print(f"  pre-rendered {len(top_for_static)} static feed rows + JSON-LD ItemList into index.html")
 except Exception as e:
     print(f"  WARN: index.html injection failed: {e}")
+
+
+def build_page_intro(cuisine_key):
+    """Render the editorial intro paragraph for a cuisine landing page.
+    Returns '' (markers collapse to nothing) when no intro is on file."""
+    rec = _CUISINE_INTROS.get(cuisine_key) or {}
+    intro = (rec.get('intro') or '').strip()
+    if not intro: return ''
+    return f'<div class="page-intro"><p>{_esc(intro)}</p></div>'
+
+
+def build_related_cuisines(cuisine_key):
+    """Three sibling-cuisine links at the bottom of a cuisine page. Pulls from
+    cuisine_intros.json's 'related' list - filters out any related key that
+    doesn't have a label (i.e. isn't in the canonical taxonomy) so dead links
+    can't slip in. Returns '' when no related set is on file."""
+    rec = _CUISINE_INTROS.get(cuisine_key) or {}
+    related = [k for k in (rec.get('related') or []) if k in CUISINE_LABEL]
+    if not related: return ''
+    links = ', '.join(
+        f'<a href="/cuisine/{k}">{_esc(CUISINE_LABEL[k])}</a>'
+        for k in related[:3]
+    )
+    return f'<nav class="related-cuisines" aria-label="Related cuisines"><span class="rc-label">Also try</span>{links}</nav>'
 
 
 # ---------------------------------------------------------------------------
@@ -948,20 +1039,20 @@ except Exception as e:
 CUISINE_DIR = Path(ROOT) / 'cuisine'
 CUISINE_DIR.mkdir(exist_ok=True)
 cuisine_pages_written = 0
-template = open(INDEX_PATH).read()   # post-homepage-inject — has the fresh JS bundle
+template = open(INDEX_PATH).read()   # post-homepage-inject - has the fresh JS bundle
 for c in cuisines_out:
     key = c['key']; label = c['label']; n365 = c['count365d']; n30 = c['count30d']
     all_for_cuisine = opens_365_by_cuisine.get(key, [])
     entries = all_for_cuisine[:30]   # top 30 power the chronological feed + ItemList
     if not entries: continue
 
-    title = f"New {label} restaurants in Toronto — NowServingTO"
-    desc = (f"Every newly licensed {label} restaurant in Toronto over the past 365 "
-            f"days, updated weekly. {n365} entries tracked, {n30} from the last 30 days.")
+    title = f"New {label} restaurants in Toronto - NowServingTO"
+    desc = (f"Every newly registered {label} restaurant in Toronto over the past 365 "
+            f"days, updated daily. {n365} entries tracked, {n30} from the last 30 days.")
     canonical = f"https://nowservingto.com/cuisine/{key}"
 
     page = template
-    # Replace meta tags — first occurrence each.
+    # Replace meta tags - first occurrence each.
     page = re.sub(r'<title>[^<]*</title>', f'<title>{_esc(title)}</title>', page, count=1)
     for sel, val in [
         (r'(<meta name="description" content=")[^"]*(")',         desc),
@@ -976,11 +1067,13 @@ for c in cuisines_out:
                       page, count=1)
 
     # Replace the homepage's <h1 class="sub"> with a cuisine-specific
-    # one. Format follows the user-specified pattern (2026-05-16):
-    # "Toronto's newest <Label> cuisine" — targets the "newest <Label>
-    # cuisine Toronto" / "<Label> cuisine Toronto" query family.
-    cuisine_h1 = (f'<h1 class="sub">Toronto\'s <span class="hl">newest</span> '
-                  f'{_esc(label)} cuisine</h1>')
+    # one. "Newest registered" anchors the row date labels ("5d ago")
+    # to the City business-licence registration date. Avoided "licensed"
+    # because in Ontario that colloquially means LLBO/alcohol-licensed,
+    # which most entries on the site aren't. Targets "newest <Label>
+    # restaurants Toronto" SEO.
+    cuisine_h1 = (f'<h1 class="sub">Toronto\'s <span class="hl">newest registered</span> '
+                  f'{_esc(label)} restaurants</h1>')
     page = re.sub(r'<h1 class="sub">[\s\S]*?</h1>',
                   lambda m: cuisine_h1, page, count=1)
 
@@ -1015,24 +1108,20 @@ for c in cuisines_out:
          f"content, and Google Places category to determine the cuisine. "
          f"Multi-cuisine spots get tagged with every applicable cuisine."),
     ])
-    # Compound-query nav strip: bucket THIS cuisine's full 365d list by
-    # district, link each district page with the compound phrase as anchor
-    # text. Hits the "<Cuisine> restaurants in <District>" query family
-    # without re-listing the same restaurants the user is already viewing.
-    cuisine_xaxis = build_xaxis_strip(
-        all_for_cuisine,
-        group_fn=lambda e: e.get('district'),
-        anchor_template=f'{label} in {{label}} ({{count}})',
-        link_fn=lambda d: f'/district/{_district_slug(d)}',
-        intro=f'{label} by district:',
-    )
+    # Cross-axis compound-query nav strip was removed 2026-05-20 - see
+    # build_xaxis_strip for the rationale (UX-redundant with the pickers,
+    # and SEO benefit was nil because every "X in Y" anchor pointed at
+    # the same shared landing URL rather than a unique compound page).
     page = inject_into_html(
         page,
         static_block=cuisine_static,
         ld_payloads=[cuisine_collection, cuisine_breadcrumb_ld, cuisine_faq],
         breadcrumb_html=build_breadcrumb_html(cuisine_breadcrumb_parts),
-        xaxis_html=cuisine_xaxis,
+        page_intro_html=build_page_intro(key),
+        related_html=build_related_cuisines(key),
+        lcp_preload_url=(entries[0].get('thumb') or '') if entries else '',
     )
+    page = swap_newsletter_cta(page, build_alert_section('cuisine', key, label))
 
     (CUISINE_DIR / f'{key}.html').write_text(page)
     cuisine_pages_written += 1
@@ -1040,7 +1129,7 @@ print(f"  wrote {cuisine_pages_written} per-cuisine SEO landing pages → cuisin
 
 
 # ---------------------------------------------------------------------------
-# Per-DISTRICT landing pages at district/<slug>.html — parallels the
+# Per-DISTRICT landing pages at district/<slug>.html - parallels the
 # /cuisine/ pages but bucketed by Toronto district (Downtown, East Toronto,
 # Etobicoke, North York, Scarborough, West Toronto). Targets queries like
 # "new restaurants Scarborough" that have real volume and almost no ranked
@@ -1066,10 +1155,10 @@ for label, entries in by_district.items():
     n365 = len(entries)
     n30  = sum(1 for e in entries if e['daysOpen'] <= 30)
 
-    # Use "in Downtown Toronto" when label is "Downtown" — reads better.
+    # Use "in Downtown Toronto" when label is "Downtown" - reads better.
     place = f'{label} Toronto' if label == 'Downtown' else label
-    title = f"New restaurants in {place} — NowServingTO"
-    desc = (f"Every newly licensed restaurant in {place}, by cuisine, updated "
+    title = f"New restaurants in {place} - NowServingTO"
+    desc = (f"Every newly registered restaurant in {place}, by cuisine, updated "
             f"weekly. {n365} entries tracked, {n30} from the last 30 days.")
     canonical = f"https://nowservingto.com/district/{slug}"
 
@@ -1088,9 +1177,11 @@ for label, entries in by_district.items():
         page = re.sub(sel, lambda m, v=val: m.group(1) + _esc(v) + m.group(2),
                       page, count=1)
 
-    # District-specific h1
-    district_h1 = (f'<h1 class="sub">New <span class="hl">restaurants</span> '
-                   f'in {_esc(place)}</h1>')
+    # District-specific h1. "Newly registered" gives the row date labels
+    # ("5d ago") a clear referent without the LLBO/alcohol implication
+    # that "licensed" carries in Ontario.
+    district_h1 = (f'<h1 class="sub"><span class="hl">Newly registered</span> '
+                   f'restaurants in {_esc(place)}</h1>')
     page = re.sub(r'<h1 class="sub">[\s\S]*?</h1>',
                   lambda m: district_h1, page, count=1)
 
@@ -1125,34 +1216,16 @@ for label, entries in by_district.items():
          f"dataset of active business licences, cross-checked against "
          f"Google Places to confirm operating status."),
     ])
-    # Compound-query nav strip: bucket THIS district's 365d list by primary
-    # cuisine. Each cuisine page is the link target; anchor text holds the
-    # compound phrase "<Cuisine> in <District>". Same family of queries the
-    # cuisine-page strip targets — either cuisine OR district page can rank
-    # for the compound query, depending on which Google weights higher.
-    def _cuisine_label_of(e):
-        keys = e.get('cuisines') or ([e.get('cuisine')] if e.get('cuisine') else [])
-        return CUISINE_LABEL.get(keys[0], keys[0].replace('_', ' ').title()) if keys else None
-    def _cuisine_key_for(label):
-        # Reverse-lookup the cuisine key from its display label (we
-        # only have label → key in CUISINE_LABEL, so walk the dict).
-        for k, v in CUISINE_LABEL.items():
-            if v == label: return k
-        return label.lower().replace(' ', '_')
-    district_xaxis = build_xaxis_strip(
-        entries,
-        group_fn=_cuisine_label_of,
-        anchor_template=f'{{label}} in {place} ({{count}})',
-        link_fn=lambda c: f'/cuisine/{_cuisine_key_for(c)}',
-        intro=f'Cuisines in {place}:',
-    )
+    # Cross-axis compound-query nav strip removed 2026-05-20 (same reason
+    # as the cuisine-page version above - UX-redundant, SEO inert).
     page = inject_into_html(
         page,
         static_block=district_static,
         ld_payloads=[district_collection, district_breadcrumb_ld, district_faq],
         breadcrumb_html=build_breadcrumb_html(district_breadcrumb_parts),
-        xaxis_html=district_xaxis,
+        lcp_preload_url=(entries[0].get('thumb') or '') if entries else '',
     )
+    page = swap_newsletter_cta(page, build_alert_section('district', slug, label))
 
     (DISTRICT_DIR / f'{slug}.html').write_text(page)
     district_pages_written += 1
@@ -1163,10 +1236,10 @@ print(f"  wrote {district_pages_written} per-district SEO landing pages → dist
 # Per-LISTING pages at r/<slug>.html  +  OG image cards at og/<slug>.png.
 # ---------------------------------------------------------------------------
 # Every kept entry gets:
-#   r/<slug>.html  — own title/og:image/canonical/h1, single-row static feed,
+#   r/<slug>.html  - own title/og:image/canonical/h1, single-row static feed,
 #                    single-Restaurant JSON-LD. Apache .htaccess rewrites
 #                    /r/<slug> → /r/<slug>.html.
-#   og/<slug>.png  — 1200×675 branded card used as og:image so X/FB/iMessage
+#   og/<slug>.png  - 1200×675 branded card used as og:image so X/FB/iMessage
 #                    show the personalized image when the URL is shared,
 #                    with the IMAGE itself being a click-target to the page.
 from og_card import render_card_png as _render_og_card
@@ -1187,7 +1260,7 @@ for entry in seen_entries.values():
     slug = entry.get('slug')
     if not slug: continue
 
-    # 1) PNG card → og/<slug>.png — branded fallback
+    # 1) PNG card → og/<slug>.png - branded fallback
     try:
         _render_og_card(entry, out_path=str(OG_DIR / f'{slug}.png'))
         n_listing_png += 1
@@ -1206,9 +1279,9 @@ for entry in seen_entries.values():
     addr     = entry.get('address') or ''
     district = entry.get('district') or ''
 
-    title = f"{name} — {primary_lbl} restaurant in Toronto · NowServingTO"
+    title = f"{name} - {primary_lbl} restaurant in Toronto · NowServingTO"
     desc_addr = addr + (f', {district}' if district and district not in addr else '')
-    desc  = (f"{name} — newly licensed {primary_lbl} restaurant at {desc_addr}. "
+    desc  = (f"{name} - newly registered {primary_lbl} restaurant at {desc_addr}. "
              f"Part of NowServingTO's daily-updated directory of Toronto's "
              f"newest restaurants, by cuisine.")
     canonical = f"https://nowservingto.com/r/{slug}"
@@ -1257,7 +1330,7 @@ for entry in seen_entries.values():
         'servesCuisine': [CUISINE_LABEL.get(k, k) for k in keys if k],
         'url': entry.get('website') or canonical,
         'image': og_image,
-        'dateOpened': entry.get('issuedDate'),
+        'foundingDate': entry.get('issuedDate'),
     }
     if entry.get('rating'):
         listing_ld['aggregateRating'] = {
@@ -1283,6 +1356,7 @@ for entry in seen_entries.values():
         static_block=one_row,
         ld_payloads=[listing_ld, listing_breadcrumb_ld],
         breadcrumb_html=build_breadcrumb_html(listing_breadcrumb_parts),
+        lcp_preload_url=entry.get('thumb') or '',
     )
 
     (LISTING_DIR / f'{slug}.html').write_text(page)
@@ -1313,16 +1387,16 @@ for c in cuisines_out:
     url_blocks.append(
         f'  <url>\n    <loc>{SITE_BASE}/cuisine/{c["key"]}</loc>\n    <lastmod>{REFERENCE_DATE.isoformat()}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>0.8</priority>\n  </url>'
     )
-# Per-district landing pages — same priority as cuisines.
+# Per-district landing pages - same priority as cuisines.
 for label in by_district:
     if not by_district[label]: continue
     slug = _district_slug(label)
     url_blocks.append(
         f'  <url>\n    <loc>{SITE_BASE}/district/{slug}</loc>\n    <lastmod>{REFERENCE_DATE.isoformat()}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>0.8</priority>\n  </url>'
     )
-# Per-listing pages — every kept entry. Mid-tier priority (0.5) since each
+# Per-listing pages - every kept entry. Mid-tier priority (0.5) since each
 # is thin-ish on its own, but Google needs to see them in the sitemap to
-# discover them — they were completely absent before, which is why the
+# discover them - they were completely absent before, which is why the
 # GSC "Discovered - not indexed" count tracks the cuisine/district pages,
 # not the 444 r/<slug> pages Google doesn't even know about.
 # lastmod = each entry's actual issued date so Google sees stable URLs
@@ -1354,7 +1428,7 @@ for c in cuisines_out[:12]:
     print(f"  {c['label']:20s} {c['count365d']:>4} new (last 30d: {c['count30d']})   newest: {c['newest']['operatingName'][:42]}")
 
 # ---------------------------------------------------------------------------
-# Cleanup pass — delete stale generated files for entries that no longer
+# Cleanup pass - delete stale generated files for entries that no longer
 # exist in the live data. Without this, every dropped restaurant + every
 # emptied-out cuisine leaves an orphaned HTML file on disk serving 200 OK
 # to Google, polluting the indexing report with "discovered but not
@@ -1383,12 +1457,12 @@ n_district_stale = _cleanup(DISTRICT_DIR, live_districts)
 n_listing_stale  = _cleanup(LISTING_DIR,  live_slugs)
 # Same for the per-listing OG card PNGs + photo JPGs + thumb JPGs that
 # track the listing lifecycle. (og/ also holds non-listing assets like
-# /og.svg — only the <slug>.png pattern matters here.)
+# /og.svg - only the <slug>.png pattern matters here.)
 n_og_card_stale  = _cleanup(OG_DIR,           live_slugs, suffix='.png')
 n_og_photo_stale = _cleanup(OG_DIR / 'photo', live_slugs, suffix='.jpg')
 n_og_thumb_stale = _cleanup(OG_DIR / 'thumb', live_slugs, suffix='.webp')
 # Transitional cleanup 2026-05-19: thumbnails switched from JPG → WebP.
-# Sweep ALL leftover .jpg thumbs (regardless of slug match — they're no
+# Sweep ALL leftover .jpg thumbs (regardless of slug match - they're no
 # longer referenced by HTML; the new code only generates .webp).
 _thumb_jpg_dir = OG_DIR / 'thumb'
 if _thumb_jpg_dir.exists():

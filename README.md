@@ -6,9 +6,9 @@ Live at **https://nowservingto.com/**.
 
 ## What it does
 
-Every morning the cron pulls the City of Toronto business-licence feed from CKAN, finds the food businesses issued in the last 365 days, asks Claude Haiku 4.5 to classify each by cuisine (using `web_search` to read actual menus, reviews, owner bios — not just the operating name), verifies each is actually operating, and serves a single-page directory with a dropdown of cuisines and the newest entries first. Links go to the restaurant's website when one exists; otherwise to its Google Maps profile.
+Every morning the cron pulls the City of Toronto business-licence feed from CKAN, finds the food businesses issued in the last 365 days, asks Claude Haiku 4.5 to classify each by cuisine (using `web_search` to read actual menus, reviews, owner bios - not just the operating name), verifies each is actually operating, and serves a single-page directory with a dropdown of cuisines and the newest entries first. Links go to the restaurant's website when one exists; otherwise to its Google Maps profile.
 
-The point: an **immigrant-first** discovery feed. The newest Ethiopian, Tamil, Bangladeshi, Persian, Filipino, Salvadoran, Jamaican, etc. spots get surfaced the day their licence is approved, with the dropdown surfacing the cuisine you're actually looking for — not "ethnic" lumped together.
+The point: an **immigrant-first** discovery feed. The newest Ethiopian, Tamil, Bangladeshi, Persian, Filipino, Salvadoran, Jamaican, etc. spots get surfaced the day their licence is approved, with the dropdown surfacing the cuisine you're actually looking for - not "ethnic" lumped together.
 
 ## How it works
 
@@ -102,11 +102,11 @@ nowservingto/
 
 ## Status
 
-- 2026-05-13 — pivoted from "cultural corridor displacement map" to "now open by cuisine"
-- 2026-05-12 — pivoted from DemoCalcTO (demolition cost benchmarking) to corridor map
+- 2026-05-13 - pivoted from "cultural corridor displacement map" to "now open by cuisine"
+- 2026-05-12 - pivoted from DemoCalcTO (demolition cost benchmarking) to corridor map
 - BloomTO (multiplex parcel filtering) archived under `legacy/bloomto/`
 - DemoCalcTO archived under `legacy/democalcto/`
 
 ## License
 
-Code: MIT. Data: from the [City of Toronto Open Data Portal](https://open.toronto.ca/) under its Open Data Licence. Cuisine classifications are generated and may be wrong — flag issues via the repo's GitHub issues.
+Code: MIT. Data: from the [City of Toronto Open Data Portal](https://open.toronto.ca/) under its Open Data Licence. Cuisine classifications are generated and may be wrong - flag issues via the repo's GitHub issues.

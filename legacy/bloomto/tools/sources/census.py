@@ -43,7 +43,7 @@ PERIOD_UNIVERSE_LABEL = (
 HH_MEDIAN_INCOME_LABEL = "Median total income of household in 2020 ($)"
 HH_AVERAGE_INCOME_LABEL = "Average total income of household in 2020 ($)"
 
-# Owner-reported dwelling value (NPP 2021). Direct affordability signal —
+# Owner-reported dwelling value (NPP 2021). Direct affordability signal -
 # Toronto-wide range $500K (Flemingdon, Thorncliffe) to $3M (Bridle Path,
 # Forest Hill S). Per-parcel teardown lot cost ≈ 0.5–0.8 × neighborhood
 # median dwelling value, so a $2M-median hood is structurally outside the
@@ -70,7 +70,7 @@ BRACKET_MIDPOINTS: list[tuple[str, int]] = [
 ]
 
 # Cosmetic punctuation/whitespace differences between XLSX header names and the canonical
-# AREA_NAME values from the neighborhoods GeoJSON. Same neighborhoods — not fallbacks.
+# AREA_NAME values from the neighborhoods GeoJSON. Same neighborhoods - not fallbacks.
 NAME_ALIASES: dict[str, str] = {
     "Cabbagetown-South St. James Town": "Cabbagetown-South St.James Town",
     "Danforth-East York": "Danforth East York",
@@ -99,7 +99,7 @@ def _download_with_retries(url: str, dest: Path) -> None:
             if attempt == len(backoffs):
                 raise
             wait = backoffs[attempt]
-            _log.warning("download %s failed (attempt %d): %s — retrying in %ss",
+            _log.warning("download %s failed (attempt %d): %s - retrying in %ss",
                          url, attempt + 1, e, wait)
             time.sleep(wait)
 
@@ -128,7 +128,7 @@ def _resolve_built_year(universe: int | float | None,
     `universe` is the row 326 denominator (Total occupied private dwellings by period of
     construction); `bracket_counts` are the 8 per-bracket counts in BRACKET_MIDPOINTS
     order. Suppressed cells appear as 0, indistinguishable from a true zero per the
-    README — None is treated identically to 0.
+    README - None is treated identically to 0.
     """
     if not universe:
         return None
@@ -138,7 +138,7 @@ def _resolve_built_year(universe: int | float | None,
         if cumulative * 2 >= universe:
             return midpoint
     # Random-rounding (±20 per README risk #2) can leave cumulative just under universe.
-    # Fall through to the newest bracket — the median is at or after this point.
+    # Fall through to the newest bracket - the median is at or after this point.
     return BRACKET_MIDPOINTS[-1][1]
 
 
@@ -225,7 +225,7 @@ def compute_census(neighborhoods: list[Neighborhood], cache_dir: Path
         median_year = int(statistics.median(built_year_by_name.values()))
     else:
         median_year = 1985
-        _log.error("no built_year computed for any neighborhood — defaulting to %d",
+        _log.error("no built_year computed for any neighborhood - defaulting to %d",
                    median_year)
     for name in needs_built_year_fallback:
         built_year_by_name[name] = median_year
@@ -253,7 +253,7 @@ def _pull_paired_dollar_rows(neighborhoods: list[Neighborhood], cache_dir: Path,
                              ) -> tuple[dict[str, int], dict[str, int], list[str]]:
     """Generic puller for any (median, average) dollar pair from NPP 2021.
 
-    Used by both `compute_household_income` and `compute_dwelling_value` —
+    Used by both `compute_household_income` and `compute_dwelling_value` -
     same XLSX, same alias map, same per-nbhd column lookup. Returns
     `(median_by_name, avg_by_name, fallback_names)` keyed on AREA_NAME.
     Names with suppressed/missing data get 0 and appear in `fallback_names`.
@@ -333,7 +333,7 @@ def compute_household_income(neighborhoods: list[Neighborhood], cache_dir: Path
 
     Note: average is more useful than median for wealth detection in mansion-
     bearing hoods because the avg/median ratio captures wealth concentration
-    (Bridle Path: avg=$519K vs median=$222K, ratio 2.34 — mansions diluted by
+    (Bridle Path: avg=$519K vs median=$222K, ratio 2.34 - mansions diluted by
     Sunnybrook hospital staff and senior residences).
     """
     return _pull_paired_dollar_rows(
@@ -346,7 +346,7 @@ def compute_dwelling_value(neighborhoods: list[Neighborhood], cache_dir: Path
                            ) -> tuple[dict[str, int], dict[str, int], list[str]]:
     """Returns `(median_dwelling_value, avg_dwelling_value, fallback_names)`
     keyed on AREA_NAME. Owner-reported dwelling value (2020), CAD, from NPP
-    2021. Direct affordability signal — used as the L2/3-dev wealth filter
+    2021. Direct affordability signal - used as the L2/3-dev wealth filter
     in `build_parcels_top.py`. See DWELLING_MEDIAN_VALUE_LABEL header
     comment for caveats (owner self-report, 2020 baseline, condo blending).
     """

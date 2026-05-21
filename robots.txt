@@ -1,6 +1,69 @@
+# NowServingTO — robots policy.
+#
+# Default-allow for every crawler, including LLM/AI bots. The wildcard
+# stanza below already covers them, but we list the major AI bots
+# explicitly so:
+#   1. Intent is unambiguous to any human or middleware reading this
+#      (e.g. Cloudflare's "block-AI-bots-by-default" feature)
+#   2. Future-proof against an upstream proxy injecting Disallow rules —
+#      explicit Allows above any injected Disallow blocks win the precedence
+#      contest in the standard.
+#
 User-agent: *
 Allow: /
 Disallow: /tools/
 Disallow: /legacy/
+
+# Major LLM training + on-demand crawlers — all explicitly allowed.
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: claude-web
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: Meta-ExternalAgent
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: cohere-ai
+Allow: /
+
+User-agent: DiffBot
+Allow: /
+
+User-agent: YouBot
+Allow: /
 
 Sitemap: https://nowservingto.com/sitemap.xml

@@ -11,8 +11,9 @@ leaves entries on social.
 """
 import sys, time, json
 from pathlib import Path
-sys.path.insert(0, '/home/josh/nowservingto/tools')
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 from enrich_places import enrich_one, CACHE_PATH
+from chain_filter import is_known_chain, chain_set_summary
 
 ROOT = Path(__file__).resolve().parent.parent
 WEB_VERIFY_PATH = ROOT / 'tools' / 'cache' / 'web_verify_cache.json'
@@ -26,13 +27,19 @@ def main():
     wv = json.loads(WEB_VERIFY_PATH.read_text())
     places = json.loads(CACHE_PATH.read_text()) if CACHE_PATH.exists() else {}
 
+    print(chain_set_summary())
+    # Two cost gates added 2026-05-20: skip validator-rejected entries and
+    # known chains - they never end up on the site, paying Places for them
+    # is pure waste. See chain_filter.py.
     targets = [(k, e) for k, e in wv.items()
                if e.get('status') == 'ok'
                and e.get('operating') == 'yes'
-               and is_social(e.get('website'))]
-    print(f"social-link entries to address: {len(targets)}\n")
+               and is_social(e.get('website'))
+               and not e.get('validator_drop')
+               and not is_known_chain(k.split('||', 1)[0])]
+    print(f"social-link entries to address (excluding chains + validator-drops): {len(targets)}\n")
 
-    # Identify entries already covered by Places — those should already be using
+    # Identify entries already covered by Places - those should already be using
     # the Places URL in the rendered page; if not, the lookup key may differ.
     already_covered = sum(
         1 for k, e in targets

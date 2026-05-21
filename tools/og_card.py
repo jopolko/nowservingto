@@ -3,17 +3,17 @@
 Branded 1200x675 PNG card generator for a restaurant entry.
 
 Used by:
-  - inject_openings.py — writes one PNG per kept entry to /og/<slug>.png
+  - inject_openings.py - writes one PNG per kept entry to /og/<slug>.png
     at inject time. The per-listing HTML at /r/<slug>.html points its
     og:image meta tag at this PNG so X / Facebook / Slack / iMessage all
     show the personalized card when the URL is shared.
-  - x_post_new_openings.py — historically attached the PNG directly to
+  - x_post_new_openings.py - historically attached the PNG directly to
     tweets via the v1.1 /media/upload endpoint; with per-listing OG
     pages live, the bot can post text-only and X auto-cards from the
     page's og:image, giving the same visual + a click-target on the URL.
 
 Stdlib + rsvg-convert (apt: librsvg2-bin). Card design lives in
-build_card_svg() — edit there to change the look.
+build_card_svg() - edit there to change the look.
 """
 import os, re, subprocess, tempfile, sys
 from pathlib import Path

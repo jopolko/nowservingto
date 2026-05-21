@@ -3,14 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MISS QU BBQ CHINESE BISTRO — Chinese restaurant in Toronto · NowServingTO</title>
-<meta name="description" content="MISS QU BBQ CHINESE BISTRO — newly licensed Chinese restaurant at 4186 Finch Ave E Unit 21-22, Scarborough, ON M1S 4T5. Part of NowServingTO&#39;s daily-updated directory of Toronto&#39;s newest restaurants, by cuisine.">
-<meta name="keywords" content="Toronto restaurants, new restaurants Toronto, newest restaurants, Ethiopian Toronto, Tamil Toronto, Filipino Toronto, Persian Toronto, Mexican Toronto, Jamaican Toronto, Korean Toronto, Bangladeshi Toronto, Caribbean Toronto, immigrant restaurants Toronto, restaurant openings Toronto, daily updated">
+<title>MISS QU BBQ CHINESE BISTRO - Chinese restaurant in Toronto · NowServingTO</title>
+<meta name="description" content="MISS QU BBQ CHINESE BISTRO - newly licensed Chinese restaurant at 4186 Finch Ave E Unit 21-22, Scarborough, ON M1S 4T5. Part of NowServingTO&#39;s daily-updated directory of Toronto&#39;s newest restaurants, by cuisine.">
+<!-- meta keywords removed 2026-05-18: Google ignores the tag and a generic
+     cuisine-stuffed list reused across every generated page reads as spam. -->
 <meta name="author" content="NowServingTO">
 <link rel="canonical" href="https://nowservingto.com/r/miss-qu-bbq-chinese-bistro-4186">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="apple-touch-icon" href="/favicon.svg">
-<!-- Warm DNS + TLS to ipapi.co at page load — when a visitor clicks Near
+<!-- Warm DNS + TLS to ipapi.co at page load - when a visitor clicks Near
      Me, the HTTP request that follows skips ~150-300ms of handshake. -->
 <link rel="preconnect" href="https://ipapi.co" crossorigin>
 
@@ -24,21 +25,17 @@
   gtag('config', 'G-CBQJHD3G7P');
 </script>
 
-<!-- Leaflet for the optional map view. ~50 KB total. Routing-machine + flexpolyline
-     dropped: Google Maps' Directions UI handles mode selection (walk/drive/transit)
-     natively; running in-page routing was duplicative. -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="" defer></script>
-<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" defer></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js" defer></script>
+<!-- Leaflet + qrcode-generator are LAZY-LOADED on demand by the Map view
+     toggle (see loadLeaflet() / loadQrcode() in the bootstrap script). They
+     were previously eager-loaded in <head>, which cost ~700ms on LCP for
+     every visitor - even though most never click the Map view. Lazy-loading
+     saves render-blocking CSS + ~200KB of JS on initial page load. -->
 
 <!-- Open Graph for sharing previews -->
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://nowservingto.com/">
-<meta property="og:title" content="MISS QU BBQ CHINESE BISTRO — Chinese restaurant in Toronto · NowServingTO">
-<meta property="og:description" content="MISS QU BBQ CHINESE BISTRO — newly licensed Chinese restaurant at 4186 Finch Ave E Unit 21-22, Scarborough, ON M1S 4T5. Part of NowServingTO&#39;s daily-updated directory of Toronto&#39;s newest restaurants, by cuisine.">
+<meta property="og:url" content="https://nowservingto.com/r/miss-qu-bbq-chinese-bistro-4186">
+<meta property="og:title" content="MISS QU BBQ CHINESE BISTRO - Chinese restaurant in Toronto · NowServingTO">
+<meta property="og:description" content="MISS QU BBQ CHINESE BISTRO - newly licensed Chinese restaurant at 4186 Finch Ave E Unit 21-22, Scarborough, ON M1S 4T5. Part of NowServingTO&#39;s daily-updated directory of Toronto&#39;s newest restaurants, by cuisine.">
 <meta property="og:image" content="https://nowservingto.com/og/photo/miss-qu-bbq-chinese-bistro-4186.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="675">
@@ -47,8 +44,8 @@
 
 <!-- Twitter / X cards -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="MISS QU BBQ CHINESE BISTRO — Chinese restaurant in Toronto · NowServingTO">
-<meta name="twitter:description" content="MISS QU BBQ CHINESE BISTRO — newly licensed Chinese restaurant at 4186 Finch Ave E Unit 21-22, Scarborough, ON M1S 4T5. Part of NowServingTO&#39;s daily-updated directory of Toronto&#39;s newest restaurants, by cuisine.">
+<meta name="twitter:title" content="MISS QU BBQ CHINESE BISTRO - Chinese restaurant in Toronto · NowServingTO">
+<meta name="twitter:description" content="MISS QU BBQ CHINESE BISTRO - newly licensed Chinese restaurant at 4186 Finch Ave E Unit 21-22, Scarborough, ON M1S 4T5. Part of NowServingTO&#39;s daily-updated directory of Toronto&#39;s newest restaurants, by cuisine.">
 <meta name="twitter:image" content="https://nowservingto.com/og/photo/miss-qu-bbq-chinese-bistro-4186.jpg">
 
 <!-- Structured data: WebSite for the directory itself. Restaurant ItemList is
@@ -64,7 +61,7 @@
   "publisher": {"@type": "Organization", "name": "NowServingTO"},
   "isBasedOn": {
     "@type": "Dataset",
-    "name": "Municipal Licensing and Standards — Business Licences and Permits",
+    "name": "Municipal Licensing and Standards - Business Licences and Permits",
     "description": "Active business licences issued by the City of Toronto's Municipal Licensing and Standards division, including restaurants, retailers, and personal services. Published as open data and refreshed daily.",
     "url": "https://open.toronto.ca/dataset/municipal-licensing-and-standards-business-licences-and-permits/",
     "creator": {"@type": "Organization", "name": "City of Toronto", "url": "https://www.toronto.ca/"},
@@ -76,6 +73,7 @@
 </script>
 <!-- LD-ITEMLIST-START -->
 <script type="application/ld+json" id="ld-itemlist">{"@context":"https://schema.org","@type":"Restaurant","name":"MISS QU BBQ CHINESE BISTRO","address":{"@type":"PostalAddress","streetAddress":"4186 Finch Ave E Unit 21-22, Scarborough, ON M1S 4T5","addressLocality":"Toronto","addressRegion":"ON","addressCountry":"CA"},"servesCuisine":["Chinese"],"url":"https://nowservingto.com/r/miss-qu-bbq-chinese-bistro-4186","image":"https://nowservingto.com/og/photo/miss-qu-bbq-chinese-bistro-4186.jpg","dateOpened":"2025-05-29","aggregateRating":{"@type":"AggregateRating","ratingValue":4.9,"reviewCount":1663}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://nowservingto.com/"},{"@type":"ListItem","position":2,"name":"Chinese restaurants","item":"https://nowservingto.com/cuisine/chinese"},{"@type":"ListItem","position":3,"name":"MISS QU BBQ CHINESE BISTRO","item":"https://nowservingto.com/r/miss-qu-bbq-chinese-bistro-4186"}]}</script>
 <!-- LD-ITEMLIST-END -->
 <style>
   :root {
@@ -155,7 +153,7 @@
      instead of a rainbow of cuisine codes (cuisine is still shown in the popup). */
   .cuisine-pin span { display: block; width: 22px; height: 22px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.4); }
   .user-pin span { display: block; width: 18px; height: 18px; border-radius: 50%; background: #2a72ff; border: 3px solid #fff; box-shadow: 0 0 0 4px rgba(42,114,255,0.3); }
-  /* Permanent name label next to a pin — only shown when filter narrows to ~25 or fewer entries */
+  /* Permanent name label next to a pin - only shown when filter narrows to ~25 or fewer entries */
   .leaflet-tooltip.pin-label { background: rgba(255,255,255,0.95); border: 1px solid var(--line); border-radius: 4px; padding: 3px 7px; font: 700 11.5px/1.1 var(--sans); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,0.18); white-space: nowrap; }
   .leaflet-tooltip.pin-label::before { display: none; }  /* hide default tooltip pointer arrow */
   .leaflet-popup-content { font: 14px/1.4 var(--serif); margin: 12px 14px; }
@@ -236,7 +234,6 @@
   .open-row .on .rating { display: inline-block; margin-left: 10px; font: 700 12px/1 var(--sans); color: var(--ink2); font-variant-numeric: tabular-nums; vertical-align: 1px; white-space: nowrap; }
   .open-row .on .rating::before { content: '★'; color: #d4a017; margin-right: 3px; font-size: 13px; }
   .open-row .on .rating .rc { color: var(--muted); font-weight: 500; margin-left: 4px; font-size: 11px; }
-  .open-row .on .unverified { display: inline-block; margin-left: 8px; font: 700 9.5px/1 var(--sans); color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; border: 1px solid var(--line); padding: 3px 6px; border-radius: 99px; vertical-align: 2px; }
   .open-row .on .oad { display: block; font: 400 13px/1.4 var(--sans); color: var(--muted); margin-top: 4px; }
   .open-row .on .oad .oad-d { color: var(--ink2); font-weight: 500; }
   .open-row .on .oad .oad-dist { font-variant-numeric: tabular-nums; }
@@ -255,7 +252,7 @@
   /* When filtered to a single cuisine, hide the redundant cuisine pill on rows
      whose ONLY cuisine matches the filter. Multi-cuisine rows keep their pills
      visible so the user sees "Afghan · Pakistani · Indian" even on the Indian
-     filter — useful signal that the place serves multiple traditions. */
+     filter - useful signal that the place serves multiple traditions. */
   .open-feed.single-cuisine .open-row:not([data-multi]) { grid-template-columns: 110px 1fr; }
   .open-feed.single-cuisine .open-row.has-pic:not([data-multi]) { grid-template-columns: 80px 110px 1fr; }
   .open-feed.single-cuisine .open-row:not([data-multi]) .oc { display: none; }
@@ -264,6 +261,34 @@
   .open-feed .show-more:hover { background: var(--bg); border-color: var(--rule); color: var(--ink); }
 
   main.wrap { padding-bottom: 60px; }
+  /* Visible breadcrumb above the filter row on /cuisine, /district, /r pages.
+     Empty on the homepage (no parent). Mirrors the BreadcrumbList JSON-LD so
+     Google can show breadcrumbs in SERP results. */
+  .breadcrumb { font: 500 12px/1.4 var(--sans); color: var(--muted); margin: 18px 0 8px; letter-spacing: 0.01em; }
+  .breadcrumb a { color: var(--muted); text-decoration: none; border-bottom: 1px solid transparent; }
+  .breadcrumb a:hover { color: var(--ink); border-bottom-color: var(--line); }
+  .breadcrumb [aria-current="page"] { color: var(--ink2); }
+  .breadcrumb .sep { margin: 0 6px; opacity: 0.55; }
+  /* Compound-query SEO via a single-line nav strip - only on /cuisine/X
+     and /district/X pages. Each link's anchor text holds the compound
+     phrase ("<Cuisine> in <District>") so Google sees the topical signal,
+     and the link points across to the cross-axis page (district pages
+     from cuisine pages, cuisine pages from district pages). One quiet
+     line, no content duplication with the chronological feed above.
+     Replaces the earlier <details>/<h3> implementation which re-listed
+     restaurants already shown on the page. */
+  .xa-strip { margin: 18px 0 8px; padding: 12px 14px; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; font: 13px/1.5 var(--sans); color: var(--ink2); }
+  .xa-strip .xa-intro { font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 11px; margin-right: 4px; }
+  .xa-strip a { color: var(--ink); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.12s; }
+  .xa-strip a:hover { border-bottom-color: var(--rule); }
+  /* Newsletter CTA - sits above the footer. Quiet card with embedded
+     Substack signup iframe. Not a popup, not sticky - just a clear
+     offer for visitors who reached the bottom of the page. */
+  .newsletter-cta { margin: 40px 0 24px; padding: 22px 24px; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); display: grid; grid-template-columns: 1fr; gap: 16px; align-items: center; }
+  .newsletter-cta .nl-pitch h2 { font: 700 17px/1.25 var(--sans); margin: 0 0 6px; color: var(--ink); letter-spacing: -0.005em; }
+  .newsletter-cta .nl-pitch p { font: 400 13px/1.45 var(--sans); margin: 0; color: var(--ink2); }
+  .newsletter-cta iframe { display: block; min-height: 130px; }
+  @media (min-width: 640px) { .newsletter-cta { grid-template-columns: 1.1fr 1fr; gap: 28px; } }
   .site-foot { margin: 36px 0 8px; padding-top: 18px; border-top: 1px solid var(--line); font: 400 12.5px/1.6 var(--sans); color: var(--muted); text-align: center; }
   .site-foot a { color: var(--ink2); text-decoration: none; font-weight: 600; transition: color 0.12s; }
   .site-foot a:hover { color: var(--accent); }
@@ -297,6 +322,7 @@
 </header>
 
 <main class="wrap">
+  <!-- BREADCRUMB-START --><nav class="breadcrumb" aria-label="Breadcrumb"><a href="https://nowservingto.com/">Home</a><span class="sep">›</span><a href="https://nowservingto.com/cuisine/chinese">Chinese restaurants</a><span class="sep">›</span><span aria-current="page">MISS QU BBQ CHINESE BISTRO</span></nav><!-- BREADCRUMB-END -->
   <div class="filters">
     <div class="cuisine-picker">
       <button id="cp-trigger" class="cp-trigger" aria-haspopup="listbox" aria-expanded="false" aria-label="Filter by cuisine">All cuisines</button>
@@ -314,10 +340,12 @@
     </div>
   </div>
   <div class="open-feed" id="open-feed">
-    <!-- STATIC-FEED-START — pre-rendered daily by tools/inject_openings.py for crawlers + no-JS visitors. Replaced by interactive JS render on page load. -->
-    <div class="open-row has-pic"><a class="row-pic-link" href="https://maps.google.com/?cid=1850349313117951843" rel="noopener" aria-label="View MISS QU BBQ CHINESE BISTRO"><img class="row-pic" src="/og/thumb/miss-qu-bbq-chinese-bistro-4186.jpg" alt="" loading="lazy" decoding="async"></a><div class="od"><span class="ago">licensed 12mo ago</span></div><div class="on"><a href="https://maps.google.com/?cid=1850349313117951843" rel="noopener">MISS QU BBQ CHINESE BISTRO</a><span class="oad"><a href="https://maps.google.com/?cid=1850349313117951843" rel="noopener">4186 Finch Ave E Unit 21-22, Scarborough, ON M1S 4T5</a><span class="oad-d"> · Scarborough</span></span></div><div class="oc"><span class="pill" style="background:#b13e6a">Chinese</span></div></div>
+    <!-- STATIC-FEED-START - pre-rendered daily by tools/inject_openings.py for crawlers + no-JS visitors. Replaced by interactive JS render on page load. -->
+    <div class="open-row has-pic"><a class="row-pic-link" href="https://maps.google.com/?cid=1850349313117951843" rel="noopener" aria-label="View MISS QU BBQ CHINESE BISTRO"><img class="row-pic" src="/og/thumb/miss-qu-bbq-chinese-bistro-4186.webp" alt="" loading="lazy" decoding="async"></a><div class="od"><span class="ago">licensed 12mo ago</span></div><div class="on"><a href="https://maps.google.com/?cid=1850349313117951843" rel="noopener">MISS QU BBQ CHINESE BISTRO</a><span class="oad"><a href="https://maps.google.com/?cid=1850349313117951843" rel="noopener">4186 Finch Ave E Unit 21-22, Scarborough, ON M1S 4T5</a><span class="oad-d"> · Scarborough</span></span></div><div class="oc"><span class="pill" style="background:#b13e6a">Chinese</span></div></div>
     <!-- STATIC-FEED-END -->
   </div>
+
+  <!-- XAXIS-START --><!-- XAXIS-END -->
 
   <div class="map-view" id="map-view" hidden>
     <div class="map-toolbar">
@@ -326,12 +354,22 @@
     <div id="map" role="region" aria-label="Map of new restaurant openings"></div>
   </div>
 
+  <section class="newsletter-cta" aria-label="Email newsletter signup">
+    <div class="nl-pitch">
+      <h2>Get new Toronto restaurant openings in your inbox</h2>
+      <p>A short weekly digest of newly licensed restaurants by cuisine - straight from City open data, classified, and curated. Free, no spam.</p>
+    </div>
+    <iframe src="https://nowservingto.substack.com/embed" width="100%" height="150" style="border:1px solid var(--line);background:#fff;border-radius:8px;" frameborder="0" scrolling="no" loading="lazy"></iframe>
+  </section>
+
   <footer class="site-foot">
     <a href="https://x.com/nowservingto" target="_blank" rel="noopener">Follow @nowservingto on X</a>
     <span class="dot">·</span>
+    <a href="/contribute">Got a tip?</a>
+    <span class="dot">·</span>
     <a href="/usage">Sources</a>
     <span class="dot">·</span>
-    City of Toronto open data <span class="dot">·</span>
+    City of Toronto Open Data <span class="dot">·</span>
     Google Places <span class="dot">·</span>
     Anthropic Claude
   </footer>
@@ -411,14 +449,14 @@ function agoLabel(days) {
 
 fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
   const no = data.newOpenings;
-  // (Subtitle reads "updated daily" — no dynamic date to inject.)
+  // (Subtitle reads "updated weekly" - no dynamic date to inject.)
 
   // Dynamic cuisine taxonomy: corridors.json carries label + color for every
   // active cuisine (curated palette for seed keys, hash-derived hex for
   // novel keys auto-registered when Haiku surfaced a new ethnicity). This
   // map lets the renderer use server-side colors/labels first, falling back
   // to the legacy JS CUISINE_PALETTE/LABEL only for keys the JSON didn't
-  // ship — typically nothing, since the JSON is the source of truth now.
+  // ship - typically nothing, since the JSON is the source of truth now.
   const CUISINE_META = {};
   (no && no.cuisines || []).forEach(c => {
     if (c && c.key) CUISINE_META[c.key] = { label: c.label, color: c.color };
@@ -454,7 +492,7 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
   const rPanel = document.getElementById('rp-panel');
   const feed = document.getElementById('open-feed');
 
-  // District list — same 6 derived from FSA mapping in inject_openings.py
+  // District list - same 6 derived from FSA mapping in inject_openings.py
   const DISTRICTS = ['Downtown', 'East Toronto', 'Etobicoke', 'North York', 'Scarborough', 'West Toronto'];
 
   // Build the custom dropdown options: "All cuisines" pinned top, then alphabetical
@@ -473,7 +511,7 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
     .sort((a, b) => (a.label || a.key).localeCompare(b.label || b.key))
     .forEach(c => panel.appendChild(makeOpt(c.key, c.label, c.count365d, false)));
 
-  // Region dropdown — count entries per district from the recent feed
+  // Region dropdown - count entries per district from the recent feed
   const regionCount = {};
   no.recent.forEach(r => { if (r.district) regionCount[r.district] = (regionCount[r.district]||0)+1; });
   rPanel.appendChild(makeOpt('__all', 'All Toronto', no.recent.length, true));
@@ -500,12 +538,18 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
     if (cuisineKeys.length > 1) row.setAttribute('data-multi', '');
     const trustMatch = !r.matchedName || nameJaccard(r.operatingName, r.matchedName) >= 0.34;
     // Per user directive 2026-05-15: name link is shown when the validator
-    // approved a website — either from Places or from the Google-search
+    // approved a website - either from Places or from the Google-search
     // fallback (top match, judged on small-scale/independent/immigrant-owned
     // ethnic-cuisine criteria). The validator-approved URL is in r.website;
     // if absent, no link. trustMatch still gates against wrong-business
     // Places matches (suppresses link + rating when the matched name diverges).
-    const link = (trustMatch && r.website) ? r.website : null;
+    // Name link precedence: own website (when trust gate passes) > Places
+    // deep-link > our own /r/<slug> listing page. The listing page is the
+    // always-available fallback - never sends to a wrong business or a
+    // generic-building Maps result, and provides cuisine + address + a
+    // breadcrumb back to the cuisine hub.
+    const internalUrl = r.slug ? `/r/${r.slug}` : null;
+    const link = (trustMatch && r.website) ? r.website : (r.mapsUrl || internalUrl);
     const linkClass = link ? 'ext' : '';
     // target=_blank on desktop (preserve NowServingTO tab); same-tab on mobile so
     // the back button cleanly returns from Maps without stranding the user on a
@@ -518,24 +562,25 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
     const ratingHtml = (trustMatch && r.rating)
       ? `<span class="rating">${r.rating.toFixed(1)}<span class="rc">· ${r.reviewCount ? r.reviewCount.toLocaleString() : '?'}</span></span>`
       : '';
-    const unverifiedHtml = (!trustMatch && r.matchedName)
-      ? `<span class="unverified" title="Google's matched name (${r.matchedName}) differs too much from the licence name to trust — link suppressed">unverified</span>`
-      : '';
-    // Address links to Google Maps. Precedence:
-    //   1. r.mapsUrl — Places CID deep-link (e.g., maps.google.com?cid=...)
-    //      when Places matched the entry. Single result, exact business —
-    //      no ambiguity when multiple businesses share a name or address.
-    //   2. r.fallbackMapsUrl — name + address search URL when no Places
-    //      match exists. The wrong-brand routing risk (Mapo case) is
-    //      already prevented upstream by the brand-new-unverified gate.
-    // Both are address-anchored (no lat/lng coordinates), human-readable,
-    // and route to a real Google Maps result.
-    const addrUrl = r.mapsUrl || r.fallbackMapsUrl;
-    const addrText = r.address || '—';
+    // (Was: "unverified" pill rendered when Places' matched name diverges
+    // too far from the licence name. The user-protective behavior - link
+    // suppression - still happens silently via trustMatch. Pill removed
+    // 2026-05-19 because Google's JS-rendering crawl was picking it up
+    // and concatenating it next to the restaurant name in SERP snippets
+    // ("CAFEMIA ITALIAN BAKERYunverified 84 OAKDALE RD"), which read
+    // worse to searchers than the protective behavior was worth.)
+// Address link: ONLY the Places CID deep-link. When there's no Places
+    // match we previously fell back to a name+address search URL, but that
+    // lands on neighboring businesses (CAFEMIA case → Messina/Amico/Tre
+    // Mari bakeries instead of CAFEMIA) and an address-only search lands
+    // on a generic building. Plain text is more honest when we don't have
+    // an authoritative deep-link.
+    const addrUrl = r.mapsUrl;
+    const addrText = r.address || '-';
     const addrLink = addrUrl ? `<a href="${addrUrl}"${tgt} rel="noopener">${addrText}</a>` : addrText;
     // Suffix the address with either distance (when Near me is active and we
     // have coords) or the district (when not, and we're showing all-Toronto).
-    // Distance replaces district under near-me — the district is less useful
+    // Distance replaces district under near-me - the district is less useful
     // once the user's already filtered to their own neighbourhood radius.
     let addrSuffix = '';
     if (nearMeActive && userLatLng && r.lat && r.lng) {
@@ -550,7 +595,7 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
     const favHtml = r.slug
       ? `<button class="row-fav ${saved ? 'fav-on' : ''}" type="button" aria-label="${saved ? 'Remove from saved' : 'Save for later'}">${saved ? '♥' : '♡'}</button>`
       : '';
-    // Material/Android share glyph — 3 dots connected by lines. More universally
+    // Material/Android share glyph - 3 dots connected by lines. More universally
     // recognized as "share" than ↗ (which we already use for external links on
     // business names).
     const shareHtml = r.slug
@@ -559,7 +604,10 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
     const thumb = r.thumb || '';
     // Thumbnail click → restaurant's own website if validated, else the
     // Places Maps card. Direct destination, no aggregator detour.
-    const thumbTarget = r.website || r.mapsUrl || r.fallbackMapsUrl || '';
+    // Photo click → Google Places card preferred (Maps has more photos +
+    // reviews + hours than a typical one-page restaurant website). Falls
+    // back to website then internal listing page.
+    const thumbTarget = r.mapsUrl || r.website || internalUrl || '';
     const thumbHtml = thumb && thumbTarget
       ? `<a class="row-pic-link" href="${thumbTarget}"${tgt} rel="noopener" aria-label="View ${r.operatingName}"><img class="row-pic" src="${thumb}" alt="" loading="lazy" decoding="async"></a>`
       : thumb
@@ -568,7 +616,7 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
     if (thumb) row.classList.add('has-pic');
     row.innerHTML = `${thumbHtml}
       <div class="od"><span class="ago">${agoLabel(r.daysOpen)}</span></div>
-      <div class="on">${nameHtml}${ratingHtml}${unverifiedHtml}<span class="oad">${addrLine}</span></div>
+      <div class="on">${nameHtml}${ratingHtml}<span class="oad">${addrLine}</span></div>
       <div class="oc">${favHtml}${shareHtml}${pillsHtml}</div>`;
     const favBtn = row.querySelector('.row-fav');
     if (favBtn) {
@@ -631,7 +679,7 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
   }
   function renderFeed() {
     // Single-listing mode (/r/<slug>): the user arrived from a shared link
-    // or X card — show ONLY that one entry, with a "Browse all" link at the
+    // or X card - show ONLY that one entry, with a "Browse all" link at the
     // top so they can broaden to the full feed.
     if (singleSlug) {
       const target = no.recent.find(r => r.slug === singleSlug);
@@ -672,7 +720,7 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
   // Build the row set that would result from a given (cuisine, region, nearMe) tuple.
   // Mirrors the logic in renderFeed() so option counts agree with what the user sees.
   // When nearMe is true (and userLatLng is set), filters to entries within nearMeRadius
-  // of the user — overriding the region argument since they're mutually exclusive.
+  // of the user - overriding the region argument since they're mutually exclusive.
   function rowsFor(cuisineKey, regionKey, nearMe) {
     let rows;
     if (cuisineKey === '__all') rows = no.recent.slice();
@@ -690,7 +738,7 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
       rows = rows.filter(r => saved.has(r.slug));
     }
     if (nearMe && userLatLng) {
-      // Entries without coords can't be evaluated for proximity — exclude them.
+      // Entries without coords can't be evaluated for proximity - exclude them.
       rows = rows.filter(r => r.lat && r.lng && haversineKm(userLatLng, [r.lat, r.lng]) <= nearMeRadius);
     } else if (regionKey !== '__all') {
       rows = rows.filter(r => r.district === regionKey);
@@ -699,7 +747,7 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
   }
   function updateOptionCounts() {
     // Region counts = entries that survive (currentCuisine, that-region, no near-me).
-    // Region pickers are "if I picked this region" hypotheticals — distinct from near-me.
+    // Region pickers are "if I picked this region" hypotheticals - distinct from near-me.
     rPanel.querySelectorAll('.cp-opt').forEach(o => {
       const ct = o.querySelector('.ct'); if (!ct) return;
       ct.textContent = rowsFor(currentCuisine, o.dataset.key, false).length;
@@ -722,13 +770,13 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
     currentRegion = regionKey;
     // Recompute counts for both dropdowns under the new filter state
     updateOptionCounts();
-    // Update cuisine trigger — count reflects current region (or near-me) too
+    // Update cuisine trigger - count reflects current region (or near-me) too
     const cuisineN = rowsFor(cuisineKey, regionKey, nearMeActive).length;
     const c = cuisineKey === '__all' ? null : no.cuisines.find(x => x.key === cuisineKey);
     trigger.textContent = c ? `${c.label} (${cuisineN})` : `All cuisines (${cuisineN})`;
     panel.querySelectorAll('.cp-opt').forEach(o => o.setAttribute('aria-selected', o.dataset.key === cuisineKey ? 'true' : 'false'));
-    // Update region trigger — Near me overrides the region pick.
-    // Near me overrides the region pick. Trigger shows just "Near me" — no
+    // Update region trigger - Near me overrides the region pick.
+    // Near me overrides the region pick. Trigger shows just "Near me" - no
     // km value, because the dropdown only offers regions and a number in the
     // trigger misleads users into expecting a km picker inside.
     rTrigger.textContent = nearMeActive
@@ -746,11 +794,12 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
     }
   }
   // Initial filter state. Priority:
-  //   1. URL hash (`#cuisine=X&region=Y`) — sticky across refreshes + share-links
-  //   2. URL path (`/cuisine/X`) — SEO landing pages
+  //   1. URL hash (`#cuisine=X&region=Y`) - sticky across refreshes + share-links
+  //   2. URL path (`/cuisine/X`) - SEO landing pages
   //   3. defaults
-  const pathCuisineMatch = location.pathname.match(/^\/cuisine\/([a-z_]+)\/?$/);
-  const pathListingMatch = location.pathname.match(/^\/r\/([\w-]+)\/?$/);
+  const pathCuisineMatch  = location.pathname.match(/^\/cuisine\/([a-z_]+)\/?$/);
+  const pathDistrictMatch = location.pathname.match(/^\/district\/([a-z-]+)\/?$/);
+  const pathListingMatch  = location.pathname.match(/^\/r\/([\w-]+)\/?$/);
   const hashCuisine = (location.hash.match(/cuisine=([a-z_]+)/) || [])[1];
   const hashRegion = (location.hash.match(/region=([^&]+)/) || [])[1];
   const cuisineFromUrl = hashCuisine || (pathCuisineMatch && pathCuisineMatch[1]);
@@ -764,7 +813,7 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
   if (initialCuisine !== '__all' && pathCuisineMatch) {
     const c = no.cuisines.find(x => x.key === initialCuisine);
     if (c) {
-      const t = `Toronto's newest ${c.label} restaurants — NowServingTO`;
+      const t = `Toronto's newest ${c.label} restaurants - NowServingTO`;
       document.title = t;
       const desc = `A daily-fresh list of every new ${c.label} restaurant licensed in Toronto in the past 365 days. ${c.count365d} entries currently tracked.`;
       const setMeta = (sel, attr, val) => {
@@ -780,7 +829,7 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
     }
   }
 
-  // Per-listing share link `/r/{slug}` — single-listing mode. Show just
+  // Per-listing share link `/r/{slug}` - single-listing mode. Show just
   // this entry, hide the filter row, and add a "Browse all restaurants"
   // link so the visitor can broaden when they're ready.
   if (pathListingMatch) {
@@ -788,7 +837,7 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
     const target = no.recent.find(r => r.slug === slug);
     if (target) {
       singleSlug = slug;
-      document.title = `${target.operatingName} — NowServingTO`;
+      document.title = `${target.operatingName} - NowServingTO`;
       const link = document.querySelector('link[rel="canonical"]');
       if (link) link.setAttribute('href', `https://nowservingto.com/r/${slug}`);
       // Hide filter row (cuisine/region/near-me/saved/view) and inject a
@@ -809,7 +858,7 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
   }
 
   // Reusable dropdown toggle/close for both pickers. allPickers lets each picker
-  // close the others on open — fixes the "both open at once" overlap bug since
+  // close the others on open - fixes the "both open at once" overlap bug since
   // stopPropagation on the trigger click prevents the document-level outside-click
   // from reaching the other picker's handler.
   const allPickers = [];
@@ -833,16 +882,59 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
     allPickers.push(picker);
     return picker;
   }
-  setupPicker(trigger, panel, key => applyFilters(key, currentRegion));
+  // District slug helper - mirrors tools/inject_openings.py _district_slug.
+  // Used to navigate between /district/<slug> landing pages.
+  const districtSlug = label => label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+  setupPicker(trigger, panel, key => {
+    // Cuisine pick → navigate to the canonical landing page in most cases.
+    // The cuisine landing page is richer than the homepage filter view
+    // (cuisine-specific h1, FAQ, breadcrumb, JSON-LD CollectionPage,
+    // and the by-district nav strip). Hash-filtering the homepage gave
+    // visitors none of that. Two cases that still in-page filter:
+    //   - "__all" picked while already on homepage: stay (already showing all)
+    //   - Same cuisine picked while already on that cuisine page: no-op
+    if (key === '__all') {
+      if (pathCuisineMatch || pathDistrictMatch) {
+        location.href = '/';
+      } else {
+        applyFilters(key, currentRegion);
+      }
+      return;
+    }
+    if (pathCuisineMatch && key === pathCuisineMatch[1]) {
+      applyFilters(key, currentRegion);
+      return;
+    }
+    location.href = '/cuisine/' + key;
+  });
   setupPicker(rTrigger, rPanel, key => {
-    // Picking any region (including "All Toronto") turns Near me off — they're
+    // Picking any region (including "All Toronto") turns Near me off - they're
     // mutually exclusive spatial filters.
     if (nearMeActive) {
       nearMeActive = false;
       document.getElementById('locate-btn').classList.remove('active');
       if (mapInstance && userMarker) mapInstance.removeLayer(userMarker);
     }
-    applyFilters(currentCuisine, key);
+    // Region pick → navigate to the canonical /district/<slug> landing page
+    // in most cases. The landing page is richer than the homepage filter
+    // view (district-specific h1, FAQ, breadcrumb, JSON-LD, and the
+    // by-cuisine nav strip). Two cases that still in-page filter:
+    //   - "__all" picked while already on homepage: stay
+    //   - Same district picked while already on that district page: no-op
+    if (key === '__all') {
+      if (pathCuisineMatch || pathDistrictMatch) {
+        location.href = '/';
+      } else {
+        applyFilters(currentCuisine, key);
+      }
+      return;
+    }
+    if (pathDistrictMatch && districtSlug(key) === pathDistrictMatch[1]) {
+      applyFilters(currentCuisine, key);
+      return;
+    }
+    location.href = '/district/' + districtSlug(key);
   });
 
   // Brand-as-home: clicking NowServingTO always navigates to the
@@ -856,7 +948,7 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
     brandLink.addEventListener('click', e => {
       e.preventDefault();
       if (location.pathname === '/' && !location.hash && !location.search) {
-        location.reload();  // already at root — refresh in place
+        location.reload();  // already at root - refresh in place
       } else {
         location.href = '/';
       }
@@ -866,12 +958,12 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
 
   // ---- MAP VIEW ----
   // Leaflet + markercluster. Lazy-inits on first toggle to Map view.
-  // Pins drawn from currentRows (the filtered set) — re-renders on filter change
+  // Pins drawn from currentRows (the filtered set) - re-renders on filter change
   // and on view toggle. Geolocation is user-initiated only.
   //
   // `var` (not `let`) so these hoist alongside their function decls. `renderMapPins`
   // gets called from applyFilters during initial hash-restore, BEFORE control flow
-  // reaches this block — `let` would put these in TDZ and the call would throw.
+  // reaches this block - `let` would put these in TDZ and the call would throw.
   var mapInstance = null;
   var mapMarkers = null;
   var userMarker = null;
@@ -879,16 +971,16 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
   var mapInitialized = false;
 
 
-  // 📱 Send to phone — show a QR code linking to Google Maps with the
+  // 📱 Send to phone - show a QR code linking to Google Maps with the
   // destination pre-filled. Phone's camera scans → opens in its native Maps app
   // (Google on Android, Apple Maps via Safari handoff on iOS) with directions
-  // ready. We let the phone provide its own current location as the origin —
+  // ready. We let the phone provide its own current location as the origin -
   // more reliable than passing our (possibly browser-cached) lat/lng across.
   function sendToPhone(lat, lng, encodedName) {
     const name = decodeURIComponent(encodedName || '');
     const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}` +
                     (name ? `&destination_place_id=&travelmode=walking` : '');
-    if (typeof qrcode !== 'function') { alert('QR library still loading — try again in a moment.'); return; }
+    if (typeof qrcode !== 'function') { alert('QR library still loading - try again in a moment.'); return; }
     const qr = qrcode(0, 'M');
     qr.addData(mapsUrl);
     qr.make();
@@ -917,7 +1009,7 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
   // Once active, all counts/feed/pins constrain to entries within nearMeRadius km
   // of userLatLng. Selecting any region from the dropdown turns this off.
   var nearMeActive = false;
-  var nearMeRadius = 5; // km — generous enough that one transit hop (TTC bus or
+  var nearMeRadius = 5; // km - generous enough that one transit hop (TTC bus or
                          // streetcar from a typical neighbourhood) lands inside
                          // the radius, not just walking distance.
 
@@ -928,10 +1020,62 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
     return 2 * R * Math.asin(Math.sqrt(A));
   }
 
+  // Lazy-load Leaflet (CSS + JS + MarkerCluster) only when the Map view is
+  // first activated. ~200KB of assets the vast majority of visitors never
+  // need - eager-loading them cost ~700ms LCP for every page load (per
+  // PageSpeed Insights). Returns a Promise that resolves once Leaflet is
+  // ready to use; memoized so subsequent calls return the same Promise.
+  let _leafletLoadPromise = null;
+  function loadLeaflet() {
+    if (_leafletLoadPromise) return _leafletLoadPromise;
+    _leafletLoadPromise = new Promise((resolve, reject) => {
+      // CSS files first - inject all three in parallel
+      [
+        'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+        'https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css',
+        'https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css',
+      ].forEach(href => {
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = href;
+        link.crossOrigin = '';
+        document.head.appendChild(link);
+      });
+      // Leaflet JS, then MarkerCluster JS (must load after Leaflet's global L is defined)
+      const leafletJs = document.createElement('script');
+      leafletJs.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+      leafletJs.crossOrigin = '';
+      leafletJs.onload = () => {
+        const mcJs = document.createElement('script');
+        mcJs.src = 'https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js';
+        mcJs.onload = resolve;
+        mcJs.onerror = reject;
+        document.head.appendChild(mcJs);
+      };
+      leafletJs.onerror = reject;
+      document.head.appendChild(leafletJs);
+    });
+    return _leafletLoadPromise;
+  }
+  // qrcode-generator is also only used by the map's directions-popup QR
+  // (no map view → no QR usage). Load on demand.
+  let _qrcodeLoadPromise = null;
+  function loadQrcode() {
+    if (_qrcodeLoadPromise) return _qrcodeLoadPromise;
+    _qrcodeLoadPromise = new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js';
+      s.onload = resolve;
+      s.onerror = reject;
+      document.head.appendChild(s);
+    });
+    return _qrcodeLoadPromise;
+  }
+
   function initMap() {
     if (mapInitialized) return;
     if (typeof L === 'undefined') {
-      document.getElementById('map').innerHTML = '<div style="padding:20px;color:#7a746a">Map library still loading — try again in a moment.</div>';
+      document.getElementById('map').innerHTML = '<div style="padding:20px;color:#7a746a">Map library still loading - try again in a moment.</div>';
       return;
     }
     mapInstance = L.map('map', { preferCanvas: true }).setView([43.6532, -79.3832], 12);
@@ -957,7 +1101,7 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
     if (!mapInitialized) return;
     mapMarkers.clearLayers();
     const rows = currentRows.filter(r => r.lat && r.lng);
-    const PIN_COLOR = '#1a7340';  // var(--fresh) — same green as walking route
+    const PIN_COLOR = '#1a7340';  // var(--fresh) - same green as walking route
     // Permanent name labels are useful when there are few pins (e.g. filtered to
     // a small cuisine). Above ~25 they crowd the map and we let clicks reveal names.
     const showLabels = rows.length <= 25;
@@ -1001,11 +1145,11 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
       : '';
     // Always show route buttons. If location isn't granted yet, showRoute() will
     // prompt for it and auto-route once acquired.
-    // On mobile, the user IS the phone — open Google Maps directly. On desktop,
+    // On mobile, the user IS the phone - open Google Maps directly. On desktop,
     // show a QR for handoff to a separate phone.
     const onMobile = window.matchMedia('(max-width: 700px)').matches || ('ontouchstart' in window);
     const encName = encodeURIComponent(r.operatingName||'');
-    // Single Directions button — opens Google Maps' Directions UI where the user
+    // Single Directions button - opens Google Maps' Directions UI where the user
     // picks walk/drive/transit themselves. Cleaner than duplicating mode selection
     // here. On desktop, also offer 📱 To phone (QR for handoff).
     const dirBtn = onMobile
@@ -1033,14 +1177,14 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
     const ago = r.daysOpen <= 1 ? 'today'
               : r.daysOpen <= 60 ? `${r.daysOpen}d ago`
               : `${Math.round(r.daysOpen/30)}mo ago`;
-    // "Downtown" alone reads awkwardly — pin it as "Downtown Toronto". Other
+    // "Downtown" alone reads awkwardly - pin it as "Downtown Toronto". Other
     // districts (Scarborough, Etobicoke, North York) are well-known on their own.
     const districtPhrase = r.district === 'Downtown' ? 'Downtown Toronto' : r.district;
     const where = r.address && districtPhrase
       ? ` at ${r.address} in ${districtPhrase}`
       : r.address ? ` at ${r.address}`
       : districtPhrase ? ` in ${districtPhrase}` : '';
-    const text = `${r.operatingName} — newly-licensed ${cuisineLbl} kitchen${where}. Licensed ${ago}.`;
+    const text = `${r.operatingName} - newly-licensed ${cuisineLbl} kitchen${where}. Licensed ${ago}.`;
     if (navigator.share) {
       try { await navigator.share({ title: r.operatingName, text, url }); }
       catch (e) { /* user dismissed */ }
@@ -1100,7 +1244,7 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
       btn.textContent = originalLabel;
       btn.disabled = false;
       if (!wasActive) setNearMeActive(true);
-      else applyFilters(currentCuisine, '__all', true);  // silent upgrade — refresh distances
+      else applyFilters(currentCuisine, '__all', true);  // silent upgrade - refresh distances
     };
 
     // Stage 1: localStorage cache (30-min TTL). Re-clicks are instant.
@@ -1115,7 +1259,7 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
 
     btn.textContent = 'locating…';
 
-    // Stage 2: ipapi.co — free, ~200ms, city-level accuracy (~5-10km).
+    // Stage 2: ipapi.co - free, ~200ms, city-level accuracy (~5-10km).
     // No permission prompt, no waiting. Plenty precise for the 5km Near
     // Me radius. Free tier: 1K req/day per IP, no key, HTTPS. Falls
     // through to browser geolocation only if ipapi fails.
@@ -1139,7 +1283,7 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
         }
       })
       .catch(() => {
-        // ipapi unreachable — fall back to native geolocation.
+        // ipapi unreachable - fall back to native geolocation.
         if (!navigator.geolocation) {
           btn.textContent = originalLabel;
           btn.disabled = false;
@@ -1154,9 +1298,9 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
           clearTimeout(slowTimer);
           btn.textContent = originalLabel;
           btn.disabled = false;
-          const msg = err.code === 1 ? 'Permission denied — enable location in your browser to use this.'
+          const msg = err.code === 1 ? 'Permission denied - enable location in your browser to use this.'
                     : err.code === 2 ? 'Location unavailable right now.'
-                    : err.code === 3 ? 'Timed out — try again.' : 'Could not get location.';
+                    : err.code === 3 ? 'Timed out - try again.' : 'Could not get location.';
           alert(msg);
         }, { enableHighAccuracy: false, timeout: 8000, maximumAge: 30 * 60 * 1000 });
       });
@@ -1173,9 +1317,25 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
     if (v === 'map') {
       feed.hidden = true;
       mapView.hidden = false;
-      if (!mapInitialized) initMap();
-      else renderMapPins();
-      setTimeout(() => mapInstance && mapInstance.invalidateSize(), 60);
+      if (!mapInitialized) {
+        // Show a brief "loading…" state while Leaflet downloads on first
+        // map-view toggle. Most visitors never reach this branch.
+        const mapDiv = document.getElementById('map');
+        mapDiv.innerHTML = '<div style="padding:20px;color:#7a746a">Loading map…</div>';
+        loadLeaflet().then(() => {
+          mapDiv.innerHTML = '';
+          initMap();
+          setTimeout(() => mapInstance && mapInstance.invalidateSize(), 60);
+        }).catch(() => {
+          mapDiv.innerHTML = '<div style="padding:20px;color:#7a746a">Map library failed to load. Refresh the page to retry.</div>';
+        });
+        // Also start loading qrcode lib in parallel - it's used inside
+        // pin popups for the directions QR, so likely needed shortly.
+        loadQrcode().catch(() => { /* QR is non-critical; fail silently */ });
+      } else {
+        renderMapPins();
+        setTimeout(() => mapInstance && mapInstance.invalidateSize(), 60);
+      }
     } else {
       feed.hidden = false;
       mapView.hidden = true;
@@ -1187,11 +1347,11 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
     b.addEventListener('click', () => setView(b.dataset.view));
   });
 
-  // 📍 Near me — visible in the filter row regardless of view. Locate-and-filter
+  // 📍 Near me - visible in the filter row regardless of view. Locate-and-filter
   // works in both list and map view; no auto-switch.
   document.getElementById('locate-btn').addEventListener('click', locateUser);
 
-  // ♡ Saved toggle — filters list + map to only saved entries
+  // ♡ Saved toggle - filters list + map to only saved entries
   refreshSavedToggle();
   document.getElementById('saved-toggle').addEventListener('click', () => {
     savedOnly = !savedOnly;
@@ -1201,7 +1361,7 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
   });
 
 }).catch(err => {
-  document.getElementById('open-feed').innerHTML = '<div class="empty">error loading data — ' + (err && err.message ? err.message : String(err)) + '</div>';
+  document.getElementById('open-feed').innerHTML = '<div class="empty">error loading data - ' + (err && err.message ? err.message : String(err)) + '</div>';
   console.error('NSTO load error:', err && err.stack ? err.stack : err);
 });
 </script>

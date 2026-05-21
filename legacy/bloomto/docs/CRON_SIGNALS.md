@@ -1,4 +1,4 @@
-# Nightly signals refresh — VPS setup
+# Nightly signals refresh - VPS setup
 
 `tools/build_signals.py` pulls three CKAN-fresh feeds (severance applications,
 demolition permits, property violations), address-joins them to the existing
@@ -14,7 +14,7 @@ weekly ETL rebuild on the workstation.
 
 The VPS needs:
 - Python 3.10+ (3.12 is what the workstation uses)
-- The `requests` package — that's the only third-party dep `build_signals.py`
+- The `requests` package - that's the only third-party dep `build_signals.py`
   pulls in. No shapely, no geopandas, no pyproj. Tiny footprint.
 - Read+write access to a clone of this repo
 - (Optional) Write access to the live web root if you want the script to
@@ -65,9 +65,9 @@ Add the line:
 
 That fires at **04:17 server-local-time daily**. The 17-minute offset is a
 small etiquette gesture toward the CKAN API (every cron in the world hits
-on the hour) — feel free to change to whatever odd minute you like.
+on the hour) - feel free to change to whatever odd minute you like.
 
-### Optional — auto-deploy to the live web root
+### Optional - auto-deploy to the live web root
 
 If the web server is on the same host (Apache `/var/www/html/bloomto`,
 nginx, etc.), the wrapper can `cp` the file straight into the served path:
@@ -87,7 +87,7 @@ the `WEB_ROOT=` and add an `rsync` line *after* the wrapper:
            rsync -az /opt/bloomto/data/signals.json deploy@web:/var/www/html/bloomto/data/
 ```
 
-### Optional — email on failure
+### Optional - email on failure
 
 cron sends stdout/stderr to the user's mailbox by default. To redirect to
 a specific address:
@@ -98,7 +98,7 @@ MAILTO=you@example.com
 ```
 
 The wrapper exits non-zero on any failure, so cron will mail the log
-contents — no extra alerting needed.
+contents - no extra alerting needed.
 
 ## Verifying it ran
 
@@ -142,7 +142,7 @@ If you want every run to bypass the cache, delete:
 rm -f /opt/bloomto/tools/cache/{coa_active,demo_permits,property_violations}.json
 ```
 
-before invoking. The wrapper doesn't busy the cache itself — fresh-data
+before invoking. The wrapper doesn't busy the cache itself - fresh-data
 needs are usually `< 24 h` already.
 
 ### When the parcels JSONs change
@@ -161,24 +161,24 @@ No restart, no re-fetch of the source caches needed.
 
 ## Troubleshooting
 
-**`build_signals.py: command not found`** — the wrapper `cd`s into
+**`build_signals.py: command not found`** - the wrapper `cd`s into
 `BLOOMTO_DIR` first, but make sure `python3` is on the cron's PATH or
 that `.venv/bin/python` exists. Cron has a minimal env (`/usr/bin:/bin`),
 so don't rely on user-shell paths.
 
-**`Could not find datastore-active …`** — Toronto Open Data sometimes
+**`Could not find datastore-active …`** - Toronto Open Data sometimes
 re-IDs resources without notice. The error means the resource ID our
 source-module looks up by name has gone missing. Check the dataset page
 on `open.toronto.ca` and update the `RESOURCE_NAME` constant in the
 relevant `tools/sources/*.py` file.
 
-**Atomic deploy failed** — `mv` is only atomic if source and destination
+**Atomic deploy failed** - `mv` is only atomic if source and destination
 are on the same filesystem. If `WEB_ROOT` is on a different mount than
 `BLOOMTO_DIR/data`, the wrapper still works but the move briefly becomes
 copy-then-delete. Either ensure same-filesystem placement, or accept the
 ~50ms half-write window (signals.json is small enough that it's nearly
 imperceptible).
 
-**`flock: command not found`** — `flock` ships with util-linux. Install
+**`flock: command not found`** - `flock` ships with util-linux. Install
 it (`apt install util-linux` on Debian/Ubuntu) or remove the locking
 block from the wrapper if you're certain only one run will ever overlap.

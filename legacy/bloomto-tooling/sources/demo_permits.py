@@ -1,4 +1,4 @@
-"""Demolition permits — daily-refreshed CKAN feed.
+"""Demolition permits - daily-refreshed CKAN feed.
 
 Filtered subset of `building-permits-active-permits` where the work is a
 demolition. Two paths into the same set:
@@ -6,15 +6,15 @@ demolition. Two paths into the same set:
 - `WORK == 'Demolition'` (the work-type label)
 - `PERMIT_TYPE == 'Demolition Folder (DM)'` (Toronto's permit-type code)
 
-Either is sufficient — we OR them so a typo or upstream schema drift in
+Either is sufficient - we OR them so a typo or upstream schema drift in
 one field doesn't lose rows.
 
 A demolition permit on a multiplex-eligible parcel is the strongest
 "owner-is-moving" signal we surface:
 - Owner pulled the permit, paid the fee, posted public notice
 - They're either selling the cleared site (offer them land cost!) or
-  DIY-redeveloping (call them anyway — they're a real-estate-active person)
-- Filed-but-not-issued status means it's pending — even earlier signal
+  DIY-redeveloping (call them anyway - they're a real-estate-active person)
+- Filed-but-not-issued status means it's pending - even earlier signal
 
 CKAN refresh cadence: **daily**. Resource has 230K active permits citywide;
 filtering to demolition + last 90 days drops to a handful per week of
@@ -37,7 +37,7 @@ RESOURCE_NAME = "building-permits-active-permits"
 CACHE_FILENAME = "demo_permits.json"
 CACHE_TTL_S = 24 * 3600  # daily
 
-# CKAN datastore_search caps at 32000 rows per request — page through.
+# CKAN datastore_search caps at 32000 rows per request - page through.
 _PAGE_SIZE = 32000
 
 _log = logging.getLogger(__name__)

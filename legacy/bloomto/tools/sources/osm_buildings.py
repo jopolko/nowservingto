@@ -9,7 +9,7 @@ bbox via the Overpass API, then map specific tag values to our 5-class enum:
     'terrace', 'townhouse', 'apartments'     → "row"
 
 OSM coverage on Toronto (verified 2026-05-08): 88,806 buildings with addresses,
-72,110 with mappable structure types — adds ~25 % coverage on top of the
+72,110 with mappable structure types - adds ~25 % coverage on top of the
 permit-derived index, and where the two overlap they agree on 96 % of cases.
 Combined permit + OSM coverage on curated cohort = ~58 % (vs 43 % permits-only).
 
@@ -18,7 +18,7 @@ field `existingStructureSource` distinguishes "permit" / "osm" / "classifier"
 so the frontend can mark each parcel's confidence.
 
 Cache: `tools/cache/osm_buildings_typed.json` (~24 MB). Refreshed manually via
-`tools/sources/osm_buildings.py refetch` — no auto-update on every build.
+`tools/sources/osm_buildings.py refetch` - no auto-update on every build.
 """
 
 import json

@@ -13,7 +13,7 @@ file in lock-step.
 
 Why one helper:
   Five separate scripts used to copy-paste a `cache_key(name, address)`
-  function — three of them (geocode_addresses, the dead enrich_places
+  function - three of them (geocode_addresses, the dead enrich_places
   main, llm_websites) built the key from a single combined `address`
   field that callers had no consistent way to pass. The result was a
   silent 100% miss rate when those scripts were given `corridors.json`

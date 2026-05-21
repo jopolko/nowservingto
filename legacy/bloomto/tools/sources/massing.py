@@ -1,4 +1,4 @@
-"""Toronto 3D Massing source — building footprints + heights for shadow analysis.
+"""Toronto 3D Massing source - building footprints + heights for shadow analysis.
 
 Per Task 3 of the parcel-multiplex-readiness spec, the CKAN dataset ships annual
 Shapefile snapshots in 19 resources; we use the 2025 vintage (the latest, no
@@ -6,7 +6,7 @@ Shapefile snapshots in 19 resources; we use the 2025 vintage (the latest, no
 trade-off vs. the Multipatch sibling and the **EPSG:3857-trap** the filename
 hides.
 
-Loaded data is **ETL-only** — the 3D footprints + heights inform per-parcel
+Loaded data is **ETL-only** - the 3D footprints + heights inform per-parcel
 `solarScore` shadow attenuation in `tools/shadow_analysis.py` and never reach
 the wire format. The browser sees a single shadow-adjusted scalar per parcel,
 not the underlying geometry. (Per CLAUDE.md: "the 'no 3D' rule is about the
@@ -44,7 +44,7 @@ CACHE_FILENAME = "massing.shp.zip"
 # Field names per the README_Metadata.xlsx that ships inside the SHP zip.
 # Note: the metadata spreadsheet has typos (`SURV_ELEV` for actual `SURF_ELEV`)
 # and lists fields that don't appear in the .dbf (`OBJECTID`, `SHAPE_AREA`).
-# Trust the .dbf, not the spreadsheet — Task 3's README investigation enumerates
+# Trust the .dbf, not the spreadsheet - Task 3's README investigation enumerates
 # the 9 fields actually present.
 MIN_HEIGHT_FIELD = "MIN_HEIGHT"
 MAX_HEIGHT_FIELD = "MAX_HEIGHT"
@@ -57,10 +57,10 @@ _log = logging.getLogger(__name__)
 class Building:
     """One 3D Massing record, reprojected to WGS84.
 
-    `geometry` is the building footprint polygon (per-vertex Z dropped — we
+    `geometry` is the building footprint polygon (per-vertex Z dropped - we
     use the scalar height fields, not vertex Z which is uniformly 0 in the
     2D Shapefile resource). `height_m` is `None` when both `MAX_HEIGHT` and
-    `AVG_HEIGHT` are 0 or missing — `tools/shadow_analysis.py` uses this to
+    `AVG_HEIGHT` are 0 or missing - `tools/shadow_analysis.py` uses this to
     classify the building as Tier 3 ("unavailable") at parcel time.
     """
     geometry: BaseGeometry

@@ -5,7 +5,7 @@ Build an authoritative chain set from OpenStreetMap.
 OSM mappers tag known restaurant chains with `brand=<Name>` (and often
 `brand:wikidata=<Qxxx>`). This is curated by humans across the world, and
 Toronto's OSM coverage is well-maintained for fast-food and casual-dining
-chains. Independent restaurants don't carry `brand=` tags — only chains do.
+chains. Independent restaurants don't carry `brand=` tags - only chains do.
 
 This is the authoritative source we use to auto-detect chains in
 inject_openings.py, replacing the earlier count-heuristic (which mis-tagged
@@ -16,7 +16,7 @@ tag, deduplicates by uppercased brand name, writes to
 `tools/cache/osm_chain_set.json`. Free, no API key.
 
 Refresh cadence: weekly is plenty (chain lists move slowly). Cron entry is
-optional — falls back to whatever's in the cache file if Overpass is down.
+optional - falls back to whatever's in the cache file if Overpass is down.
 """
 import json, sys, time
 from pathlib import Path
@@ -73,7 +73,7 @@ def main():
     brands = fetch_brands()
     # Filter out one-offs that might be miscoded as a "brand". Real chains will
     # have ≥2 OSM-tagged locations in Toronto. (Note: this is OSM coverage, NOT
-    # licence-count — chains under-tagged in OSM still pass through; we rely on
+    # licence-count - chains under-tagged in OSM still pass through; we rely on
     # CHAIN_DENYLIST as backstop for those.)
     real = {k: v for k, v in brands.items() if v['count'] >= 2}
     out = {

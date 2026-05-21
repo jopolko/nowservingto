@@ -57,16 +57,26 @@ else
 fi
 log "python=$PYTHON"
 
-# Step 0: refresh the OSM chain set if older than 7 days (or missing). This is
-# the authoritative source for auto-chain detection in inject_openings.py.
-# Free (no API key), ~6s for the Overpass query. We refresh weekly because chain
-# brand lists move slowly, and a stale set just means we miss a newly-tagged
-# brand for a week (the manual CHAIN_DENYLIST is the backstop).
+# Step 0a: refresh the OSM chain set if older than 7 days (or missing). This is
+# one of the two authoritative sources for auto-chain detection (along with
+# Wikidata, refreshed in 0b). Free (no API key), ~6s for the Overpass query.
 OSM_CACHE="$ROOTED_DIR/tools/cache/osm_chain_set.json"
 if [[ ! -s "$OSM_CACHE" ]] || [[ $(find "$OSM_CACHE" -mtime +7 2>/dev/null | wc -l) -gt 0 ]]; then
     log "→ build_osm_chain_set.py (refresh authoritative chain list from OSM)"
     "$PYTHON" -u tools/build_osm_chain_set.py >> "$LOG_FILE" 2>&1 \
         || log "WARN: OSM chain refresh failed (non-fatal — using cached set)"
+fi
+
+# Step 0b: refresh the Wikidata chain set if older than 7 days. Catches every
+# named restaurant chain globally — including ones with a single Toronto
+# location that OSM's Toronto-bbox query misses (Pokeworks, Marugame Udon,
+# Molly Tea were burning ~$1-2/day in Places lookups before this was wired in).
+# Free, no API key, one SPARQL query.
+WIKI_CACHE="$ROOTED_DIR/tools/cache/wikidata_chain_set.json"
+if [[ ! -s "$WIKI_CACHE" ]] || [[ $(find "$WIKI_CACHE" -mtime +7 2>/dev/null | wc -l) -gt 0 ]]; then
+    log "→ build_wikidata_chain_set.py (refresh authoritative chain list from Wikidata)"
+    "$PYTHON" -u tools/build_wikidata_chain_set.py >> "$LOG_FILE" 2>&1 \
+        || log "WARN: Wikidata chain refresh failed (non-fatal — using cached set)"
 fi
 
 # Step 1: fresh CSV pull from CKAN
@@ -140,10 +150,17 @@ fi
 # nor places_enrich_socials triggers). Without this, entries like JARDIN
 # NOIR (yorkdale.com URL + cuisine=french from web_verify) never get
 # Places-queried → no photoRef → no row thumbnail. Idempotent: skips
-# entries already in places_cache.
-log "→ enrich_places.py (catch-all: Places lookup for any kept entry not yet cached)"
-if ! "$PYTHON" -u tools/enrich_places.py >> "$LOG_FILE" 2>&1; then
-    log "WARN: enrich_places catch-all failed (non-fatal)"
+# entries already in places_cache. Pre-2026-05-20 ran daily; now SUNDAY-
+# ONLY because targeted scripts (places_enrich_socials + places_recover)
+# pick up most cases within hours, and a 6-day delay for the catch-all
+# sweep is acceptable trade for ~$2-4/week saved.
+if [[ "$(date -u +%u)" == "7" ]]; then
+    log "→ enrich_places.py (catch-all: Sunday weekly sweep)"
+    if ! "$PYTHON" -u tools/enrich_places.py >> "$LOG_FILE" 2>&1; then
+        log "WARN: enrich_places catch-all failed (non-fatal)"
+    fi
+else
+    log "  enrich_places.py catch-all — skipped (runs Sundays only)"
 fi
 
 # Step 5b: cuisine-recovery pass — for entries still without a cuisine, fetch
@@ -238,6 +255,15 @@ if [[ -n "${WEB_ROOT:-}" ]]; then
     mv -f "$TMP" "$DEST_DATA/corridors.json"
     log "  deployed corridors.json → $DEST_DATA"
 fi
+
+# Step 8: fire per-cuisine + per-district real-time email alerts for any
+# brand-new entries that hit corridors.json today. Runs AFTER deploy so
+# subscribers only ever get notified about listings already live on prod.
+# Mail hops through local Postfix (DKIM-signed by OpenDKIM) — see
+# deploy/mail-setup.md. First run snapshots the existing 365d backlog so
+# nobody gets blasted with a year of openings.
+log "→ send_alerts.py (real-time per-cuisine + per-district email alerts)"
+"$PYTHON" -u tools/send_alerts.py >> "$LOG_FILE" 2>&1 || log "WARN: send_alerts failed (non-fatal)"
 
 # Rotate logs (keep 30 days)
 find "$LOG_DIR" -name 'openings-*.log' -mtime +30 -delete 2>/dev/null || true

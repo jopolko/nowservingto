@@ -47,7 +47,7 @@ FEATURE_PROPERTIES = (
     "inRegulatedArea",
     "permits",
     "nearbyMultiplexPermits",  # {count, nearestDistM, nearestDate,
-                               # nearestUnitsCreated} or None — recent
+                               # nearestUnitsCreated} or None - recent
                                # multiplex permits (≥3 units, last 5y)
                                # within 250m of this parcel's centroid,
                                # excluding this parcel's own permits.
@@ -72,7 +72,7 @@ FEATURE_PROPERTIES = (
     # frontend) and the synthetic test fixtures.
     "lotGeometry",        # { longAxisM, shortAxisM, orientationDeg }
     "neighborHeights",    # { nAvgM, sAvgM, eAvgM, wAvgM }  (each may be None)
-    "existingMaxBuildingHeightM",  # float m or None — tallest 3D Massing
+    "existingMaxBuildingHeightM",  # float m or None - tallest 3D Massing
                                    # building substantially overlapping the
                                    # parcel; gates apartment-exclusion at 15m
     "existingStructureType",  # "detached" | "semi" | "row" | "vacant" | "unknown"
@@ -85,40 +85,40 @@ FEATURE_PROPERTIES = (
                                # OSM volunteer-mapped, or address-point
                                # spatial join) or our cross-boundary
                                # classifier guess.
-    "addressPointCount",       # int — distinct municipal address points
+    "addressPointCount",       # int - distinct municipal address points
                                # contained in the parcel polygon. AP=1 +
                                # detached structure → "True Detached" badge
                                # (no shared walls, no shared addresses).
                                # AP≥2 → multi-unit existing on parcel.
-    "addressDriftSuspect",     # bool — true when parcel.address does not
+    "addressDriftSuspect",     # bool - true when parcel.address does not
                                # match any Address Point inside the polygon.
                                # Drops from elite via is_elite gate.
-    "geometrySuspect",         # bool — true when the height attribution
+    "geometrySuspect",         # bool - true when the height attribution
                                # looks like a polygon mis-draw (tall+narrow
                                # or exact-neighbour-match). Drops from elite.
-    "addrToStreetM",           # float metres — distance from the parcel's
+    "addrToStreetM",           # float metres - distance from the parcel's
                                # representative point to the nearest
                                # Centreline geometry. Combined with
                                # `abutsLaneway` it surfaces back-lot
                                # residue parcels (1030 Danforth case).
-    "existingUnitsApprox",     # int | None — best estimate of existing
+    "existingUnitsApprox",     # int | None - best estimate of existing
                                # dwelling units on the parcel. 0 = vacant.
                                # Derivation precedence: permits
                                # (DWELLING_UNITS_EXISTING) > height ×
                                # footprint > height band > unknown.
-    "existingUnitsBasis",      # str — which method produced the estimate:
+    "existingUnitsBasis",      # str - which method produced the estimate:
                                # 'permits' | 'height_x_footprint' |
                                # 'height_band' | 'vacant' | 'unknown'.
                                # Frontend renders the calculation visibly
                                # so the dev sees HOW the count was derived.
-    "osmAmenityType",          # str | None — OSM `amenity` tag of any
+    "osmAmenityType",          # str | None - OSM `amenity` tag of any
                                # commercial holdover (fast_food / restaurant /
                                # cafe / bar / pub / bank / pharmacy /
                                # post_office) substantially sitting on this
                                # parcel. Surfaced for the "Currently A&W"
                                # row badge so the dev sees the commercial
                                # reality before Street View click. NOT a
-                               # hard exclusion — R-zoned commercial
+                               # hard exclusion - R-zoned commercial
                                # holdovers are valid teardown candidates.
     "solarYieldKwhPerYr",   # int kWh, the un-shadowed best-rooftop figure
     "pvCapacityKwEstimate", # float kW, derived from solarYieldKwhPerYr
@@ -185,7 +185,7 @@ def validate(payload) -> None:
 
     Raises `ValueError` with a contextual message on any violation. The caller
     (orchestrator) is expected to let this propagate to a non-zero exit per
-    Req 12.5 — there is no silent fallback.
+    Req 12.5 - there is no silent fallback.
     """
     if not isinstance(payload, dict):
         raise ValueError(f"payload must be a dict, got {type(payload).__name__}")
@@ -314,7 +314,7 @@ def write_atomic(payload: dict, out_path: Path) -> None:
     )
     try:
         with os.fdopen(tmp_fd, "w", encoding="utf-8") as fp:
-            # No `indent` and a compact `separators` — the file is machine-consumed
+            # No `indent` and a compact `separators` - the file is machine-consumed
             # by index.html. Pretty-printing 50k+ features added ~2–3 MB of pure
             # whitespace (~300–500 KB after gzip). Compact form trims that.
             json.dump(payload, fp, ensure_ascii=False, separators=(",", ":"),

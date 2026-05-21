@@ -3,8 +3,8 @@ Toronto's 2018 Tree Canopy Study File Geodatabase.
 
 The dataset arrives as a vector File Geodatabase whose 1,812 multipolygons are
 already pre-dissolved by (source-hood × land-cover class). Each polygon carries
-`Shape_Area` in the source CRS (NAD83(CSRS) / MTM zone 10, metres) — the exact
-area of the patch — so we aggregate in vector form rather than rasterizing.
+`Shape_Area` in the source CRS (NAD83(CSRS) / MTM zone 10, metres) - the exact
+area of the patch - so we aggregate in vector form rather than rasterizing.
 
 The intermediate cache is a small WGS84 GeoJSON of *just* one representative
 point per source polygon plus its `gridcode` and `Shape_Area`. Full geometries
@@ -53,7 +53,7 @@ TREE_GRIDCODE = 1
 SHAPE_AREA_FIELD = "Shape_Area"
 
 # Toronto-wide canopy share is ~28%; use 30 as a neutral fallback for hoods that
-# end up with zero attributed land-cover area (shouldn't happen — citywide tiling —
+# end up with zero attributed land-cover area (shouldn't happen - citywide tiling -
 # but defends against future boundary changes).
 FALLBACK_CANOPY = 30
 
@@ -75,7 +75,7 @@ def _download_with_retries(url: str, dest: Path) -> None:
             if attempt == len(backoffs):
                 raise
             wait = backoffs[attempt]
-            _log.warning("download %s failed (attempt %d): %s — retrying in %ss",
+            _log.warning("download %s failed (attempt %d): %s - retrying in %ss",
                          url, attempt + 1, e, wait)
             time.sleep(wait)
 

@@ -7,14 +7,14 @@ design.md §147 / §354's accuracy-over-completeness rule:
 
   - "measured":    all candidates have valid footprint + height
   - "estimated":   at least one candidate falls back to the conservative envelope
-  - "unavailable": no candidate has a usable height — orchestrator sets
+  - "unavailable": no candidate has a usable height - orchestrator sets
                    `solarScore = None`, never guesses
 
-The projection is **planar** at Toronto's latitude (43.7°N) — the design's
+The projection is **planar** at Toronto's latitude (43.7°N) - the design's
 "flat-earth is fine" approximation, which avoids reaching for `pyproj` and
 works because parcels are O(50 m) wide and the per-degree distance error
 across that span is sub-metre. Sun direction at azimuth `a` (degrees, North = 0
-clockwise) means the sun is *at* that bearing — shadows fall in the *opposite*
+clockwise) means the sun is *at* that bearing - shadows fall in the *opposite*
 direction. For Toronto noon, the sun is south (azimuth 180°), so shadows
 extend north.
 
@@ -45,9 +45,9 @@ def _clean(geom):
     self-intersections, near-collinear vertices, or precision artifacts that
     pass shapely's `is_valid` check but blow up inside GEOS C code.
 
-    Strategy: `make_valid` first (preferred — preserves topology); fall back
+    Strategy: `make_valid` first (preferred - preserves topology); fall back
     to `buffer(0)` (the classic GEOS "snap-clean" idiom). Returns None for
-    geometries that come back empty/invalid even after both passes — those
+    geometries that come back empty/invalid even after both passes - those
     are dropped from the union rather than risking a crash.
     """
     if geom is None or geom.is_empty:
@@ -96,12 +96,12 @@ DEFAULT_SEARCH_RADIUS_M = 75
 MAX_CANDIDATES_PER_PARCEL = 100
 SHADOW_PROJECTION_METHOD = "planar"
 
-# (azimuth_deg, elevation_deg) — winter solstice noon, summer solstice noon, at
+# (azimuth_deg, elevation_deg) - winter solstice noon, summer solstice noon, at
 # Toronto's latitude (~43.7°N). Azimuth 180° (south) is the sun's local-noon
 # bearing; elevation 22° (Dec 21) and 70° (Jun 21) bracket the year.
 REFERENCE_ANGLES = ((180, 22), (180, 70))
 
-# Metres per degree at Toronto's latitude — used as the planar approximation
+# Metres per degree at Toronto's latitude - used as the planar approximation
 # for sub-100m projections. Latitude is nearly constant across the city.
 _TORONTO_LAT_DEG = 43.7
 _M_PER_DEG_LAT = 111_000.0
@@ -114,7 +114,7 @@ def _project_shadow_polygon(building, azimuth_deg: float, elevation_deg: float):
     Returns `None` if the projection isn't physically meaningful (sun at or
     below horizon, missing height). The shadow is the union of the building's
     own footprint and a copy translated by the shadow length in the sun's
-    opposite-direction. This conservatively encloses the swept envelope —
+    opposite-direction. This conservatively encloses the swept envelope -
     correct for convex footprints and over-estimates only by the side strips
     for non-convex ones, which is the safe direction.
     """
@@ -143,7 +143,7 @@ def _envelope_disc(building, elevation_deg: float):
     centered at the building's footprint centroid.
 
     Over-estimates shadow extent (the actual shadow is a directional strip,
-    not a circle), which biases the resulting `solarScore` downward — the
+    not a circle), which biases the resulting `solarScore` downward - the
     safe direction per design.md §354.
     """
     if building.height_m is None or building.height_m <= 0:
@@ -169,7 +169,7 @@ def _select_candidates(
         _M_PER_DEG_LAT,
         _M_PER_DEG_LAT * math.cos(math.radians(parcel_lat)),
     )
-    # Use latitude-axis distance (the larger of the two — smaller cos shrinks
+    # Use latitude-axis distance (the larger of the two - smaller cos shrinks
     # longitude metres-per-degree), for a conservative bbox query.
     buffered = parcel.geometry.buffer(buffer_deg)
     idxs = list(tree.query(buffered))
@@ -206,7 +206,7 @@ def analyze_parcel(
 
     See module docstring for the algorithm and the three-tier accuracy contract.
     Returns `(1.0, "measured")` when no buildings fall within `search_radius_m`
-    — no neighbours, no shadow, no adjustment needed (and that *is* the
+    - no neighbours, no shadow, no adjustment needed (and that *is* the
     measured truth, not an estimate).
     """
     candidates = _select_candidates(parcel, massing_index, search_radius_m)
@@ -227,11 +227,11 @@ def analyze_parcel(
             tier3_count += 1
 
     if not tier1 and not tier2:
-        # Every candidate is tier3 — no usable height anywhere nearby.
+        # Every candidate is tier3 - no usable height anywhere nearby.
         return ShadowResult(None, "unavailable")
 
     parcel_geom = parcel.geometry
-    parcel_area = parcel_geom.area  # deg² — fine for ratios
+    parcel_area = parcel_geom.area  # deg² - fine for ratios
     if parcel_area <= 0:
         return ShadowResult(1.0, "measured")
 

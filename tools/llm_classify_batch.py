@@ -5,7 +5,7 @@ Submit a Message Batches job for cuisine classification. Picks up:
   - Entries previously marked status='error' for retry
 
 50% off vs sync, much higher rate limits, polls until done, merges into the cache.
-Designed to be safe-to-call from the daily cron — exits cleanly with no spend if
+Designed to be safe-to-call from the daily cron - exits cleanly with no spend if
 nothing is missing/errored.
 
 Reads ANTHROPIC_API_KEY from /var/secrets/nowservingto.env.
@@ -39,7 +39,7 @@ MODEL = 'claude-haiku-4-5-20251001'
 POLL_INTERVAL_SEC = 30
 
 SYSTEM_PROMPT = """You classify a Toronto restaurant by cuisine from the operating
-name + licence address ALONE — no Places match, no website, no reviews available
+name + licence address ALONE - no Places match, no website, no reviews available
 at this stage of the pipeline. A later validator pass sees the richer evidence.
 
 Return JSON on one line: {"cuisines":["k1","k2",...],"evidence":"<short>"}
@@ -67,6 +67,7 @@ import sys as _sys
 _sys.path.insert(0, str(Path(__file__).resolve().parent))
 from cuisines import VALID_CUISINE_KEYS as VALID_KEYS, parse_cuisines_from_llm
 from places_key import cache_key
+from chain_filter import is_known_chain, chain_match
 
 def load_api_key():
     for line in SECRETS.read_text().splitlines():
@@ -117,19 +118,30 @@ def main():
                 if not name: continue
                 addr1 = (row.get('Licence Address Line 1') or '').strip()
                 addr3 = (row.get('Licence Address Line 3') or '').strip()
-                address = (addr1 + ' ' + addr3).strip() or '—'
+                address = (addr1 + ' ' + addr3).strip() or '-'
                 key = cache_key(name, address)
                 if key in seen: continue
                 seen.add(key)
                 ex = cache.get(key)
                 if ex and ex.get('status') == 'ok': continue  # already classified successfully
+                # Deterministic chain gate: known chains are unknown by policy.
+                # Stub the cache so downstream verify/places skip them too, without paying Anthropic.
+                brand = chain_match(name)
+                if brand:
+                    cache[key] = {'status': 'ok', 'cuisine': 'unknown', 'cuisines': ['unknown'],
+                                  'reason': 'chain', 'chain_brand': brand,
+                                  'classified_at': datetime.now().isoformat()}
+                    continue
                 targets.append((key, name, address))
     n_new = len([1 for k,_,_ in targets if k not in cache])
     n_retry = len(targets) - n_new
-    print(f"  targets: {len(targets)} ({n_new} new, {n_retry} retries from previous errors)")
+    n_chain_stubs = sum(1 for v in cache.values() if v.get('reason') == 'chain')
+    print(f"  targets: {len(targets)} ({n_new} new, {n_retry} retries)  chain-stubbed: {n_chain_stubs}")
 
     if not targets:
         print("nothing to classify.")
+        # Persist any chain stubs we wrote during the scan.
+        CACHE_PATH.write_text(json.dumps(cache, separators=(',', ':')))
         return
 
     # 2. Build batch payload
@@ -174,14 +186,14 @@ def main():
         if st in ('cancelling', 'canceled', 'expired'):
             sys.exit(f"batch ended unexpectedly: {st}")
 
-    # Download results — they come as JSONL from results_url
+    # Download results - they come as JSONL from results_url
     results_url = info.get('results_url')
     if not results_url:
         sys.exit("no results_url on completed batch")
     print(f"downloading results from {results_url}")
     raw = http_request('GET', results_url)
     if isinstance(raw, dict):
-        # If JSON parsed (single object), shouldn't happen — JSONL is multi-line
+        # If JSON parsed (single object), shouldn't happen - JSONL is multi-line
         raw_text = json.dumps(raw)
     else:
         raw_text = raw.decode('utf-8')
@@ -206,7 +218,7 @@ def main():
         total_in += usage.get('input_tokens', 0)
         total_out += usage.get('output_tokens', 0)
         text = ''.join(b.get('text','') for b in msg.get('content', []) if b.get('type')=='text').strip()
-        # Parse the JSON object — new format `{"cuisines":["italian"]}`. Fall back to
+        # Parse the JSON object - new format `{"cuisines":["italian"]}`. Fall back to
         # plain-token scan for legacy single-key responses.
         cuisines = []
         for line in text.split('\n'):
@@ -226,7 +238,7 @@ def main():
         if not cuisines: cuisines = ['unknown']
         cache[key] = {
             'status': 'ok',
-            'cuisine': cuisines[0],          # primary (first listed) — backwards compat
+            'cuisine': cuisines[0],          # primary (first listed) - backwards compat
             'cuisines': cuisines,            # full list for multi-cuisine entries
             'raw': text[:200],
             'in_tok': usage.get('input_tokens', 0),

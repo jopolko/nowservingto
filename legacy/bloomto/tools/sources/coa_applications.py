@@ -1,13 +1,13 @@
-"""Committee of Adjustment Applications — daily-refreshed CKAN feed.
+"""Committee of Adjustment Applications - daily-refreshed CKAN feed.
 
-Surfaces active **Consent (severance)** applications — owners formally
+Surfaces active **Consent (severance)** applications - owners formally
 asking the City to subdivide their lot. This is the strongest pre-listing
 signal a multiplex dev can act on: the owner has hired a planner, paid
 the City filing fee (~$1,200), and is on record at a public hearing.
 Almost always pre-sale or pre-development.
 
 Filtering scope:
-- `APPLICATION_TYPE == 'CO'` (Consent / severance only — drops Minor
+- `APPLICATION_TYPE == 'CO'` (Consent / severance only - drops Minor
   Variance noise which is 92% of the dataset volume)
 - Active applications resource (drops Closed since 2017)
 - Optional date filter via `since_iso` to scope to last 90/180/365 days

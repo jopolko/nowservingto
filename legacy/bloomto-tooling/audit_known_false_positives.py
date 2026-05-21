@@ -1,7 +1,7 @@
-"""Regression audit — known false-positive parcels must NOT appear in elite.
+"""Regression audit - known false-positive parcels must NOT appear in elite.
 
 Accumulates the full list of parcels we've identified through manual spot-
-checking as "structurally not multiplex teardowns" — schools, station
+checking as "structurally not multiplex teardowns" - schools, station
 infrastructure, government buildings, parking lots, parkettes, etc. The
 audit fails (exit non-zero) if any of them re-enters `data/parcels-top.json`.
 
@@ -9,7 +9,7 @@ Run after every projection. Wire into the cron / rebuild pipeline so a
 regression in the curation logic surfaces loudly instead of slipping into
 the live data.
 
-Each entry pairs `parcelId` (the authoritative key — never changes even if
+Each entry pairs `parcelId` (the authoritative key - never changes even if
 the address typography drifts) with a brief reason. Address fallback is
 provided for parcels where we don't have a stable parcelId on hand.
 
@@ -20,7 +20,7 @@ Usage:
 Add a new false positive:
     1. Find the parcelId from `data/parcels-top.json` (or the address row).
     2. Append a row to `KNOWN_FALSE_POSITIVES` below with one-line reason.
-    3. Run the script — it should pass.
+    3. Run the script - it should pass.
     4. Commit. Future regressions on that parcel will fail the audit.
 """
 
@@ -31,15 +31,15 @@ from pathlib import Path
 
 
 # Each entry: (parcelId, address, reason). Either parcelId or address can
-# be None when only one is known. Both fields are matched (OR) — match either
+# be None when only one is known. Both fields are matched (OR) - match either
 # one and the audit fails.
 KNOWN_FALSE_POSITIVES: list[tuple[str | None, str | None, str]] = [
     # ── Institutional / school complexes (multi-parcel sites where the
     # ── city's institutional point dataset only flags the main building) ──
     ("5491079", "185 Close Ave",          "Parkdale Collegiate / Holy Family School playing field"),
-    (None,      "20 Kintyre Ave",         "South Riverdale — large vacant institutional-pattern lot"),
-    (None,      "1536 St Clair Ave W",    "Corso Italia-Davenport — large vacant institutional-pattern lot"),
-    (None,      "1070 Eastern Ave",       "Greenwood-Coxwell — large vacant institutional-pattern lot"),
+    (None,      "20 Kintyre Ave",         "South Riverdale - large vacant institutional-pattern lot"),
+    (None,      "1536 St Clair Ave W",    "Corso Italia-Davenport - large vacant institutional-pattern lot"),
+    (None,      "1070 Eastern Ave",       "Greenwood-Coxwell - large vacant institutional-pattern lot"),
 
     # ── Government / institutional buildings missed by city dataset ──
     (None,      "10 Armoury St",          "Ontario Court of Justice (2023 build, pre-dates Building Outlines refresh)"),
@@ -48,7 +48,7 @@ KNOWN_FALSE_POSITIVES: list[tuple[str | None, str | None, str]] = [
     ("5404834", "13 Essex St",            "Fiesta Gardens supermarket parking complex (only 19% OSM-tagged)"),
 
     # ── Active construction sites (Building Outlines + 3D Massing disagree) ──
-    (None,      "677 Queen St E",         "Active apartment construction site (cov=0% but Massing height=11.3m — datasets disagree, parcel is mid-build)"),
+    (None,      "677 Queen St E",         "Active apartment construction site (cov=0% but Massing height=11.3m - datasets disagree, parcel is mid-build)"),
 
     # ── TTC subway-station infrastructure ──
     (None,      "11 Bedford Rd",          "St. George station entrance"),
@@ -84,10 +84,10 @@ def audit(top_path: Path) -> int:
                 reason,
             ))
 
-    print(f"audit_known_false_positives — checked {len(KNOWN_FALSE_POSITIVES)} known bad parcels against {top_path} ({len(rows):,} rows)")
+    print(f"audit_known_false_positives - checked {len(KNOWN_FALSE_POSITIVES)} known bad parcels against {top_path} ({len(rows):,} rows)")
     if failures:
         print()
-        print(f"FAIL — {len(failures)} known false-positive(s) re-entered the curated set:")
+        print(f"FAIL - {len(failures)} known false-positive(s) re-entered the curated set:")
         for desc, reason in failures:
             print(f"  ✗ {desc}")
             print(f"      reason: {reason}")
@@ -95,7 +95,7 @@ def audit(top_path: Path) -> int:
         print("The curation gates regressed. Add a stricter rule (positive-residential, "
               "wealthy-enclave filter, OSM landuse, etc.) before shipping.")
         return 1
-    print(f"PASS — no known false-positives in elite.")
+    print(f"PASS - no known false-positives in elite.")
     return 0
 
 

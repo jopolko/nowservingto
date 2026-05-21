@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 Unified Haiku validator: one batched call per entry that sees ALL the evidence
-at once — licence name, Places matched name + types + editorial + reviews,
-web-verify website + evidence — and returns four orthogonal judgments:
+at once - licence name, Places matched name + types + editorial + reviews,
+web-verify website + evidence - and returns four orthogonal judgments:
 
   is_same_business : did Places match the right business? (catches EASTERN 828
                      CAFE matched to Eastern-Leslie Car Wash; KALIMERA matched
@@ -39,51 +39,51 @@ WEB_VERIFY_PATH = ROOT / 'tools' / 'cache' / 'web_verify_cache.json'
 PLACES_PATH = ROOT / 'tools' / 'cache' / 'places_cache.json'
 URL_HEALTH_PATH = ROOT / 'tools' / 'cache' / 'url_health_cache.json'
 
-SYSTEM_PROMPT = """You validate a directory entry for NowServingTO — a curated list
+SYSTEM_PROMPT = """You validate a directory entry for NowServingTO - a curated list
 of Toronto's NEWLY LICENCED small-scale, independent, immigrant-owned ethnic-cuisine
 restaurants (past 12 months).
 
 THE AUDIENCE: Toronto residents seeking specific-country authentic spots opened by
-first-generation diaspora operators — a Lebanese family café, a Sri Lankan hopper
+first-generation diaspora operators - a Lebanese family café, a Sri Lankan hopper
 kitchen, an Argentine empanada window, an Eritrean injera spot, a Sichuan dumpling
 counter. These are the entries we WANT to surface.
 
-We do NOT want to surface — drop with is_restaurant=no:
+We do NOT want to surface - drop with is_restaurant=no:
   - Chain franchises (Popeyes, KFC, Tim Hortons, Pizza Pizza, Subway, Mary Brown's,
-    McDonald's, Starbucks, etc. — any business with brand-level multi-location presence).
+    McDonald's, Starbucks, etc. - any business with brand-level multi-location presence).
   - Institutional / B2B food service (Aramark, Compass Group, Sodexo, university or
     college campus food courts, hospital cafeterias, corporate-office contract kitchens).
   - Packaged-food brands / factory outlets / wholesalers (Soma Bone Broth, Shimla
-    Foods, Patel Brothers warehouse, Roma Foods factory outlet — places licensed for
+    Foods, Patel Brothers warehouse, Roma Foods factory outlet - places licensed for
     take-out at a warehouse that sell packaged goods, not prepared dishes).
   - Grocery stores / supermarkets with a counter selling packaged products (not a
     hot table or made-to-order kitchen).
   - Pan-Asian fusion blending 3+ unrelated Asian cuisines (Korean + Hawaiian + bao
-    + banh mi) — that's not authentic to any one diaspora.
+    + banh mi) - that's not authentic to any one diaspora.
   - American Southern / Cajun / BBQ themed (we have no taxonomy bucket for US South).
 
-You see the City of Toronto licence data — the SOURCE OF TRUTH for what business
+You see the City of Toronto licence data - the SOURCE OF TRUTH for what business
 should be at what address. That's:
   - Operating Name (the business name on the licence)
   - Licence Address (the legal address of operation)
-  - Client Name (the corporation holding the licence — institutional / chain
+  - Client Name (the corporation holding the licence - institutional / chain
     operators like ARAMARK CANADA LTD, COMPASS GROUP CANADA, TORONTO METROPOLITAN
     UNIVERSITY are obvious from this field; treat is_restaurant=no for them.
     A franchisee LLC holding 5+ Tim Hortons / McDonald's locations is also a
     chain by Client Name.)
-  - Licence Category (always food-related — eating/drinking establishment,
-    take-out, retail food, etc. — this is broad "food of some kind", not cuisine)
+  - Licence Category (always food-related - eating/drinking establishment,
+    take-out, retail food, etc. - this is broad "food of some kind", not cuisine)
   - Conditions (free-text field from the City. Phrases like "Located inside
     Loblaws", "Located inside Sobeys", "operates inside [grocery chain]"
-    indicate in-grocery-store kiosks — treat is_restaurant=no. A semicolon-
+    indicate in-grocery-store kiosks - treat is_restaurant=no. A semicolon-
     separated tag soup including "CHAIN;" "SHARED ADDRESS;" "NO SEATING
-    ACCOMMODATION;" "COMMON SEATING;" "SEATING CAPACITY UNDER 40;" — the City
-    explicitly tags chains with "CHAIN;" — treat that as is_restaurant=no.)
+    ACCOMMODATION;" "COMMON SEATING;" "SEATING CAPACITY UNDER 40;" - the City
+    explicitly tags chains with "CHAIN;" - treat that as is_restaurant=no.)
   - Endorsements (food-category tags from the City: "FOODSTUFFS;"
     "xFRESH MEAT DEALER;" "BAKE SHOP;" "REFRESHMENTS;" "CIGARS, CIGARETTES &
     TOBACCO;" etc. A row with only "FOODSTUFFS;" or "xFRESH MEAT DEALER;" is
     likely a grocery counter / butcher / variety store, not a restaurant.)
-  - Cancel Date (when populated, the licence is no longer active — operator
+  - Cancel Date (when populated, the licence is no longer active - operator
     surrendered the licence or the City revoked it. Treat is_restaurant=no
     regardless of other signals; the place is no longer in business under
     this licence.)
@@ -92,14 +92,14 @@ You also see supplemental evidence:
   - Google Places match (matched name + address + categories + editorial summary
     + top reviews + Places-known website)
   - The earlier Haiku web_search verifier's website + evidence
-  - WEBSITE CONTENT, when available — the page is fetched either statically
+  - WEBSITE CONTENT, when available - the page is fetched either statically
     (server-rendered HTML) or, for JS-only SPAs, via a headless render
     (labelled "HOMEPAGE (jina-rendered): ..."). Treat both forms as equally
     authoritative content evidence. A multi-location list like
     "Queen St W / Eaton Centre / Square One / Vaughan Mills" is a strong
     CHAIN signal even when it surfaces only in the rendered text.
   - The name-only LLM's previous cuisine guess
-  - WEBSITE CONTENT — when the Places-known website was fetchable, the homepage
+  - WEBSITE CONTENT - when the Places-known website was fetchable, the homepage
     plus the most-promising linked menu / about page have been crawled, HTML
     stripped, and included as raw text. Use this content to (a) confirm the URL
     points to a real, operating restaurant (not parked domain, aggregator-wrapper
@@ -108,7 +108,7 @@ You also see supplemental evidence:
     quoted cultural-marker phrases > generic "best food in town" copy).
 
 Judge holistically from all of it. No rule we hardcode in Python should be doing
-this work — you have richer context than any regex.
+this work - you have richer context than any regex.
 
 Return a single JSON object, no prose, no markdown code fences:
 {
@@ -119,9 +119,9 @@ Return a single JSON object, no prose, no markdown code fences:
   "evidence":"<one short sentence>"
 }
 
-DECISIVE — DO NOT HEDGE. Pick yes or no based on the evidence.
+DECISIVE - DO NOT HEDGE. Pick yes or no based on the evidence.
 - "no_match" for is_same_business is ONLY for when Places returned no result
-  (the message above will say "GOOGLE PLACES MATCH: (none — ...)"). Otherwise yes/no.
+  (the message above will say "GOOGLE PLACES MATCH: (none - ...)"). Otherwise yes/no.
 - is_restaurant defaults to "yes" unless evidence CLEARLY shows the business is
   institutional (Aramark/Compass cafeteria), packaged-only retail (Soma Bone Broth,
   Shimla Foods), wholesale/factory, or a major chain franchise (Popeyes/KFC/Tim
@@ -130,21 +130,21 @@ DECISIVE — DO NOT HEDGE. Pick yes or no based on the evidence.
 
 RULES
 
-is_same_business — apply this test: if a Google Maps user typed the City's
+is_same_business - apply this test: if a Google Maps user typed the City's
 licence NAME + ADDRESS into Maps, would the Places match shown below be a
-reasonable top hit — same business operation at the same address? Be
+reasonable top hit - same business operation at the same address? Be
 forgiving on name variations (Google's search is forgiving too); be strict
 on address agreement and business type.
 
-BE LENIENT on minor name differences — small spelling/punctuation/word-order
+BE LENIENT on minor name differences - small spelling/punctuation/word-order
 variations are SAME business, return "yes":
-  - "OI BANH MI" vs "Ôi BÁNH MÌ" — Unicode/accent variants → yes
+  - "OI BANH MI" vs "Ôi BÁNH MÌ" - Unicode/accent variants → yes
   - "MARY BROWN'S CHICKEN" vs "Mary Brown's Fried Chicken" → yes
-  - "LENA'S ROTI & DOUBLES" vs "Lena's Roti and Doubles" — & vs and → yes
-  - "EL SABOR DEL PACIFICO RESTAURANT" vs "Sabor del Pacifico" — extra
+  - "LENA'S ROTI & DOUBLES" vs "Lena's Roti and Doubles" - & vs and → yes
+  - "EL SABOR DEL PACIFICO RESTAURANT" vs "Sabor del Pacifico" - extra
     descriptor words trimmed → yes
-  - "PIZZA HOUSE INC" vs "Pizza House" — corporate-suffix dropped → yes
-  - "SHAKE 'N CHICK" vs "Shake & Chick" — punctuation rendering → yes
+  - "PIZZA HOUSE INC" vs "Pizza House" - corporate-suffix dropped → yes
+  - "SHAKE 'N CHICK" vs "Shake & Chick" - punctuation rendering → yes
   - Same brand transliterated / translated, same address → yes
 
 BE STRICT on address: same brand at a different physical address ≥500m apart
@@ -152,19 +152,19 @@ is "no", not "yes". LENA'S ROTI licence 3999 Keele vs Places match LENA'S
 ROTI 4207 Keele → no (different physical operation; user would land on the
 wrong location).
 
-On business TYPE — use judgment, not a checklist. Restaurant licences cover
+On business TYPE - use judgment, not a checklist. Restaurant licences cover
 cafes, bars, bakeries, food trucks, ghost kitchens, meal-takeaway counters,
-ice cream shops — Places' `types` field can flag any of these and they're
+ice cream shops - Places' `types` field can flag any of these and they're
 all fine. Use the type signal AS PART OF the larger same-business question:
 "is the Places match plausibly the consumer-restaurant business named on
 the permit?" Cases where the answer is clearly NO (illustrative, not
 exhaustive):
   - Permit clearly a cafe/grill, Places match is car_wash with car-wash
-    reviews — completely different business at same address
-  - Permit a food kitchen, Places match is a school/medical-spa/dentist —
+    reviews - completely different business at same address
+  - Permit a food kitchen, Places match is a school/medical-spa/dentist -
     completely different
   - Permit a restaurant, Places match is a grocery store ONLY (types =
-    [grocery_or_supermarket] alone, no food/restaurant) — different
+    [grocery_or_supermarket] alone, no food/restaurant) - different
     operation type
 The point isn't to require exact type alignment; it's to catch
 "completely-different-business-at-same-address" failures. When types are
@@ -175,23 +175,23 @@ agreement, editorial, reviews, business status).
 If Places returned no match at all → "no_match" (distinct from "no"; means
 we have no data to compare, not that we have data and it's wrong).
 
-is_restaurant — does this entry belong on a directory of Toronto's NEWLY
+is_restaurant - does this entry belong on a directory of Toronto's NEWLY
 LICENCED small-scale, independent, immigrant-owned ETHNIC-CUISINE restaurants?
-  - "yes" — standalone restaurant, cafe, bar, bakery, food truck, hot-counter
+  - "yes" - standalone restaurant, cafe, bar, bakery, food truck, hot-counter
     that ordinary people walk into to eat AND is recognizably anchored in a
     specific ethnic / national / regional cuisine (Vietnamese pho counter,
     Salvadoran pupuseria, Eritrean injera kitchen, Sichuan dumpling shop,
     Lebanese shawarma, Trinidadian roti, Korean BBQ, Argentine empanada
     window, etc.). Even a tiny ghost kitchen counts if humans can order
     food AND there's a clear single-country / single-diaspora identity.
-  - "no" — any of:
+  - "no" - any of:
       * Institutional caterers (Aramark/Compass cafeterias in hospitals,
         offices, universities)
       * Packaged-food brand / factory outlet (Soma Bone Broth, Shimla Foods,
         Bergamos)
       * Grocery / supermarket counter selling packaged goods, not made-to-
         order food
-      * MAJOR chain franchise — household-name brands with national /
+      * MAJOR chain franchise - household-name brands with national /
         international footprint or recognizable corporate-franchise model.
         Concrete drops: Popeyes, KFC, Mary Brown's, Tim Hortons, Pizza
         Pizza, Papa Johns, Pizzaville, McDonald's, Starbucks, Subway,
@@ -201,7 +201,7 @@ LICENCED small-scale, independent, immigrant-owned ETHNIC-CUISINE restaurants?
         Do NOT drop small TORONTO-ANCHORED family multi-location operators
         (~2-8 GTA-only locations, all under one ownership, all the same
         cuisine, no formal franchising). These are the "family expanded
-        and opened a second/third location" pattern — they're still the
+        and opened a second/third location" pattern - they're still the
         immigrant-owned story this directory surfaces. Concrete keeps:
         - Bamiyan Kabob (Afghan, ~5 GTA locations, one family)
         - Tanghulu Tanghulu (Chinese, 8 Toronto-area mall counters, same
@@ -215,33 +215,33 @@ LICENCED small-scale, independent, immigrant-owned ETHNIC-CUISINE restaurants?
         → keep.
       * PAN-CUISINE / NON-ETHNIC-ANCHORED joints. Concretely: places whose
         menu spans multiple unrelated cuisines without a single-country
-        identity — wings + poutine + Nashville chicken (North American
+        identity - wings + poutine + Nashville chicken (North American
         comfort), burgers + pizza + shawarma (multi-region grab-bag),
         "150+ wing flavors + burgers + wraps + South Asian items" (no
         anchor), generic "fusion" with no diaspora tie-in. Also: American
         Southern / Cajun / BBQ themed (no taxonomy bucket and not a
         Toronto-immigrant story). If you can't name ONE country or one
         diaspora the menu clearly belongs to, return "no".
-  - "unclear" — genuinely ambiguous (coffee + branded retail like Lindt
+  - "unclear" - genuinely ambiguous (coffee + branded retail like Lindt
     Chocolate, deli + grocery combo, retail bakery with mostly-packaged
     goods).
 
 Treat `cuisines=["unknown"]` as a warning sign for is_restaurant: if you
 can't identify a cuisine after looking at the evidence, the entry likely
-fails the ethnic-anchor test and is_restaurant should be "no" — NOT "yes
+fails the ethnic-anchor test and is_restaurant should be "no" - NOT "yes
 with unknown cuisine." A real ethnic restaurant has a recognizable
 country/diaspora identity visible somewhere in the evidence.
 
   AGED-OUT-UNVERIFIABLE RULE (added 2026-05-15, scoped 2026-05-15 v2):
   When ALL of these hold STRICTLY, return is_restaurant="no":
-    1) GOOGLE PLACES MATCH line above is literally "(none — Places returned
-       no result for this name+address)" — i.e., we have zero Places data
+    1) GOOGLE PLACES MATCH line above is literally "(none - Places returned
+       no result for this name+address)" - i.e., we have zero Places data
        to compare against.
     2) NO "WEBSITE CONTENT" block appears anywhere in the user message
-       above — literally absent. (If a WEBSITE CONTENT block IS shown,
+       above - literally absent. (If a WEBSITE CONTENT block IS shown,
        even with marketing-flavored copy or short menu fragments, this
        rule does NOT fire. Quality of the content is irrelevant to this
-       rule — only its presence.)
+       rule - only its presence.)
     3) LICENCE "Days since issued" is at least 30.
   Rationale: zero Places data + zero crawled content + 30d aged means we
   have NO evidence the business exists. A fresh licence (<30d) can
@@ -251,16 +251,16 @@ country/diaspora identity visible somewhere in the evidence.
   DO NOT FIRE THIS RULE when:
     - WEBSITE CONTENT was provided, even if you judge it as thin or
       marketing-heavy. Content presence proves the URL is alive and the
-      business has SOMETHING online — that's enough to clear AGED-OUT.
+      business has SOMETHING online - that's enough to clear AGED-OUT.
     - Places returned a match, even a weak one.
     - The licence is <30 days old.
 
   When this rule fires, set evidence to start with "AGED-OUT UNVERIFIABLE:"
   so the pipeline can schedule a monthly recheck.
 
-cuisines — list of 1 to 3 SPECIFIC country / diaspora cuisine labels.
+cuisines - list of 1 to 3 SPECIFIC country / diaspora cuisine labels.
 
-  Return labels in any natural casing — e.g., "Sri Lankan", "Cape Verdean",
+  Return labels in any natural casing - e.g., "Sri Lankan", "Cape Verdean",
   "Uyghur", "Persian", "Trinidadian-Chinese". The system slugifies and
   auto-registers any cuisine it hasn't seen before; no ethnicity goes
   unrecognized.
@@ -285,14 +285,14 @@ cuisines — list of 1 to 3 SPECIFIC country / diaspora cuisine labels.
     "Middle Eastern" or country (Lebanese,  "Shawarma", "Falafel", "Kebab",
        Syrian, Persian, etc.)               "Mediterranean"
 
-  COUNTRY-LEVEL distinctions ARE granular enough — keep these separate:
+  COUNTRY-LEVEL distinctions ARE granular enough - keep these separate:
     Tamil (Sri Lankan Tamil diaspora, distinct cuisine)
     Sri Lankan (broader, hoppers / kottu)
-    Bangladeshi (vs Indian — separate national cuisine)
-    Pakistani (vs Indian — separate national cuisine)
+    Bangladeshi (vs Indian - separate national cuisine)
+    Pakistani (vs Indian - separate national cuisine)
     Taiwanese (politically + culturally distinct from mainland Chinese)
     Tibetan (distinct from Chinese)
-    Uyghur (distinct from Chinese — Central Asian Turkic Muslim)
+    Uyghur (distinct from Chinese - Central Asian Turkic Muslim)
 
   WHEN TO MULTI-LIST: two specific countries blended at the same shop
     (Korean+Japanese izakaya → ["Korean", "Japanese"], not "Asian Fusion").
@@ -308,21 +308,21 @@ cuisines — list of 1 to 3 SPECIFIC country / diaspora cuisine labels.
 
   Do NOT invent vague descriptors like "Asian Fusion" or "International".
 
-  EXPLICIT BANS — never return these labels:
-    "Canadian", "American", "Hawaiian", "European" — these aren't immigrant
+  EXPLICIT BANS - never return these labels:
+    "Canadian", "American", "Hawaiian", "European" - these aren't immigrant
        diaspora cuisines we surface; set is_restaurant="no" instead.
-    "Mediterranean" — too broad; use "Middle Eastern" or the specific
+    "Mediterranean" - too broad; use "Middle Eastern" or the specific
        country (Lebanese, Greek, Turkish, etc.).
-    "Indian-Chinese", "Hakka" — collapse to "Indian" or "Chinese" based
+    "Indian-Chinese", "Hakka" - collapse to "Indian" or "Chinese" based
        on which tradition dominates the menu; never use the fusion label.
-    "Nepali" — use "Nepalese" (canonical spelling in our taxonomy).
+    "Nepali" - use "Nepalese" (canonical spelling in our taxonomy).
     Any "<Region> <Country>" label like "South Indian", "North Indian",
-       "Maharashtrian", "Southern Italian", "Northern Chinese" — collapse
+       "Maharashtrian", "Southern Italian", "Northern Chinese" - collapse
        to the parent country.
 
   The grain we keep is COUNTRY, NOT region. Always.
 
-best_website — the URL we should put on the entry's name link.
+best_website - the URL we should put on the entry's name link.
 
 USER DIRECTIVE (verbatim, 2026-05-15): "Haiku will identify website from
 Google Places and ingest review and, if no website link exists in places,
@@ -334,19 +334,19 @@ Name listing. If no relevant site found and no site in places, no link
 will be applied to the business name."
 
 Concretely:
-  - PLACES PATH — when GOOGLE PLACES MATCH shows a Website per Places URL
+  - PLACES PATH - when GOOGLE PLACES MATCH shows a Website per Places URL
     and WEBSITE CONTENT was fetched from it, judge the content directly.
     Return the URL when the page shows real restaurant material.
-  - SEARCH-FALLBACK PATH — when Places has NO website but WEB VERIFY shows
+  - SEARCH-FALLBACK PATH - when Places has NO website but WEB VERIFY shows
     a Website found URL (this came from an earlier Haiku web_search using
-    name + address + category — the top search match), judge that URL the
+    name + address + category - the top search match), judge that URL the
     same way. If WEBSITE CONTENT was fetched for it, evaluate that content.
     Return the URL only when the page clearly belongs to a small-scale,
-    independent, ethnic-cuisine restaurant matching the licence — i.e.,
+    independent, ethnic-cuisine restaurant matching the licence - i.e.,
     the audience we surface. Reject if the search-found page looks like a
     chain corporate site, an unrelated business, an aggregator, or a
     different-city operator with the same name.
-  - NO SITE PATH — if neither Places nor the search-fallback yields a
+  - NO SITE PATH - if neither Places nor the search-fallback yields a
     judgeable real restaurant site, return null. The entry will render
     without a name link (clean UX).
 
@@ -361,11 +361,11 @@ When content evaluation says approve:
   - REQUIRE WEBSITE CONTENT for the URL to be approved. If literally no
     WEBSITE CONTENT block was shown to you for this entry's candidate URL
     (the static fetch came up dry AND jina headless render came up dry),
-    return best_website=null even when Places provides a URL — Places
+    return best_website=null even when Places provides a URL - Places
     doesn't probe liveness; we do, and without our own content we can't
     confirm the URL works. (Note: this rule is about CONTENT PRESENCE,
     not content quality. If a WEBSITE CONTENT block IS present, evaluate
-    it as above — do NOT return null on the basis that the content seems
+    it as above - do NOT return null on the basis that the content seems
     sparse.)
   - Return null when the website content is bad:
       * Parked-domain placeholder (Hostinger / Namecheap "this domain is for
@@ -377,11 +377,11 @@ When content evaluation says approve:
       * Page is just a single image or social-redirect with no text content
       * Returns the wrong business entirely (different restaurant name)
   - Evaluate each candidate URL by what KIND of page it is. Examples of
-    each category are illustrative, not exhaustive — apply the principle.
+    each category are illustrative, not exhaustive - apply the principle.
 
     APPROVE:
     * The business's own website (own domain, own brand, business-authored
-      content — menu, hours, story, ordering).
+      content - menu, hours, story, ordering).
     * A landlord/mall directory page DEDICATED to one tenant with
       substantial business-specific content (description, hours, address
       match, marketing copy). E.g. yorkdale.com/store/<biz>/. For new mall
@@ -389,34 +389,34 @@ When content evaluation says approve:
     * A real social profile (instagram.com/<handle>, facebook.com/<handle>)
       matching the business name, with consumer-facing posts.
 
-    REJECT — the page is ABOUT the business but not authored by them:
-    * Inspection / regulatory / public-health records — pages that catalog
+    REJECT - the page is ABOUT the business but not authored by them:
+    * Inspection / regulatory / public-health records - pages that catalog
       health-inspection results, infractions, licence data. The tone is
       governmental; the content is "what we found", not "what we serve".
       Hint hosts: dinesafe.to, public-health portals, business-licence
       lookups. But identify the category from content + URL together;
       a regulator under any domain still produces regulatory pages.
-    * Delivery/ordering aggregators — third-party platforms that list many
+    * Delivery/ordering aggregators - third-party platforms that list many
       restaurants. Hint hosts: skipthedishes, doordash, ubereats, grubhub,
       foodora, menulog, seamless, chownow, toasttab, order.online.
-    * Review aggregators with user-generated content — hint hosts: yelp,
+    * Review aggregators with user-generated content - hint hosts: yelp,
       tripadvisor. The reviews may be about the business but the page
       isn't.
-    * Commercial real estate / property listings — pages selling/leasing
+    * Commercial real estate / property listings - pages selling/leasing
       the SPACE, not representing the business.
     * Social search-results / aggregate pages (instagram.com/popular/,
-      instagram.com/explore/, facebook.com/search/) — these aren't
+      instagram.com/explore/, facebook.com/search/) - these aren't
       profiles.
     * Generic landlord directory navigation (a "list of all stores at the
       mall") without business-specific detail.
 
   Use the page content as the primary signal; URL host is a hint. If the
   page reads as a regulator's record, an aggregator's listing, or a real-
-  estate listing — reject regardless of the host. If it reads as the
-  business's own marketing/menu/story — approve regardless of the host.
-  - Return null if no good website exists — entry falls back to Places mapsUrl.
+  estate listing - reject regardless of the host. If it reads as the
+  business's own marketing/menu/story - approve regardless of the host.
+  - Return null if no good website exists - entry falls back to Places mapsUrl.
 
-evidence — one short sentence quoting the strongest signal that justified the
+evidence - one short sentence quoting the strongest signal that justified the
 above judgments (a review excerpt, an editorial line, a menu phrase)."""
 
 def _days_since_issued(s):
@@ -436,7 +436,7 @@ def _days_since_issued(s):
 
 def build_request(entry_key, verify_entry, places_entry, llm_entry=None, csv_row=None, website_text=None):
     name, _, addr = entry_key.partition('||')
-    lines = [f"LICENCE (City of Toronto — source of truth for name, address, food-category):",
+    lines = [f"LICENCE (City of Toronto - source of truth for name, address, food-category):",
              f"  Operating Name:    {name}",
              f"  Licence Address:   {addr}"]
     if csv_row:
@@ -454,7 +454,7 @@ def build_request(entry_key, verify_entry, places_entry, llm_entry=None, csv_row
         if addr3:       lines.append(f"  Address Line 3:    {addr3}")
         if conditions:  lines.append(f"  Conditions:        {conditions[:300]}")
         if endorse:     lines.append(f"  Endorsements:      {endorse[:200]}")
-        # Issued date + days-since-issued — feeds the aged-out-unverifiable
+        # Issued date + days-since-issued - feeds the aged-out-unverifiable
         # rule in is_restaurant: licences older than 30d with no online
         # presence get dropped (likely ghosts); younger ones stay (operator
         # may still be opening doors).
@@ -463,7 +463,7 @@ def build_request(entry_key, verify_entry, places_entry, llm_entry=None, csv_row
             days_since = _days_since_issued(issued_raw)
             if days_since is not None:
                 lines.append(f"  Days since issued: {days_since}")
-        # Cancel Date — if populated, the licence is no longer active.
+        # Cancel Date - if populated, the licence is no longer active.
         # is_restaurant should be "no" regardless of other signals.
         if cancel_date: lines.append(f"  Cancel Date:       {cancel_date}  ← LICENCE IS CANCELLED")
     lines.append("")
@@ -485,12 +485,12 @@ def build_request(entry_key, verify_entry, places_entry, llm_entry=None, csv_row
         if places_entry.get('businessStatus'):
             lines.append(f"  Business status: {places_entry['businessStatus']}")
     else:
-        lines.append("GOOGLE PLACES MATCH: (none — Places returned no result for this name+address)")
+        lines.append("GOOGLE PLACES MATCH: (none - Places returned no result for this name+address)")
     lines.append("")
 
     lines.append("WEB VERIFY (earlier Haiku web_search):")
     if verify_entry.get('synthesized_for_validator'):
-        lines.append("  (no web_verify entry — this entry surfaced via Places match alone)")
+        lines.append("  (no web_verify entry - this entry surfaced via Places match alone)")
     else:
         vw = verify_entry.get('website')
         if vw: lines.append(f"  Website found: {vw}")
@@ -499,7 +499,7 @@ def build_request(entry_key, verify_entry, places_entry, llm_entry=None, csv_row
         cur_cuisine = verify_entry.get('cuisines') or [verify_entry.get('cuisine')]
         lines.append(f"  Current cuisine tag(s): {cur_cuisine}")
 
-    # Name-only LLM guess from llm_cuisine_cache — useful for Haiku to see what
+    # Name-only LLM guess from llm_cuisine_cache - useful for Haiku to see what
     # the name-only-Haiku previously concluded, and to either confirm or override
     # when richer evidence (Places types/editorial/reviews) is also visible above.
     if llm_entry and llm_entry.get('status') == 'ok':
@@ -529,7 +529,7 @@ def parse_result(msg):
     import re
     text_blocks = [b.get('text','') for b in msg.get('content', []) if b.get('type') == 'text']
     text = (text_blocks[-1] if text_blocks else '').strip()
-    # Strip markdown code fences — Haiku often wraps pretty-printed JSON in ```json ... ```
+    # Strip markdown code fences - Haiku often wraps pretty-printed JSON in ```json ... ```
     text = re.sub(r'^```(?:json)?\s*\n?', '', text, flags=re.MULTILINE)
     text = re.sub(r'\n?```\s*$', '', text)
     parsed = None
@@ -566,7 +566,7 @@ def main():
     llm = json.loads(llm_cache_path.read_text()) if llm_cache_path.exists() else {}
 
     # Index the City CSV by name||address so Haiku gets the full licence row
-    # (Client Name, Category, Conditions) — these encode the institutional /
+    # (Client Name, Category, Conditions) - these encode the institutional /
     # in-store-kiosk / chain-franchisee signals that we previously hard-coded
     # into inject_openings as Python rules. Now Haiku judges from the data.
     import csv as _csv
@@ -584,10 +584,10 @@ def main():
                 if n and a:
                     csv_index[f"{n}||{a}"] = row
 
-    # Targets: every entry that the inject pipeline would consider operating —
+    # Targets: every entry that the inject pipeline would consider operating -
     # i.e., either Places returned OPERATIONAL or web_verify said operating=yes.
     # This catches Places-only entries (e.g., JOLLOF KING) that never went
-    # through web_verify and so were never validated before — they relied on
+    # through web_verify and so were never validated before - they relied on
     # name-only LLM for cuisine without seeing any Places signal in context.
     target_keys = set()
     for k, e in wv.items():
@@ -597,13 +597,13 @@ def main():
         if p.get('status') == 'ok' and p.get('businessStatus') == 'OPERATIONAL':
             target_keys.add(k)
     # Ensure every target has SOMETHING in web_verify so the apply loop can
-    # write back to it. Synthesize a stub for Places-only entries — same
+    # write back to it. Synthesize a stub for Places-only entries - same
     # invariant verification_for() relies on.
     for k in target_keys:
         if k not in wv:
             wv[k] = {'status': 'ok', 'operating': 'yes', 'cuisine': None, 'cuisines': None,
                      'synthesized_for_validator': True}
-    # Skip entries validated in the last 14 days — avoids re-spending on
+    # Skip entries validated in the last 14 days - avoids re-spending on
     # already-judged entries. The previous 24h cutoff re-validated every
     # entry every day, which cost ~$2/day in Anthropic Haiku batch input
     # tokens (444 entries × ~3k tokens) for content that fundamentally
@@ -652,7 +652,7 @@ def main():
     wt_cutoff = (datetime.now(timezone.utc) - timedelta(days=14)).isoformat()
 
     # Candidate URL precedence per 2026-05-15 directive:
-    #   1) Google Places website  (preferred — most authoritative match)
+    #   1) Google Places website  (preferred - most authoritative match)
     #   2) WEB VERIFY website     (top Google-search match found earlier
     #      via Haiku web_search using name+address+category)
     # Either way Haiku gets to JUDGE the actual page content before we keep
@@ -816,7 +816,7 @@ def main():
             wv[key].pop('validator_drop', None)
             wv[key].pop('validator_recheck_after', None)
 
-        # 3. Cuisine update — only if it's a real change AND we got real cuisines
+        # 3. Cuisine update - only if it's a real change AND we got real cuisines
         real_cuisines = [c for c in parsed['cuisines'] if c and c != 'unknown']
         current = wv[key].get('cuisines') or ([wv[key].get('cuisine')] if wv[key].get('cuisine') else [])
         current = [c for c in current if c and c != 'unknown']
@@ -830,7 +830,7 @@ def main():
             wv[key]['recovery_source'] = 'unified_validator'
 
         # 4. Website handling. The validator is the authoritative source for
-        # URL trust — when it approves a URL we MUST clear any stale broken
+        # URL trust - when it approves a URL we MUST clear any stale broken
         # flag in url_health (e.g., from a prior run with a stricter prompt
         # that rejected this URL). When it rejects, mark all candidates
         # broken so the inject pipeline skips them.
@@ -846,7 +846,7 @@ def main():
                 if len(examples['website_dropped']) < 6:
                     examples['website_dropped'].append(f"{name[:35]:<35}  {cur_website[:50]}")
         elif parsed['best_website']:
-            # Approved — clear any stale broken flag from a prior run.
+            # Approved - clear any stale broken flag from a prior run.
             health[parsed['best_website']] = {
                 'status': 200, 'checked_at': now_iso, 'ok': True,
                 'reason': 'validator: approved'

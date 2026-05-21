@@ -124,7 +124,7 @@ from places_key import cache_key  # canonical shared helper
 def main():
     data = json.loads(DATA_PATH.read_text())
     no = data.get('newOpenings')
-    if not no: sys.exit("data/corridors.json has no newOpenings — inject first")
+    if not no: sys.exit("data/corridors.json has no newOpenings - inject first")
 
     web_cache = json.loads(WEB_CACHE_PATH.read_text()) if WEB_CACHE_PATH.exists() else {}
     places_cache = json.loads(PLACES_CACHE_PATH.read_text()) if PLACES_CACHE_PATH.exists() else {}

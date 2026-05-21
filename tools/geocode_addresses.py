@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
 Geocode Toronto street addresses for entries that don't already have coordinates
-via Google Places. Uses OpenStreetMap Nominatim — free, no API key, rate-limited
+via Google Places. Uses OpenStreetMap Nominatim - free, no API key, rate-limited
 to 1 req/sec by their usage policy.
 
 Reads candidate addresses from corridors.json (newOpenings.recent).
 Skips anything already in places_cache OR geocode_cache.
-Writes to tools/cache/geocode_cache.json. Idempotent — re-running picks up only
+Writes to tools/cache/geocode_cache.json. Idempotent - re-running picks up only
 the new delta.
 
 Cron: runs daily after the verification pipeline, before inject_openings.
@@ -62,7 +62,7 @@ def main():
     places = json.loads(PLACES_CACHE_PATH.read_text()) if PLACES_CACHE_PATH.exists() else {}
     cache = json.loads(GEOCODE_CACHE_PATH.read_text()) if GEOCODE_CACHE_PATH.exists() else {}
     if not WIRE_PATH.exists():
-        sys.exit("corridors.json missing — run build_corridors.py first")
+        sys.exit("corridors.json missing - run build_corridors.py first")
     wire = json.loads(WIRE_PATH.read_text())
     recent = wire.get('newOpenings', {}).get('recent', [])
 
@@ -74,8 +74,8 @@ def main():
         if not addr:
             continue
         # Prefer the permit-derived _cacheKey stashed by inject_openings.py
-        # (name||addr1 addr3). r.address is just addr1 — possibly overwritten
-        # with Places' matchedAddress — neither of which matches places_cache
+        # (name||addr1 addr3). r.address is just addr1 - possibly overwritten
+        # with Places' matchedAddress - neither of which matches places_cache
         # keys. Fall back to building from r.address only when _cacheKey
         # is absent (older corridors.json or non-inject sources).
         k = r.get('_cacheKey') or cache_key(name, addr)

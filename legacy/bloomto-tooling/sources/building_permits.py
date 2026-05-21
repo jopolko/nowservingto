@@ -1,4 +1,4 @@
-"""Toronto Building Permits — Active Permits source loader.
+"""Toronto Building Permits - Active Permits source loader.
 
 Pulls Toronto's `building-permits-active-permits` CKAN dataset (CSV, ~50-80MB),
 filters to residential new-build / conversion permits, and produces a
@@ -58,7 +58,7 @@ RESOURCE_URL = (
     "https://ckan0.cf.opendata.inter.prod-toronto.ca/datastore/dump/"
     "6d0229af-bc54-46de-9c2b-26759b01dd05"
 )
-# Cleared building permits since 2017 — separate dataset from active.
+# Cleared building permits since 2017 - separate dataset from active.
 # Same schema (incl. STRUCTURE_TYPE), used only by `build_structure_type_index`.
 CLEARED_CACHE_FILENAME = "cleared_permits.csv"
 CLEARED_RESOURCE_URL = (
@@ -69,7 +69,7 @@ CLEARED_RESOURCE_URL = (
 DEFAULT_FRESHNESS_YEARS = 5
 SANITY_VALUE_CEILING_CAD = 50_000_000
 MAX_UNCLASSIFIED = 1000
-MIN_NEIGHBORHOOD_SAMPLE_SIZE = 5  # was 10 — lowered 2026-05-11 alongside the
+MIN_NEIGHBORHOOD_SAMPLE_SIZE = 5  # was 10 - lowered 2026-05-11 alongside the
 # ≥3-units-created filter on comp aggregation. The stricter unit filter
 # drops the available sample by ~60% in many neighbourhoods; keeping the
 # old "10 minimum" would null out half the city's pro-forma anchor.
@@ -77,7 +77,7 @@ MIN_NEIGHBORHOOD_SAMPLE_SIZE = 5  # was 10 — lowered 2026-05-11 alongside the
 # luxury outlier).
 
 # Closed-set classifier on PERMIT_TYPE. Keys are uppercased exact-match.
-# Comprehensive 2026-05-04 calibration against the full 230K-row CSV — every
+# Comprehensive 2026-05-04 calibration against the full 230K-row CSV - every
 # value with ≥1 occurrence is mapped. Unseen values still trigger a one-shot
 # WARN + counter with `ClassifierDriftError` above MAX_UNCLASSIFIED so a
 # future Toronto schema add surfaces loudly.
@@ -137,7 +137,7 @@ class ClassifierDriftError(RuntimeError):
 class BuildingPermit:
     """One residential-relevant building permit, post-classification.
 
-    `description` is intentionally classifier-only — never logged, never
+    `description` is intentionally classifier-only - never logged, never
     serialized to the wire, never reproduced in tests beyond synthetic
     strings. Toronto's permit description field can leak contractor or
     applicant names that the structured fields do not.
@@ -145,11 +145,11 @@ class BuildingPermit:
     permit_id: str
     address: str         # raw, pre-normalize
     permit_type: str     # upstream PERMIT_TYPE
-    description: str     # classifier input ONLY — do not surface
+    description: str     # classifier input ONLY - do not surface
     declared_value_cad: int
     issued_date: date
     units_created: int   # DWELLING_UNITS_CREATED, ≥0
-    units_existing: int  # DWELLING_UNITS_EXISTING, ≥0 — pre-construction
+    units_existing: int  # DWELLING_UNITS_EXISTING, ≥0 - pre-construction
                          # unit count, ground truth for the parcel's existing-
                          # units count when this permit's address joins to a
                          # parcel. Added 2026-05-09 for the existingUnitsApprox
@@ -243,7 +243,7 @@ def compute_permits(
     and returns the index for the orchestrator to join against parcels.
 
     Loud-failure: if more than MAX_UNCLASSIFIED rows match no entry in
-    `PERMIT_CATEGORY_TABLE`, raises `ClassifierDriftError` — the table
+    `PERMIT_CATEGORY_TABLE`, raises `ClassifierDriftError` - the table
     needs an update before the build can proceed.
     """
     path = _ensure_cached(Path(cache_dir))
@@ -386,7 +386,7 @@ _LANE_REF_RE = __import__("re").compile(
 def compute_laneway_suite_address_set(cache_dir: Path) -> set[str]:
     """Return the set of normalized addresses that have at least one
     laneway-indicating permit on file. Used as a back-derived
-    laneway-abutment signal — Toronto Centreline + OSM both have
+    laneway-abutment signal - Toronto Centreline + OSM both have
     gaps on some Roncesvalles / Caledonia-Fairbank back-lanes, but
     any address in this set abuts a real lane by construction-permit
     ground truth.
@@ -398,7 +398,7 @@ def compute_laneway_suite_address_set(cache_dir: Path) -> set[str]:
          garage" AND the description references "laneway" / "rear yard"
          / "rear lane" (~242 net new addresses). A new detached garage
          explicitly tied to a lane reference is strong evidence the
-         parcel abuts a lane — homeowner intentionally building
+         parcel abuts a lane - homeowner intentionally building
          lane-facing accessory infrastructure.
     """
     csv_path = _ensure_cached(Path(cache_dir))
@@ -447,7 +447,7 @@ def build_structure_type_index(cache_dir: Path) -> dict[str, str]:
     of 528K parcels) and ~50–60 % of curated/broader picks (which are
     biased toward parcels with redev history).
 
-    For matched parcels we have direct ground truth — no classifier
+    For matched parcels we have direct ground truth - no classifier
     heuristic needed. The cross-boundary classifier remains the fallback
     for unmatched parcels.
     """
@@ -485,7 +485,7 @@ def build_structure_type_index(cache_dir: Path) -> dict[str, str]:
         for row in csv.DictReader(fp):
             ingest_row(row, "active")
 
-    # 2. Cleared permits (since 2017) — separate dataset, similar schema.
+    # 2. Cleared permits (since 2017) - separate dataset, similar schema.
     # Auto-download if not cached (~135 MB, takes ~20s). On a fresh
     # machine the first build_parcels run will pull this once.
     cleared = cache / CLEARED_CACHE_FILENAME
@@ -494,15 +494,15 @@ def build_structure_type_index(cache_dir: Path) -> dict[str, str]:
         try:
             _http.download_with_retries(CLEARED_RESOURCE_URL, cleared)
         except Exception as e:
-            _log.warning("cleared permits download failed (%s) — skipping that source", e)
+            _log.warning("cleared permits download failed (%s) - skipping that source", e)
     if cleared.exists() and cleared.stat().st_size > 0:
         with cleared.open("r", encoding="utf-8", newline="") as fp:
             for row in csv.DictReader(fp):
                 ingest_row(row, "cleared")
     else:
-        _log.warning("cleared_permits.csv not in cache — skipping cleared-permits ingest")
+        _log.warning("cleared_permits.csv not in cache - skipping cleared-permits ingest")
 
-    # 3. Demolition permits — already cached as JSON for the signals
+    # 3. Demolition permits - already cached as JSON for the signals
     # layer. Same schema as building permits.
     import json as _json
     demo = cache / "demo_permits.json"
@@ -514,7 +514,7 @@ def build_structure_type_index(cache_dir: Path) -> dict[str, str]:
             for row in (recs or []):
                 ingest_row(row, "demo")
         except Exception as e:
-            _log.warning("demo_permits.json read failed: %s — skipping", e)
+            _log.warning("demo_permits.json read failed: %s - skipping", e)
 
     out = {addr: enum for addr, (_d, enum, _s) in best_by_addr.items()}
     _log.info(
@@ -530,7 +530,7 @@ def freshness_cutoff(today: date | None = None,
                      freshness_years: int = DEFAULT_FRESHNESS_YEARS) -> date:
     """Return the date floor for in-window aggregation."""
     today = today or date.today()
-    # Crude "N years ago" — exact boundary is fine; a 1-day off-by-one at the
+    # Crude "N years ago" - exact boundary is fine; a 1-day off-by-one at the
     # cutoff doesn't change the aggregate.
     return today - timedelta(days=freshness_years * 365)
 
@@ -544,7 +544,7 @@ def existing_units_from_permits(
 
     Used by `build_parcels.py` to derive `existingUnitsApprox` with
     basis='permits' (the highest-confidence source). The "most recent"
-    rule favours fresher signals — a 2024 reno after a 2018 permit
+    rule favours fresher signals - a 2024 reno after a 2018 permit
     reflects today's reality, not what was on the lot 6 years ago.
     """
     if not permit_indices:
@@ -583,11 +583,11 @@ def aggregate_per_parcel(
 # Nearby-multiplex-permit comp (queued 2026-05-12 from 83 Twenty Seventh St
 # case). For each parcel, find the nearest recent multiplex permits within
 # 250m. Stronger underwriting evidence than the neighborhood-median comp
-# we already surface — "4-plex built 80m away last year" is an on-block
+# we already surface - "4-plex built 80m away last year" is an on-block
 # precedent, not a vibe-check.
 # ----------------------------------------------------------------------------
 
-NEARBY_COMP_MIN_UNITS = 3        # multiplex floor — same as aggregate_per_neighborhood
+NEARBY_COMP_MIN_UNITS = 3        # multiplex floor - same as aggregate_per_neighborhood
 NEARBY_COMP_WINDOW_YEARS = 5     # post-Bill 185 environment + a couple years before
 NEARBY_COMP_RADIUS_M = 250       # ≈ 3 typical Toronto blocks
 
@@ -613,7 +613,7 @@ def build_nearby_multiplex_index(
     """Build an STRtree of recent multiplex permits keyed by location.
 
     `ap_records_by_norm` is the `{normalized_address: Point(lon, lat)}`
-    map derived from Toronto Address Points — supplies each permit's
+    map derived from Toronto Address Points - supplies each permit's
     coordinate (the permits CSV ships no lat/lng). Permits whose address
     doesn't resolve to an Address Point are silently dropped.
 
@@ -671,7 +671,7 @@ def query_nearby_multiplex(
 
     `builder_activity_counter` is the citywide
     `{normalized_builder_name: count}` map (same one used by
-    build_signals.py for demo permits) — used to tag the nearest
+    build_signals.py for demo permits) - used to tag the nearest
     permit's builder with an activity classification.
 
     Returns:
@@ -782,12 +782,12 @@ def compute_builder_counter_all_permits(
     """Raw-CSV pass to count every permit (any STRUCTURE_TYPE, any
     PERMIT_TYPE, any unit count) per normalized BUILDER_NAME within the
     window. Used by build_signals.py to attribute builder activity
-    across BOTH demolition and building permits — a custom-home builder
+    across BOTH demolition and building permits - a custom-home builder
     with no demos still gets credit for their building permits.
 
     Counts each individual permit row (one builder might appear on a
     plumbing permit + a mechanical permit + a structural permit for the
-    same project — all 3 count). The threshold buckets are tuned to
+    same project - all 3 count). The threshold buckets are tuned to
     this: 1 = first project, 2-3 = occasional, 4+ = active operator.
     Inflating counts via multi-trade rollup is roughly correct here
     because a builder filing 4 trade permits IS more committed than a
@@ -831,15 +831,15 @@ def aggregate_per_neighborhood(
 ) -> dict[str, dict]:
     """Compute `{neighborhood_name: {medianCostPerUnit, sampleSize, freshnessYears}}`.
 
-    2026-05-11 — filter comps to MULTIPLEX-COMPARABLE permits only (units
+    2026-05-11 - filter comps to MULTIPLEX-COMPARABLE permits only (units
     created ≥ 3). Previously the comp set included every residential permit
     adding ≥1 unit, which in wealthy neighbourhoods (Bayview Village, Lawrence
     Park) was dominated by $3-5M single-family custom rebuilds. Those inflated
-    the per-unit median to ~$900K — wildly above what a 4-6 unit multiplex
+    the per-unit median to ~$900K - wildly above what a 4-6 unit multiplex
     would actually cost. The multiplex-floor cutoff (3 units) drops single-
     family rebuilds and conversions to <3 units while keeping triplex,
     fourplex, sixplex, and small-apartment comps. Sample sizes will shrink
-    in wealthy areas where multiplex activity is sparse — that's correct;
+    in wealthy areas where multiplex activity is sparse - that's correct;
     "we don't have a credible comp" is better than "luxury single-family
     median masquerading as multiplex math."
     """

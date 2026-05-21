@@ -1,19 +1,19 @@
 """
-Canonical cuisine taxonomy — single source of truth for the entire pipeline.
+Canonical cuisine taxonomy - single source of truth for the entire pipeline.
 
 Why this exists:
   Before this module, every recovery script defined its own VALID_CUISINE_KEYS
   set, and inject_openings.py had its own CUISINE_LABEL dict. They drifted.
   Recovery scripts would tag entries with cuisines like `armenian` that the
   inject step didn't have a label for, so those entries silently disappeared
-  from the feed. (Lost 15 cuisines this way on 2026-05-14 — armenian,
+  from the feed. (Lost 15 cuisines this way on 2026-05-14 - armenian,
   argentinian, spanish, egyptian, yemeni, georgian, cuban, dominican,
   venezuelan, sri_lankan, nepalese, senegalese, israeli, cambodian, laotian.)
 
 Now CUISINE_LABEL is defined ONCE here. Adding a new cuisine bucket means:
   1. Add a line to CUISINE_LABEL below.
-  2. Everything else — recovery scripts, the inject step, the front-end
-     dropdown — picks it up automatically on next cron.
+  2. Everything else - recovery scripts, the inject step, the front-end
+     dropdown - picks it up automatically on next cron.
 """
 
 # key -> human display label (used in the cuisine dropdown, /cuisine/<key>
@@ -54,8 +54,8 @@ CUISINE_LABEL = {
 # DYNAMIC TAXONOMY (added 2026-05-15)
 # ---------------------------------------------------------------------------
 # Haiku is now free to return any country/diaspora cuisine label it likes.
-# When the validator reports a label we don't already know — e.g. "Cape
-# Verdean", "Hakka", "Uyghur" — we slugify it, generate a deterministic
+# When the validator reports a label we don't already know - e.g. "Cape
+# Verdean", "Hakka", "Uyghur" - we slugify it, generate a deterministic
 # color, and persist the new key to cuisines_dynamic.json. Next inject
 # picks it up and the frontend renders it like any built-in cuisine.
 #
@@ -114,7 +114,7 @@ def _slugify_cuisine(label):
 
 def cuisine_color(key):
     """Deterministic hex color for a cuisine key. Used for cuisines NOT
-    in the curated index.html palette — gives them a stable, distinct
+    in the curated index.html palette - gives them a stable, distinct
     chip color without manual assignment. HSL hue derived from a hash,
     fixed saturation + lightness for visual cohesion with the existing
     palette (saturated, mid-dark)."""
@@ -137,7 +137,7 @@ def register_cuisine(label):
     slug. Auto-registers (and persists) novel cuisines so the next cron
     run knows the key. Returns '' if the label can't be slugified.
     Parent-country collapsing (Sichuan → Chinese) lives in the validator
-    prompt, not here — keeps judgment with Haiku, not in a hardcoded map.
+    prompt, not here - keeps judgment with Haiku, not in a hardcoded map.
 
     Label reverse-lookup: if Haiku returns "Middle Eastern" but our seed
     taxonomy has key=middle_east with label="Middle Eastern", reuse the
@@ -154,7 +154,7 @@ def register_cuisine(label):
     for existing_key, existing_label in CUISINE_LABEL.items():
         if existing_label.lower() == pretty_in.lower():
             return existing_key
-    # Novel cuisine — title-case the human label and persist.
+    # Novel cuisine - title-case the human label and persist.
     CUISINE_LABEL[key] = pretty_in
     VALID_CUISINE_KEYS.add(key)
     dyn = _load_dynamic()
@@ -189,7 +189,7 @@ def normalize_cuisines(entry):
 
 def parse_cuisines_from_llm(parsed):
     """Read the cuisines field from an LLM response dict. Accepts both:
-       - `{"cuisines": ["Korean", "Japanese"]}`  (new format, up to 3 entries — free-form)
+       - `{"cuisines": ["Korean", "Japanese"]}`  (new format, up to 3 entries - free-form)
        - `{"cuisine": "Sri Lankan"}`              (old single-cuisine format)
     Returns a deduplicated list of canonical keys; novel cuisine labels
     are auto-registered (added to CUISINE_LABEL and persisted to
@@ -199,7 +199,7 @@ def parse_cuisines_from_llm(parsed):
     out = []
     cs = parsed.get('cuisines')
     if isinstance(cs, list):
-        for c in cs[:3]:  # cap at 3 — anything more is fusion and we abstain
+        for c in cs[:3]:  # cap at 3 - anything more is fusion and we abstain
             if not isinstance(c, str): continue
             raw = c.strip().lower()
             if raw == 'unknown':

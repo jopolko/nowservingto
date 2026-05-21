@@ -6,7 +6,7 @@ this script asserts that the chosen `PART_V_HERITAGE_FACTOR = 0.5` actually
 surfaces a useful number of Part V parcels in the top 5 Heritage Conservation
 Districts (South/North Rosedale, three Cabbagetowns).
 
-The script is **not** part of the unittest suite — it requires the real cached
+The script is **not** part of the unittest suite - it requires the real cached
 heritage SHP zip and a generated `data/parcels.geojson`. Run it manually after
 each ETL:
 
@@ -15,10 +15,10 @@ each ETL:
         --heritage-cache tools/cache/heritage.shp.zip
 
 Exit codes:
-    0  — all 5 HCDs surface ≥ 10 parcels at score ≥ 1; Part IV invariant holds.
-    1  — at least one HCD falls below the floor (factor likely too aggressive).
-    2  — Part IV invariant violated (a Part IV parcel has score > 0; this is a
-         scoring-formula bug, not a tuning issue — escalate before re-running).
+    0  - all 5 HCDs surface ≥ 10 parcels at score ≥ 1; Part IV invariant holds.
+    1  - at least one HCD falls below the floor (factor likely too aggressive).
+    2  - Part IV invariant violated (a Part IV parcel has score > 0; this is a
+         scoring-formula bug, not a tuning issue - escalate before re-running).
 """
 
 import argparse
@@ -165,7 +165,7 @@ def main(argv=None) -> int:
                         format="%(asctime)s %(levelname)s %(message)s")
 
     if not args.parcels.exists():
-        _log.error("parcels file missing: %s — run tools/build_parcels.py first", args.parcels)
+        _log.error("parcels file missing: %s - run tools/build_parcels.py first", args.parcels)
         return 2
     if not args.heritage_cache.exists():
         _log.error("heritage cache missing: %s", args.heritage_cache)
@@ -185,7 +185,7 @@ def main(argv=None) -> int:
     print("Heritage tier breakdown")
     print("=" * 60)
     print(f"  Part IV / score == 0:  {breakdown['part_iv_score_zero']}  (expected: all)")
-    print(f"  Part IV / score  > 0:  {breakdown['part_iv_score_pos']}   (expected: 0 — invariant)")
+    print(f"  Part IV / score  > 0:  {breakdown['part_iv_score_pos']}   (expected: 0 - invariant)")
     print(f"  Part V  / score >= 1:  {breakdown['part_v_score_pos']}")
     print(f"  Listed  / score >= 1:  {breakdown['listed_score_pos']}")
     if stats:
@@ -198,7 +198,7 @@ def main(argv=None) -> int:
     # Hard-block invariant.
     if breakdown["part_iv_score_pos"] > 0:
         _log.error(
-            "INVARIANT VIOLATED: %d Part IV parcels have score > 0 — Part IV is "
+            "INVARIANT VIOLATED: %d Part IV parcels have score > 0 - Part IV is "
             "supposed to be a hard block (heritage_factor=0). Investigate "
             "tools/parcel_scoring.py before re-running with different factors.",
             breakdown["part_iv_score_pos"],

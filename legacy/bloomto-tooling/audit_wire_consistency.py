@@ -6,7 +6,7 @@ audit/wire_consistency.md grouped by severity:
 
   CRITICAL  claim is logically impossible / mutually contradictory
   HIGH      column is degenerate (no signal) or rule violated by many rows
-  MEDIUM    distribution is suspicious — investigate
+  MEDIUM    distribution is suspicious - investigate
   LOW       documentation / sanity flag
 
 Usage:
@@ -93,14 +93,14 @@ def check_degenerate_columns(rows, file_label):
                 if exp_v is None:
                     findings.append(Finding(
                         "LOW",
-                        f"`{col}` is null on all {n:,} rows in {file_label} (expected — gate-filtered)",
+                        f"`{col}` is null on all {n:,} rows in {file_label} (expected - gate-filtered)",
                         f"Reason: {reason}.",
                     ))
                     continue
             findings.append(Finding(
                 "HIGH",
                 f"`{col}` is null on all {n:,} rows in {file_label}",
-                "Column carries no signal — drop from wire or fix ETL.",
+                "Column carries no signal - drop from wire or fix ETL.",
             ))
             continue
         # All-same value
@@ -115,7 +115,7 @@ def check_degenerate_columns(rows, file_label):
                 if v == exp_v:
                     findings.append(Finding(
                         "LOW",
-                        f"`{col}` is constant `{v!r}` on {n - nulls:,} rows in {file_label} (expected — gate-filtered)",
+                        f"`{col}` is constant `{v!r}` on {n - nulls:,} rows in {file_label} (expected - gate-filtered)",
                         f"Reason: {reason}.",
                     ))
                     continue
@@ -135,7 +135,7 @@ def check_degenerate_columns(rows, file_label):
                     "MEDIUM",
                     f"`{col}` is {frac:.1%} `{frac >= 0.5}` in {file_label}",
                     f"{true_count:,}/{len(non_null):,} rows are `{frac >= 0.5}`. "
-                    "Near-constant boolean — verify the gate isn't already excluding the minority.",
+                    "Near-constant boolean - verify the gate isn't already excluding the minority.",
                 ))
     return findings
 
@@ -150,7 +150,7 @@ def check_logical_invariants(rows, file_label):
         return bad
 
     # outsideTransitBuffer / score / softScore checks dropped 2026-05-07
-    # — those wire fields no longer exist (synthesised composites stripped).
+    # - those wire fields no longer exist (synthesised composites stripped).
 
     # distSubwayStreetcarM == min(distSubwayM, distStreetcarM)
     mismatches = []
@@ -199,7 +199,7 @@ def check_logical_invariants(rows, file_label):
     range_check("solarScore", 0, 100)
     range_check("builtYear", 1820, 2026)
     range_check("neighborhoodCanopyPct", 0, 100)
-    range_check("buildingCoverageRatio", 0, 1, "MEDIUM")  # sanity — might be 0-100
+    range_check("buildingCoverageRatio", 0, 1, "MEDIUM")  # sanity - might be 0-100
     range_check("lotAreaM2", 50, 20000, "MEDIUM")  # weird outliers worth flagging
     range_check("distSubwayM", 0, 50000, "MEDIUM")
     range_check("distStreetcarM", 0, 50000, "MEDIUM")
@@ -268,7 +268,7 @@ def check_logical_invariants(rows, file_label):
             "MEDIUM",
             f"`builtYear` is null on {nulls:,}/{len(rows):,} rows ({nulls/len(rows):.1%}) in {file_label}",
             "If `postwarNeighborhood` is computed downstream from `builtYear`, "
-            "those rows fall back to neighborhood-level inference — confirm that's intentional.",
+            "those rows fall back to neighborhood-level inference - confirm that's intentional.",
         ))
 
     # Zero-frontage / zero-area parcels
@@ -326,7 +326,7 @@ def check_zoning_coupling(rows, file_label):
             bad,
         ))
 
-    # sixplexEligible=False but maxUnits >= 6 — may be fine (e.g. maxUnits is multiplex cap)
+    # sixplexEligible=False but maxUnits >= 6 - may be fine (e.g. maxUnits is multiplex cap)
     # but still useful to surface. LOW.
     bad = []
     for r in rows:
@@ -378,7 +378,7 @@ def check_zoning_coupling(rows, file_label):
 def check_geographic(rows, file_label):
     findings = []
 
-    # Neighborhood concentration — top 5 should not exceed 50% of rows
+    # Neighborhood concentration - top 5 should not exceed 50% of rows
     nbhds = Counter(r.get("neighborhood") for r in rows if r.get("neighborhood"))
     top5 = nbhds.most_common(5)
     top5_share = sum(c for _, c in top5) / len(rows) if rows else 0
@@ -392,7 +392,7 @@ def check_geographic(rows, file_label):
             examples,
         ))
 
-    # Distinct neighborhood count — Toronto has ~158 (new) or ~140 (old) neighborhoods
+    # Distinct neighborhood count - Toronto has ~158 (new) or ~140 (old) neighborhoods
     distinct = len(nbhds)
     if distinct < 50:
         findings.append(Finding(
@@ -412,7 +412,7 @@ def check_score_distribution(rows, file_label):
     if not scores:
         return findings
 
-    # Score quantization — if scores are nearly-discrete (e.g. 30 unique values for 15K rows)
+    # Score quantization - if scores are nearly-discrete (e.g. 30 unique values for 15K rows)
     uniq = len(set(scores))
     if uniq < 15:
         findings.append(Finding(
@@ -422,7 +422,7 @@ def check_score_distribution(rows, file_label):
             "Consider adding a tiebreaker (e.g. parcelId) to break ties stably.",
         ))
 
-    # Bloom field expected to be boolean — check
+    # Bloom field expected to be boolean - check
     bloom_vals = Counter(type(r.get("bloom")).__name__ for r in rows if r.get("bloom") is not None)
     if len(bloom_vals) > 1:
         findings.append(Finding(
@@ -474,7 +474,7 @@ def check_cross_file(top_rows, broader_rows):
             "that broader.json doesn't accidentally exclude any elite parcel.",
         ))
     else:
-        # Mixed — partial overlap. Likely a bug.
+        # Mixed - partial overlap. Likely a bug.
         findings.append(Finding(
             "HIGH",
             f"top and broader have partial overlap: "

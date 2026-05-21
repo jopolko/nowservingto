@@ -1,4 +1,4 @@
-"""Toronto Building Outlines source — per-parcel building coverage ratio.
+"""Toronto Building Outlines source - per-parcel building coverage ratio.
 
 Per Task 2 of the parcel-multiplex-readiness spec, the CKAN dataset ships in
 8 forms; we use the WGS84 CSV resource (273 MB) with embedded GeoJSON
@@ -68,7 +68,7 @@ def _load_building_polygons(cache_path: Path) -> list[BaseGeometry]:
     """Stream the CSV and return parsed building MultiPolygon geometries.
 
     Filters strictly to `SUBTYPE_CODE == 9003` (the canonical "Building Outline"
-    code) — the dataset's schema admits other subtypes (e.g. canopy/awning) and
+    code) - the dataset's schema admits other subtypes (e.g. canopy/awning) and
     we don't want those padding the coverage ratio.
     """
     geoms: list[BaseGeometry] = []
@@ -112,7 +112,7 @@ def compute_coverage(
     """Compute the per-parcel building-coverage ratio.
 
     Returns a `{parcel_id: coverage}` dict where coverage ∈ [0, 1]. A parcel
-    with no candidate buildings (vacant lot) gets `0.0` — distinguished from
+    with no candidate buildings (vacant lot) gets `0.0` - distinguished from
     "missing data" only by the parallel `solarShadowQuality` field per design.
 
     Memory: holds all building polygons in memory simultaneously (one STRtree
@@ -124,7 +124,7 @@ def compute_coverage(
     geoms = _load_building_polygons(cached)
 
     if not geoms:
-        _log.warning("building_outlines: zero footprints loaded — every parcel will get 0.0 coverage")
+        _log.warning("building_outlines: zero footprints loaded - every parcel will get 0.0 coverage")
         return {p.parcel_id: 0.0 for p in parcels}
 
     tree = STRtree(geoms)

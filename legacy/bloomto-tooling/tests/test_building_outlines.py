@@ -47,7 +47,7 @@ def _write_buildings_csv(csv_path: Path, buildings: list[Polygon]) -> None:
     """Write a CSV mimicking the Toronto Building Outlines schema.
 
     Includes one extra non-building row (`SUBTYPE_CODE = 9999`) to exercise
-    the SUBTYPE_CODE filter — that row's geometry must NOT contribute to coverage.
+    the SUBTYPE_CODE filter - that row's geometry must NOT contribute to coverage.
     """
     fieldnames = [
         "_id", "SUBTYPE_CODE", "SUBTYPE_DESC", "ELEVATION", "DERIVED_HEIGHT",
@@ -87,7 +87,7 @@ class CoverageRatioTests(unittest.TestCase):
         self.tmpdir = Path(tempfile.mkdtemp())
         self.cache_path = self.tmpdir / CACHE_FILENAME
 
-        # Parcel A: 0.001° × 0.001° square at (-79.400, 43.700) — about 80m × 110m.
+        # Parcel A: 0.001° × 0.001° square at (-79.400, 43.700) - about 80m × 110m.
         self.parcel_a = _make_parcel("A", Polygon([
             (-79.400, 43.700), (-79.399, 43.700),
             (-79.399, 43.701), (-79.400, 43.701),

@@ -1,10 +1,10 @@
-"""Parcel scoring constants — solar methodology disclosure only.
+"""Parcel scoring constants - solar methodology disclosure only.
 
 2026-05-07 cleanup: this module previously held the BloomTO-synthesised
 `score`, `softScore`, and `bloom_flag` formulas. Per the trust-erosion
 discussion (every weighted formula papered over data gaps), those have
 all been removed from the wire format, the ETL, and the UI. The
-remaining content is the SolarTO methodology disclosure — surfaced on
+remaining content is the SolarTO methodology disclosure - surfaced on
 the wire as `meta.solarMethodology` so any consumer can read what
 city-sourced inputs feed the (city-published) `solarScore` field.
 
@@ -12,7 +12,7 @@ Stdlib only. Kept as a separate module purely so the disclosure string
 isn't buried inside `build_parcels.py`.
 """
 
-# SolarTO upstream rooftop screening — what passes into BloomTO's solarScore.
+# SolarTO upstream rooftop screening - what passes into BloomTO's solarScore.
 # Verbatim methodology text the wire ships at meta.solarMethodology so any
 # consumer can read what feeds the field without copy drift.
 SOLAR_METHODOLOGY_TEXT = (

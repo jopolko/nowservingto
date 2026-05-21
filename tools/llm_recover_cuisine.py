@@ -11,7 +11,7 @@ but the actual menu is Chinese xiao long bao).
 This script does the obvious extra step: for each such entry, fetch the
 restaurant's website homepage, strip HTML, and feed the actual page text into
 Haiku alongside the name+address. Menu words ("xiao long bao", "Korean BBQ",
-"pho", "injera") are highly diagnostic — much stronger than search snippets.
+"pho", "injera") are highly diagnostic - much stronger than search snippets.
 
 Idempotent: only revisits entries with status=ok, operating=yes, cuisine
 null/unknown, and website set. Cost ~$0.001 per recovery call on Haiku sync.
@@ -36,20 +36,20 @@ SOCIAL_DOMAINS = ('instagram.com', 'facebook.com', 'tiktok.com')
 sys.path.insert(0, str(ROOT / 'tools'))
 from check_link_health import _strip_html
 
-# Cuisine taxonomy is the canonical one from cuisines.py — keeps this script
+# Cuisine taxonomy is the canonical one from cuisines.py - keeps this script
 # in lockstep with inject_openings' display labels so we can't silently tag
 # entries with a cuisine that has no label.
 from cuisines import VALID_CUISINE_KEYS, parse_cuisines_from_llm
 
 SYSTEM_PROMPT = """You classify a Toronto restaurant by cuisine using the evidence provided.
 The evidence may include any subset of:
-  • WEBSITE CONTENT — the restaurant's own homepage and/or menu page (HTML stripped)
-  • GOOGLE PLACES EDITORIAL SUMMARY — Google's curated one-line description of the place
-  • RECENT GOOGLE REVIEWS — up to 5 customer reviews
+  • WEBSITE CONTENT - the restaurant's own homepage and/or menu page (HTML stripped)
+  • GOOGLE PLACES EDITORIAL SUMMARY - Google's curated one-line description of the place
+  • RECENT GOOGLE REVIEWS - up to 5 customer reviews
 
 Use ALL provided sections to decide. Reviews often carry the strongest cultural-marker
 signals: "their kunafa is amazing", "best biryani in Scarborough", "the pupusas are
-authentic Salvadoran" — these dish-and-country mentions in reviews disambiguate cases
+authentic Salvadoran" - these dish-and-country mentions in reviews disambiguate cases
 where the website is generic or a JS shell. The editorial summary is Google's own
 classification ("Lebanese restaurant serving...") and is usually accurate.
 
@@ -165,7 +165,7 @@ def extract_socials(text):
 
 import threading as _threading
 # Jina free tier caps at 2 concurrent connections per IP. With the keyed
-# trial allowance (10M tokens) we still respect this — both for politeness
+# trial allowance (10M tokens) we still respect this - both for politeness
 # and because exceeding it just yields 429s.
 _JINA_SEM = _threading.Semaphore(2)
 
@@ -185,7 +185,7 @@ _JINA_KEY = _load_jina_key()
 
 
 def _fetch_jina(url):
-    """Fetch a page through r.jina.ai — Jina's Reader service runs the URL in a
+    """Fetch a page through r.jina.ai - Jina's Reader service runs the URL in a
     headless browser, lets JS hydrate, and returns the rendered DOM as plain
     text. Used as a fallback for SPAs whose static HTML has no body text.
 
@@ -233,7 +233,7 @@ def fetch_page_text(url):
          "Locations" page or footer only exists after hydration.
     """
     raw, final_url = _fetch_raw(url)
-    if not raw: return None, url   # dead URL — don't waste jina budget
+    if not raw: return None, url   # dead URL - don't waste jina budget
     home_text = _strip_html(raw)
     home_body = home_text.split('TEXT:', 1)[1].strip() if home_text and 'TEXT:' in home_text else ''
 
@@ -253,7 +253,7 @@ def fetch_page_text(url):
             combined += f"\n\nMENU/ABOUT PAGE ({menu_url}): {menu_text}"
         return combined[:3200], final_url
 
-    # Static fetch came up empty but the URL is alive — likely a JS-only SPA.
+    # Static fetch came up empty but the URL is alive - likely a JS-only SPA.
     # Fall through to jina's headless-rendered text.
     rendered = _fetch_jina(url)
     if rendered:
@@ -320,9 +320,9 @@ def _is_maps_url(url):
 
 def best_website(verify_entry, places_entry):
     """Pick the most fetchable website for cuisine recovery, in priority order:
-       1. Places' own-website (non-social, non-maps) — Google's authoritative pick
+       1. Places' own-website (non-social, non-maps) - Google's authoritative pick
        2. verify_cache's website if non-social
-       3. anything social — last resort; immigrant-run spots may live entirely on IG
+       3. anything social - last resort; immigrant-run spots may live entirely on IG
        Returns (url, source) or (None, None)."""
     p_web = (places_entry or {}).get('website') if places_entry and places_entry.get('status') == 'ok' else None
     v_web = verify_entry.get('website')
@@ -330,7 +330,7 @@ def best_website(verify_entry, places_entry):
         return p_web, 'places'
     if v_web and not _is_social(v_web) and not _is_maps_url(v_web):
         return v_web, 'verify'
-    # Fall back to social — Instagram bios often carry "Authentic Sichuan",
+    # Fall back to social - Instagram bios often carry "Authentic Sichuan",
     # "Halal Turkish bakery", etc. in the first line of accessible HTML.
     if p_web and _is_social(p_web): return p_web, 'places-social'
     if v_web and _is_social(v_web): return v_web, 'verify-social'
@@ -352,7 +352,7 @@ def needs_recovery(entry, places_entry=None):
     # Maps profile has substantive review content.
     url, _ = best_website(entry, places_entry)
     if not url and not _has_places_extras(places_entry): return False
-    # Skip entries we already tried in the last 30 days — they'll be re-attempted
+    # Skip entries we already tried in the last 30 days - they'll be re-attempted
     # naturally as the website-content situation evolves (e.g. brand-new sites
     # may have a fuller menu page after a month).
     ra = entry.get('recovered_at')
@@ -414,7 +414,7 @@ def main():
         for i, fut in enumerate(as_completed(futures), 1):
             key, cuisines, evidence, err, src = fut.result()
             # Always stamp recovered_at so we don't retry the same failure every
-            # day — gives the natural 30-day re-attempt cycle via needs_recovery.
+            # day - gives the natural 30-day re-attempt cycle via needs_recovery.
             cache[key]['recovered_at'] = now_iso
             if err:
                 n_failed += 1
@@ -424,17 +424,17 @@ def main():
                 if cuisines == ['unknown']:
                     cache[key]['cuisine'] = 'unknown'
                     cache[key]['cuisines'] = ['unknown']
-                    cache[key]['evidence'] = (evidence or 'page content recovery — still unknown')[:200]
+                    cache[key]['evidence'] = (evidence or 'page content recovery - still unknown')[:200]
             else:
-                # Strip 'unknown' if mixed with real cuisines (defensive — shouldn't happen)
+                # Strip 'unknown' if mixed with real cuisines (defensive - shouldn't happen)
                 real = [c for c in cuisines if c != 'unknown']
                 if not real:
                     n_unknown += 1
                     continue
                 n_recovered += 1
                 recovered_by_source[src] = recovered_by_source.get(src, 0) + 1
-                cache[key]['cuisine'] = real[0]          # primary — backwards compat
-                cache[key]['cuisines'] = real             # full list — new multi-cuisine
+                cache[key]['cuisine'] = real[0]          # primary - backwards compat
+                cache[key]['cuisines'] = real             # full list - new multi-cuisine
                 cache[key]['evidence'] = (evidence or '')[:200]
                 cache[key]['recovery_source'] = src
             if i % 10 == 0 or i == len(targets):

@@ -1,4 +1,4 @@
-"""TRCA Regulated Area (Ont. Reg. 41/24) — riverine flood + valley + wetland overlay.
+"""TRCA Regulated Area (Ont. Reg. 41/24) - riverine flood + valley + wetland overlay.
 
 Toronto and Region Conservation Authority (TRCA) regulates development on
 riverine floodplains, hazardous slopes, and provincially-significant
@@ -11,7 +11,7 @@ regulatory limit polygon is the union of:
 - Watercourse setbacks (typically 30m from top-of-bank)
 
 A parcel intersecting this regulated area requires TRCA approval before any
-development — building permits are rarely granted on floodplain land for new
+development - building permits are rarely granted on floodplain land for new
 residential. This is the discriminating buy/no-buy flood signal devs need;
 the basement-flooding-study-areas dataset (`tools/sources/flood.py`) flags
 combined-sewer service zones (universal across BloomTO's emit set), but
@@ -21,7 +21,7 @@ Source: TRCA Open Data Portal Hub
   https://trca-camaps.opendata.arcgis.com/datasets/trca-regulated-area
   ArcGIS Item: 77304275d0214ca99d146248f4b2baa5
 
-The download endpoint is async — POSTing/GETting the export URL returns 202
+The download endpoint is async - POSTing/GETting the export URL returns 202
 with a job-status JSON until the export completes (~30-60s on TRCA's side),
 then 302-redirects to the cached GeoJSON. Polygons are published in
 EPSG:26917 (UTM Zone 17N) and are reprojected to EPSG:4326 in-process.
@@ -96,7 +96,7 @@ def _ensure_cached(cache_dir: Path) -> Path:
             # doesn't help.
             content = r.content
             if b'"status"' in content[:200] and b'"FeatureCollection"' not in content[:200]:
-                # Still exporting — wait and retry.
+                # Still exporting - wait and retry.
                 _log.info("  TRCA export in progress (attempt %d/%d, %d bytes)",
                           attempt + 1, _MAX_POLL_ATTEMPTS, len(content))
                 time.sleep(_POLL_SECONDS)

@@ -4,13 +4,13 @@
 destination, then atomically renames into place via `os.replace`. If the
 network drops mid-stream or the request fails after all retries, the temp
 file is unlinked and `dest` is left untouched (or absent, if it didn't
-already exist) — never partially overwritten.
+already exist) - never partially overwritten.
 
 The eight v1.1 source modules each carry their own copy of the verbatim
 retry pattern (see e.g. `neighborhoods.py:_download_with_retries`). This
 helper is the lifted form. v1.2 modules (`heritage.py`, `building_outlines.py`,
 `massing.py`) consume it directly. The v1.1 duplicates stay put for this
-release — they're slated for cleanup in v1.3 and refactoring them now would
+release - they're slated for cleanup in v1.3 and refactoring them now would
 require re-running the 39-test suite for no v1.2 benefit.
 """
 
@@ -73,7 +73,7 @@ def download_with_retries(
                 break
             wait = backoffs[attempt]
             _log.warning(
-                "download %s failed (attempt %d/%d): %s — retrying in %ss",
+                "download %s failed (attempt %d/%d): %s - retrying in %ss",
                 url, attempt + 1, total_attempts, e, wait,
             )
             time.sleep(wait)

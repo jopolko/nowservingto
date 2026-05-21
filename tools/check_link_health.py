@@ -43,7 +43,7 @@ ANTHROPIC_KEY = _load_api_key()
 # Social platforms aggressively rate-limit HEAD probes and don't go silently dead the way
 # custom domains do. We trust them and skip the probe entirely.
 # Social platforms aggressively 429 our HEAD probes (they hate bots) but the pages
-# themselves are live for any human browser. We skip probing these — it's a probe
+# themselves are live for any human browser. We skip probing these - it's a probe
 # bypass, NOT a quality endorsement. The verifier prompt still prefers them LAST,
 # below own websites and Google Maps profiles.
 SKIP_PROBE_DOMAINS = ('instagram.com', 'facebook.com', 'tiktok.com', 'twitter.com', 'x.com', 'threads.net')
@@ -52,7 +52,7 @@ SKIP_PROBE_DOMAINS = ('instagram.com', 'facebook.com', 'tiktok.com', 'twitter.co
 SOFT_FAIL_CODES = {401, 403, 405, 429, 451, 503}
 
 # When the HTTP probe succeeds, we still need to know whether the page is the
-# legitimate business homepage — or whether the domain has been hijacked/parked
+# legitimate business homepage - or whether the domain has been hijacked/parked
 # and is now serving SEO spam (gambling, pharmacy, crypto, "domain for sale", etc).
 # We delegate that judgment to Haiku rather than hardcoding token lists, so new
 # spam variants don't slip through. ~$0.001 per URL on sync pricing.
@@ -64,7 +64,7 @@ or whether the domain has been hijacked / parked / repurposed as SEO spam.
 Reply with exactly one JSON object on ONE line, no prose, no markdown:
 {"verdict":"legit|spam|off_topic","reason":"<one short sentence>"}
 
-- "legit": real business homepage in any language — restaurant, shop, services,
+- "legit": real business homepage in any language - restaurant, shop, services,
   agency, personal portfolio for a chef/owner. Imperfect/unprofessional sites are fine.
 - "spam": gambling/casino/slots, online pharmacy, crypto/forex scams, link farms,
   SEO bait, "domain for sale" or "buy this domain" parking. Especially common:
@@ -78,7 +78,7 @@ Be generous with "legit". Reserve "spam"/"off_topic" for clear cases."""
 def _strip_html(body_bytes):
     """Best-effort HTML → text without BeautifulSoup.
     Also strips inline CSS rules (@font-face / .class{...}) that website builders
-    like Squarespace/Vistaweb dump into the body — without this, the "text" sent
+    like Squarespace/Vistaweb dump into the body - without this, the "text" sent
     to the reviewer is dominated by font declarations and the page looks empty."""
     try:
         s = body_bytes.decode('utf-8', errors='replace')
@@ -89,7 +89,7 @@ def _strip_html(body_bytes):
     s = re.sub(r'<script[^>]*>.*?</script>', ' ', s, flags=re.IGNORECASE | re.DOTALL)
     s = re.sub(r'<style[^>]*>.*?</style>', ' ', s, flags=re.IGNORECASE | re.DOTALL)
     # Squarespace/Wix/etc. dump huge inline scripts whose closing tag falls past our
-    # 32KB read window — strip anything from an unclosed <script>/<style> to end-of-input.
+    # 32KB read window - strip anything from an unclosed <script>/<style> to end-of-input.
     s = re.sub(r'<script\b[^>]*>.*$', ' ', s, flags=re.IGNORECASE | re.DOTALL)
     s = re.sub(r'<style\b[^>]*>.*$', ' ', s, flags=re.IGNORECASE | re.DOTALL)
     s = re.sub(r'<[^>]+>', ' ', s)
@@ -97,7 +97,7 @@ def _strip_html(body_bytes):
          .replace('&gt;', '>').replace('&#39;', "'").replace('&quot;', '"'))
     # Strip inline CSS rules that escaped <style> tags. Builder platforms inline
     # rules with complex selectors (attribute selectors, multi-selector commas) that
-    # the simple `.class { ... }` pattern doesn't catch — go broader here.
+    # the simple `.class { ... }` pattern doesn't catch - go broader here.
     s = re.sub(r'@[a-z-]+\s+[^;]+;', ' ', s, flags=re.IGNORECASE)  # @charset, @import
     s = re.sub(r'@[a-z-]+[^;{]*\{[^{}]*\}', ' ', s, flags=re.IGNORECASE)  # @font-face, @media (one level)
     s = re.sub(r'[.#:\[][\w\s,.#:\[\]=\-_*>+~()"\']{0,200}?\{[^{}]{0,500}\}', ' ', s)  # broad selector { ... }
@@ -105,11 +105,11 @@ def _strip_html(body_bytes):
     return f"TITLE: {title}\n\nTEXT: {s[:2000]}"
 
 def _body_too_short_to_judge(page_text):
-    """SPA shells (Squarespace, Wix, etc.) deliver near-empty initial HTML — actual
+    """SPA shells (Squarespace, Wix, etc.) deliver near-empty initial HTML - actual
     content is JS-hydrated. Can't judge what isn't rendered. Two heuristics:
     1. After stripping CSS/JS, body is too short to contain real content
     2. After stripping, body is mostly symbols (CSS leftovers, JS object literals,
-       JSON dumps) — not prose. Either way: default to legit."""
+       JSON dumps) - not prose. Either way: default to legit."""
     if 'TEXT:' not in page_text: return True
     body = page_text.split('TEXT:', 1)[1].strip()
     if len(body) < 150: return True
@@ -120,7 +120,7 @@ def _body_too_short_to_judge(page_text):
 def review_site(url):
     """Fetch up to SNIFF_BYTES of the URL and ask Haiku whether it's a legit business
     homepage. Returns a reason string if the page is spam/off-topic, else None.
-    Any error (fetch, parse, API) returns None — give the URL the benefit of the doubt."""
+    Any error (fetch, parse, API) returns None - give the URL the benefit of the doubt."""
     if not ANTHROPIC_KEY:
         return None
     try:
@@ -181,7 +181,7 @@ def needs_check(entry):
         age = (datetime.now(timezone.utc) - datetime.fromisoformat(entry['checked_at'])).days
     except Exception:
         return True
-    # Re-check broken URLs more aggressively too — maybe they came back
+    # Re-check broken URLs more aggressively too - maybe they came back
     if not entry.get('ok'): return age >= 3
     return age >= CHECK_DAYS
 
@@ -196,8 +196,8 @@ def _host_of(url):
 def probe(url):
     """Try HEAD first; some servers refuse, retry GET with range. Treat 200/3xx as OK,
     AND treat known soft-fail codes (429/403/etc.) as OK since they mean the page exists
-    but is rate-limiting our probe. Skip social platforms entirely — they always rate-limit.
-    Flag cross-domain redirects (e.g. ethioeri.com 301→leonrent.com) as broken — the
+    but is rate-limiting our probe. Skip social platforms entirely - they always rate-limit.
+    Flag cross-domain redirects (e.g. ethioeri.com 301→leonrent.com) as broken - the
     original domain is parked/hijacked and the link is misleading."""
     if any(d in url.lower() for d in SKIP_PROBE_DOMAINS):
         return {'status': None, 'ok': True, 'reason': 'skipped (HEAD probe blocked by site; page assumed live for browser visitors)'}
@@ -218,7 +218,7 @@ def probe(url):
                 return {'status': code, 'ok': 200 <= code < 400, 'reason': r.reason}
         except HTTPError as e:
             if e.code in SOFT_FAIL_CODES:
-                # rate-limit / soft block — page exists, just won't let us probe it
+                # rate-limit / soft block - page exists, just won't let us probe it
                 return {'status': e.code, 'ok': True, 'reason': f'soft-fail {e.code} (page assumed live)'}
             if method == 'HEAD': continue
             return {'status': e.code, 'ok': False, 'reason': f'HTTP {e.code}'}

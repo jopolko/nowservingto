@@ -7,15 +7,15 @@ combinations that might separate detached from attached, or surface other patter
 Distributions are computed across the **241 curated picks** (which already pass the
 elite gate, so the ranges are tighter than the full 528K-parcel universe).
 
-## Cross-reference — what we tried and what didn't separate detached vs attached
+## Cross-reference - what we tried and what didn't separate detached vs attached
 
 | Signal | Detached cohort | Attached cohort | Verdict |
 |---|---|---|---|
-| Cross-building distance | med 1.94m, 36% within 2m | med 0.57m, 80% within 2m | 76% best — too noisy |
+| Cross-building distance | med 1.94m, 36% within 2m | med 0.57m, 80% within 2m | 76% best - too noisy |
 | `abutsLaneway` | 0% | 20% | high-precision but only catches 20% of attached |
 | `lotShortAxisM` | med 18.9m | med 16.1m | distributions overlap |
 | `lotAspectRatio` | med 2.54 | med 3.52 | distributions overlap |
-| Composite (any of A/B/C) | — | — | 73% accuracy ceiling |
+| Composite (any of A/B/C) | - | - | 73% accuracy ceiling |
 
 If you spot a clean separator we missed, that's the signal we want.
 
@@ -271,7 +271,7 @@ If you spot a clean separator we missed, that's the signal we want.
 - **Type:** float. **Range:** 0.0 → 47.2
 - **Distribution:** p10=3.8, med=9.9, p90=34.5
 
-## Sample row — `160 Dowling Ave` (South Parkdale)
+## Sample row - `160 Dowling Ave` (South Parkdale)
 
 Every field on the wire, actual values, for one curated parcel:
 
@@ -343,26 +343,26 @@ Every field on the wire, actual values, for one curated parcel:
 
 These are nested objects we currently flatten into the per-parcel rows. If you want a richer signal, we can pull more sub-keys through `tools/parcels_top_io.py`:
 
-- `neighborhoodPermitComp` — dict, keys: ['medianCostPerUnit', 'sampleSize', 'freshnessYears']
+- `neighborhoodPermitComp` - dict, keys: ['medianCostPerUnit', 'sampleSize', 'freshnessYears']
   - sample: `{"medianCostPerUnit": null, "sampleSize": 9, "freshnessYears": 5}`
-- `neighborHeights` — dict, keys: ['nAvgM', 'sAvgM', 'eAvgM', 'wAvgM']
+- `neighborHeights` - dict, keys: ['nAvgM', 'sAvgM', 'eAvgM', 'wAvgM']
   - sample: `{"nAvgM": null, "sAvgM": null, "eAvgM": null, "wAvgM": null}`
-- `permits` — dict, keys: ['recentCount', 'recentValueTotal', 'recentMostRecentDate', 'denominatorSource']
+- `permits` - dict, keys: ['recentCount', 'recentValueTotal', 'recentMostRecentDate', 'denominatorSource']
   - sample: `{"recentCount": 0, "recentValueTotal": 0, "recentMostRecentDate": null, "denominatorSource": "no_joined_permits"}`
-- `lotGeometry` — dict, keys: ['longAxisM', 'shortAxisM', 'orientationDeg']
+- `lotGeometry` - dict, keys: ['longAxisM', 'shortAxisM', 'orientationDeg']
   - sample: `{"longAxisM": 456.9, "shortAxisM": 196.3, "orientationDeg": 72.7}`
 
 ## What we *don't* have (and why classification is hard)
 
-- **MPAC structure-type code** — paywalled. Would directly tell us detached/semi/row.
-- **Land Registry / Teranet sale prices** — paywalled.
-- **Per-parcel dwelling unit count** — Toronto Open Data has it as `DWELLING_UNITS_EXISTING` on building permits, but only for the subset of parcels with permits in the last 5 years (~10K of 528K). Useful as a partial signal.
-- **Address Points USE_CODE** — Toronto nullified this field in 2021-07-29 (per project memory).
-- **Building Outlines structure-class** — the dataset distinguishes only `house`, `apartment building`, `school`, `garage`, `shed`, `commercial`, `industrial`, etc. — not detached vs semi/row.
+- **MPAC structure-type code** - paywalled. Would directly tell us detached/semi/row.
+- **Land Registry / Teranet sale prices** - paywalled.
+- **Per-parcel dwelling unit count** - Toronto Open Data has it as `DWELLING_UNITS_EXISTING` on building permits, but only for the subset of parcels with permits in the last 5 years (~10K of 528K). Useful as a partial signal.
+- **Address Points USE_CODE** - Toronto nullified this field in 2021-07-29 (per project memory).
+- **Building Outlines structure-class** - the dataset distinguishes only `house`, `apartment building`, `school`, `garage`, `shed`, `commercial`, `industrial`, etc. - not detached vs semi/row.
 
 ---
 
-# Full dataset inventory — every CKAN/OSM/file source BloomTO consumes
+# Full dataset inventory - every CKAN/OSM/file source BloomTO consumes
 
 Generated 2026-05-07. For each dataset: source file in `tools/cache/`, the
 loader module under `tools/sources/`, the fields available in the source
@@ -373,18 +373,18 @@ the table. Use this to spot signals we're not using yet.
 
 ### Property Boundaries
 - **File:** `tools/cache/property_boundaries.geojson`
-- **Loader:** `tools/sources/zoning.py — Parcel dataclass`
+- **Loader:** `tools/sources/zoning.py - Parcel dataclass`
 - **Source schema fields:** `name`
 
 ### Zoning By-law 569-2013
 - **File:** `tools/cache/zoning_area.geojson`
-- **Loader:** `tools/sources/zoning.py — ZoneRecord dataclass`
+- **Loader:** `tools/sources/zoning.py - ZoneRecord dataclass`
 - **Source schema fields:** `name`
 
 ### 3D Massing
 - **File:** `tools/cache/massing.shp.zip`
 - **Loader:** `tools/sources/massing.py`
-- **Source schema fields:** `(shapefile zip — see loader for fields)`
+- **Source schema fields:** `(shapefile zip - see loader for fields)`
 
 ### Building Outlines
 - **File:** `tools/cache/building_outlines.csv`
@@ -404,7 +404,7 @@ the table. Use this to spot signals we're not using yet.
 ### Heritage Register
 - **File:** `tools/cache/heritage.shp.zip`
 - **Loader:** `tools/sources/heritage.py`
-- **Source schema fields:** `(shapefile zip — see loader for fields)`
+- **Source schema fields:** `(shapefile zip - see loader for fields)`
 
 ## Hazard / regulatory layers
 
@@ -421,7 +421,7 @@ the table. Use this to spot signals we're not using yet.
 ### Sixplex District (T&EY + Ward 23)
 - **File:** `tools/cache/sixplex_district.geojson`
 - **Loader:** `tools/sources/sixplex_district.py`
-- **Source schema fields:** (couldn't peek — large file or unsupported format)
+- **Source schema fields:** (couldn't peek - large file or unsupported format)
 
 ## Permit-activity layers
 
@@ -430,25 +430,25 @@ the table. Use this to spot signals we're not using yet.
 - **Loader:** `tools/sources/building_permits.py`
 - **Source schema fields:** `_id`, `PERMIT_NUM`, `REVISION_NUM`, `PERMIT_TYPE`, `STRUCTURE_TYPE`, `WORK`, `STREET_NUM`, `STREET_NAME`, `STREET_TYPE`, `STREET_DIRECTION`, `POSTAL`, `GEO_ID`, `WARD_GRID`, `APPLICATION_DATE`, `ISSUED_DATE`, `COMPLETED_DATE`, `STATUS`, `DESCRIPTION`, `CURRENT_USE`, `PROPOSED_USE`, `DWELLING_UNITS_CREATED`, `DWELLING_UNITS_LOST`, `EST_CONST_COST`, `ASSEMBLY`, `INSTITUTIONAL`, `RESIDENTIAL`, `BUSINESS_AND_PERSONAL_SERVICES`, `MERCANTILE`, `INDUSTRIAL`, `INTERIOR_ALTERATIONS` (+2 more)
 
-### CKAN signals — severance applications
+### CKAN signals - severance applications
 - **File:** `tools/cache/coa_active.json`
 - **Loader:** `tools/sources/coa_applications.py`
-- **Source schema fields:** (couldn't peek — large file or unsupported format)
+- **Source schema fields:** (couldn't peek - large file or unsupported format)
 
-### CKAN signals — demolition permits
+### CKAN signals - demolition permits
 - **File:** `tools/cache/demo_permits.json`
 - **Loader:** `tools/sources/demo_permits.py`
-- **Source schema fields:** (couldn't peek — large file or unsupported format)
+- **Source schema fields:** (couldn't peek - large file or unsupported format)
 
-### CKAN signals — property violations
+### CKAN signals - property violations
 - **File:** `tools/cache/(streamed live, no cache)`
 - **Loader:** `tools/sources/property_violations.py`
-- **Source schema fields:** (couldn't peek — large file or unsupported format)
+- **Source schema fields:** (couldn't peek - large file or unsupported format)
 
-### CKAN signals — preliminary zoning
+### CKAN signals - preliminary zoning
 - **File:** `tools/cache/(streamed live, no cache)`
 - **Loader:** `tools/sources/preliminary_zoning_reviews.py`
-- **Source schema fields:** (couldn't peek — large file or unsupported format)
+- **Source schema fields:** (couldn't peek - large file or unsupported format)
 
 ## Demographics + neighborhood
 
@@ -482,17 +482,17 @@ the table. Use this to spot signals we're not using yet.
 ### Street Trees
 - **File:** `tools/cache/street_trees.csv`
 - **Loader:** `tools/sources/street_trees.py`
-- **Source schema fields:** (couldn't peek — large file or unsupported format)
+- **Source schema fields:** (couldn't peek - large file or unsupported format)
 
-### TTC GTFS — stops.txt
+### TTC GTFS - stops.txt
 - **File:** `tools/cache/gtfs/stops.txt`
 - **Loader:** `tools/sources/ttc.py`
-- **Source schema fields:** (couldn't peek — large file or unsupported format)
+- **Source schema fields:** (couldn't peek - large file or unsupported format)
 
-### TTC GTFS — routes.txt
+### TTC GTFS - routes.txt
 - **File:** `tools/cache/gtfs/routes.txt`
 - **Loader:** `tools/sources/ttc.py`
-- **Source schema fields:** (couldn't peek — large file or unsupported format)
+- **Source schema fields:** (couldn't peek - large file or unsupported format)
 
 ## Institutional exclusions (12 sources combined)
 
@@ -504,7 +504,7 @@ the table. Use this to spot signals we're not using yet.
 ### OSM TTC Stations
 - **File:** `tools/cache/osm_ttc_stations.geojson`
 - **Loader:** `tools/sources/osm_ttc_stations.py`
-- **Source schema fields:** (couldn't peek — large file or unsupported format)
+- **Source schema fields:** (couldn't peek - large file or unsupported format)
 
 ### Institutions: schools
 - **File:** `tools/cache/institutions_schools.geojson`
@@ -519,7 +519,7 @@ the table. Use this to spot signals we're not using yet.
 ### Institutions: parks
 - **File:** `tools/cache/institutions_parks.geojson`
 - **Loader:** `tools/sources/institutions.py`
-- **Source schema fields:** (couldn't peek — large file or unsupported format)
+- **Source schema fields:** (couldn't peek - large file or unsupported format)
 
 ### Institutions: libraries
 - **File:** `tools/cache/institutions_libraries.geojson`
@@ -549,7 +549,7 @@ the table. Use this to spot signals we're not using yet.
 ### Institutions: parks & rec facilities
 - **File:** `tools/cache/institutions_parks_rec.geojson`
 - **Loader:** `tools/sources/institutions.py`
-- **Source schema fields:** (couldn't peek — large file or unsupported format)
+- **Source schema fields:** (couldn't peek - large file or unsupported format)
 
 ### Institutions: child-care
 - **File:** `tools/cache/institutions_child_care.geojson`

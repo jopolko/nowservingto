@@ -81,11 +81,11 @@ african_west, nigerian, ghanaian, moroccan, senegalese, unknown
 ALWAYS prefer the most SPECIFIC bucket. Only use the broader umbrella when the name fits a
 region but no specific country signal is present.
 
-South Asian — PREFER specific country over umbrella:
+South Asian - PREFER specific country over umbrella:
 - indian: pan-Indian, Mughlai, Punjabi-NOT-Pakistani, North/South Indian, "India", "Indian",
   tandoori-house, masala-house, biryani-house (when not specifically Pakistani), naan house,
   dosa, idli, thali, samosa house. THIS is the right bucket for most "South Asian" places.
-- pakistani: explicitly Pakistani — Karachi, Lahore, "halal pak", "Pak Punjab"
+- pakistani: explicitly Pakistani - Karachi, Lahore, "halal pak", "Pak Punjab"
 - afghan: Kabul, Kandahar, mantu, kabuli pulao
 - bangladeshi: Dhaka, Bengali, "bangla", Bengali sweets
 - tamil: Sri Lankan Tamil or South Indian Tamil (Jaffna, Eelam, Madras, Chennai, kothu)
@@ -112,11 +112,11 @@ West African:
 - moroccan: tagine, Marrakech, Fez, Casablanca, couscous (split from west, technically North Africa)
 - african_west: generic West African umbrella (Senegal, Mali, etc., or no specific country)
 
-Caribbean (cultural grouping — Guyana is geographically South America but culinarily fits here):
+Caribbean (cultural grouping - Guyana is geographically South America but culinarily fits here):
 - jamaican: Jamaica, jerk, ackee, patty (most common in Toronto)
 - trinidadian: Trini, doubles, bake-and-shark
 - guyanese: Guyana, Guyanese (note: technically South America, but Toronto's Guyanese restaurants
-  share dishes with Trinidad — roti, curry, doubles)
+  share dishes with Trinidad - roti, curry, doubles)
 - haitian: Haiti, Port-au-Prince, griot, diri
 - caribbean: generic Caribbean umbrella (Bahamian, Bajan, multi-island, "Caribbean Foods")
 
@@ -153,7 +153,7 @@ Other:
 - portuguese: padaria, pastel, Portuguese
 - polish: pierogi, Polish
 
-CRITICAL — American fast-food chains and Canadian chains = unknown, NOT their themed cuisine:
+CRITICAL - American fast-food chains and Canadian chains = unknown, NOT their themed cuisine:
 - Popeyes Louisiana Kitchen → unknown (Cajun chain; NOT caribbean, NOT jamaican)
 - KFC, KFC/Taco Bell combos → unknown (American chain; not mexican even with Taco Bell)
 - Mary Brown's, Church's Chicken, Wendy's, A&W → unknown
@@ -255,7 +255,7 @@ def main():
             if not name: continue
             addr1 = (row.get('Licence Address Line 1') or '').strip()
             addr3 = (row.get('Licence Address Line 3') or '').strip()
-            address = (addr1 + ' ' + addr3).strip() or '—'
+            address = (addr1 + ' ' + addr3).strip() or '-'
             key = f"{name.upper()}||{address.upper()}"
             # Skip only entries that succeeded last time; retry errors
             existing = cache.get(key)

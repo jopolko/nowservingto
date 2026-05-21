@@ -1,6 +1,6 @@
 """Post-process: read data/parcels.geojson and write data/parcels-top.json.
 
-Standalone script — does NOT re-run the ETL. Reads the canonical GeoJSON the
+Standalone script - does NOT re-run the ETL. Reads the canonical GeoJSON the
 ETL produced, projects the top-N features (already sorted by score desc) into
 flat table rows, writes atomically. Runs in seconds.
 
@@ -23,7 +23,7 @@ if __package__ in (None, ""):
 from tools import parcels_top_io
 
 
-# Luxury-street blacklist — (street, neighborhood) tuples identified via
+# Luxury-street blacklist - (street, neighborhood) tuples identified via
 # Street View visual classification (2026-05-12). Same data lives in
 # index.html as the `LUXURY_STREETS` JS Set; both consult the canonical
 # tools/luxury_streets.json. Belt-and-suspenders gate for the page.
@@ -52,14 +52,14 @@ logging.basicConfig(
 _log = logging.getLogger("bloomto.build_parcels_top")
 
 
-# Two-tier projection (2026-05-07 binary-gate redesign — replaces the prior
+# Two-tier projection (2026-05-07 binary-gate redesign - replaces the prior
 # synthesised `score >= 70` threshold). Every gate is a direct check on a
 # city primitive; passing means the parcel is multiplex-eligible. Tunable
 # here in one place.
 #
-# ELITE: tighter gate (transit ≤500m, max_units ≥4, lot ≥350m²) — the
+# ELITE: tighter gate (transit ≤500m, max_units ≥4, lot ≥350m²) - the
 #        cover-list of slam-dunk multiplex candidates.
-# BROADER: looser gate (transit ≤1500m, max_units ≥3, lot ≥250m²) — every
+# BROADER: looser gate (transit ≤1500m, max_units ≥3, lot ≥250m²) - every
 #          candidate a dev might still want to flip through.
 #
 # Both share the binary friction-clear gates (heritage clear, TRCA clear,
@@ -70,20 +70,20 @@ ELITE_TRANSIT_BUFFER_M = 500
 # Toronto 25-ft-frontage lots (~232-280 m²) common in Trinity-Bellwoods,
 # Little Italy, Roncesvalles, Riverside, Leslieville. These are highly
 # laneway-active neighbourhoods + walkable transit + multiplex-friendly
-# zoning — the prior 350 m² floor was structurally excluding the
+# zoning - the prior 350 m² floor was structurally excluding the
 # best-aligned-with-Toronto-net-zero parcels in favour of inner-suburban
 # bigger lots that have no laneway access.
 ELITE_MIN_LOT_M2 = 250
 ELITE_MIN_MAX_UNITS = 4
 
 BROADER_TRANSIT_BUFFER_M = 1500
-BROADER_MIN_LOT_M2 = 200  # was 250 — keep elite as a strict subset
+BROADER_MIN_LOT_M2 = 200  # was 250 - keep elite as a strict subset
 BROADER_MIN_MAX_UNITS = 3
 
-# Existing-structure gate (2026-05-07). Elite is "spicy" — only parcels where a
+# Existing-structure gate (2026-05-07). Elite is "spicy" - only parcels where a
 # multiplex teardown is structurally clean (detached) or trivially feasible
 # (vacant). Broader extends to semis (badged in the UI for the niche dev with a
-# party-wall play). Row/townhouse and unknown are excluded everywhere — row
+# party-wall play). Row/townhouse and unknown are excluded everywhere - row
 # multiplex is non-economic (two party walls + ~14ft frontage); unknown means
 # the side-yard classifier failed and we'd rather drop than mislead.
 ELITE_STRUCTURE_TYPES = frozenset({"detached", "vacant"})
@@ -91,9 +91,9 @@ BROADER_STRUCTURE_TYPES = frozenset({"detached", "vacant", "semi"})
 
 # Curated `parcels-top.json` Path B threshold + cap.
 #
-# 2026-05-11 — lowered min lot 500 → 250 m² so classic Toronto 25-ft-
+# 2026-05-11 - lowered min lot 500 → 250 m² so classic Toronto 25-ft-
 # frontage downtown lots (Trinity-Bellwoods, Little Italy, Roncesvalles,
-# Riverside, Leslieville — laneway-rich, multiplex-active areas) can
+# Riverside, Leslieville - laneway-rich, multiplex-active areas) can
 # enter the elite cohort. Sixplex math IS tighter on smaller lots but
 # the by-law accommodates them. The prior 500 m² floor was structurally
 # excluding the most net-zero-aligned parcels in favour of inner-suburban
@@ -105,7 +105,7 @@ BROADER_STRUCTURE_TYPES = frozenset({"detached", "vacant", "semi"})
 CURATED_PATH_B_MIN_LOT_M2 = 250
 CURATED_PATH_B_TOP_N = 500
 
-# 500 m² footprint upper bound — see prior comments. Existing structure
+# 500 m² footprint upper bound - see prior comments. Existing structure
 # above this is most likely apartment/mid-rise (would have been caught by
 # the ETL's 15m height gate too, but the footprint check belt-and-braces
 # protects against Massing data gaps).
@@ -114,14 +114,14 @@ SHARED_MAX_FOOTPRINT_M2 = 500
 # ── Positive-residential gate (2026-05-07) ─────────────────────────────────
 # Up through 2026-05-07, every elite-passing parcel passed *negative*
 # filters ("not heritage, not TRCA, not too tall, not parking lot...").
-# That left an entire class of false positives — large vacant lots that
+# That left an entire class of false positives - large vacant lots that
 # are actually school playing fields, municipal yards, parkettes, ROW
-# slivers — slipping through because no single negative filter caught
+# slivers - slipping through because no single negative filter caught
 # them. The structural fix flips the burden: a parcel only enters
 # elite if it AFFIRMATIVELY looks residential.
 #
 # A parcel passes the positive-residential check if either:
-#   (a) Has a building footprint (cover ≥ POSRES_MIN_COVER) — confirms
+#   (a) Has a building footprint (cover ≥ POSRES_MIN_COVER) - confirms
 #       a structure exists, AND lot is in normal residential range
 #       (≤ POSRES_MAX_LOT_AREA_M2); OR
 #   (b) Vacant (cover = 0) BUT lot ≤ POSRES_VACANT_MAX_LOT_AREA_M2
@@ -139,7 +139,7 @@ POSRES_VACANT_MAX_LOT_AREA_M2 = 2000  # vacant exception only on small typical
 # ── Wealthy-enclave filter (2026-05-07) ────────────────────────────────────
 # Layer 2/3 multiplex devs (BloomTO's target cohort) operate $1–3M project
 # budgets. Forest Hill / Rosedale / Bridle Path / etc. have $4–10M land
-# costs alone — economically incompatible. Showing them wastes the dev's
+# costs alone - economically incompatible. Showing them wastes the dev's
 # time on parcels they structurally can't afford. The list below is the
 # conservative set of publicly-known Toronto wealthy enclaves; toggleable
 # via the "Show high-cost neighborhoods" UI affordance (frontend).
@@ -162,7 +162,7 @@ WEALTHY_ENCLAVE_NEIGHBORHOODS = frozenset({
 # nominally-mixed neighborhoods (1 Grenadier Hts in High Park-Swansea,
 # Old Colony / Northdale / Truman in St. Andrew-Windfields, the Cummer
 # Ave cluster in Newtonbrook East, etc.). These don't redevelop into
-# multiplex regardless of zoning permission — they're owner-occupied
+# multiplex regardless of zoning permission - they're owner-occupied
 # heritage-grade homes on $5M+ lots.
 #
 # Structural signature: large lot + low coverage + a recorded structure
@@ -181,9 +181,9 @@ WEALTHY_ESTATE_MAX_COVERAGE = 0.15
 #
 # Combined signal: a 1,200 m² gross floor area (footprint × storeys ≈
 # height/3) on a parcel in a neighborhood with $1 M+ average dwelling value.
-# Both signals together — big building AND wealthy area — cleanly separate
+# Both signals together - big building AND wealthy area - cleanly separate
 # mansions from genuine multiplex teardowns. A 1,200 m² floor area on a
-# normal lot is structurally a 5-storey big-house — not a 4-plex teardown
+# normal lot is structurally a 5-storey big-house - not a 4-plex teardown
 # target. The neighborhood avg-value gate confirms the area can sustain
 # mansion pricing.
 #
@@ -198,7 +198,7 @@ MANSION_MIN_NB_AVG_DWELLING_VALUE = 1_000_000
 # Direct-affordability threshold from NPP 2021 owner-reported median dwelling
 # value. Catches whole neighborhoods whose median home price exceeds the L2/3
 # dev's lot-acquisition envelope. At $2.0M median, the lot alone is ~$1.5–1.8M
-# — that's half the L2/3 dev's $1–3M project budget gone before any
+# - that's half the L2/3 dev's $1–3M project budget gone before any
 # construction. Filter targets:
 #   - 6 hoods at $2.0M median: Bridle Path, Forest Hill S, St.Andrew-Windfields,
 #     Bedford Park-Nortown, Lawrence Park S, Forest Hill N
@@ -216,7 +216,7 @@ def _passes_positive_residential(props: dict) -> bool:
     The decisive signal is **3D Massing recorded height**. A real
     residential building (anything 1+ storey) is in Toronto's 3D Massing
     dataset. A parking-lot kiosk, awning, storage shed, or transit
-    pavilion is NOT in Massing — too small to mass — but Building
+    pavilion is NOT in Massing - too small to mass - but Building
     Outlines may still tag them as a footprint (giving a non-zero
     coverage ratio). Coverage % alone is unreliable: a small house on a
     big lot legitimately has 12–20% cover, while a 9% cover kiosk on a
@@ -235,18 +235,18 @@ def _passes_positive_residential(props: dict) -> bool:
     lot_area = props.get("lotAreaM2") or 0
     has_height = props.get("existingMaxBuildingHeightM") is not None
 
-    # Hard ceiling — no Toronto residential lot is >5000 m² in practice.
+    # Hard ceiling - no Toronto residential lot is >5000 m² in practice.
     if lot_area > POSRES_MAX_LOT_AREA_M2:
         return False
 
-    # Vacant exception — only OK on small typical residential lots.
+    # Vacant exception - only OK on small typical residential lots.
     if cover == 0 and not has_height:
         return lot_area <= POSRES_VACANT_MAX_LOT_AREA_M2
 
     # Active redevelopment / construction-site signature: Outlines
     # reports cover = 0 but Massing has a recorded height. The two
     # datasets capture different snapshots of the parcel; when they
-    # disagree like this, the parcel is in flux — newly demolished,
+    # disagree like this, the parcel is in flux - newly demolished,
     # newly built, or under active construction. None of those are
     # fresh teardown candidates. See 677 Queen St E (active apartment
     # construction, mid-2026).
@@ -255,7 +255,7 @@ def _passes_positive_residential(props: dict) -> bool:
 
     # Has cover but no Massing height → footprint exists but the
     # structure is sub-massing-threshold. That's a kiosk / shed / awning
-    # / pavilion — not a real residential building. Reject.
+    # / pavilion - not a real residential building. Reject.
     if not has_height:
         return False
 
@@ -270,7 +270,7 @@ def _is_wealthy_enclave(props: dict) -> bool:
 def _looks_like_wealthy_estate(props: dict) -> bool:
     """Mansion-on-a-yard structural signature: large lot, low coverage,
     AND a Massing-recorded existing structure. Vacant lots fall through
-    (no Massing height) — those are gated separately by
+    (no Massing height) - those are gated separately by
     POSRES_VACANT_MAX_LOT_AREA_M2.
     """
     lot = props.get("lotAreaM2") or 0
@@ -315,7 +315,7 @@ def _passes_shared(props: dict) -> bool:
     if props.get("inRegulatedArea"):
         return False
     # RA / RAC zoning excluded: pure-residential apartment zones (20+ units
-    # per lot) are not multiplex territory — different product, different
+    # per lot) are not multiplex territory - different product, different
     # audience. CR / CRE / CL stay (mainstreet mixed-use teardowns).
     if props.get("zoneClass") in ("RA", "RAC"):
         return False
@@ -325,36 +325,36 @@ def _passes_shared(props: dict) -> bool:
     if footprint >= SHARED_MAX_FOOTPRINT_M2:
         return False
     if 0 < footprint < 30:
-        # Building Outlines digitization gap — a 13 m² "shed" on a 1500 m²
+        # Building Outlines digitization gap - a 13 m² "shed" on a 1500 m²
         # addressed lot is more likely a data error than a real vacant-with-
         # shed configuration.
         return False
     addr = props.get("address") or ""
     if not addr or addr == "None None":
         return False
-    # Estate filter — mansion-on-a-yard properties don't redevelop into
+    # Estate filter - mansion-on-a-yard properties don't redevelop into
     # multiplex regardless of zoning permission. Catches 1 Grenadier Hts
     # (2,593 m² · 8.3 % cov) plus the St.Andrew-Windfields / Kingsway /
     # Bedford Park clusters that the named-enclave list misses.
     if _looks_like_wealthy_estate(props):
         return False
-    # Mansion filter — big-building-in-wealthy-area. Catches what the
+    # Mansion filter - big-building-in-wealthy-area. Catches what the
     # estate filter misses (smaller lot, higher coverage) and what the
     # $2M median-value gate misses (gentrified mid-tier areas).
     if _looks_like_mansion(props):
         return False
-    # Named-enclave filter (2026-05-07 evening — moved from curated-only
+    # Named-enclave filter (2026-05-07 evening - moved from curated-only
     # path into the shared gate so broader inherits it too). Previously the
     # broader cohort had Forest Hill / Casa Loma / Rosedale parcels in it
     # because the enclave gate only fired during curation; now both elite
     # and broader exclude these.
     if _is_wealthy_enclave(props):
         return False
-    # Dwelling-value gate — neighborhoods whose median home price exceeds
+    # Dwelling-value gate - neighborhoods whose median home price exceeds
     # the L2/3 dev's lot-acquisition envelope. Property is annotated with
     # `nbMedDwellingValue` upstream (in main(), via neighborhoods.json
     # lookup). Treat 0 / missing as pass-through so a missing data row
-    # doesn't silently exclude a parcel — fallback nbhds keep their
+    # doesn't silently exclude a parcel - fallback nbhds keep their
     # existing structural-filter coverage.
     nb_med_value = props.get("nbMedDwellingValue") or 0
     if nb_med_value > DWELLING_VALUE_CEILING_CAD:
@@ -372,7 +372,7 @@ def _passes_shared(props: dict) -> bool:
 
 
 def _transit_distance_m(props: dict) -> float:
-    """Closest transit distance — subway or streetcar, whichever is nearer."""
+    """Closest transit distance - subway or streetcar, whichever is nearer."""
     sub = props.get("distSubwayStreetcarM")
     if sub is None:
         sub = min(
@@ -383,7 +383,7 @@ def _transit_distance_m(props: dict) -> float:
 
 
 def is_elite(props: dict) -> bool:
-    """Cover-list tier — slam-dunk multiplex candidates. All gates binary."""
+    """Cover-list tier - slam-dunk multiplex candidates. All gates binary."""
     if not _passes_shared(props):
         return False
     if (props.get("lotAreaM2") or 0) < ELITE_MIN_LOT_M2:
@@ -394,19 +394,19 @@ def is_elite(props: dict) -> bool:
         return False
     if not props.get("residential", False):
         return False
-    # Back-lot residue exclusion (added 2026-05-11 — 1030 Danforth /
+    # Back-lot residue exclusion (added 2026-05-11 - 1030 Danforth /
     # 1558 Davenport pattern). When a parcel abuts a laneway AND its
     # representative point sits ≥15 m from the nearest street centreline,
-    # the parcel is geometrically behind the frontage — accessed only via
+    # the parcel is geometrically behind the frontage - accessed only via
     # the laneway, not the street. These are residue lots, not
     # underwriting-grade frontage parcels. The frontend was already
     # surfacing `back_lot_candidate` in meta.stats; this gate uses the
     # same signal as a hard-exclusion for the elite cohort.
     if props.get("abutsLaneway") and (props.get("addrToStreetM") or 0) >= 15:
         return False
-    # Geometry-suspect exclusion (added 2026-05-11 — 807 Glencairn /
+    # Geometry-suspect exclusion (added 2026-05-11 - 807 Glencairn /
     # 177 Symons pattern). Set by ETL when height-attribution looks
-    # like a catastrophic polygon mis-draw — tall (≥12 m) on narrow
+    # like a catastrophic polygon mis-draw - tall (≥12 m) on narrow
     # (<20% cov), or exactly matches a neighbour-height within 0.1 m.
     # Three rebuild iterations couldn't fix these algorithmically (the
     # source polygons in Property Boundaries are wrong), so we hard-
@@ -417,7 +417,7 @@ def is_elite(props: dict) -> bool:
     # Active-demolition exclusion (added 2026-05-12). When the parcel
     # already has a residential-construction permit ≥1 unit created
     # filed in the last 18 months, someone has bought it, gotten
-    # permits, and is tearing down. The teardown is happening — just
+    # permits, and is tearing down. The teardown is happening - just
     # not by us. Per the page's "Multiplex Plays" framing, this parcel
     # is no longer an acquisition opportunity; it's competitive intel
     # better surfaced via the nearby-multiplex-permit comp on
@@ -430,17 +430,17 @@ def is_elite(props: dict) -> bool:
         # The permits payload aggregates only multiplex-relevant rows
         # (DWELLING_UNITS_CREATED ≥ 1), so a non-zero count is enough.
         return False
-    # Address-drift exclusion (added 2026-05-11 — 106 Eastwood Rd
+    # Address-drift exclusion (added 2026-05-11 - 106 Eastwood Rd
     # pattern). Parcel's stated address didn't match any Address Point
     # inside its polygon. Can't underwrite what you can't physically
     # locate. Reject from elite; broader keeps them with a frontend
     # caution.
     if props.get("addressDriftSuspect"):
         return False
-    # Apartment-block masquerade exclusion (added 2026-05-12 — 191 Dunn Ave
+    # Apartment-block masquerade exclusion (added 2026-05-12 - 191 Dunn Ave
     # pattern). 5+ storey detached residences on Toronto's 25%+ coverage
     # lots are almost universally converted multi-unit (Parkdale, Annex,
-    # High Park, Beaches Victorian conversions) — NOT multiplex-by-law
+    # High Park, Beaches Victorian conversions) - NOT multiplex-by-law
     # candidates. Even if some are real luxury mansions, teardown of a
     # $5-10M structure for a 6-unit multiplex doesn't pencil either way.
     # Page is called "Multiplex Plays" → every elite row should actually
@@ -452,13 +452,13 @@ def is_elite(props: dict) -> bool:
     ap = props.get("addressPointCount") or 0
     if height >= 14.0 and coverage >= 0.25 and approx >= 10 and (approx - ap) >= 5:
         return False
-    # Storey ceiling for the elite cohort (added 2026-05-12 — 304 Indian /
+    # Storey ceiling for the elite cohort (added 2026-05-12 - 304 Indian /
     # 92 Pine / Parkdale Victorian conversions class). 4+ storey "detached"
     # buildings in Toronto are functionally never single-family residences;
     # they are converted multi-unit apartment buildings (Parkdale / Annex /
     # High Park / Beaches Victorians converted decades ago). Even when the
     # classifier and 3D Massing data say "detached", the structure carries
-    # tenants and significant improvement value — not a multiplex teardown.
+    # tenants and significant improvement value - not a multiplex teardown.
     # 3-storey and shorter detached homes stay in elite regardless of
     # footprint; we trust developers to judge the teardown math themselves
     # given honest data. Vacant lots have no structure so always pass.
@@ -469,25 +469,25 @@ def is_elite(props: dict) -> bool:
     structure_type = props.get("existingStructureType", "unknown")
     if structure_type not in ELITE_STRUCTURE_TYPES:
         return False
-    # 2026-05-09 — elite requires ground-truth-grade structure type.
+    # 2026-05-09 - elite requires ground-truth-grade structure type.
     # Acceptable sources for non-vacant parcels:
-    #   "permit"         — Toronto building-permit STRUCTURE_TYPE record
+    #   "permit"         - Toronto building-permit STRUCTURE_TYPE record
     #                      (city-recorded, ~32% citywide coverage)
-    #   "osm"            — OpenStreetMap volunteer-mapped `building=*` tag
+    #   "osm"            - OpenStreetMap volunteer-mapped `building=*` tag
     #                      (~12% additional coverage, 96% agreement w/ permits)
-    #   "address_points" — Toronto Address Points spatial join
+    #   "address_points" - Toronto Address Points spatial join
     #                      (city-recorded address registry)
-    #   "classifier" + AP=1 — heuristic detached + Address Points dataset
+    #   "classifier" + AP=1 - heuristic detached + Address Points dataset
     #                      confirms exactly 1 dwelling on the parcel polygon.
     #                      The AP=1 ground-truth flips the source from
     #                      "guess" to "city has registered exactly 1 address
-    #                      here" — bulletproof on the no-shared-walls /
+    #                      here" - bulletproof on the no-shared-walls /
     #                      no-shared-addresses question. Lifts coverage in
     #                      suburban wards where permit data is sparse;
     #                      addresses the central-Toronto bias previously
     #                      caused by the strict permit/osm gate (86% of
     #                      elite was clustering in T&EY + Ward 23).
-    # Vacant parcels exempt — no structure to verify, source is
+    # Vacant parcels exempt - no structure to verify, source is
     # deterministic absence of a Building-Outline polygon.
     if structure_type != "vacant":
         src = props.get("existingStructureSource")
@@ -502,7 +502,7 @@ def is_elite(props: dict) -> bool:
 
 
 def is_broader(props: dict) -> bool:
-    """Back-half tier — every candidate worth flipping through. Strict
+    """Back-half tier - every candidate worth flipping through. Strict
     superset of `is_elite` (elite is a subset of broader).
     """
     if not _passes_shared(props):
@@ -540,7 +540,7 @@ def main():
     args = parser.parse_args()
 
     if not args.in_path.exists():
-        _log.error("input not found: %s — run build_parcels.py first", args.in_path)
+        _log.error("input not found: %s - run build_parcels.py first", args.in_path)
         return 1
 
     _log.info("reading %s", args.in_path)
@@ -548,7 +548,7 @@ def main():
     features = geojson["features"]
     total_in = len(features)
 
-    # 2026-05-07 evening — annotate each feature with per-neighborhood
+    # 2026-05-07 evening - annotate each feature with per-neighborhood
     # context (income, dwelling value, permit rate per 1k dwellings) from
     # data/neighborhoods.json. The wealth gate in `_passes_shared` reads
     # `nbMedDwellingValue` from props directly, so this annotation must
@@ -568,7 +568,7 @@ def main():
         )
     else:
         _log.warning(
-            "neighborhoods.json not found at %s — wealth filter will pass-through "
+            "neighborhoods.json not found at %s - wealth filter will pass-through "
             "everything (treats nbMedDwellingValue as 0)", nbhds_path,
         )
 
@@ -592,8 +592,8 @@ def main():
     # time so we don't need a full ETL rebuild to ship this fix.
     #
     # Two-stage flip:
-    #   Stage A — exact-address match: 1303 permits → ~6 elite flips
-    #   Stage B — same-street block propagation: any parcel on the same
+    #   Stage A - exact-address match: 1303 permits → ~6 elite flips
+    #   Stage B - same-street block propagation: any parcel on the same
     #             street within ±LANE_PROP_RANGE house numbers of a
     #             laneway-suite permit also flips. A Toronto residential
     #             block typically spans ±25 house numbers (each side).
@@ -665,7 +665,7 @@ def main():
         _log.warning("laneway-suite back-derivation skipped: %s", _e)
 
     # Citywide total (every parcel processed, not just score-positive ones)
-    # — sourced from the master GeoJSON's meta. The frontend uses this for
+    # - sourced from the master GeoJSON's meta. The frontend uses this for
     # the "filtered from ~N citywide" copy so the figure stays current as
     # subdivisions / lot merges shift the parcel count over time.
     total_citywide = (
@@ -678,7 +678,7 @@ def main():
     )
 
     if args.no_elite:
-        # Legacy single-file path — kept for parity with downstream tools.
+        # Legacy single-file path - kept for parity with downstream tools.
         payload = parcels_top_io.make_payload(features, args.top_n, total_citywide=total_citywide)
         parcels_top_io.write_atomic(payload, args.out)
         out_size_kb = args.out.stat().st_size / 1024
@@ -706,7 +706,7 @@ def main():
     # Path A: parcel has at least one active CKAN owner-activity signal
     #         (severance / demoPermit / violation / prelimZoning).
     # Path B: sixplexEligible AND lotAreaM2 >= CURATED_PATH_B_MIN_LOT_M2.
-    # Union produces the curated front of the listings — every parcel has
+    # Union produces the curated front of the listings - every parcel has
     # a labeled "why it's here" reason. Falls back to Path B only when
     # data/signals.json is absent (first-ever rebuild).
     signal_pids = _load_signal_pids(Path("data/signals.json"))
@@ -718,7 +718,7 @@ def main():
 
     # 2026-05-07 evening: wealthy-enclave + dwelling-value gates moved into
     # _passes_shared so broader inherits them too. The remaining structural
-    # gate here is positive-residential — that one stays curated-only because
+    # gate here is positive-residential - that one stays curated-only because
     # it would over-cut broader (vacant-on-big-lot is sometimes a real
     # multiplex play in broader, less so in curated).
     eligible_after_structural = [
@@ -730,7 +730,7 @@ def main():
         len(eligible_features), len(eligible_after_structural),
     )
 
-    # Path A: all signal-bearing eligible parcels (uncapped — every one
+    # Path A: all signal-bearing eligible parcels (uncapped - every one
     # has a story, count is naturally bounded by CKAN signal volume).
     path_a_features = [
         f for f in eligible_after_structural
@@ -774,7 +774,7 @@ def main():
     # Archive the previous rebuild's parcels-top.json (if any) BEFORE
     # writing the new one. The frontend reads `parcels-top-prev.json` to
     # compute "this week" deltas (added picks since last refresh).
-    # Idempotent — does nothing on the first-ever rebuild. Added 2026-05-09.
+    # Idempotent - does nothing on the first-ever rebuild. Added 2026-05-09.
     _archive_previous(args.out)
 
     curated_payload = parcels_top_io.make_payload(
@@ -814,14 +814,14 @@ def _archive_previous(out_path: Path) -> None:
 def _load_signal_pids(signals_path: Path) -> set | None:
     """Read `data/signals.json` if present and return the set of parcelIds
     with any active signal. Returns `None` when the file is missing
-    (first-ever rebuild) — caller falls back to Path B only.
+    (first-ever rebuild) - caller falls back to Path B only.
     """
     if not signals_path.exists():
         return None
     try:
         payload = json.loads(signals_path.read_text(encoding="utf-8"))
     except Exception as e:
-        _log.warning("signals.json present but unreadable (%s) — Path B only", e)
+        _log.warning("signals.json present but unreadable (%s) - Path B only", e)
         return None
     by_pid = payload.get("byParcelId") or {}
     return {str(pid) for pid, signals in by_pid.items() if signals}

@@ -4,7 +4,7 @@ One-shot: run review_site() against every URL in url_health_cache.json that's
 currently `ok=True` but hasn't been Haiku-reviewed yet. Marks `reviewed_at`
 on every checked entry; flips `ok=False` for any that come back spam/off_topic.
 
-Idempotent — re-running skips entries that already have a `reviewed_at`.
+Idempotent - re-running skips entries that already have a `reviewed_at`.
 
 Cost: ~$0.0018/URL on sync Haiku 4.5 pricing. ~$1.26 for the initial ~700 URLs.
 """
@@ -27,7 +27,7 @@ def needs_review(url, entry):
 
 def main():
     if not ANTHROPIC_KEY:
-        sys.exit("ANTHROPIC_API_KEY not loaded — /var/secrets/nowservingto.env missing or unreadable")
+        sys.exit("ANTHROPIC_API_KEY not loaded - /var/secrets/nowservingto.env missing or unreadable")
     cache = json.loads(HEALTH_CACHE.read_text())
     targets = [u for u, e in cache.items() if needs_review(u, e)]
     print(f"cache: {len(cache)} URLs total")
@@ -55,7 +55,7 @@ def main():
                 entry['review_verdict'] = 'legit'
                 n_legit += 1
             elif verdict.startswith('error:'):
-                # Network/parse error — leave ok untouched, but don't mark legit either.
+                # Network/parse error - leave ok untouched, but don't mark legit either.
                 # No reviewed_at update so next run retries.
                 del entry['reviewed_at']
                 n_err += 1

@@ -4,12 +4,12 @@ expressed 0–100) per neighborhood from the SolarTO city-wide rooftop dataset.
 Also exposes the v1.2 building blocks `compute_solar_points` (STRtree + parallel
 kWh array, used by parcel scoring) and `kwh_p95` (citywide 95th-percentile kWh,
 used to normalize per-parcel solar to 0–100). Note: `kwh_p95` is **not** the
-statistic used by `compute_heat_pump` — that uses an internal P75. The two
+statistic used by `compute_heat_pump` - that uses an internal P75. The two
 percentiles serve different scoring layers (P75 for the neighborhood-level
 heat-pump share, P95 for the parcel-level raw solar score).
 
 SolarTO upstream rooftop screening (City of Toronto, applied SOURCE-side
-before kWh values are published — BloomTO inherits these gates transitively):
+before kWh values are published - BloomTO inherits these gates transitively):
   - Roof surface must receive >=800 kWh/m^2/yr incident solar radiation
   - Roof surface must have >=30 m^2 of clear, usable space
   - Slope must be < 45 degrees
@@ -17,7 +17,7 @@ before kWh values are published — BloomTO inherits these gates transitively):
   - Toronto yield factor: 1 kW installed PV -> ~1,150 kWh/yr generated
 
 So every kWh value in the SolarTO CSV represents a roof surface that already
-clears all four screening gates. BloomTO does NOT re-apply these filters —
+clears all four screening gates. BloomTO does NOT re-apply these filters -
 they're respected transitively because the source already filtered. The
 methodology is surfaced on the wire as `meta.solarMethodology` for honest
 disclosure, and in `goldmines.html` info card so users see what's behind
@@ -73,7 +73,7 @@ def _download_with_retries(url: str, dest: Path) -> None:
             if attempt == len(backoffs):
                 raise
             wait = backoffs[attempt]
-            _log.warning("download %s failed (attempt %d): %s — retrying in %ss",
+            _log.warning("download %s failed (attempt %d): %s - retrying in %ss",
                          url, attempt + 1, e, wait)
             time.sleep(wait)
 
@@ -174,22 +174,22 @@ def compute_solar_per_parcel(parcels, cache_dir: Path) -> dict[str, int]:
     P95 kWh, clamps to [0, 100]. Empty parcels (no contained rooftops) get 0.
 
     The "raw" name distinguishes this from the shadow-attenuated `solarScore`
-    on the wire format — `parcel_scoring.py` (or the orchestrator) multiplies
+    on the wire format - `parcel_scoring.py` (or the orchestrator) multiplies
     this by the unshadowed fraction from `shadow_analysis.py` to get the
     final number, and may set it to None per the three-tier rule.
 
-    Reuses `compute_solar_points` + `kwh_p95` (Task 7) — does NOT re-stream
+    Reuses `compute_solar_points` + `kwh_p95` (Task 7) - does NOT re-stream
     the CSV. The STRtree built there is exactly what we need here.
     """
     tree, kwh_values = compute_solar_points(Path(cache_dir))
 
     if not kwh_values:
-        _log.warning("solar_to: no rooftops loaded — every parcel will get raw_score = 0")
+        _log.warning("solar_to: no rooftops loaded - every parcel will get raw_score = 0")
         return {p.parcel_id: 0 for p in parcels}
 
     p95 = kwh_p95(kwh_values)
     if p95 <= 0:
-        _log.error("solar_to: P95 is %s — every parcel will get raw_score = 0", p95)
+        _log.error("solar_to: P95 is %s - every parcel will get raw_score = 0", p95)
         return {p.parcel_id: 0 for p in parcels}
 
     out: dict[str, int] = {}
@@ -214,7 +214,7 @@ def compute_heat_pump(neighborhoods: list[Neighborhood], cache_dir: Path
     75th percentile, rounded to 0–100. Neighborhoods with zero rooftops fall back to
     `heat_pump = 50` (neutral) and appear in `fallback_names`.
     """
-    # Pass 1: collect (kwh, point) tuples — same memory shape as v1.1
+    # Pass 1: collect (kwh, point) tuples - same memory shape as v1.1
     # (no STRtree build; we don't need spatial-query access during the
     # neighborhood attribution pass).
     rooftops: list[tuple[float, Point]] = list(_iter_solar_rooftops(Path(cache_dir)))

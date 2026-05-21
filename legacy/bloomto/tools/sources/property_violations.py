@@ -1,9 +1,9 @@
-"""Building Construction / Demolition Violations — daily-refreshed CKAN feed.
+"""Building Construction / Demolition Violations - daily-refreshed CKAN feed.
 
 The ML&S (Municipal Licensing & Standards) division issues these against
 property owners for unpermitted construction, unsafe structures, stop-work
 violations, and similar enforcement actions. A multiplex dev reading this
-feed sees owners under City pressure — strongest "motivated seller" signal
+feed sees owners under City pressure - strongest "motivated seller" signal
 publicly available.
 
 Filtering scope:
@@ -16,7 +16,7 @@ Filtering scope:
 - Drops `Closed`, `Order Complied`, `Cancelled`, `Rescheduled`, etc.
 - Optional date filter via `since_iso` to scope to recent filings.
 
-CKAN refresh cadence: **daily**. Dataset has ~48K rows total — historic +
+CKAN refresh cadence: **daily**. Dataset has ~48K rows total - historic +
 active. Filtering trims to ~3K active distress signals citywide.
 """
 
@@ -47,7 +47,7 @@ ACTIVE_DISTRESS_STATUSES = frozenset({
 })
 
 # WORK substrings that flag a violation as irrelevant to multiplex prospecting.
-# Sign violations are commercial signage on retail / restaurant frontage —
+# Sign violations are commercial signage on retail / restaurant frontage -
 # nothing to do with the residential / mixed-use teardown thesis. Drop.
 IGNORED_WORK_SUBSTRINGS = (
     "sign no permit",
@@ -56,7 +56,7 @@ IGNORED_WORK_SUBSTRINGS = (
     "notice issued signs",
 )
 
-# Severity ranking for sorting — higher = more pressure on the owner.
+# Severity ranking for sorting - higher = more pressure on the owner.
 STATUS_SEVERITY = {
     "Emergency Order Issued": 5,
     "Stop Work Order Issued": 4,
@@ -92,7 +92,7 @@ def _is_cache_fresh(path: Path) -> bool:
 
 
 def _resolve_json_url() -> str:
-    """The full JSON resource is the cleanest fetch — small enough to grab
+    """The full JSON resource is the cleanest fetch - small enough to grab
     in one shot, no datastore_search paging required."""
     pkg = requests.get(
         f"{CKAN_BASE}/package_show",
