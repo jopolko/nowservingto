@@ -74,13 +74,6 @@ As Google/Bing index new places, the next cron re-check picks up the better link
 
 Cuisines split out where meaningfully different from their parent region. Examples (full list in `tools/cuisines.py`): Afghan, Argentinian, Armenian, Bangladeshi, Brazilian, Caribbean, Chinese, Colombian, Eritrean, Ethiopian, Filipino, French, Ghanaian, Greek, Guyanese, Haitian, Indian, Indonesian, Italian, Jamaican, Japanese, Jewish deli, Korean, Latin American, Lebanese, Mexican, Middle Eastern, Nepalese, Nigerian, Pakistani, Persian, Peruvian, Polish, Portuguese, Salvadoran, Senegalese, Somali, South Asian, Spanish, Sri Lankan, Tamil, Thai, Tibetan, Trinidadian, Turkish, Venezuelan, Vietnamese.
 
-## Cost model
-
-- **Daily steady-state**: ~$0.35–$0.45/day
-  - ~$0.30/day Anthropic (Haiku tokens + ~10 web_search calls + photo classification + evidence rewrites)
-  - ~$0.05–$0.15/day Google (Places refetch + photo download + Street View fallback for new openings whose first photo is wrong)
-- ~$12–$15/month total
-
 ## Setup
 
 ```bash
