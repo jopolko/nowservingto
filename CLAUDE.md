@@ -58,7 +58,8 @@ As Google/Bing index new places, the next cron re-check picks up the better link
 ## Coverage policy
 
 - Only restaurants licensed in the last **365 days** appear. Older licences fall out.
-- Only entries that are **verified open** (Places `OPERATIONAL` OR web_search `operating=yes`) appear.
+- Only entries with a **Google Places match** appear. The previous policy accepted web_search-only verification as a fallback; tightened on 2026-05-27 because without a Places place_id we can't link visitors to a real Maps profile, and a row that doesn't go anywhere is worse than no row. Flag in `verification_for()`: `ALLOW_WEB_SEARCH_ONLY = False`.
+- Within Places-matched entries, the **`OPERATIONAL` business-status gate** still applies — closed/permanently-closed don't render.
 - Chain-denylist matches never appear, regardless of LLM verdict.
 
 ## Cuisine taxonomy (~50 keys)
@@ -67,9 +68,11 @@ Specific country buckets are preferred over umbrellas. Where a cuisine is meanin
 
 ## Cost model
 
-- Daily steady-state: ~$0.30/day in Anthropic API credit (Haiku tokens + ~10 web_search calls for the daily delta + tier-aware re-checks)
-- ~$10/month
-- Zero ongoing Google API spend (Places enrichment was a one-time $6 cold-start)
+- **Daily steady-state**: ~$0.35-$0.45/day total
+  - **~$0.30/day Anthropic** (Haiku tokens + ~10 web_search calls for the daily delta + tier-aware re-checks + photo classification)
+  - **~$0.05-$0.15/day Google** (photo recovery pipeline: Place Details refetch + photo download + Street View fallback for new openings whose first Places photo is wrong - usually 2-3 retries/day at ~$0.025 each)
+- **~$12-$15/month** total
+- Photo enrichment was a one-time $6 cold-start; the ongoing Google spend is the *recovery* loop (retry_denied_photos.py + retry_places_photos.py) that fixes Cube-Online-Canada-style wrong-business photos. Cheap but no longer zero.
 
 ## Secrets
 
@@ -79,7 +82,7 @@ Specific country buckets are preferred over umbrellas. Where a cuisine is meanin
 
 - Apache on `nowservingto.com`. Prod URL: **https://nowservingto.com/**.
 - Prod path: `/var/www/html/nowservingto/` (same dir as cron working dir - `cp` deploy step is a no-op)
-- VPS: DigitalOcean droplet, San Francisco. SSH `john@143.110.236.86:34522` via `~/.ssh/nowservingto_deploy`
+- VPS: DigitalOcean droplet, San Francisco. SSH connection details are in the local SSH config under host alias `nowservingto` (use that, not the raw IP, so the IP isn't published to public git history). Key: `~/.ssh/nowservingto_deploy`
 - File ownership `john:www-data`. `.htaccess` default-denies everything except the explicit allow-list.
 - Crontab on VPS: `17 5 * * * /var/www/html/nowservingto/tools/cron_daily_openings.sh` (UTC; runs ~1:17 AM Toronto)
 
