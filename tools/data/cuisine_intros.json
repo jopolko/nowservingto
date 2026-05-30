@@ -1,5 +1,5 @@
 {
-  "_doc": "Per-cuisine intro paragraphs (1-2 sentences) and 3 related cuisines, used by inject_openings.py to differentiate /cuisine/* SEO landing pages. Toronto-specific where possible; avoid templated phrasing. Edit freely; the next cron run picks up changes.",
+  "_doc": "Per-cuisine intro paragraphs (1-2 sentences), 3 related cuisines, and optional community_partners. Used by inject_openings.py to differentiate /cuisine/* SEO landing pages. Toronto-specific where possible; avoid templated phrasing. Edit freely; the next cron run picks up changes. Schema: {intro: str, related: [key, key, key], community_partners?: [{name, url, blurb}]}. community_partners renders as a quiet footer block of reciprocal outbound links to cultural-community directories that list our cuisine page back; add an entry only AFTER a directory confirms they'll list you (otherwise you're sending traffic out for nothing). Cap of 4 per cuisine enforced in the renderer.",
   "afghan": {
     "intro": "Afghan kabob houses cluster along the GTA's western edge - Etobicoke, Mississauga, the Queensway - where the diaspora settled in waves from the 1980s on. Look for chapli kabob, mantu dumplings, and long basmati pilafs studded with raisins and carrots.",
     "related": ["pakistani", "persian", "tibetan"]

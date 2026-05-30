@@ -1658,6 +1658,51 @@ def build_related_cuisines(cuisine_key):
     return f'<nav class="related-cuisines" aria-label="Related cuisines"><span class="rc-label">Also try</span>{links}</nav>'
 
 
+def build_community_partners(cuisine_key):
+    """Reciprocal outbound links to community directories that list our
+    cuisine page back. Pulls from cuisine_intros.json's 'community_partners'
+    list. Empty / missing = nothing rendered (most cuisines won't have
+    partners yet; populated as outreach in data/community_submissions.md
+    converts).
+
+    Schema per partner:
+      {"name": "Tamilar.ca", "url": "https://tamilar.ca/",
+       "blurb": "Tamil business directory, GTA"}
+
+    Render rationale:
+      - Tight footer block with rel="noopener" + target="_blank" so visitors
+        don't lose the cuisine page on a side-trip.
+      - No rel="nofollow": these ARE editorial endorsements of partners
+        who reciprocate; nofollow would burn the relational equity.
+      - One short sentence per link so the section reads as a helpful
+        "community resources" cite, not a link farm. Cap at 4 partners to
+        keep it that way.
+    """
+    rec = _CUISINE_INTROS.get(cuisine_key) or {}
+    partners = rec.get('community_partners') or []
+    if not partners: return ''
+    label = CUISINE_LABEL.get(cuisine_key, cuisine_key)
+    items = []
+    for p in partners[:4]:
+        name = p.get('name') or ''
+        url = p.get('url') or ''
+        blurb = p.get('blurb') or ''
+        if not (name and url): continue
+        items.append(
+            f'<li class="cp-item">'
+            f'<a class="cp-link" href="{_esc(url)}" target="_blank" rel="noopener">{_esc(name)}</a>'
+            f'{(" - " + _esc(blurb)) if blurb else ""}'
+            f'</li>'
+        )
+    if not items: return ''
+    return (
+        f'<aside class="community-partners" aria-label="{_esc(label)}-Canadian community resources">'
+        f'<h3 class="cp-heading">{_esc(label)}-Canadian community resources</h3>'
+        f'<ul class="cp-list">{"".join(items)}</ul>'
+        f'</aside>'
+    )
+
+
 # ---------------------------------------------------------------------------
 # Inject PER-CUISINE landing pages at cuisine/<key>.html.
 # ---------------------------------------------------------------------------
@@ -1763,7 +1808,7 @@ for c in cuisines_out:
         ld_payloads=[cuisine_collection, cuisine_breadcrumb_ld, cuisine_faq],
         breadcrumb_html=build_breadcrumb_html(cuisine_breadcrumb_parts),
         page_intro_html=build_page_intro(key),
-        related_html=build_related_cuisines(key),
+        related_html=build_related_cuisines(key) + build_community_partners(key),
         lcp_preload_url=(entries[0].get('thumb') or '') if entries else '',
     )
     page = swap_newsletter_cta(page, build_alert_section('cuisine', key, label))
