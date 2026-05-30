@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>This Week in Toronto · Newest Italian kitchens</title>
+<meta name="description" content="1 licensed this week, 40 in the past year. Every Italian restaurant the City of Toronto has licensed, tracked nightly. Updated May 27, 2026.">
+<meta name="theme-color" content="#c83624">
+<meta property="og:title" content="This Week in Toronto · Newest Italian kitchens">
+<meta property="og:description" content="1 licensed this week, 40 in the past year. Every Italian restaurant the City of Toronto has licensed, tracked nightly. Updated May 27, 2026.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://nowservingto.com/wire/italian">
+<meta property="og:image" content="https://nowservingto.com/og/photo/ferro-bar-caffe-769.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://nowservingto.com/wire/italian">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<style>
+  :root {
+    --ink: #131516; --ink2: #46494c; --muted: #74787c; --paper: #ffffff;
+    --bg: #fafafa; --line: #ebecef; --accent: #c83624; --accent-dark: #8e2218;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; line-height: 1.5; }
+  a { color: inherit; }
+
+  /* HERO: full-bleed photo with dark gradient bottom + overlaid type */
+  .hero { position: relative; width: 100%; min-height: 64vh; max-height: 720px; background-size: cover; background-position: center 35%; background-color: #1a1a1a; display: flex; align-items: flex-end; }
+  .hero-flat { min-height: 50vh; }
+  .hero-inner { width: 100%; max-width: 1080px; margin: 0 auto; padding: 60px 32px; color: #fff; position: relative; z-index: 2; }
+  .hero-eyebrow { font: 800 12px/1 var(--sans); letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 14px; }
+  .hero-headline { font: 800 clamp(34px, 5vw, 56px)/1.08 var(--sans); margin: 0; letter-spacing: -0.025em; }
+  .hero-dek { font: 400 clamp(15px, 1.7vw, 17px)/1.5 var(--sans); margin: 18px 0 0; color: rgba(255,255,255,0.88); }
+  .hero-credit { position: absolute; bottom: 10px; right: 14px; font: 500 10px/1.2 var(--sans); color: rgba(255,255,255,0.55); letter-spacing: 0.04em; z-index: 2; max-width: 280px; text-align: right; }
+
+  /* MAIN WRAPPER */
+  main { max-width: 1080px; margin: 0 auto; padding: 0 32px; }
+  @media (max-width: 640px) { main { padding: 0 18px; } .hero-inner { padding: 44px 18px; } }
+
+  /* STAT STRIP: photo-magazine style. Cell count is dynamic (zero-count
+     windows are omitted), so cells are separated by gap-as-divider
+     rather than positional border rules - any count from 1-4 renders
+     cleanly. Column count comes from --cols-desktop / --cols-mobile
+     inline CSS vars set when the strip is built. */
+  .stats { display: grid; grid-template-columns: repeat(var(--cols-desktop, 4), 1fr); gap: 1px; background: var(--line); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin: 48px 0 40px; }
+  .stat { background: var(--paper); padding: 22px 18px; }
+  .stat-num { font: 800 clamp(28px, 4vw, 40px)/1 var(--sans); color: var(--accent); letter-spacing: -0.02em; }
+  .stat-label { font: 600 10.5px/1.3 var(--sans); color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 8px; }
+  @media (max-width: 640px) {
+    .stats { grid-template-columns: repeat(var(--cols-mobile, 2), 1fr); }
+  }
+
+  /* FIELD NOTE: short editorial paragraph anchoring the data in human context */
+  .field-note { font: 400 17px/1.6 var(--sans); color: var(--ink2); margin: 0 0 60px; padding: 0 0 0 18px; border-left: 3px solid var(--accent); }
+  .field-note b { color: var(--ink); font-weight: 700; }
+
+  /* SECTION HEADERS */
+  section { margin: 56px 0; }
+  section > h2 { font: 800 24px/1.2 var(--sans); margin: 0 0 6px; letter-spacing: -0.015em; }
+  section > .h2-dek { font: 400 14.5px/1.5 var(--sans); color: var(--muted); margin-bottom: 28px; }
+
+  /* CARD GRID */
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+  @media (max-width: 900px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; transition: transform 0.18s, box-shadow 0.18s; }
+  .card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
+  .card-photo { display: block; aspect-ratio: 1 / 1; overflow: hidden; background: #e8e8e8; }
+  .card-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .card-photo-empty { background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%); opacity: 0.12; }
+  .card-body { padding: 16px 18px 18px; }
+  .card-when { font: 800 11px/1 var(--sans); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
+  .card-name { font: 700 17px/1.25 var(--sans); margin: 0 0 6px; letter-spacing: -0.005em; }
+  .card-name a { text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.12s; }
+  .card-name a:hover { border-bottom-color: var(--accent); }
+  .card-meta { font: 400 13px/1.45 var(--sans); color: var(--ink2); }
+  .card-district { display: inline-block; margin-left: 4px; padding: 2px 7px; background: var(--bg); border-radius: 99px; font: 600 11px/1.4 var(--sans); color: var(--muted); }
+
+  /* DISTRICT BAR CHART */
+  .district-bars { display: flex; flex-direction: column; gap: 14px; }
+  .bar-row { display: grid; grid-template-columns: 160px 1fr 40px; align-items: center; gap: 14px; }
+  .bar-label { font: 700 12.5px/1 var(--sans); letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink); }
+  .bar-track { height: 14px; background: var(--bg); border-radius: 7px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 7px; }
+  .bar-count { font: 700 18px/1 var(--sans); color: var(--ink); text-align: right; }
+  @media (max-width: 540px) { .bar-row { grid-template-columns: 110px 1fr 32px; gap: 10px; } .bar-label { font-size: 11px; } }
+
+  /* FOOTER */
+  .foot { margin: 70px 0 50px; padding-top: 30px; border-top: 1px solid var(--line); font: 400 13.5px/1.55 var(--sans); color: var(--muted); }
+  .foot a { color: var(--ink2); text-decoration: underline; }
+  .foot p + p { margin-top: 14px; }
+  .foot .cta { display: inline-block; margin-top: 18px; padding: 12px 22px; background: var(--ink); color: #fff; text-decoration: none; font: 700 14px/1 var(--sans); border-radius: 8px; letter-spacing: 0.005em; }
+  .foot .cta:hover { background: var(--accent); }
+
+  /* META BAR (small top utility bar with site brand) */
+  .topbar { position: absolute; top: 0; left: 0; right: 0; padding: 18px 32px; z-index: 3; display: flex; justify-content: space-between; align-items: center; }
+  .topbar .brand { font: 800 17px/1 var(--sans); letter-spacing: -0.01em; color: #fff; text-decoration: none; }
+  .topbar .updated { font: 600 11px/1 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.85); }
+  .topbar .updated b { color: #fff; font-weight: 800; }
+  @media (max-width: 640px) { .topbar { padding: 14px 18px; } .topbar .brand { font-size: 15px; } }
+</style>
+</head>
+<body>
+
+<div class="topbar"><a class="brand" href="/">NowServingTO</a><span class="updated"><b>This Week in Toronto</b> · May 27, 2026</span></div><div class="hero" style="background-image: linear-gradient(180deg, transparent 0%, transparent 45%, rgba(0,0,0,0.75) 100%), url('/og/photo/ferro-bar-caffe-769.jpg');"><div class="hero-inner"><div class="hero-eyebrow" style="color:#c83624">THIS WEEK IN TORONTO</div><h1 class="hero-headline">Toronto&#x27;s newest Italian kitchens</h1><p class="hero-dek">1 licensed this week. 40 in the past year. From the City of Toronto’s nightly registry.</p></div><div class="hero-credit">Pictured: FERRO BAR CAFFE</div></div>
+
+<main>
+
+  <div class="stats" style="--cols-desktop: 4; --cols-mobile: 2">
+    <div class="stat">
+      <div class="stat-num">1</div>
+      <div class="stat-label">Past 7 days</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">5</div>
+      <div class="stat-label">Past 30 days</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">11</div>
+      <div class="stat-label">Past 3 months</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">40</div>
+      <div class="stat-label">Past 12 months</div>
+    </div>
+  </div>
+
+  <p class="field-note">Little Italy on College, Corso Italia on St Clair West, Woodbridge for the second generation - and now a return downtown for the third. The <b>40</b> Italian kitchens licensed by the City of Toronto in the past 12 months sit across all four chapters at once: red-sauce trattorias, Neapolitan pizzerias, Roman-style by-the-slice, fresh-pasta counters, gelato. <b>5</b> of them in just the past 30 days.</p>
+
+  <section>
+    <h2>The 12 most recently licensed</h2>
+    <div class="h2-dek">Click any card to open the restaurant&apos;s Google Maps profile. Cards link out to live listings.</div>
+    <div class="grid">
+      <article class="card"><a class="card-photo" href="https://maps.google.com/?cid=15376471417141155761" rel="noopener" aria-label="View PROFOUND PIZZA"><img src="/og/thumb/profound-pizza-108.webp" alt="PROFOUND PIZZA" loading="lazy" decoding="async"></a><div class="card-body"><div class="card-when" style="color:#c83624">7D AGO</div><h3 class="card-name"><a href="https://maps.google.com/?cid=15376471417141155761" rel="noopener">PROFOUND PIZZA</a></h3><div class="card-meta">108 Vine Ave, Old Toronto, ON M6P 1V7 <span class="card-district">West Toronto</span></div></div></article>
+<article class="card"><a class="card-photo" href="https://maps.google.com/?cid=13967229013025087832" rel="noopener" aria-label="View GELATO ON THE DANNY"><img src="/og/thumb/gelato-on-the-danny-1980.webp" alt="GELATO ON THE DANNY" loading="lazy" decoding="async"></a><div class="card-body"><div class="card-when" style="color:#c83624">19D AGO</div><h3 class="card-name"><a href="https://maps.google.com/?cid=13967229013025087832" rel="noopener">GELATO ON THE DANNY</a></h3><div class="card-meta">1980 Danforth Ave, Toronto, ON M4C 1J6 <span class="card-district">East Toronto</span></div></div></article>
+<article class="card"><a class="card-photo" href="/r/cafemia-italian-bakery-84" rel="noopener" aria-label="View CAFEMIA ITALIAN BAKERY"><img src="/og/thumb/cafemia-italian-bakery-84.webp" alt="CAFEMIA ITALIAN BAKERY" loading="lazy" decoding="async"></a><div class="card-body"><div class="card-when" style="color:#c83624">21D AGO</div><h3 class="card-name"><a href="/r/cafemia-italian-bakery-84" rel="noopener">CAFEMIA ITALIAN BAKERY</a></h3><div class="card-meta">84 OAKDALE RD <span class="card-district">North York</span></div></div></article>
+<article class="card"><a class="card-photo" href="https://maps.google.com/?cid=13333792010969594332" rel="noopener" aria-label="View ARIETE E TORO"><img src="/og/thumb/ariete-e-toro-1229.webp" alt="ARIETE E TORO" loading="lazy" decoding="async"></a><div class="card-body"><div class="card-when" style="color:#c83624">28D AGO</div><h3 class="card-name"><a href="https://maps.google.com/?cid=13333792010969594332" rel="noopener">ARIETE E TORO</a></h3><div class="card-meta">1229 Dundas St W, Toronto, ON M6J 1X6 <span class="card-district">West Toronto</span></div></div></article>
+<article class="card"><a class="card-photo" href="https://maps.google.com/?cid=12115031063852184357" rel="noopener" aria-label="View LILIANA"><img src="/og/thumb/liliana-1198.webp" alt="LILIANA" loading="lazy" decoding="async"></a><div class="card-body"><div class="card-when" style="color:#c83624">28D AGO</div><h3 class="card-name"><a href="https://maps.google.com/?cid=12115031063852184357" rel="noopener">LILIANA</a></h3><div class="card-meta">1198 Queen St W, Toronto, ON M6J 1J6 <span class="card-district">West Toronto</span></div></div></article>
+<article class="card"><a class="card-photo" href="https://maps.google.com/?cid=18310434239347051927" rel="noopener" aria-label="View DONNA FERNANDA"><img src="/og/thumb/donna-fernanda-740.webp" alt="DONNA FERNANDA" loading="lazy" decoding="async"></a><div class="card-body"><div class="card-when" style="color:#c83624">55D AGO</div><h3 class="card-name"><a href="https://maps.google.com/?cid=18310434239347051927" rel="noopener">DONNA FERNANDA</a></h3><div class="card-meta">740 King St W, Toronto, ON M5V 1N3 <span class="card-district">Downtown</span></div></div></article>
+<article class="card"><a class="card-photo" href="https://maps.google.com/?cid=1364697834960235411" rel="noopener" aria-label="View RESTAURANT ZIA&#x27;S"><img src="/og/thumb/restaurant-zias-1543.webp" alt="RESTAURANT ZIA&#x27;S" loading="lazy" decoding="async"></a><div class="card-body"><div class="card-when" style="color:#c83624">2MO AGO</div><h3 class="card-name"><a href="https://maps.google.com/?cid=1364697834960235411" rel="noopener">RESTAURANT ZIA&#x27;S</a></h3><div class="card-meta">1543 Dundas St W, Toronto, ON M6K 1T6 <span class="card-district">West Toronto</span></div></div></article>
+<article class="card"><a class="card-photo" href="https://maps.google.com/?cid=7576917229277373013" rel="noopener" aria-label="View THE BLUE HORSE CUCINA"><img src="/og/thumb/the-blue-horse-cucina-848.webp" alt="THE BLUE HORSE CUCINA" loading="lazy" decoding="async"></a><div class="card-body"><div class="card-when" style="color:#c83624">2MO AGO</div><h3 class="card-name"><a href="https://maps.google.com/?cid=7576917229277373013" rel="noopener">THE BLUE HORSE CUCINA</a></h3><div class="card-meta">848 The Queensway, Etobicoke, ON M8Z 1N7 <span class="card-district">Etobicoke</span></div></div></article>
+<article class="card"><a class="card-photo" href="https://maps.google.com/?cid=10950936434708415231" rel="noopener" aria-label="View LA FENICE TUSCAN GRILL"><img src="/og/thumb/la-fenice-tuscan-grill-319.webp" alt="LA FENICE TUSCAN GRILL" loading="lazy" decoding="async"></a><div class="card-body"><div class="card-when" style="color:#c83624">2MO AGO</div><h3 class="card-name"><a href="https://maps.google.com/?cid=10950936434708415231" rel="noopener">LA FENICE TUSCAN GRILL</a></h3><div class="card-meta">319-A King St W, Toronto, ON M5V 1J5 <span class="card-district">Downtown</span></div></div></article>
+<article class="card"><a class="card-photo" href="https://maps.google.com/?cid=11686425076287400791" rel="noopener" aria-label="View AMMUCCA SICILIAN STREET FOOD"><img src="/og/thumb/ammucca-sicilian-street-food-1154.webp" alt="AMMUCCA SICILIAN STREET FOOD" loading="lazy" decoding="async"></a><div class="card-body"><div class="card-when" style="color:#c83624">2MO AGO</div><h3 class="card-name"><a href="https://maps.google.com/?cid=11686425076287400791" rel="noopener">AMMUCCA SICILIAN STREET FOOD</a></h3><div class="card-meta">1154 St Clair Ave W Unit B, Toronto, ON M6E 1B3 <span class="card-district">West Toronto</span></div></div></article>
+<article class="card"><a class="card-photo" href="https://maps.google.com/?cid=12660708736190836200" rel="noopener" aria-label="View CAFE RUSSO"><img src="/og/thumb/cafe-russo-139.webp" alt="CAFE RUSSO" loading="lazy" decoding="async"></a><div class="card-body"><div class="card-when" style="color:#c83624">3MO AGO</div><h3 class="card-name"><a href="https://maps.google.com/?cid=12660708736190836200" rel="noopener">CAFE RUSSO</a></h3><div class="card-meta">139 Roncesvalles Ave, Toronto, ON M6R 2L2 <span class="card-district">West Toronto</span></div></div></article>
+<article class="card"><a class="card-photo" href="https://maps.google.com/?cid=15710520406050881564" rel="noopener" aria-label="View MR SINGH&#x27;S PIZZA"><img src="/og/thumb/mr-singhs-pizza-6640.webp" alt="MR SINGH&#x27;S PIZZA" loading="lazy" decoding="async"></a><div class="card-body"><div class="card-when" style="color:#c83624">3MO AGO</div><h3 class="card-name"><a href="https://maps.google.com/?cid=15710520406050881564" rel="noopener">MR SINGH&#x27;S PIZZA</a></h3><div class="card-meta">6640 Finch Ave W #4, Etobicoke, ON M9W 0B3 <span class="card-district">Etobicoke</span></div></div></article>
+    </div>
+  </section>
+
+  <section>
+    <h2>Where they&apos;re opening</h2>
+    <div class="h2-dek">All 40 kitchens, by Toronto district. Concentration tells you where the Italian community&apos;s commercial footprint is densest right now.</div>
+    <div class="district-bars">
+      <div class="bar-row"><div class="bar-label">West Toronto</div><div class="bar-track"><div class="bar-fill" style="width:100.0%;background:#c83624"></div></div><div class="bar-count">16</div></div>
+<div class="bar-row"><div class="bar-label">East Toronto</div><div class="bar-track"><div class="bar-fill" style="width:50.0%;background:#c83624"></div></div><div class="bar-count">8</div></div>
+<div class="bar-row"><div class="bar-label">Downtown</div><div class="bar-track"><div class="bar-fill" style="width:50.0%;background:#c83624"></div></div><div class="bar-count">8</div></div>
+<div class="bar-row"><div class="bar-label">Etobicoke</div><div class="bar-track"><div class="bar-fill" style="width:31.2%;background:#c83624"></div></div><div class="bar-count">5</div></div>
+<div class="bar-row"><div class="bar-label">North York</div><div class="bar-track"><div class="bar-fill" style="width:12.5%;background:#c83624"></div></div><div class="bar-count">2</div></div>
+<div class="bar-row"><div class="bar-label">Scarborough</div><div class="bar-track"><div class="bar-fill" style="width:6.2%;background:#c83624"></div></div><div class="bar-count">1</div></div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <p><b style="color:var(--ink)">About <em style="font-style:italic">This Week in Toronto</em>.</b> A weekly dispatch tracking every restaurant the City of Toronto licenses. Cuisine is verified against Google Places, owner websites, and food-press coverage. Every restaurant above appears on the live site at <a href="https://nowservingto.com/cuisine/italian">nowservingto.com/cuisine/italian</a>.</p>
+    <p>Editorial use: lift the numbers, screenshot the cards, link the brief. If you&apos;d like the wire delivered weekly to your inbox - or want a custom cut for Italy - drop a line via the site footer.</p>
+    <a href="https://nowservingto.com/cuisine/italian" class="cta">Browse the live Italian feed &rarr;</a>
+  </footer>
+
+</main>
+
+</body></html>

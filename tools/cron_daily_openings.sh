@@ -122,6 +122,50 @@ if [[ "${SKIP_WEBSITES:-0}" != "1" ]]; then
     fi
 fi
 
+# Step 4b: menu-signal extraction. Strict verbatim-only Haiku pass over
+# every entry with a website + cached page text; populates the "Menu
+# signals" line on /r/<slug> pages. Cached forever per cache_key, so
+# steady-state daily cost is ~$0.001 (only new openings). Safe to skip
+# (non-fatal) — listing pages just render without the menu line.
+log "→ llm_menu_highlights_batch.py (verbatim dish-name extraction)"
+if ! "$PYTHON" -u tools/llm_menu_highlights_batch.py >> "$LOG_FILE" 2>&1; then
+    log "WARN: menu-highlights batch failed (non-fatal — Menu signals will skip)"
+fi
+
+# Step 4c: Haiku-vision classifier - decide whether each cached Places
+# photo actually shows a restaurant (or whether it's a hair-salon / gas-
+# station / paint-section attached by Places to the wrong CID). Cached
+# forever per slug; only new openings get classified each day. inject
+# honors the verdict and hides the photo on rows flagged as not-food.
+log "→ llm_photo_classify_batch.py (Haiku vision: is this photo a restaurant?)"
+if ! "$PYTHON" -u tools/llm_photo_classify_batch.py >> "$LOG_FILE" 2>&1; then
+    log "WARN: photo-classifier batch failed (non-fatal — rows render as before)"
+fi
+
+# Step 4c+: for any photo the classifier just rejected, try fallbacks.
+# Each script honors photo_attempts.json so we never re-spend on dead ends.
+#   - retry_denied_photos.py: Street View at the geocoded lat/lng
+#   - retry_places_photos.py: refetch Place Details, walk photos[1..N]
+log "→ retry_denied_photos.py (Street View fallback for wrong-business photos)"
+if ! "$PYTHON" -u tools/retry_denied_photos.py >> "$LOG_FILE" 2>&1; then
+    log "WARN: retry_denied_photos failed (non-fatal — denied photos stay denied)"
+fi
+log "→ retry_places_photos.py (Places multi-photo fallback)"
+if ! "$PYTHON" -u tools/retry_places_photos.py >> "$LOG_FILE" 2>&1; then
+    log "WARN: retry_places_photos failed (non-fatal — denied photos stay denied)"
+fi
+
+# Step 4d: rewrite validator_evidence into editorial prose. The raw
+# evidence from the verifier reads as a verification log ("Website
+# confirms...", "Places match shows...") and leaks that register onto
+# the LISTING-EXTRA "What we know" panel and the meta description.
+# This pass turns each evidence string into a 1-2 sentence editorial
+# blurb. Cached forever per _cacheKey; only new openings run.
+log "→ llm_evidence_rewrite_batch.py (Haiku: rewrite verification notes editorially)"
+if ! "$PYTHON" -u tools/llm_evidence_rewrite_batch.py >> "$LOG_FILE" 2>&1; then
+    log "WARN: evidence-rewrite batch failed (non-fatal — pages fall back to raw evidence)"
+fi
+
 # Step 5: probe every cached restaurant website for HTTP errors so we don't show
 # dead links. $0 cost, ~20s for full sweep. Each URL re-probed every 14 days.
 log "→ check_link_health.py (HEAD-probe cached websites)"
@@ -211,6 +255,13 @@ fi
 log "→ inject_openings.py (final, post-verify + post-health-check)"
 "$PYTHON" tools/inject_openings.py >> "$LOG_FILE" 2>&1 || log "WARN: final inject failed"
 
+# Step 6.25: regenerate the diaspora pitch wire pages (/wire/filipino,
+# /wire/jamaican, /wire/vietnamese) from the freshly-injected corridors.json.
+# Self-contained editorial briefs aimed at homeland food editors - charts
+# stay current without manual rebuilding.
+log "→ build_wire_pages.py (live diaspora pitch wires)"
+"$PYTHON" tools/build_wire_pages.py >> "$LOG_FILE" 2>&1 || log "WARN: wire-pages build failed (non-fatal)"
+
 # Step 7: post the freshest unposted entry to @nowservingto on X.
 #
 # DISABLED 2026-05-19 — @nowservingto is shadow-banned; daily auto-posts
@@ -231,6 +282,13 @@ log "  step 7 (x_post) DISABLED — account dormant for shadow-ban recovery"
 # the /usage page reflects today's spend. Cheap (just reads a JSONL file).
 log "→ aggregate_usage.py"
 "$PYTHON" -u tools/aggregate_usage.py >> "$LOG_FILE" 2>&1 || log "WARN: usage aggregate failed (non-fatal)"
+
+# Crawl-log rollup: parse Apache access logs for search-engine and AI-bot
+# hits. Powers the "Crawlers" section on /usage. Cron user (john) must
+# be in the `adm` group to read /var/log/apache2/*; if not, the script
+# writes a friendly stub with the one-time sudo command to fix it.
+log "→ aggregate_bot_traffic.py"
+"$PYTHON" -u tools/aggregate_bot_traffic.py >> "$LOG_FILE" 2>&1 || log "WARN: bot-traffic aggregate failed (non-fatal)"
 
 # Step 5: sanity-check + deploy
 DATA="$ROOTED_DIR/data/corridors.json"
@@ -255,6 +313,15 @@ if [[ -n "${WEB_ROOT:-}" ]]; then
     mv -f "$TMP" "$DEST_DATA/corridors.json"
     log "  deployed corridors.json → $DEST_DATA"
 fi
+
+# Step 7.5: ping IndexNow with today's URL set. Bing, Yandex, Naver,
+# Seznam re-crawl on receipt. Google doesn't participate, but ChatGPT
+# Search + Perplexity ride Bing's index, so this is the cheapest way
+# to push freshness to AI search. Idempotent and free; runs every day
+# regardless of whether anything actually changed (IndexNow handles
+# the "no-op" case server-side).
+log "→ ping_indexnow.py (Bing/Yandex/etc. re-crawl notification)"
+"$PYTHON" -u tools/ping_indexnow.py >> "$LOG_FILE" 2>&1 || log "WARN: IndexNow ping failed (non-fatal)"
 
 # Step 8: fire per-cuisine + per-district real-time email alerts for any
 # brand-new entries that hit corridors.json today. Runs AFTER deploy so

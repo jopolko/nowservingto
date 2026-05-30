@@ -1,0 +1,28 @@
+[Unit]
+Description=NowServingTO alerts + tips HTTP service
+After=network.target postfix.service
+Wants=postfix.service
+
+[Service]
+Type=simple
+User=john
+Group=john
+WorkingDirectory=/var/www/html/nowservingto
+ExecStart=/usr/bin/python3 /var/www/html/nowservingto/tools/alerts_server.py
+Restart=on-failure
+RestartSec=3s
+Environment=ALERTS_PORT=8080
+
+# Hardening — service only needs to read site cache and write subs/tips
+NoNewPrivileges=yes
+ProtectSystem=full
+ProtectHome=read-only
+ReadWritePaths=/var/www/html/nowservingto/tools/cache
+PrivateTmp=yes
+
+# Stdout/stderr go to journal — check with: journalctl -u alerts_server -f
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

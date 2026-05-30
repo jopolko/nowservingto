@@ -1,0 +1,84 @@
+# NowServingTO
+
+> A daily-fresh directory of restaurants newly licensed in Toronto, classified
+> by cuisine and district. Sourced from the City of Toronto's Municipal
+> Licensing and Standards open data, verified open via Google Places and
+> web search, updated every morning around 1:17 AM Toronto time.
+
+The site is intended for people looking for the newest restaurants of a
+specific cuisine or neighbourhood. The full data is the City of Toronto's
+licence feed for the past 365 days, filtered to entries confirmed as
+operating, classified by AI (Anthropic Claude) into ~50 cuisine buckets,
+and rendered as static HTML.
+
+## Browse
+
+- [Home](https://nowservingto.com/): Newest restaurants across Toronto, top 30
+- [Sitemap](https://nowservingto.com/sitemap.xml): All 500+ pages
+- [Press kit](https://nowservingto.com/press): Methodology, screenshots, contact
+
+## Cuisines
+
+Every cuisine has its own page at `/cuisine/<slug>` listing the newest
+restaurants of that cuisine, ordered by licence-issue date. Each page
+includes JSON-LD `CollectionPage` markup with a `sameAs` link to the
+Wikidata entity for that cuisine.
+
+Examples:
+- [Italian](https://nowservingto.com/cuisine/italian)
+- [Chinese](https://nowservingto.com/cuisine/chinese)
+- [Indian](https://nowservingto.com/cuisine/indian)
+- [Vietnamese](https://nowservingto.com/cuisine/vietnamese)
+- [Mexican](https://nowservingto.com/cuisine/mexican)
+- [Ethiopian](https://nowservingto.com/cuisine/ethiopian)
+- [Filipino](https://nowservingto.com/cuisine/filipino)
+- [Tibetan](https://nowservingto.com/cuisine/tibetan)
+- [Tamil](https://nowservingto.com/cuisine/tamil)
+- [Guyanese](https://nowservingto.com/cuisine/guyanese)
+
+The complete list of cuisines lives in `sitemap.xml`.
+
+## Districts
+
+Toronto is divided into six districts. Each has a page listing the newest
+restaurants in that area:
+
+- [Downtown](https://nowservingto.com/district/downtown)
+- [East Toronto](https://nowservingto.com/district/east-toronto)
+- [West Toronto](https://nowservingto.com/district/west-toronto)
+- [North York](https://nowservingto.com/district/north-york)
+- [Scarborough](https://nowservingto.com/district/scarborough)
+- [Etobicoke](https://nowservingto.com/district/etobicoke)
+
+## Individual restaurants
+
+Each restaurant has a detail page at `/r/<slug>` with its address, cuisine,
+how recently it was licensed, a thumbnail, and links to its website +
+Google Maps card. JSON-LD `Restaurant` markup includes `geo`, `address`,
+`servesCuisine`, `aggregateRating` (when available), `foundingDate`
+(licence date), and `hasMap`.
+
+## How data is sourced
+
+- **Licence data**: City of Toronto Open Data, Municipal Licensing and
+  Standards, "Business Licences" dataset (refreshed daily).
+- **Cuisine classification**: Anthropic Claude Haiku, given the operating
+  name and address; verified with web search for ambiguous cases.
+- **Operating verification**: Google Places API (one-time enrichment) plus
+  ongoing web-search re-verification on tier-aware intervals.
+- **Chain filter**: Hand-curated denylist of known American/Canadian
+  chains; anything matching is excluded regardless of AI verdict.
+
+## What this site is not
+
+- Not user-submitted reviews. The source of truth is the City's licence
+  feed, not user input.
+- Not a tourist guide to "ethnic food" — the audience is people from
+  specific diaspora communities looking for the newest spot in their cuisine.
+- Not historical archive. Only restaurants licensed in the past 365 days
+  appear; older licences fall out automatically.
+
+## Contact
+
+Operated by Josh Opolko. Methodology questions: see the
+[press kit](https://nowservingto.com/press).

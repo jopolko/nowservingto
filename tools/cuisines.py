@@ -132,28 +132,74 @@ def cuisine_color(key):
     return f'#{R:02x}{G:02x}{B:02x}'
 
 
+# Defense-in-depth canonicalization. The validator prompt already tells Haiku
+# to use canonical labels and reject these banned ones, but Haiku occasionally
+# ignores the instructions (~3% of validations). Without this map, "Argentine"
+# from a stubborn Haiku output would register as a duplicate of "Argentinian";
+# "Canadian" / "European" / "Mediterranean" / "South Indian" / "Gujarati" would
+# leak through as cuisine pages despite being explicitly banned in the prompt.
+# Two slug categories handled:
+#   - SEED COLLISION (value=existing seed slug): merge into the canonical key.
+#     e.g. "Jewish" returned by Haiku → reuse 'jewish_deli' (the seed slug),
+#     not a new 'jewish' duplicate.
+#   - BANNED LABEL (value=''):  the validator prompt explicitly forbids these
+#     labels; force them to '' (== unknown / drop) instead of letting them
+#     create their own cuisine page.
+# This is taxonomy data (10-15 entries, stable across years), not a regex.
+# Add to the seed CUISINE_LABEL above if a "novel" should become canonical;
+# add here if Haiku tends to return a label that should fold into a seed key.
+_CANONICAL_ALIASES = {
+    # Seed-collision aliases (Haiku slug variant → canonical seed key)
+    'argentine': 'argentinian',
+    'jewish': 'jewish_deli',
+    'irish': 'irish_uk',
+    'british': 'irish_uk',
+    'latin_american': 'latin',
+    'eastern_european': 'eastern_eu',
+    'south_indian': 'indian',     # per validator prompt: "South Indian → Indian"
+    'north_indian': 'indian',
+    'gujarati': 'indian',
+    'punjabi': 'indian',
+    # Banned labels (validator prompt: "never return these"). Force to drop
+    # by mapping to '' (caller treats empty key as no-cuisine).
+    'canadian': '',
+    'american': '',
+    'european': '',
+    'hawaiian': '',
+    'mediterranean': '',
+}
+
+
 def register_cuisine(label):
     """Given a free-form cuisine label from Haiku, return its canonical
     slug. Auto-registers (and persists) novel cuisines so the next cron
-    run knows the key. Returns '' if the label can't be slugified.
-    Parent-country collapsing (Sichuan → Chinese) lives in the validator
-    prompt, not here - keeps judgment with Haiku, not in a hardcoded map.
+    run knows the key. Returns '' if the label can't be slugified OR if
+    it matches an explicit banned label.
 
-    Label reverse-lookup: if Haiku returns "Middle Eastern" but our seed
-    taxonomy has key=middle_east with label="Middle Eastern", reuse the
-    existing key instead of creating a duplicate `middle_eastern` slug.
-    Same for any seed cuisine whose display label differs from its slug.
+    Two layers of canonicalization run before persistence:
+      1. SEED REVERSE-LOOKUP: if Haiku's label matches an existing seed
+         display label (case-insensitive), reuse the seed key. Catches
+         "Middle Eastern" → middle_east, "Jewish deli" → jewish_deli.
+      2. CANONICAL_ALIASES TABLE: catches the small set of stubborn slug
+         variants and banned labels that Haiku occasionally emits despite
+         the validator prompt's preferred-labels list (defense-in-depth).
     """
     key = _slugify_cuisine(label)
     if not key: return ''
+    # Layer 1: seed slug or 'unknown' - already canonical
     if key in CUISINE_LABEL or key == 'unknown':
         return key
-    # Reverse-lookup by display label so we don't create slug duplicates
-    # of existing seed cuisines ("Middle Eastern" → middle_east).
-    pretty_in = _re.sub(r'\s+', ' ', str(label).strip()).title()
+    # Layer 2: case-insensitive display-label reverse lookup. Replace
+    # underscores with spaces first - Haiku sometimes returns the slug form
+    # ("costa_rican") instead of natural casing ("Costa Rican"); without the
+    # swap the persisted label keeps the underscore and renders as "Costa_Rican".
+    pretty_in = _re.sub(r'[\s_]+', ' ', str(label).strip()).title()
     for existing_key, existing_label in CUISINE_LABEL.items():
         if existing_label.lower() == pretty_in.lower():
             return existing_key
+    # Layer 3: hand-curated alias / ban table
+    if key in _CANONICAL_ALIASES:
+        return _CANONICAL_ALIASES[key]  # may be '' for banned
     # Novel cuisine - title-case the human label and persist.
     CUISINE_LABEL[key] = pretty_in
     VALID_CUISINE_KEYS.add(key)

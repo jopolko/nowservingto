@@ -140,11 +140,11 @@ def _entry_email(entry, sub):
     # Why this subscriber is being notified - set the lede honestly.
     if sub['kind'] == 'cuisine':
         clabel = sub['value'].replace('_', ' ').title()
-        lede = f"A new {clabel} restaurant was just licensed in Toronto."
+        lede = f"A new {clabel} restaurant was just registered in Toronto."
         subject = f"New {clabel}: {name}"
     elif sub['kind'] == 'district':
         dlabel = sub['value'].replace('-', ' ').title()
-        lede = f"A new restaurant was just licensed in {dlabel}."
+        lede = f"A new restaurant was just registered in {dlabel}."
         subject = f"New in {dlabel}: {name} ({cuisine_labels})"
     else:   # intersection
         ck, _, ds = sub['value'].partition('|')
@@ -225,7 +225,7 @@ def _entry_email(entry, sub):
       <!-- Header band -->
       <tr><td style="padding:26px 28px 18px;border-bottom:3px solid #131516">
         <a href="{SITE_BASE}" style="display:inline-block;font:800 28px/1 Georgia,'Iowan Old Style',serif;letter-spacing:-0.02em;color:#131516;text-decoration:none">NowServingTO</a>
-        <div style="color:#74787c;font:italic 400 14px/1.4 Georgia,serif;margin-top:6px">Toronto's newest registered restaurants &mdash; updated daily.</div>
+        <div style="color:#74787c;font:italic 400 14px/1.4 Georgia,serif;margin-top:6px">Toronto's newest registered restaurants - updated daily.</div>
       </td></tr>
 
       <!-- Lede -->
@@ -261,7 +261,7 @@ def _entry_email(entry, sub):
       <tr><td bgcolor="#f6f7f8" style="padding:18px 28px 22px;background:#f6f7f8;border-top:1px solid #ebecef">
         <p style="margin:0;color:#74787c;font:12.5px/1.55 -apple-system,sans-serif">
           You&rsquo;re subscribed to <b style="color:#46494c">{_esc(_sub_label(sub))}</b> alerts.
-          <a href="{unsub_url}" style="color:#74787c;text-decoration:underline">Unsubscribe</a> &mdash; one click, no questions.
+          <a href="{unsub_url}" style="color:#74787c;text-decoration:underline">Unsubscribe</a> - one click, no questions.
         </p>
         <p style="margin:10px 0 0;color:#a8acb0;font:11px/1.5 -apple-system,sans-serif">
           NowServingTO pulls newly registered restaurants from City of Toronto Open Data, classifies cuisine with Anthropic Claude, and verifies operating status via Google Places.

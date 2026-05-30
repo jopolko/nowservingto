@@ -2,355 +2,559 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://nowservingto.com/</loc>
-    <lastmod>2026-05-19</lastmod>
+    <lastmod>2026-05-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/press</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/wire/afghan</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/wire/bangladeshi</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/wire/caribbean</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/wire/chinese</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/wire/colombian</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/wire/ethiopian</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/wire/filipino</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/wire/french</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/wire/greek</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/wire/indian</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/wire/italian</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/wire/jamaican</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/wire/japanese</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/wire/korean</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/wire/lebanese</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/wire/mexican</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/wire/middle_east</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/wire/nepalese</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/wire/nigerian</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/wire/pakistani</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/wire/persian</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/wire/portuguese</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/wire/sri_lankan</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/wire/tamil</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/wire/thai</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/wire/trinidadian</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/wire/turkish</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/wire/vietnamese</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/cuisine/indian</loc>
-    <lastmod>2026-05-19</lastmod>
+    <lastmod>2026-05-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://nowservingto.com/cuisine/chinese</loc>
-    <lastmod>2026-05-19</lastmod>
+    <lastmod>2026-05-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://nowservingto.com/cuisine/italian</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/cuisine/japanese</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/cuisine/vietnamese</loc>
-    <lastmod>2026-05-19</lastmod>
+    <lastmod>2026-05-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://nowservingto.com/cuisine/mexican</loc>
-    <lastmod>2026-05-19</lastmod>
+    <lastmod>2026-05-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/cuisine/middle_east</loc>
-    <lastmod>2026-05-19</lastmod>
+    <loc>https://nowservingto.com/cuisine/japanese</loc>
+    <lastmod>2026-05-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/cuisine/jamaican</loc>
-    <lastmod>2026-05-19</lastmod>
+    <loc>https://nowservingto.com/cuisine/vietnamese</loc>
+    <lastmod>2026-05-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://nowservingto.com/cuisine/korean</loc>
-    <lastmod>2026-05-19</lastmod>
+    <lastmod>2026-05-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://nowservingto.com/cuisine/turkish</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/cuisine/french</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/cuisine/portuguese</loc>
-    <lastmod>2026-05-19</lastmod>
+    <lastmod>2026-05-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://nowservingto.com/cuisine/thai</loc>
-    <lastmod>2026-05-19</lastmod>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/cuisine/jamaican</loc>
+    <lastmod>2026-05-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://nowservingto.com/cuisine/filipino</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/cuisine/tamil</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/cuisine/lebanese</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/cuisine/south_asian</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/cuisine/ethiopian</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/cuisine/nigerian</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/cuisine/pakistani</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/cuisine/sri_lankan</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/cuisine/persian</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/cuisine/nepalese</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/cuisine/afghan</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/cuisine/bangladeshi</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/cuisine/greek</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/cuisine/colombian</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/cuisine/jewish_deli</loc>
-    <lastmod>2026-05-19</lastmod>
+    <lastmod>2026-05-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://nowservingto.com/cuisine/caribbean</loc>
-    <lastmod>2026-05-19</lastmod>
+    <lastmod>2026-05-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/cuisine/eritrean</loc>
-    <lastmod>2026-05-19</lastmod>
+    <loc>https://nowservingto.com/cuisine/lebanese</loc>
+    <lastmod>2026-05-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/cuisine/trinidadian</loc>
-    <lastmod>2026-05-19</lastmod>
+    <loc>https://nowservingto.com/cuisine/pakistani</loc>
+    <lastmod>2026-05-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/cuisine/venezuelan</loc>
-    <lastmod>2026-05-19</lastmod>
+    <loc>https://nowservingto.com/cuisine/middle_east</loc>
+    <lastmod>2026-05-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/cuisine/ghanaian</loc>
-    <lastmod>2026-05-19</lastmod>
+    <loc>https://nowservingto.com/cuisine/french</loc>
+    <lastmod>2026-05-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/cuisine/latin</loc>
-    <lastmod>2026-05-19</lastmod>
+    <loc>https://nowservingto.com/cuisine/persian</loc>
+    <lastmod>2026-05-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/cuisine/peruvian</loc>
-    <lastmod>2026-05-19</lastmod>
+    <loc>https://nowservingto.com/cuisine/nigerian</loc>
+    <lastmod>2026-05-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/cuisine/polish</loc>
-    <lastmod>2026-05-19</lastmod>
+    <loc>https://nowservingto.com/cuisine/sri_lankan</loc>
+    <lastmod>2026-05-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/cuisine/armenian</loc>
-    <lastmod>2026-05-19</lastmod>
+    <loc>https://nowservingto.com/cuisine/greek</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/cuisine/bangladeshi</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/cuisine/tamil</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/cuisine/ethiopian</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/cuisine/afghan</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/cuisine/portuguese</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/cuisine/jewish_deli</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/cuisine/taiwanese</loc>
+    <lastmod>2026-05-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://nowservingto.com/cuisine/argentinian</loc>
-    <lastmod>2026-05-19</lastmod>
+    <lastmod>2026-05-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/cuisine/guyanese</loc>
-    <lastmod>2026-05-19</lastmod>
+    <loc>https://nowservingto.com/cuisine/south_asian</loc>
+    <lastmod>2026-05-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/cuisine/senegalese</loc>
-    <lastmod>2026-05-19</lastmod>
+    <loc>https://nowservingto.com/cuisine/trinidadian</loc>
+    <lastmod>2026-05-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/cuisine/spanish</loc>
-    <lastmod>2026-05-19</lastmod>
+    <loc>https://nowservingto.com/cuisine/kurdish</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/cuisine/nepalese</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/cuisine/colombian</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/cuisine/venezuelan</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/cuisine/ghanaian</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/cuisine/eritrean</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/cuisine/peruvian</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/cuisine/salvadoran</loc>
+    <lastmod>2026-05-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://nowservingto.com/cuisine/tibetan</loc>
-    <lastmod>2026-05-19</lastmod>
+    <lastmod>2026-05-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/cuisine/african_west</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/cuisine/indonesian</loc>
-    <lastmod>2026-05-19</lastmod>
+    <loc>https://nowservingto.com/cuisine/armenian</loc>
+    <lastmod>2026-05-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://nowservingto.com/cuisine/brazilian</loc>
-    <lastmod>2026-05-19</lastmod>
+    <lastmod>2026-05-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/cuisine/dominican</loc>
-    <lastmod>2026-05-19</lastmod>
+    <loc>https://nowservingto.com/cuisine/belgian</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/cuisine/palestinian</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/cuisine/latin</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/cuisine/senegalese</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/cuisine/costa_rican</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/cuisine/south_african</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/cuisine/singaporean</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/cuisine/guatemalan</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/cuisine/somali</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/cuisine/spanish</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/cuisine/indonesian</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/cuisine/polish</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/cuisine/iraqi</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/cuisine/ecuadorian</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/cuisine/uyghur</loc>
+    <lastmod>2026-05-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://nowservingto.com/district/scarborough</loc>
-    <lastmod>2026-05-19</lastmod>
+    <lastmod>2026-05-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://nowservingto.com/district/north-york</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/district/west-toronto</loc>
-    <lastmod>2026-05-19</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/district/etobicoke</loc>
-    <lastmod>2026-05-19</lastmod>
+    <lastmod>2026-05-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://nowservingto.com/district/downtown</loc>
-    <lastmod>2026-05-19</lastmod>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/district/west-toronto</loc>
+    <lastmod>2026-05-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/district/etobicoke</loc>
+    <lastmod>2026-05-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://nowservingto.com/district/east-toronto</loc>
-    <lastmod>2026-05-19</lastmod>
+    <lastmod>2026-05-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://nowservingto.com/r/aathavan-unavakam-501</loc>
     <lastmod>2026-03-04</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/r/shivas-coffee-bar-snacks-3867</loc>
-    <lastmod>2025-05-20</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/r/la-delight-4750</loc>
-    <lastmod>2025-05-22</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/r/tutto-panino-100</loc>
-    <lastmod>2025-05-22</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/r/appu-express-takeout-catering-2</loc>
-    <lastmod>2025-05-27</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/r/bunna-aroma-coffee-1189</loc>
-    <lastmod>2025-05-28</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -373,14 +577,20 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/viet-sandwich-2181</loc>
-    <lastmod>2025-07-01</lastmod>
+    <loc>https://nowservingto.com/r/pizzeria-fornace-562</loc>
+    <lastmod>2025-06-04</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/crumbs-patties-160</loc>
-    <lastmod>2025-06-11</lastmod>
+    <loc>https://nowservingto.com/r/oaxaca-coffee-shop-399</loc>
+    <lastmod>2025-06-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/viet-sandwich-2181</loc>
+    <lastmod>2025-07-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -391,8 +601,8 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/sundays-pasta-lab-100</loc>
-    <lastmod>2025-06-17</lastmod>
+    <loc>https://nowservingto.com/r/pizza-fiamma-2382</loc>
+    <lastmod>2025-06-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -403,8 +613,14 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/the-second-tummy-tiramisu-3262</loc>
-    <lastmod>2025-06-19</lastmod>
+    <loc>https://nowservingto.com/r/carousel-bakery-93</loc>
+    <lastmod>2025-06-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/luxme-vilas-5637</loc>
+    <lastmod>2025-06-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -415,8 +631,26 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/robs-pupusas-247</loc>
+    <lastmod>2025-06-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/kings-delight-caribbean-cuisine-1658</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/clay-steam-boat-spicy-kitchen-2677</loc>
     <lastmod>2025-07-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/highland-momo-2267</loc>
+    <lastmod>2025-07-05</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -433,20 +667,14 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/sanok-deli-773</loc>
-    <lastmod>2025-07-10</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
     <loc>https://nowservingto.com/r/lezmas-kitchen-1818</loc>
     <lastmod>2025-07-15</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/spicy-indian-flavours-605</loc>
-    <lastmod>2025-07-19</lastmod>
+    <loc>https://nowservingto.com/r/jos-cha-3276</loc>
+    <lastmod>2025-07-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -457,32 +685,32 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/bhaat-n-bytes-427</loc>
+    <lastmod>2025-07-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/m-t-fishball-noodle-3272</loc>
     <lastmod>2025-08-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/tutto-gelato-181</loc>
-    <lastmod>2025-08-05</lastmod>
+    <loc>https://nowservingto.com/r/las-muns-28</loc>
+    <lastmod>2025-08-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/nord-lyon-65</loc>
+    <lastmod>2025-08-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://nowservingto.com/r/singh-hospitality-545</loc>
     <lastmod>2025-08-07</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/r/chung-chun-rice-dog-ap-11</loc>
-    <lastmod>2025-08-08</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/r/ren-sushi-the-well-486</loc>
-    <lastmod>2025-08-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -501,6 +729,12 @@
   <url>
     <loc>https://nowservingto.com/r/banyan-southern-chinese-food-5</loc>
     <lastmod>2025-08-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/masala-blvd-lakeshore-3260</loc>
+    <lastmod>2025-08-15</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -529,6 +763,48 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/vietnamese-sub-2541</loc>
+    <lastmod>2025-09-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/manyaman-foods-express-328</loc>
+    <lastmod>2025-09-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/umis-inc-346</loc>
+    <lastmod>2025-09-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/spicelane-pizza-and-fastfood-1375</loc>
+    <lastmod>2025-09-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/kao-kang-toronto-486</loc>
+    <lastmod>2025-09-06</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/bavu-villas-2950</loc>
+    <lastmod>2025-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/mexco-latin-store-724</loc>
+    <lastmod>2025-09-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/the-curry-kingdom-20</loc>
     <lastmod>2025-09-17</lastmod>
     <changefreq>monthly</changefreq>
@@ -553,26 +829,20 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/delicious-jamaican-cuisine-coffee-1568</loc>
+    <lastmod>2025-09-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/onigiri-co-333</loc>
     <lastmod>2025-09-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/sip-and-shawarma-181</loc>
+    <loc>https://nowservingto.com/r/csk-indian-street-kitchen-208</loc>
     <lastmod>2025-09-26</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/r/bairrandino-rotisserie-grill-222</loc>
-    <lastmod>2025-09-29</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/r/la-catrina-tacos-267</loc>
-    <lastmod>2025-10-03</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -589,8 +859,32 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/majha-land-restaurant-20</loc>
+    <lastmod>2025-10-08</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/dubailevant-4750</loc>
+    <lastmod>2025-10-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/bibab-express-1</loc>
+    <lastmod>2025-10-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/the-benue-440</loc>
     <lastmod>2025-10-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/ji--modern-south-asian-grill-130</loc>
+    <lastmod>2025-10-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -625,20 +919,32 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/akhigbe-african-caribbean-food-market-inc-6921</loc>
+    <lastmod>2025-10-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/faith-caribbean-cuisine-inc-3449</loc>
     <lastmod>2025-10-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/caldense-bakery-2588</loc>
-    <lastmod>2025-11-07</lastmod>
+    <loc>https://nowservingto.com/r/terra-brasil-market-415</loc>
+    <lastmod>2025-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/tawa-kitchenpizza-chef-1313-3430</loc>
-    <lastmod>2025-11-18</lastmod>
+    <loc>https://nowservingto.com/r/zen-kyoto-120</loc>
+    <lastmod>2025-11-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/mexology-1792</loc>
+    <lastmod>2025-11-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -661,6 +967,12 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/twice-as-nice-caribbean-cuisine-4190</loc>
+    <lastmod>2025-11-21</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/delhish-41</loc>
     <lastmod>2025-11-24</lastmod>
     <changefreq>monthly</changefreq>
@@ -679,6 +991,18 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/mian-more-648</loc>
+    <lastmod>2025-11-27</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/que-birra-taqueria-2350</loc>
+    <lastmod>2025-12-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/solero-bakery-cafe-grocery-3029</loc>
     <lastmod>2025-12-03</lastmod>
     <changefreq>monthly</changefreq>
@@ -691,8 +1015,26 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/zen-kyoto-88</loc>
+    <lastmod>2025-12-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/delhi-ke-chole-bhature-545</loc>
+    <lastmod>2025-12-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/alis-shawarma-1172</loc>
     <lastmod>2025-12-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/king-place-bbq-curry-242</loc>
+    <lastmod>2025-12-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -733,7 +1075,19 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/hub-burritos-106</loc>
+    <lastmod>2026-01-08</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/rajahram-take-out-589</loc>
+    <lastmod>2026-01-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/revolver-pizza-co-916</loc>
     <lastmod>2026-01-09</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
@@ -751,13 +1105,19 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/mami-cantina-81</loc>
+    <lastmod>2026-01-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/banh-mi-pho-an-3833</loc>
     <lastmod>2026-01-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/waffle-de-rêve-6</loc>
+    <loc>https://nowservingto.com/r/waffle-de-reve-6</loc>
     <lastmod>2026-01-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
@@ -769,7 +1129,7 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/gàima-rice-bowl-5317</loc>
+    <loc>https://nowservingto.com/r/gaima-rice-bowl-5317</loc>
     <lastmod>2026-01-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
@@ -787,8 +1147,50 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/snacks-gaala-4190</loc>
+    <lastmod>2026-01-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/ghareeb-nawaz-catering-1071</loc>
+    <lastmod>2026-01-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/samosa-express-100</loc>
     <lastmod>2026-01-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/el-sazon-yucateco-mexican-food-9</loc>
+    <lastmod>2026-02-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/dulzura-mexican-desserts-9</loc>
+    <lastmod>2026-02-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/los-reyes-del-sazon-1165</loc>
+    <lastmod>2026-02-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/radhe-panipuri-1753</loc>
+    <lastmod>2026-02-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/hin-sushi-chanxiaoguan-5661</loc>
+    <lastmod>2026-02-05</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -805,14 +1207,32 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/hakka-n-jerk-296</loc>
+    <lastmod>2026-02-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/banh-mi-journey-2383</loc>
     <lastmod>2026-02-11</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/banh-mi-cafe-vn-2853</loc>
+    <lastmod>2026-02-12</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/makann-866</loc>
     <lastmod>2026-02-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/xinlong-frozen-food-3272</loc>
+    <lastmod>2026-03-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -835,6 +1255,12 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/definitely-ours-jamaican-restaurant-1155</loc>
+    <lastmod>2026-03-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/ethio-eri-cafe-707</loc>
     <lastmod>2026-03-10</lastmod>
     <changefreq>monthly</changefreq>
@@ -853,13 +1279,43 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/banh-mi-happy-2391</loc>
+    <lastmod>2026-03-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/kasturi-street-food-sweets-3450</loc>
+    <lastmod>2026-03-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/doaba-junction-3110</loc>
     <lastmod>2026-03-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/cong-caphe-yonge-eglinton-2354</loc>
+    <lastmod>2026-03-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/shreeji-panipuri-5010</loc>
+    <lastmod>2026-03-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/oi-banh-mi-vietnamese-sandwiches-900</loc>
+    <lastmod>2026-03-17</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/el-puestesito-hidalguense-1081</loc>
     <lastmod>2026-03-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
@@ -877,12 +1333,6 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/pampanguena-3776</loc>
-    <lastmod>2026-03-19</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
     <loc>https://nowservingto.com/r/super-samosa-snacks-sweets-837</loc>
     <lastmod>2026-03-24</lastmod>
     <changefreq>monthly</changefreq>
@@ -891,6 +1341,12 @@
   <url>
     <loc>https://nowservingto.com/r/malvon-empanadas-300</loc>
     <lastmod>2026-03-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/bodega-de-weston-latin-market-876</loc>
+    <lastmod>2026-03-27</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -907,14 +1363,14 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/slowhand-pizza-8</loc>
-    <lastmod>2026-04-10</lastmod>
+    <loc>https://nowservingto.com/r/amico-bakery-2889</loc>
+    <lastmod>2026-04-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/panda-bubble-4750</loc>
-    <lastmod>2026-04-10</lastmod>
+    <loc>https://nowservingto.com/r/myungrang-hotdog-finch-648</loc>
+    <lastmod>2026-04-15</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -925,13 +1381,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/hebas-kitchen-1960</loc>
+    <loc>https://nowservingto.com/r/tongdak-50</loc>
     <lastmod>2026-04-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/the-halal-spot-1921</loc>
+    <loc>https://nowservingto.com/r/hebas-kitchen-1960</loc>
     <lastmod>2026-04-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
@@ -949,8 +1405,26 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/gelateria-dolce-mia-690</loc>
+    <lastmod>2026-04-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/ariete-e-toro-1229</loc>
+    <lastmod>2026-04-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/banh-mi-journey-bloor-706</loc>
     <lastmod>2026-05-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/cafemia-italian-bakery-84</loc>
+    <lastmod>2026-05-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -969,6 +1443,24 @@
   <url>
     <loc>https://nowservingto.com/r/masala-story-21</loc>
     <lastmod>2026-05-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/old-soul-pizzeria-1940</loc>
+    <lastmod>2026-05-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/profound-pizza-108</loc>
+    <lastmod>2026-05-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/dulzura-mexican-desserts-260</loc>
+    <lastmod>2026-05-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -997,6 +1489,12 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/koh-rawi-thai-kitchen-bar-934</loc>
+    <lastmod>2026-03-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/deccan-house-restaurant-1885</loc>
     <lastmod>2026-03-30</lastmod>
     <changefreq>monthly</changefreq>
@@ -1009,73 +1507,25 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/yardys-jerk-2201</loc>
-    <lastmod>2025-05-20</lastmod>
+    <loc>https://nowservingto.com/r/la-vitrine-bar-and-kitchen-2014</loc>
+    <lastmod>2026-03-30</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/portovelo-cafe-1669</loc>
-    <lastmod>2025-05-22</lastmod>
+    <loc>https://nowservingto.com/r/lost-in-tokyo-parfait-shop-636</loc>
+    <lastmod>2025-05-30</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/daon-sushi-japanese-restaurant-4188</loc>
-    <lastmod>2025-05-23</lastmod>
+    <loc>https://nowservingto.com/r/dundas-pizza-depot-4986</loc>
+    <lastmod>2025-06-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/pizza-fresca-1-302</loc>
-    <lastmod>2025-05-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/r/chungs-caribbean-4205</loc>
-    <lastmod>2025-05-27</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/r/saigon-pai-610</loc>
-    <lastmod>2025-05-28</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/r/con-sabor-a-mexico-restaurant-9</loc>
-    <lastmod>2025-05-29</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/r/miss-qu-bbq-chinese-bistro-4186</loc>
-    <lastmod>2025-05-29</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/r/mapo-gamjatang-bloor-630</loc>
-    <lastmod>2025-05-29</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/r/senla-vietnamese-133</loc>
-    <lastmod>2025-05-29</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/r/piada-house-60</loc>
-    <lastmod>2025-06-03</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/r/laon-453</loc>
+    <loc>https://nowservingto.com/r/litsea-cuisine-3550</loc>
     <lastmod>2025-06-03</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
@@ -1083,6 +1533,18 @@
   <url>
     <loc>https://nowservingto.com/r/sangeethaveg-3601</loc>
     <lastmod>2025-06-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/khaas-bistro-bar-880</loc>
+    <lastmod>2025-06-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/yukimi-donburi-412</loc>
+    <lastmod>2025-06-05</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -1105,14 +1567,32 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/roozamoon-cafe-398</loc>
+    <lastmod>2025-07-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/adana-kebab-1960</loc>
+    <lastmod>2025-06-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/la-golosa-gelateria-1183</loc>
     <lastmod>2025-06-11</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/chokka-643</loc>
-    <lastmod>2025-06-13</lastmod>
+    <loc>https://nowservingto.com/r/food-trip-filipino-restaurant-3772</loc>
+    <lastmod>2025-06-12</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/sals-pasta-chops-614</loc>
+    <lastmod>2025-06-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -1129,7 +1609,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/hakka-khazana-restaurant-2003</loc>
+    <loc>https://nowservingto.com/r/xihe-restaurant-649</loc>
+    <lastmod>2025-06-18</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/nakwon-kisa-restaurant-4895</loc>
     <lastmod>2025-06-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
@@ -1141,7 +1627,19 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/the-peri-peri-shack-191</loc>
+    <lastmod>2025-06-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/momtazz-kabob-330</loc>
+    <lastmod>2025-06-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/guwoo-grains-noodle-167</loc>
     <lastmod>2025-06-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
@@ -1153,19 +1651,19 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/tiquicia-restaurant-1720</loc>
-    <lastmod>2025-06-23</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
     <loc>https://nowservingto.com/r/tadka-marun-4379</loc>
     <lastmod>2025-06-27</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/omai-rice-bar-21</loc>
+    <loc>https://nowservingto.com/r/agak-agak-253</loc>
+    <lastmod>2025-06-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/ruyi-garden-queensway-650</loc>
     <lastmod>2025-07-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
@@ -1177,20 +1675,26 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/house-of-nizams-1163</loc>
+    <lastmod>2025-07-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/duhok-shawarma-1635</loc>
     <lastmod>2025-07-04</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/chatramue-341</loc>
+    <loc>https://nowservingto.com/r/zam-zam-lahori-kitchen-818</loc>
     <lastmod>2025-07-09</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/zam-zam-lahori-kitchen-818</loc>
-    <lastmod>2025-07-09</lastmod>
+    <loc>https://nowservingto.com/r/souper-hot-pot-4899</loc>
+    <lastmod>2025-07-12</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -1219,13 +1723,43 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/mo-du-san-xiong-di-3260</loc>
+    <lastmod>2025-07-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/hua-hin-383</loc>
     <lastmod>2025-08-01</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/meryem-hanims-turkish-breakfast-cafe-3200</loc>
+    <lastmod>2025-07-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/hakka-king-85</loc>
+    <lastmod>2025-07-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/my-roti-placemy-dosa-place-3334</loc>
+    <lastmod>2025-07-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/naija-jollof-592</loc>
+    <lastmod>2025-07-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/lee-kee-dumpling-house-15</loc>
     <lastmod>2025-07-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
@@ -1237,19 +1771,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/isaan-der-thai-kitchen-and-bar-327</loc>
-    <lastmod>2025-07-31</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/r/kebabci-serdar-w-naci-1101</loc>
-    <lastmod>2025-08-01</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
     <loc>https://nowservingto.com/r/chop-chop-good-food-fast-771</loc>
+    <lastmod>2025-08-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/salonika-restaurant-402</loc>
     <lastmod>2025-08-05</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
@@ -1297,6 +1825,12 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/indian-streat-food-95</loc>
+    <lastmod>2025-08-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/don-lomi-ala-eh-kasarap-3645</loc>
     <lastmod>2025-08-15</lastmod>
     <changefreq>monthly</changefreq>
@@ -1309,26 +1843,26 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/bow-thai-restaurant-4755</loc>
+    <lastmod>2025-08-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/royal-baithak-the-indian-room-755</loc>
     <lastmod>2025-08-15</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/more-gelato-caffè-392</loc>
+    <loc>https://nowservingto.com/r/more-gelato-caffe-392</loc>
     <lastmod>2025-08-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/fuumi-sushi-879</loc>
-    <lastmod>2025-08-20</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/r/shakes-n-shawarma-656</loc>
-    <lastmod>2025-08-21</lastmod>
+    <loc>https://nowservingto.com/r/sowjis-indian-cuisine-3095</loc>
+    <lastmod>2025-08-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -1339,26 +1873,44 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/balti-indian-restaurant-bloor-2241</loc>
-    <lastmod>2025-09-03</lastmod>
+    <loc>https://nowservingto.com/r/jiangnan-one-bowl-noodle-3447</loc>
+    <lastmod>2025-08-27</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/555-boat-noodles-5308</loc>
+    <lastmod>2025-08-27</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/himagas-toronto-369</loc>
+    <lastmod>2025-08-27</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/the-wilbur-taco-company-50</loc>
+    <lastmod>2025-08-27</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/mcman-pizza-2116</loc>
+    <lastmod>2025-09-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/bocconcini-pizza-96</loc>
+    <lastmod>2025-09-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://nowservingto.com/r/mega-kebab-730</loc>
     <lastmod>2025-09-05</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/r/touhenboku-ramen-261</loc>
-    <lastmod>2025-09-09</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/r/kanafani-sweets-coffee-2082</loc>
-    <lastmod>2025-09-09</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -1381,13 +1933,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/akira-back-80</loc>
-    <lastmod>2025-09-15</lastmod>
+    <loc>https://nowservingto.com/r/aaha-truly-south-downtown-250</loc>
+    <lastmod>2025-09-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/aaha-truly-south-downtown-250</loc>
+    <loc>https://nowservingto.com/r/pizza-cantina-3011</loc>
     <lastmod>2025-09-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
@@ -1395,6 +1947,18 @@
   <url>
     <loc>https://nowservingto.com/r/amico-eatery-2013</loc>
     <lastmod>2025-09-17</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/xuma-cocina-mexicana-505</loc>
+    <lastmod>2025-09-17</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/basil-pho-house-5651</loc>
+    <lastmod>2025-09-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -1441,6 +2005,18 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/kajiken-north-york-4850</loc>
+    <lastmod>2025-09-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/cafe-foret-153</loc>
+    <lastmod>2025-11-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/vaika-indian-restaurant-3284</loc>
     <lastmod>2025-10-01</lastmod>
     <changefreq>monthly</changefreq>
@@ -1459,7 +2035,25 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/la-fondita-mexican-food-2965</loc>
+    <lastmod>2025-10-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/lahori-xpress-1150</loc>
+    <lastmod>2025-10-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/sebs-cappuccino-1928</loc>
+    <lastmod>2025-10-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/bar-filo-146</loc>
     <lastmod>2025-10-07</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
@@ -1483,6 +2077,12 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/aroi-thai-dining-bar-1218</loc>
+    <lastmod>2025-10-08</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/viet-garden-372</loc>
     <lastmod>2025-10-08</lastmod>
     <changefreq>monthly</changefreq>
@@ -1495,13 +2095,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/hakka-bistro-scarborough-2432</loc>
-    <lastmod>2025-10-17</lastmod>
+    <loc>https://nowservingto.com/r/little-house-of-deli-159</loc>
+    <lastmod>2025-10-31</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/szechuan-noodle-bowl-1030</loc>
+    <loc>https://nowservingto.com/r/koji-japanese-restaurant-1553</loc>
     <lastmod>2025-10-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
@@ -1513,20 +2113,32 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/dharmayug-kathiyawadi-food-6923</loc>
+    <lastmod>2025-10-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/more-than-noodles-449</loc>
     <lastmod>2025-10-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/osteria-alba-663</loc>
-    <lastmod>2025-10-25</lastmod>
+    <loc>https://nowservingto.com/r/haku-izakaya-168</loc>
+    <lastmod>2025-10-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/chachees-chai-cafe-62</loc>
-    <lastmod>2025-10-27</lastmod>
+    <loc>https://nowservingto.com/r/pho-hieu-1235</loc>
+    <lastmod>2025-10-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/osteria-alba-663</loc>
+    <lastmod>2025-10-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -1585,12 +2197,6 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/hakka-flame-1433</loc>
-    <lastmod>2025-11-01</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
     <loc>https://nowservingto.com/r/taki-sushi-679</loc>
     <lastmod>2025-11-04</lastmod>
     <changefreq>monthly</changefreq>
@@ -1603,8 +2209,26 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/uncle-potato-noodle-29</loc>
+    <lastmod>2025-11-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/mura-cupbop-690</loc>
+    <lastmod>2025-11-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/shawarma-west-8</loc>
     <lastmod>2025-11-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/the-katsu-and-salmon-285</loc>
+    <lastmod>2025-11-11</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -1633,14 +2257,26 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/sun-chinese-cuisine-25</loc>
+    <lastmod>2025-11-18</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/oriental-congee-2347</loc>
     <lastmod>2025-11-18</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/la-petite-colline-2181</loc>
+    <loc>https://nowservingto.com/r/mr-singhs-pizza-lakeshore-3019</loc>
     <lastmod>2025-11-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/chaiiwala-of-london-markham-rd-2250</loc>
+    <lastmod>2025-11-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -1669,7 +2305,7 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/caldense-bakery-pastries-ii-1451</loc>
+    <loc>https://nowservingto.com/r/madurai-pandiyas-elite-1370</loc>
     <lastmod>2025-11-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
@@ -1683,6 +2319,12 @@
   <url>
     <loc>https://nowservingto.com/r/authentic-greek-mediterranean-eatery-1585</loc>
     <lastmod>2025-11-27</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/new-banadir-restaurant-2007</loc>
+    <lastmod>2025-11-28</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -1717,20 +2359,38 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/the-momo-station-1071</loc>
+    <lastmod>2025-12-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/churreria-calderon-inc-181</loc>
     <lastmod>2025-12-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/pizzeria-badiali-annex-581</loc>
+    <loc>https://nowservingto.com/r/casa-tabasco-3425</loc>
     <lastmod>2025-12-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/the-kings-sushi-bar-246</loc>
-    <lastmod>2025-12-08</lastmod>
+    <loc>https://nowservingto.com/r/south-indian-street-bites-4401</loc>
+    <lastmod>2025-12-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/spice-club-indian-and-hakka-cuisine-18</loc>
+    <lastmod>2025-12-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/chop-chopsticks-fresh-3101</loc>
+    <lastmod>2025-12-11</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -1753,7 +2413,19 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/ambika-foods-2687</loc>
+    <lastmod>2025-12-18</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/nova-era-bakery-pastry-ii-inc-490</loc>
+    <lastmod>2025-12-19</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/the-greek-freak-3836</loc>
     <lastmod>2025-12-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
@@ -1783,20 +2455,8 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/fungs-kitchen-3101</loc>
-    <lastmod>2025-12-24</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
     <loc>https://nowservingto.com/r/taco-mania-668</loc>
     <lastmod>2025-12-29</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://nowservingto.com/r/pho-con-bo-58</loc>
-    <lastmod>2025-12-30</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -1819,14 +2479,20 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/tropical-joes2-545</loc>
-    <lastmod>2026-01-09</lastmod>
+    <loc>https://nowservingto.com/r/romis-pizza-and-restaurant-3062</loc>
+    <lastmod>2026-01-07</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/osha-moo-kata-2150</loc>
-    <lastmod>2026-01-13</lastmod>
+    <loc>https://nowservingto.com/r/chiu-8-noodle-8</loc>
+    <lastmod>2026-01-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/tropical-joes2-545</loc>
+    <lastmod>2026-01-09</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -1839,6 +2505,12 @@
   <url>
     <loc>https://nowservingto.com/r/petite-thuet-co-181</loc>
     <lastmod>2026-01-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/shawarma-city-express-2555</loc>
+    <lastmod>2026-01-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -1857,6 +2529,24 @@
   <url>
     <loc>https://nowservingto.com/r/kiyomi-76</loc>
     <lastmod>2026-01-17</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/busan-deck-4914</loc>
+    <lastmod>2026-01-17</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/katsuya-toronto-66</loc>
+    <lastmod>2026-01-17</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/cho-kwok-lat-wellesley-79</loc>
+    <lastmod>2026-01-23</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -1885,6 +2575,12 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/habanero-876</loc>
+    <lastmod>2026-01-27</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/cafe-conciencia-646</loc>
     <lastmod>2026-01-27</lastmod>
     <changefreq>monthly</changefreq>
@@ -1893,6 +2589,18 @@
   <url>
     <loc>https://nowservingto.com/r/kims-noodle-1549</loc>
     <lastmod>2026-01-27</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/kacchi-2466</loc>
+    <lastmod>2026-01-27</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/caffe-tazza-11</loc>
+    <lastmod>2026-01-28</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -1915,7 +2623,7 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/aroma-fine-indian-cuisine-287</loc>
+    <loc>https://nowservingto.com/r/patisserie-27-401</loc>
     <lastmod>2026-02-06</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
@@ -1927,8 +2635,14 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/delicious-empanadas-latin-restaurant-1980</loc>
+    <loc>https://nowservingto.com/r/hong-dae-banjeom-456</loc>
     <lastmod>2026-02-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/jongro-754</loc>
+    <lastmod>2026-02-12</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -1939,7 +2653,19 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/pars-grill-6114</loc>
+    <lastmod>2026-02-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/marble-beef-king-noodle-house-4675</loc>
+    <lastmod>2026-02-13</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/vbow-pho-mi-more-650</loc>
     <lastmod>2026-02-13</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
@@ -2011,6 +2737,12 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/cafe-russo-139</loc>
+    <lastmod>2026-02-27</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/greek-gordo-1028</loc>
     <lastmod>2026-03-03</lastmod>
     <changefreq>monthly</changefreq>
@@ -2035,8 +2767,20 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/new-ginger-and-onion-cuisine-240</loc>
+    <lastmod>2026-03-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/jyugoya-japanese-restaurant-1528</loc>
     <lastmod>2026-03-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/delicacies-by-banana-leaf-2687</loc>
+    <lastmod>2026-03-10</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -2048,6 +2792,12 @@
   </url>
   <url>
     <loc>https://nowservingto.com/r/chefs-of-pauri-khal-1522</loc>
+    <lastmod>2026-03-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/dawat-restaurant-buffet-60</loc>
     <lastmod>2026-03-11</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
@@ -2077,7 +2827,25 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/iryewon-toronto-2215</loc>
+    <lastmod>2026-03-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/ammucca-sicilian-street-food-1154</loc>
+    <lastmod>2026-03-17</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/al-chile-mae-1159</loc>
+    <lastmod>2026-03-17</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/celeb-thai-kitchen-bar-394</loc>
     <lastmod>2026-03-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
@@ -2107,13 +2875,19 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/lamoon-thai-kitchen-and-coffee-730</loc>
-    <lastmod>2026-03-21</lastmod>
+    <loc>https://nowservingto.com/r/the-blue-horse-cucina-848</loc>
+    <lastmod>2026-03-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/innovation-casa-do-sabor-take-away-catering-inc-373</loc>
+    <loc>https://nowservingto.com/r/jollof-king-444</loc>
+    <lastmod>2026-03-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/lamoon-thai-kitchen-and-coffee-730</loc>
     <lastmod>2026-03-21</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
@@ -2137,8 +2911,26 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/gondal-shawarma-2956</loc>
+    <lastmod>2026-03-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/kens-hong-kong-cafe-3833</loc>
     <lastmod>2026-03-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/curry-chutney-by-govindas-317</loc>
+    <lastmod>2026-03-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/botanic-coffee-caphe-662</loc>
+    <lastmod>2026-03-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -2149,8 +2941,8 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/asters-patisserie-2340</loc>
-    <lastmod>2026-03-28</lastmod>
+    <loc>https://nowservingto.com/r/donna-fernanda-740</loc>
+    <lastmod>2026-04-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -2167,13 +2959,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/maison-118-709</loc>
+    <loc>https://nowservingto.com/r/dada-gimbap-364</loc>
     <lastmod>2026-04-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/dada-gimbap-364</loc>
+    <loc>https://nowservingto.com/r/alforat-restaurant-yonge-271</loc>
     <lastmod>2026-04-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
@@ -2191,6 +2983,18 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/turquoise-grill-richmond-inc-431</loc>
+    <lastmod>2026-04-10</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/pho-rang-dong-1193</loc>
+    <lastmod>2026-04-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/akashiro-japanese-casual-dining-restaurant-105</loc>
     <lastmod>2026-04-13</lastmod>
     <changefreq>monthly</changefreq>
@@ -2203,8 +3007,8 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/r/renaissance-detroit-style-pizza-809</loc>
-    <lastmod>2026-04-15</lastmod>
+    <loc>https://nowservingto.com/r/california-beef-noodle-king-usa-3290</loc>
+    <lastmod>2026-04-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -2227,6 +3031,12 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/ono-poke-bar-1353-st-clair-1353</loc>
+    <lastmod>2026-04-20</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/merkato-eri-ethio-cafe-restaurant-436</loc>
     <lastmod>2026-04-20</lastmod>
     <changefreq>monthly</changefreq>
@@ -2241,6 +3051,18 @@
   <url>
     <loc>https://nowservingto.com/r/som-tum-jinda-356</loc>
     <lastmod>2026-04-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/aunt-kui-rice-noodles-419</loc>
+    <lastmod>2026-04-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/robo-sushi-865</loc>
+    <lastmod>2026-04-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -2287,6 +3109,12 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://nowservingto.com/r/cosmic-pizza-donair-1307</loc>
+    <lastmod>2026-05-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://nowservingto.com/r/dilli-wala-2537</loc>
     <lastmod>2026-05-02</lastmod>
     <changefreq>monthly</changefreq>
@@ -2295,6 +3123,12 @@
   <url>
     <loc>https://nowservingto.com/r/claires-pinoy-kakanin-878</loc>
     <lastmod>2026-05-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/mardin-restaurant-1300</loc>
+    <lastmod>2026-05-05</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
@@ -2325,6 +3159,42 @@
   <url>
     <loc>https://nowservingto.com/r/tumi-dumpling-house-2904</loc>
     <lastmod>2026-05-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/tonton-on-bloor-1005</loc>
+    <lastmod>2026-05-12</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/sava-crepes-coffee-221</loc>
+    <lastmod>2026-05-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/oguz-uyghur-polov-4186</loc>
+    <lastmod>2026-05-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/alexandros-greek-taverna-484</loc>
+    <lastmod>2026-05-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/star-glow-boba-coffee-880</loc>
+    <lastmod>2026-05-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/r/jardin-noir-3401</loc>
+    <lastmod>2026-05-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>

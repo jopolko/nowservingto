@@ -31,7 +31,17 @@ CSV_PATH = '/tmp/business_licences_alt.csv'
 # Cuisine taxonomy is the canonical one from cuisines.py.
 import sys as _sys
 _sys.path.insert(0, str(Path(__file__).resolve().parent))
-from cuisines import VALID_CUISINE_KEYS, parse_cuisines_from_llm
+from cuisines import CUISINE_LABEL, VALID_CUISINE_KEYS, parse_cuisines_from_llm
+
+# Generated at runtime from CUISINE_LABEL so that novel cuisines registered
+# yesterday (Uyghur, Palestinian, Kurdish, etc.) appear in today's prompt -
+# Haiku reuses the canonical slug instead of inventing a near-duplicate
+# (e.g. "argentine" when "argentinian" already exists). For genuinely new
+# diaspora cuisines the prompt explicitly invites a free-form label, which
+# register_cuisine() then slugifies and persists.
+_TAXONOMY_FORMATTED = ", ".join(
+    sorted(f"{label} ({key})" for key, label in CUISINE_LABEL.items())
+)
 
 SYSTEM_PROMPT = """You verify a Toronto restaurant's existence AND identify its cuisine
 from web search results. Many places are brand new with only sparse online presence - that's fine.
@@ -54,17 +64,14 @@ fusion). Examples:
 PREFER specific country buckets over the umbrella. Only use ["south_asian"] /
 ["middle_east"] / ["caribbean"] / ["latin"] when no specific countries are stated.
 
-Valid cuisine keys:
-italian, chinese, japanese, korean, vietnamese, filipino, thai, indonesian, malaysian, burmese,
-cambodian, laotian,
-south_asian, indian, pakistani, afghan, bangladeshi, tamil, tibetan, sri_lankan, nepalese,
-caribbean, jamaican, trinidadian, guyanese, haitian, cuban, dominican,
-greek, portuguese, polish, french, irish_uk, german, jewish_deli, spanish,
-eastern_eu, ukrainian, russian, hungarian,
-middle_east, lebanese, turkish, syrian, persian, israeli, egyptian, yemeni, armenian, georgian,
-latin, mexican, salvadoran, peruvian, colombian, brazilian, argentinian, venezuelan,
-african_horn, ethiopian, eritrean, somali,
-african_west, nigerian, ghanaian, moroccan, senegalese, unknown
+PREFERRED cuisine keys (reuse these exact slugs when the cuisine matches one of them):
+__TAXONOMY__, unknown.
+
+If evidence clearly points to a country/diaspora not in the list above (e.g.
+"Uyghur", "Palestinian", "Cape Verdean", "Taiwanese"), return the natural label -
+the system slugifies and registers it. Reuse the existing canonical slug
+whenever applicable; do NOT invent near-duplicates ("argentine" when
+"argentinian" already exists, "jewish" when "jewish_deli" already exists).
 
 Use search evidence (menus, reviews, owner bios, articles) to choose cuisine - NOT just the
 operating name. Prefer the most SPECIFIC bucket (ethiopian over african_horn; mexican over latin).
@@ -214,7 +221,8 @@ REJECT pages that are ABOUT the business but authored by someone else:
     "what we found", not "what we serve".
   - Delivery/ordering aggregators listing many restaurants. Hint hosts:
     skipthedishes, doordash, ubereats, grubhub, foodora, menulog,
-    seamless, chownow, toasttab, order.online.
+    seamless, chownow, toasttab, order.online, ritual.co, opentable,
+    resy.
   - Review aggregators with user-generated content. Hint hosts: yelp,
     tripadvisor.
   - Commercial real estate / property-listing pages.
@@ -229,6 +237,8 @@ domain still produces regulatory pages regardless of how friendly the
 content looks. An unfamiliar host with substantive business-authored
 content can still be valid. A null website is a better signal than a
 misleading link to a generic directory."""
+
+SYSTEM_PROMPT = SYSTEM_PROMPT.replace('__TAXONOMY__', _TAXONOMY_FORMATTED)
 
 def load_api_key():
     for line in SECRETS.read_text().splitlines():

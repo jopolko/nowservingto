@@ -98,11 +98,45 @@ API_KEY = load_api_key()
 MENU_HINTS = ('menu', 'food', 'dishes', 'lunch', 'dinner', 'order', 'about')
 
 def _fetch_raw(url, byte_cap=SNIFF_BYTES):
-    """Fetch first chunk of URL, follow redirects. Returns (raw_bytes, final_url) or (None, url)."""
+    """Fetch first chunk of URL, follow redirects. Returns (raw_bytes, final_url)
+    or (None, url). Decompresses gzip/deflate/br responses - some servers
+    (e.g. lafonditamexicanfood.com) gzip the body regardless of our
+    Accept-Encoding, so without this the downstream UTF-8 decode produces
+    garbage and the validator flags the entry as 'corrupted/unreadable'."""
     try:
-        req = Request(url, headers={'User-Agent': UA, 'Range': f'bytes=0-{byte_cap}'}, method='GET')
+        # Explicitly advertise we accept gzip+deflate (most servers send them
+        # by default anyway). Brotli requires the optional `brotli` package.
+        req = Request(url, headers={
+            'User-Agent': UA,
+            'Range': f'bytes=0-{byte_cap}',
+            'Accept-Encoding': 'gzip, deflate',
+        }, method='GET')
         with urlopen(req, timeout=10) as r:
-            return r.read(byte_cap), r.geturl()
+            raw = r.read(byte_cap)
+            enc = (r.headers.get('Content-Encoding') or '').lower().strip()
+            # Decompress when the server tells us it's encoded, OR when we
+            # detect the gzip magic bytes (some servers misconfigure headers).
+            if enc == 'gzip' or raw[:2] == b'\x1f\x8b':
+                import gzip
+                try: raw = gzip.decompress(raw)
+                except Exception:
+                    # Partial gzip from Range request: stream-decompress what we can.
+                    try:
+                        import zlib
+                        raw = zlib.decompressobj(16 + zlib.MAX_WBITS).decompress(raw)
+                    except Exception: pass
+            elif enc == 'deflate':
+                import zlib
+                try: raw = zlib.decompress(raw)
+                except Exception:
+                    try: raw = zlib.decompress(raw, -zlib.MAX_WBITS)
+                    except Exception: pass
+            elif enc == 'br':
+                try:
+                    import brotli
+                    raw = brotli.decompress(raw)
+                except Exception: pass  # brotli optional; pass garbage through
+            return raw, r.geturl()
     except Exception:
         return None, url
 

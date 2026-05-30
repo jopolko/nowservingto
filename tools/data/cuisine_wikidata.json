@@ -1,0 +1,337 @@
+{
+  "afghan": {
+    "label": "Afghan cuisine",
+    "qid": "Q383096",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q383096"
+  },
+  "african_horn": {
+    "label": "Ethiopian cuisine",
+    "qid": "Q257508",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q257508"
+  },
+  "african_west": {
+    "label": "West African cuisine",
+    "qid": "Q11880026",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q11880026"
+  },
+  "argentinian": {
+    "label": "Argentine cuisine",
+    "qid": "Q579500",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q579500"
+  },
+  "armenian": {
+    "label": "Armenian cuisine",
+    "qid": "Q684343",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q684343"
+  },
+  "bangladeshi": {
+    "label": "Bangladeshi cuisine",
+    "qid": "Q4855470",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q4855470"
+  },
+  "brazilian": {
+    "label": "Brazilian cuisine",
+    "qid": "Q614394",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q614394"
+  },
+  "burmese": {
+    "label": "Burmese cuisine",
+    "qid": "Q1187275",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q1187275"
+  },
+  "cambodian": {
+    "label": "Cambodian cuisine",
+    "qid": "Q139430",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q139430"
+  },
+  "caribbean": {
+    "label": "Caribbean cuisine",
+    "qid": "Q1729345",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q1729345"
+  },
+  "chinese": {
+    "label": "Chinese cuisine",
+    "qid": "Q10876842",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q10876842"
+  },
+  "colombian": {
+    "label": "Colombian cuisine",
+    "qid": "Q909057",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q909057"
+  },
+  "cuban": {
+    "label": "Cuban cuisine",
+    "qid": "Q1328358",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q1328358"
+  },
+  "dominican": {
+    "label": "Dominican Republic cuisine",
+    "qid": "Q3444032",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q3444032"
+  },
+  "eastern_eu": {
+    "label": "Eastern European cuisine",
+    "qid": "Q12672014",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q12672014"
+  },
+  "egyptian": {
+    "label": "Egyptian cuisine",
+    "qid": "Q1346230",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q1346230"
+  },
+  "eritrean": {
+    "label": "Eritrean cuisine",
+    "qid": "Q846275",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q846275"
+  },
+  "ethiopian": {
+    "label": "Ethiopian cuisine",
+    "qid": "Q257508",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q257508"
+  },
+  "filipino": {
+    "label": "Filipino cuisine",
+    "qid": "Q1520796",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q1520796"
+  },
+  "french": {
+    "label": "French cuisine",
+    "qid": "Q6661",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q6661"
+  },
+  "georgian": {
+    "label": "Georgian cuisine",
+    "qid": "Q1199026",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q1199026"
+  },
+  "german": {
+    "label": "German cuisine",
+    "qid": "Q47629",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q47629"
+  },
+  "ghanaian": {
+    "label": "Ghanaian cuisine",
+    "qid": "Q1072146",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q1072146"
+  },
+  "greek": {
+    "label": "Greek cuisine",
+    "qid": "Q744027",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q744027"
+  },
+  "guyanese": {
+    "label": "Guyanese cuisine",
+    "qid": "Q94346844",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q94346844"
+  },
+  "haitian": {
+    "label": "Haitian cuisine",
+    "qid": "Q2560444",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q2560444"
+  },
+  "hungarian": {
+    "label": "Hungarian cuisine",
+    "qid": "Q264327",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q264327"
+  },
+  "indian": {
+    "label": "Indian cuisine",
+    "qid": "Q192087",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q192087"
+  },
+  "indonesian": {
+    "label": "Indonesian cuisine",
+    "qid": "Q787497",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q787497"
+  },
+  "irish_uk": {
+    "label": "British cuisine",
+    "qid": "Q918277",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q918277"
+  },
+  "israeli": {
+    "label": "Israeli cuisine",
+    "qid": "Q62458",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q62458"
+  },
+  "italian": {
+    "label": "Italian cuisine",
+    "qid": "Q192786",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q192786"
+  },
+  "jamaican": {
+    "label": "Jamaican cuisine",
+    "qid": "Q16821205",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q16821205"
+  },
+  "japanese": {
+    "label": "Japanese cuisine",
+    "qid": "Q234138",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q234138"
+  },
+  "jewish_deli": {
+    "label": "Jewish delicatessen",
+    "qid": "Q48635101",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q48635101"
+  },
+  "korean": {
+    "label": "Korean cuisine",
+    "qid": "Q647500",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q647500"
+  },
+  "laotian": {
+    "label": "Lao cuisine",
+    "qid": "Q1372774",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q1372774"
+  },
+  "latin": {
+    "label": "Latin American cuisine",
+    "qid": "Q2707196",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q2707196"
+  },
+  "lebanese": {
+    "label": "Lebanese cuisine",
+    "qid": "Q929239",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q929239"
+  },
+  "malaysian": {
+    "label": "Malaysian cuisine",
+    "qid": "Q772247",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q772247"
+  },
+  "mexican": {
+    "label": "Mexican cuisine",
+    "qid": "Q207965",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q207965"
+  },
+  "middle_east": {
+    "label": "Middle Eastern cuisine",
+    "qid": "Q1547037",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q1547037"
+  },
+  "moroccan": {
+    "label": "Moroccan cuisine",
+    "qid": "Q1150262",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q1150262"
+  },
+  "nepalese": {
+    "label": "Nepalese cuisine",
+    "qid": "Q1194855",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q1194855"
+  },
+  "nigerian": {
+    "label": "Nigerian cuisine",
+    "qid": "Q7033037",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q7033037"
+  },
+  "pakistani": {
+    "label": "Pakistani cuisine",
+    "qid": "Q1089120",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q1089120"
+  },
+  "persian": {
+    "label": "Iranian cuisine",
+    "qid": "Q1342397",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q1342397"
+  },
+  "peruvian": {
+    "label": "Peruvian cuisine",
+    "qid": "Q749847",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q749847"
+  },
+  "polish": {
+    "label": "Polish cuisine",
+    "qid": "Q756020",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q756020"
+  },
+  "portuguese": {
+    "label": "Portuguese cuisine",
+    "qid": "Q180817",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q180817"
+  },
+  "russian": {
+    "label": "Russian cuisine",
+    "qid": "Q12505",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q12505"
+  },
+  "salvadoran": {
+    "label": "Salvadoran cuisine",
+    "qid": "Q7406497",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q7406497"
+  },
+  "senegalese": {
+    "label": "Senegalese cuisine",
+    "qid": "Q1148243",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q1148243"
+  },
+  "somali": {
+    "label": "Somali cuisine",
+    "qid": "Q846538",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q846538"
+  },
+  "south_asian": {
+    "label": "South Asian cuisine",
+    "qid": "Q7566053",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q7566053"
+  },
+  "spanish": {
+    "label": "Spanish cuisine",
+    "qid": "Q622512",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q622512"
+  },
+  "sri_lankan": {
+    "label": "Sri Lankan cuisine",
+    "qid": "Q2234037",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q2234037"
+  },
+  "syrian": {
+    "label": "Syrian cuisine",
+    "qid": "Q4119264",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q4119264"
+  },
+  "tamil": {
+    "label": "Tamil cuisine",
+    "qid": "Q3007006",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q3007006"
+  },
+  "thai": {
+    "label": "Thai cuisine",
+    "qid": "Q841984",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q841984"
+  },
+  "tibetan": {
+    "label": "Tibetan cuisine",
+    "qid": "Q922990",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q922990"
+  },
+  "trinidadian": {
+    "label": "Trinidad and Tobago cuisine",
+    "qid": "Q7842450",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q7842450"
+  },
+  "turkish": {
+    "label": "Turkish cuisine",
+    "qid": "Q654493",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q654493"
+  },
+  "ukrainian": {
+    "label": "Ukrainian cuisine",
+    "qid": "Q1503789",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q1503789"
+  },
+  "venezuelan": {
+    "label": "Venezuelan cuisine",
+    "qid": "Q1149423",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q1149423"
+  },
+  "vietnamese": {
+    "label": "Vietnamese cuisine",
+    "qid": "Q826059",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q826059"
+  },
+  "yemeni": {
+    "label": "Yemeni cuisine",
+    "qid": "Q1324604",
+    "wikidata_url": "https://www.wikidata.org/wiki/Q1324604"
+  }
+}

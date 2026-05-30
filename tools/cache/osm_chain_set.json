@@ -28,7 +28,7 @@
   "AROMA ESPRESSO BAR": {
    "display": "Aroma Espresso Bar",
    "wikidata": "Q2909872",
-   "osmCount": 26
+   "osmCount": 25
   },
   "BARBURRITO": {
    "display": "BarBurrito",
@@ -54,6 +54,11 @@
    "display": "Bento Sushi",
    "wikidata": "Q134445293",
    "osmCount": 3
+  },
+  "BINGZ": {
+   "display": "Bingz",
+   "wikidata": "Q138763371",
+   "osmCount": 2
   },
   "BLAZE PIZZA": {
    "display": "Blaze Pizza",
@@ -138,7 +143,7 @@
   "COFFEE TIME": {
    "display": "Coffee Time",
    "wikidata": "Q5140932",
-   "osmCount": 19
+   "osmCount": 18
   },
   "CORA": {
    "display": "Cora",
@@ -393,7 +398,7 @@
   "MOXIE'S": {
    "display": "Moxie's",
    "wikidata": "Q6927497",
-   "osmCount": 9
+   "osmCount": 8
   },
   "MR. GREEK": {
    "display": "Mr. Greek",
@@ -473,7 +478,7 @@
   "PIZZA NOVA": {
    "display": "Pizza Nova",
    "wikidata": "Q7199971",
-   "osmCount": 65
+   "osmCount": 66
   },
   "PIZZA PIZZA": {
    "display": "Pizza Pizza",
@@ -488,7 +493,7 @@
   "PIZZAVILLE": {
    "display": "Pizzaville",
    "wikidata": "Q113001369",
-   "osmCount": 23
+   "osmCount": 22
   },
   "POPEYES": {
    "display": "Popeyes",
@@ -508,7 +513,7 @@
   "QUIZNOS": {
    "display": "Quiznos",
    "wikidata": "Q1936229",
-   "osmCount": 7
+   "osmCount": 6
   },
   "REAL FRUIT BUBBLE TEA": {
    "display": "Real Fruit Bubble Tea",
@@ -528,7 +533,7 @@
   "RUTH'S CHRIS STEAK HOUSE": {
    "display": "Ruth's Chris Steak House",
    "wikidata": "Q7382829",
-   "osmCount": 4
+   "osmCount": 3
   },
   "SCADDABUSH": {
    "display": "Scaddabush",
@@ -538,7 +543,7 @@
   "SECOND CUP": {
    "display": "Second Cup",
    "wikidata": "Q862180",
-   "osmCount": 42
+   "osmCount": 41
   },
   "SHAKE SHACK": {
    "display": "Shake Shack",
@@ -593,7 +598,7 @@
   "SUBWAY": {
    "display": "Subway",
    "wikidata": "Q244457",
-   "osmCount": 259
+   "osmCount": 258
   },
   "SUNSET GRILL": {
    "display": "Sunset Grill",
@@ -623,7 +628,7 @@
   "TAHINI'S": {
    "display": "Tahini's",
    "wikidata": "Q135991974",
-   "osmCount": 3
+   "osmCount": 4
   },
   "TERIYAKI EXPERIENCE": {
    "display": "Teriyaki Experience",
@@ -633,7 +638,7 @@
   "THA\u00cf EXPRESS": {
    "display": "Tha\u00ef Express",
    "wikidata": "Q7711610",
-   "osmCount": 30
+   "osmCount": 31
   },
   "THE ALLEY": {
    "display": "The Alley",
@@ -721,7 +726,7 @@
    "osmCount": 5
   }
  },
- "generatedAt": "2026-05-14T18:22:20Z",
+ "generatedAt": "2026-05-23T05:17:06Z",
  "source": "OpenStreetMap (Overpass API)",
  "bbox": [
   43.58,

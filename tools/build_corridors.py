@@ -938,21 +938,13 @@ CUISINE_PATTERNS = {
     'jewish_deli':   ['KOSHER','BAGEL','KNISH','SHTETL','SHWARTZ','UNITED BAKERS','MATZO','YIDDISH','SCHWARTZS'],
     'eastern_eu':    ['UKRAINIAN','RUSSIAN','BULGARIAN','HUNGARIAN','ROMANIAN','BORSCHT','PEROGY','PYROGY','VARENY','KYIV','KIEV','ODESA','PRAGUE','GOULASH','CZECH'],
 }
-CUISINE_LABEL = {
-    'italian':'Italian','chinese':'Chinese','japanese':'Japanese','korean':'Korean',
-    'vietnamese':'Vietnamese','filipino':'Filipino','thai':'Thai',
-    'indonesian':'Indonesian','malaysian':'Malaysian','burmese':'Burmese',
-    'south_asian':'South Asian','indian':'Indian','pakistani':'Pakistani','afghan':'Afghan',
-    'bangladeshi':'Bangladeshi','tamil':'Tamil','tibetan':'Tibetan',
-    'caribbean':'Caribbean','jamaican':'Jamaican','trinidadian':'Trinidadian','guyanese':'Guyanese','haitian':'Haitian',
-    'greek':'Greek','portuguese':'Portuguese','polish':'Polish','french':'French',
-    'irish_uk':'Irish/UK','german':'German','jewish_deli':'Jewish deli',
-    'eastern_eu':'Eastern European','ukrainian':'Ukrainian','russian':'Russian','hungarian':'Hungarian',
-    'middle_east':'Middle Eastern','lebanese':'Lebanese','turkish':'Turkish','syrian':'Syrian','persian':'Persian',
-    'latin':'Latin American','mexican':'Mexican','salvadoran':'Salvadoran','peruvian':'Peruvian','colombian':'Colombian','brazilian':'Brazilian',
-    'african_horn':'East African','ethiopian':'Ethiopian','eritrean':'Eritrean','somali':'Somali',
-    'african_west':'West African','nigerian':'Nigerian','ghanaian':'Ghanaian','moroccan':'Moroccan',
-}
+# CUISINE_LABEL used to be a duplicate of the one in cuisines.py - they drifted.
+# Now imported from the single source of truth (which auto-merges any cuisines
+# the validator has dynamically registered to cuisines_dynamic.json).
+import sys as _sys
+from pathlib import Path as _Path
+_sys.path.insert(0, str(_Path(__file__).resolve().parent))
+from cuisines import CUISINE_LABEL
 log("Tagging businesses by cuisine pattern (inferred from Operating Name)…")
 cuisine_by_corridor = {slug: {} for slug in CORRIDOR_FSAS}
 n_tagged = 0; n_total_food = 0

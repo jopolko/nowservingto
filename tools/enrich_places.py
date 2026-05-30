@@ -12,7 +12,7 @@ Reads GOOGLE_API_KEY from /var/secrets/nowservingto.env.
 Cost: ~$0.042 per uncached opening (Find Place + Place Details).
 Hard abort at $30 cumulative spend per run for safety.
 """
-import os, sys, json, time
+import os, sys, json, time, re
 from pathlib import Path
 from urllib.parse import urlencode
 from urllib.request import urlopen, Request
@@ -171,6 +171,27 @@ def _address_matches(queried_addr, matched_addr):
     addr_up = matched_addr.upper()
     return num in addr_up and street in addr_up
 
+
+def _address_fuzzy_matches(queried_addr, matched_addr, max_num_delta=8):
+    """Looser version of _address_matches that allows the street number to
+    differ by up to N. Catches City permit-file typos like AROI THAI listed
+    at 1218 Queen St E in the licence file but registered at 1216 in Places
+    (real example, 2026-05-27). Same street name + small number delta is
+    strong evidence we have the right business, especially when paired with
+    a high name-overlap score.
+
+    Only used as a fallback when strict _address_matches fails - we don't
+    want to relax the strict path because that catches the truly garbled
+    cases (wrong name returning a totally different business 5km away)."""
+    import re
+    if not queried_addr or not matched_addr: return False
+    m1 = re.match(r'^\s*(\d+)\s+([A-Za-z]+)', queried_addr)
+    m2 = re.search(r'(\d+)\s+([A-Za-z]+)', matched_addr)
+    if not m1 or not m2: return False
+    n1, s1 = int(m1.group(1)), m1.group(2).upper()
+    n2, s2 = int(m2.group(1)), m2.group(2).upper()
+    return s1 == s2 and abs(n1 - n2) <= max_num_delta
+
 def _coords_from_geocode(operating_name, address):
     """Pull lat/lng from the Nominatim geocode cache when find_place fails - we
     can then use Places Nearby Search to find the actual business at those
@@ -220,6 +241,39 @@ def _name_overlap(a, b):
                 break
     return matches / max(len(ta), len(tb))
 
+def _textsearch_fallback(operating_name, addr_first):
+    """Places Text Search ('place/textsearch') with just NAME + Toronto, no
+    address. More permissive than find_place: matches against business
+    name + type globally, returns candidates with formatted_address we can
+    then verify against the licence address. Catches restaurants whose
+    City-licence address (suite-level, e.g. "2965 ISLINGTON AVE, #14")
+    confuses find_place but whose Google business listing is keyed on
+    the building address. Used as a last-resort when find_place AND the
+    coords-nearby path both came up empty."""
+    q = f"{operating_name} Toronto"
+    r = http_get_json('https://maps.googleapis.com/maps/api/place/textsearch/json',
+        {'query': q, 'type': 'restaurant', 'key': API_KEY})
+    try:
+        from usage_log import log_usage
+        log_usage('places.text_search', meta={'q': q[:80]})
+    except Exception: pass
+    cands = r.get('results') or []
+    if not cands: return None
+    # Score by name overlap AND street-token match to the licence address.
+    # Avoid picking a same-name spot at a totally different street.
+    addr_street = (addr_first or '').upper().split(',')[0]
+    addr_tokens = set(re.findall(r'[A-Z]{3,}', addr_street))
+    scored = []
+    for c in cands[:5]:
+        name_score = _name_overlap(operating_name, c.get('name', ''))
+        cand_addr = (c.get('formatted_address') or '').upper()
+        addr_match = any(t in cand_addr for t in addr_tokens) if addr_tokens else False
+        if name_score >= 0.3 and addr_match:
+            scored.append((c, name_score))
+    if not scored: return None
+    scored.sort(key=lambda x: -x[1])
+    return scored[0][0]
+
 def _nearby_fallback(lat, lng, name_hint):
     """Places Nearby Search at the geocoded coords. 250m radius accounts for
     Nominatim's typical pin offset from Google's business location. Returns
@@ -247,17 +301,36 @@ def enrich_one(operating_name, address):
     # will happily return a CAR WASH at "828 Eastern Ave" when we queried for
     # "Eastern 828 Cafe & Grill" (real example, 2026-05-14). Address alone isn't
     # enough; require some substantive name-token agreement too.
-    name_ok = cand and _name_overlap(operating_name, cand.get('name', '')) >= 0.25
-    if not cand or not _address_matches(addr_first, cand.get('formatted_address')) or not name_ok:
+    name_overlap_score = _name_overlap(operating_name, cand.get('name', '')) if cand else 0.0
+    name_ok = name_overlap_score >= 0.25
+    addr_ok = cand and _address_matches(addr_first, cand.get('formatted_address'))
+    # Fuzzy fallback: same street, off-by-N number, AND strong name overlap.
+    # Catches City permit-file typos (e.g. AROI THAI listed at 1218 Queen St E
+    # in the licence file but registered at 1216 in Places). We require a
+    # higher name_overlap threshold (0.5) than the strict path to avoid
+    # false positives - a same-street neighbour with a vaguely similar name
+    # could otherwise slip through.
+    addr_fuzzy_ok = (cand and not addr_ok and name_overlap_score >= 0.5
+                     and _address_fuzzy_matches(addr_first, cand.get('formatted_address')))
+    if not cand or (not addr_ok and not addr_fuzzy_ok) or not name_ok:
         coords = _coords_from_geocode(operating_name, address)
+        nearby = None
         if coords:
             nearby = _nearby_fallback(coords[0], coords[1], operating_name)
-            if nearby:
-                cand = nearby  # Nearby Search has same shape (place_id + name + vicinity)
-            else:
-                return {'status': 'not_found', 'query': query, 'note': 'no nearby match'}
+        if nearby:
+            cand = nearby  # Nearby Search has same shape (place_id + name + vicinity)
         else:
-            return {'status': 'not_found', 'query': query, 'note': 'no coords for nearby fallback'}
+            # Last resort: Places Text Search with just "NAME Toronto" (no
+            # address-suite confusion). Useful when find_place chokes on
+            # "2965 ISLINGTON AVE, #14" suite syntax and Nominatim can't
+            # geocode that exact address either. Strict name+street-token
+            # matching prevents picking up an unrelated same-named spot.
+            ts = _textsearch_fallback(operating_name, addr_first)
+            if ts:
+                cand = ts
+            else:
+                note = 'no nearby match' if coords else 'no coords + textsearch empty'
+                return {'status': 'not_found', 'query': query, 'note': note}
     details = place_details(cand['place_id'])
     if not details:
         return {'status': 'no_details', 'place_id': cand['place_id'], 'query': query}

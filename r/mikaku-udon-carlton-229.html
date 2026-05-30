@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MIKAKU UDON CARLTON - Japanese restaurant in Toronto · NowServingTO</title>
-<meta name="description" content="MIKAKU UDON CARLTON - newly licensed Japanese restaurant at 229 Carlton St., Toronto, ON M5A 2L2, Downtown. Part of NowServingTO&#39;s daily-updated directory of Toronto&#39;s newest restaurants, by cuisine.">
+<title>MIKAKU UDON CARLTON - Japanese, 229 Carlton St. · NowServingTO</title>
+<meta name="description" content="This udon bar built a devoted following around its viral chicken curry udon, where hand-pulled noodles soak up rich, complex sauce.">
 <!-- meta keywords removed 2026-05-18: Google ignores the tag and a generic
      cuisine-stuffed list reused across every generated page reads as spam. -->
 <meta name="author" content="NowServingTO">
@@ -14,15 +14,39 @@
 <!-- Warm DNS + TLS to ipapi.co at page load - when a visitor clicks Near
      Me, the HTTP request that follows skips ~150-300ms of handshake. -->
 <link rel="preconnect" href="https://ipapi.co" crossorigin>
+<!-- LCP preload: inject_openings.py drops a <link rel="preload" as="image" ...>
+     here pointing at the first row's thumbnail so the LCP image fetch
+     starts before the browser even parses past <head>. -->
+<!-- LCP-PRELOAD-START --><link rel="preload" as="image" href="/og/thumb/mikaku-udon-carlton-229.webp" fetchpriority="high"><!-- LCP-PRELOAD-END -->
 
 <!-- Google Analytics 4. Distinct page_view events fire automatically for /, /cuisine/X,
-     and /r/X since gtag reads location.pathname on each route. -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-CBQJHD3G7P"></script>
+     and /r/X since gtag reads location.pathname on each route. Loaded on the
+     FIRST user interaction (scroll / pointer / key / touch) so the 65 KiB
+     gtag.js bundle never lands inside Lighthouse's TBT measurement window.
+     Trade-off: visitors who land + bounce without any interaction aren't
+     counted - acceptable since bounced sessions are low-signal anyway.
+     Fallback: if nothing fires within 10s, load anyway so engaged-but-still
+     readers still register. -->
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-CBQJHD3G7P');
+  (function() {
+    var loaded = false;
+    var load = function() {
+      if (loaded) return; loaded = true;
+      ['scroll','pointerdown','keydown','touchstart','visibilitychange']
+        .forEach(function(ev){ window.removeEventListener(ev, load, true); });
+      var s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-CBQJHD3G7P';
+      document.head.appendChild(s);
+      gtag('js', new Date());
+      gtag('config', 'G-CBQJHD3G7P');
+    };
+    ['scroll','pointerdown','keydown','touchstart','visibilitychange']
+      .forEach(function(ev){ window.addEventListener(ev, load, {once: true, passive: true, capture: true}); });
+    setTimeout(load, 10000);
+  })();
 </script>
 
 <!-- Leaflet + qrcode-generator are LAZY-LOADED on demand by the Map view
@@ -34,8 +58,8 @@
 <!-- Open Graph for sharing previews -->
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://nowservingto.com/r/mikaku-udon-carlton-229">
-<meta property="og:title" content="MIKAKU UDON CARLTON - Japanese restaurant in Toronto · NowServingTO">
-<meta property="og:description" content="MIKAKU UDON CARLTON - newly licensed Japanese restaurant at 229 Carlton St., Toronto, ON M5A 2L2, Downtown. Part of NowServingTO&#39;s daily-updated directory of Toronto&#39;s newest restaurants, by cuisine.">
+<meta property="og:title" content="MIKAKU UDON CARLTON - Japanese, 229 Carlton St. · NowServingTO">
+<meta property="og:description" content="This udon bar built a devoted following around its viral chicken curry udon, where hand-pulled noodles soak up rich, complex sauce.">
 <meta property="og:image" content="https://nowservingto.com/og/photo/mikaku-udon-carlton-229.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="675">
@@ -44,8 +68,8 @@
 
 <!-- Twitter / X cards -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="MIKAKU UDON CARLTON - Japanese restaurant in Toronto · NowServingTO">
-<meta name="twitter:description" content="MIKAKU UDON CARLTON - newly licensed Japanese restaurant at 229 Carlton St., Toronto, ON M5A 2L2, Downtown. Part of NowServingTO&#39;s daily-updated directory of Toronto&#39;s newest restaurants, by cuisine.">
+<meta name="twitter:title" content="MIKAKU UDON CARLTON - Japanese, 229 Carlton St. · NowServingTO">
+<meta name="twitter:description" content="This udon bar built a devoted following around its viral chicken curry udon, where hand-pulled noodles soak up rich, complex sauce.">
 <meta name="twitter:image" content="https://nowservingto.com/og/photo/mikaku-udon-carlton-229.jpg">
 
 <!-- Structured data: WebSite for the directory itself. Restaurant ItemList is
@@ -56,7 +80,7 @@
   "@type": "WebSite",
   "name": "NowServingTO",
   "url": "https://nowservingto.com/",
-  "description": "A daily-fresh directory of every new restaurant licensed in Toronto, classified by cuisine.",
+  "description": "A daily-fresh directory of every new restaurant registered with the City of Toronto, classified by cuisine.",
   "inLanguage": "en-CA",
   "publisher": {"@type": "Organization", "name": "NowServingTO"},
   "isBasedOn": {
@@ -72,12 +96,12 @@
 }
 </script>
 <!-- LD-ITEMLIST-START -->
-<script type="application/ld+json" id="ld-itemlist">{"@context":"https://schema.org","@type":"Restaurant","name":"MIKAKU UDON CARLTON","address":{"@type":"PostalAddress","streetAddress":"229 Carlton St., Toronto, ON M5A 2L2","addressLocality":"Toronto","addressRegion":"ON","addressCountry":"CA"},"servesCuisine":["Japanese"],"url":"https://www.instagram.com/mikaku_udon_bar_carlton/","image":"https://nowservingto.com/og/photo/mikaku-udon-carlton-229.jpg","dateOpened":"2025-10-03","aggregateRating":{"@type":"AggregateRating","ratingValue":4.8,"reviewCount":538}}</script>
+<script type="application/ld+json" id="ld-itemlist">{"@context":"https://schema.org","@type":"Restaurant","name":"MIKAKU UDON CARLTON","address":{"@type":"PostalAddress","streetAddress":"229 Carlton St., Toronto, ON M5A 2L2","addressLocality":"Toronto","addressRegion":"ON","addressCountry":"CA"},"servesCuisine":["Japanese"],"url":"https://www.instagram.com/mikaku_udon_bar_carlton/","image":["https://nowservingto.com/og/photo/mikaku-udon-carlton-229.jpg","https://nowservingto.com/og/thumb/mikaku-udon-carlton-229.webp"],"foundingDate":"2025-10-03","geo":{"@type":"GeoCoordinates","latitude":43.6640015,"longitude":-79.3686773},"hasMap":"https://maps.google.com/?cid=13642878946211536901","aggregateRating":{"@type":"AggregateRating","ratingValue":4.8,"reviewCount":538}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://nowservingto.com/"},{"@type":"ListItem","position":2,"name":"Japanese restaurants","item":"https://nowservingto.com/cuisine/japanese"},{"@type":"ListItem","position":3,"name":"MIKAKU UDON CARLTON","item":"https://nowservingto.com/r/mikaku-udon-carlton-229"}]}</script>
 <!-- LD-ITEMLIST-END -->
 <style>
   :root {
-    --bg: #fafafa;
+    --bg: #f1f3f6;
     --paper: #ffffff;
     --ink: #131516;
     --ink2: #46494c;
@@ -126,7 +150,7 @@
   .mast .brand { font: 800 28px/1 var(--serif); letter-spacing: -0.02em; color: var(--ink); display: inline-block; text-decoration: none; }
   .mast .brand:hover { color: var(--accent); }
   .mast .brand sup { font: 600 10px/1 var(--sans); letter-spacing: 0.08em; color: var(--muted); margin-left: 6px; vertical-align: super; text-transform: uppercase; }
-  .mast .sub { color: var(--muted); font: 400 14px/1.4 var(--serif); margin: 6px 0 0; font-style: italic; }
+  .mast .sub { color: var(--ink2); font: 400 14px/1.4 var(--serif); margin: 6px 0 0; font-style: italic; }
   .mast .sub .hl { font-weight: 800; font-style: normal; color: var(--accent); letter-spacing: -0.005em; }
   .mast .sub #last-update { font-style: normal; font-weight: 600; color: var(--ink2); font-variant-numeric: lining-nums tabular-nums; }
 
@@ -213,8 +237,35 @@
   .cuisine-picker .cp-opt .ct { color: var(--muted); font: 500 11.5px/1 var(--mono); font-variant-numeric: lining-nums tabular-nums; margin-left: auto; }
   .cuisine-picker .cp-opt.cp-all { border-bottom: 1px solid var(--line); }
 
-  .open-feed { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 0; margin-bottom: 28px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); overflow: hidden; }
-  .open-row { display: grid; grid-template-columns: 110px 1fr 165px; align-items: center; gap: 16px; padding: 16px 20px; border-bottom: 1px solid var(--line); transition: background 0.12s; }
+  .open-feed { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 0; margin-bottom: 28px; box-shadow: 0 1px 3px rgba(20,24,34,0.06), 0 8px 24px rgba(20,24,34,0.04); overflow: hidden; }
+  .open-row { display: grid; grid-template-columns: 110px 1fr 165px; align-items: center; gap: 16px; padding: 16px 20px; border-bottom: 1px solid var(--line); transition: background 0.12s; position: relative; }
+  /* Left-edge cuisine accent strip - quiet hint of colour per row.
+     Driven by --row-accent on the row itself (set inline by the server
+     row builder + the JS hydrator). Fades to transparent at top/bottom
+     so the first/last row look polished against the rounded feed
+     container instead of bleeding into the corners. */
+  .open-row::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--row-accent, transparent); opacity: 0.55; transition: opacity 0.12s; }
+  .open-row:hover::before { opacity: 0.95; }
+  /* Subtle zebra striping: every other row gets a barely-darker tint so
+     long lists have a horizontal track the eye can follow without the
+     content reading as "spreadsheet-y." 1% delta from white - sits below
+     the threshold of conscious notice but above the threshold of useful
+     visual structure. Source-ordered BEFORE the :hover rule so hover
+     still wins on both odd + even rows. */
+  .open-row:nth-child(even) { background: #fafbfc; }
+  /* Cuisine-page editorial-brief link - small chip beneath the intro
+     paragraph that routes to the matching /wire/<key> page. Without
+     this, the 28 wire pages had zero internal-link signal and were
+     orphaned from the crawl graph (0 Googlebot hits in 30 days). */
+  .page-intro-wire { margin: 8px 0 0; font: 600 12.5px/1.4 var(--sans); }
+  .page-intro-wire a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.12s; }
+  .page-intro-wire a:hover { border-bottom-color: var(--accent); }
+  /* White-space tap → /r/<slug> profile. Cursor signals tappability;
+     inner <a>/<button> elements keep their existing destinations (the
+     JS handler bails when the click target is interactive). On listing
+     pages (.page-listing) the row IS the profile, no hijack needed. */
+  body:not(.page-listing) .open-row[data-slug] { cursor: pointer; }
+  body:not(.page-listing) .open-row[data-slug]:hover { background: #fafafa; }
   .open-row:hover { background: #f6f7f8; }
   .open-row.has-pic { grid-template-columns: 80px 110px 1fr 165px; }
   .open-row .row-pic-link { display: block; line-height: 0; text-decoration: none; border-radius: 10px; overflow: hidden; transition: transform 0.18s; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
@@ -222,7 +273,8 @@
   .open-row .row-pic { width: 80px; height: 80px; object-fit: cover; border-radius: 10px; background: var(--line); display: block; }
   .open-row:last-child { border-bottom: 0; }
   .open-row .od { font: 700 10px/1.2 var(--sans); color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
-  .open-row .od .ago { display: block; }
+  .open-row .od .ago { display: block; color: var(--muted); text-decoration: none; }
+  .open-row .od a.ago:hover { color: var(--ink); }
   .open-row[data-fresh="hot"] .od .ago { color: var(--fresh); font-size: 10.5px; }
   .open-row[data-fresh="hot"] .od .ago::before { content: '★ '; }
   .open-row .on { font: 700 16px/1.3 var(--sans); color: var(--ink); letter-spacing: -0.01em; }
@@ -233,7 +285,7 @@
   .open-row .on a:active { color: var(--accent); }
   .open-row .on .rating { display: inline-block; margin-left: 10px; font: 700 12px/1 var(--sans); color: var(--ink2); font-variant-numeric: tabular-nums; vertical-align: 1px; white-space: nowrap; }
   .open-row .on .rating::before { content: '★'; color: #d4a017; margin-right: 3px; font-size: 13px; }
-  .open-row .on .rating .rc { color: var(--muted); font-weight: 500; margin-left: 4px; font-size: 11px; }
+  .open-row .on .rating .rc { color: #5d6166; font-weight: 500; margin-left: 4px; font-size: 11px; }
   .open-row .on .oad { display: block; font: 400 13px/1.4 var(--sans); color: var(--muted); margin-top: 4px; }
   .open-row .on .oad .oad-d { color: var(--ink2); font-weight: 500; }
   .open-row .on .oad .oad-dist { font-variant-numeric: tabular-nums; }
@@ -248,6 +300,13 @@
   .open-row .oc .row-share:hover { color: var(--accent); transform: scale(1.1); }
   .open-row .oc .row-share { padding-right: 8px; line-height: 0; }
   .open-row .oc .row-share svg { display: inline-block; vertical-align: middle; }
+  /* Website chip: explicit external-link affordance. ↗ glyph + "Website"
+     label so the destination is unambiguous (vs. relying on convention
+     about which row element goes where). Sits in the .oc column next to
+     the cuisine pill. */
+  .open-row .oc .row-cta { display: inline-flex; align-items: center; gap: 3px; font: 600 11px/1 var(--sans); padding: 5px 9px; border: 1px solid var(--line); border-radius: 99px; color: var(--ink2); text-decoration: none; background: #fafafa; transition: background 0.12s, border-color 0.12s, color 0.12s; white-space: nowrap; }
+  .open-row .oc .row-cta:hover { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .open-row .oc .row-cta-arrow { font-size: 10px; opacity: 0.8; }
   .map-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
   /* When filtered to a single cuisine, hide the redundant cuisine pill on rows
      whose ONLY cuisine matches the filter. Multi-cuisine rows keep their pills
@@ -277,18 +336,128 @@
      line, no content duplication with the chronological feed above.
      Replaces the earlier <details>/<h3> implementation which re-listed
      restaurants already shown on the page. */
-  .xa-strip { margin: 18px 0 8px; padding: 12px 14px; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; font: 13px/1.5 var(--sans); color: var(--ink2); }
-  .xa-strip .xa-intro { font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; font-size: 11px; margin-right: 4px; }
-  .xa-strip a { color: var(--ink); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.12s; }
-  .xa-strip a:hover { border-bottom-color: var(--rule); }
-  /* Newsletter CTA - sits above the footer. Quiet card with embedded
-     Substack signup iframe. Not a popup, not sticky - just a clear
-     offer for visitors who reached the bottom of the page. */
+  /* Email signup CTA - sits above the footer. Quiet card. Homepage +
+     listing pages show the all-Toronto weekly digest form;
+     cuisine/district pages swap in a per-axis instant-alert form
+     (same outer markup, different copy). Not a popup, not sticky. */
   .newsletter-cta { margin: 40px 0 24px; padding: 22px 24px; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); display: grid; grid-template-columns: 1fr; gap: 16px; align-items: center; }
   .newsletter-cta .nl-pitch h2 { font: 700 17px/1.25 var(--sans); margin: 0 0 6px; color: var(--ink); letter-spacing: -0.005em; }
   .newsletter-cta .nl-pitch p { font: 400 13px/1.45 var(--sans); margin: 0; color: var(--ink2); }
-  .newsletter-cta iframe { display: block; min-height: 130px; }
   @media (min-width: 640px) { .newsletter-cta { grid-template-columns: 1.1fr 1fr; gap: 28px; } }
+  /* Cuisine + district intro paragraph (SEO differentiation + reader
+     orientation). Renders only on /cuisine/* and /district/* pages; the
+     homepage's marker collapses to empty. Quiet visual weight - reads
+     as a subtitle paragraph, not a body-text block. */
+  .page-intro { margin: 4px 0 18px; max-width: 720px; }
+  .page-intro p { font: 400 14.5px/1.55 var(--sans); margin: 0; color: var(--ink2); letter-spacing: -0.002em; }
+  /* Related-cuisines strip. Sits just above the newsletter CTA. Three
+     siblings, comma-separated; visual rhythm matches the footer link row. */
+  .related-cuisines { margin: 36px 0 8px; padding: 14px 0 0; border-top: 1px solid var(--line); font: 400 13px/1.6 var(--sans); color: var(--muted); }
+  .related-cuisines .rc-label { font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; font-size: 11px; color: var(--muted); margin-right: 6px; }
+  .related-cuisines a { color: var(--ink); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.12s; }
+  .related-cuisines a:hover { border-bottom-color: var(--accent); }
+  /* LISTING-EXTRA: differentiated content shown ONLY on /r/<slug>.html
+     pages. Provides verifier evidence, license timeline, cohort context,
+     and a nearby same-cuisine card grid - the value-over-Google-Maps
+     that lets per-listing pages sustain indexation. Empty marker on
+     home / cuisine / district pages collapses cleanly. */
+  /* Single-restaurant view: hide directory-browsing chrome. The static
+     single-row feed + the LISTING-EXTRA block do all the work; the
+     cuisine/district pickers, near-me, saved, and view-toggle only make
+     sense on the home / cuisine / district pages. */
+  body.page-listing .filters,
+  body.page-listing .map-view { display: none !important; }
+  body.page-listing .open-feed { margin-bottom: 8px; }
+  /* Listing page hierarchy: the page's subject restaurant deserves a bigger
+     thumb than the "Other nearby" cards below. Without this the 4-up
+     grid of nearby cards visually dominated the smaller 80px primary
+     row, which read like the page was about the secondary cards. */
+  body.page-listing .open-row.has-pic { grid-template-columns: 140px 110px 1fr 165px; }
+  body.page-listing .open-row .row-pic { width: 140px; height: 140px; }
+  /* Shrink the nearby-card thumbs slightly so they don't compete with
+     the primary subject. Switching the grid from 4 cols to 5 makes
+     each card ~20% smaller. */
+  body.page-listing .listing-extra .lx-near-grid { grid-template-columns: repeat(5, 1fr); }
+  @media (max-width: 900px) {
+    body.page-listing .listing-extra .lx-near-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+  /* Mobile: must match the 3-col layout from the @media (max-width: 760px)
+     block below (thumb / body / pill), otherwise grid-column placements
+     on .on and .oc fight grid-template-columns and the body gets squeezed.
+     We just bump the thumb dimensions so the page subject still feels
+     primary. */
+  @media (max-width: 760px) {
+    body.page-listing .open-row.has-pic { grid-template-columns: 90px 1fr 110px; }
+    body.page-listing .open-row.has-pic .row-pic { width: 90px; height: 90px; }
+    body.page-listing .listing-extra .lx-near-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 480px) {
+    body.page-listing .open-row.has-pic { grid-template-columns: 78px 1fr 80px; }
+    body.page-listing .open-row.has-pic .row-pic { width: 78px; height: 78px; }
+    body.page-listing .listing-extra .lx-near-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  /* Listing lede: prose strip directly under the H1 carrying the three
+     facts Maps/IG don't show (opened-when, cohort rank, dish highlights).
+     Sized between H1 and body copy so it reads as supporting text, not
+     decoration. Bullet separators keep it on one visual line on desktop
+     while wrapping naturally on mobile. */
+  body.page-listing .listing-lede {
+    font: 400 14.5px/1.55 var(--serif);
+    color: var(--ink2);
+    margin: 8px 0 0;
+    max-width: 720px;
+    letter-spacing: 0.005em;
+  }
+  .listing-extra { margin: 4px 0 32px; display: flex; flex-direction: column; gap: 22px; }
+  .listing-extra .lx-card { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  .listing-extra .lx-eyebrow { font: 700 10.5px/1 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
+  .listing-extra .lx-evidence { font: 400 15.5px/1.55 var(--serif); color: var(--ink); margin: 0; }
+  .listing-extra .lx-evidence cite { display: block; margin-top: 10px; font: 400 12px/1.45 var(--sans); color: var(--muted); font-style: normal; letter-spacing: 0.01em; }
+  .listing-extra .lx-meta { font: 400 13.5px/1.55 var(--sans); color: var(--ink2); margin: 0; }
+  .listing-extra .lx-meta b { color: var(--ink); font-weight: 700; }
+  .listing-extra .lx-meta a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--rule); }
+  .listing-extra .lx-meta a:hover { border-bottom-color: var(--accent); color: var(--accent); }
+  .listing-extra .lx-cohort { font: 400 14px/1.55 var(--sans); color: var(--ink2); margin: 0; }
+  .listing-extra .lx-cohort b { color: var(--ink); font-weight: 700; }
+  .listing-extra .lx-cohort a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--rule); }
+  .listing-extra .lx-cohort a:hover { border-bottom-color: var(--accent); color: var(--accent); }
+  .listing-extra .lx-near-h { font: 700 13px/1.2 var(--sans); letter-spacing: 0.02em; color: var(--ink); margin: 0 0 12px; }
+  .listing-extra .lx-near-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  /* Hybrid nearby card: container with separately-hoverable photo + name
+     (→ /r/<slug>) plus compact Website/Maps CTAs that punch through to
+     the actual business. Visitors who want context click photo or name;
+     visitors in a hurry use the CTAs. */
+  .listing-extra .lx-near-card { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--paper); transition: border-color 0.14s, box-shadow 0.14s; }
+  .listing-extra .lx-near-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.07); border-color: var(--rule); }
+  .listing-extra .lx-near-card .lx-near-pic { display: block; aspect-ratio: 1 / 1; overflow: hidden; background: #e8e8e8; }
+  .listing-extra .lx-near-card .lx-near-pic img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.22s; }
+  .listing-extra .lx-near-card .lx-near-pic:hover img { transform: scale(1.04); }
+  .listing-extra .lx-near-card .lx-near-body { display: flex; flex-direction: column; padding: 10px 12px 10px; gap: 4px; flex: 1; }
+  .listing-extra .lx-near-card .lx-near-when { display: block; font: 700 10px/1 var(--sans); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0; }
+  .listing-extra .lx-near-card .lx-near-name { display: block; font: 700 13.5px/1.3 var(--sans); margin: 0; color: var(--ink); letter-spacing: -0.005em; word-break: break-word; text-decoration: none; }
+  .listing-extra .lx-near-card .lx-near-name:hover { color: var(--accent); }
+  .listing-extra .lx-near-card .lx-near-where { display: block; font: 400 12px/1.4 var(--sans); margin: 0; color: var(--muted); }
+  .listing-extra .lx-near-card .lx-near-ctas { display: flex; gap: 6px; margin-top: auto; padding-top: 8px; }
+  .listing-extra .lx-near-card .lx-near-cta { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 3px; font: 600 11px/1 var(--sans); padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; color: var(--ink2); text-decoration: none; background: #fafafa; transition: background 0.12s, border-color 0.12s, color 0.12s; }
+  .listing-extra .lx-near-card .lx-near-cta:hover { background: var(--ink); color: #fff; border-color: var(--ink); }
+  .listing-extra .lx-near-card .lx-near-arrow { font-size: 10px; opacity: 0.8; }
+  @media (max-width: 720px) { .listing-extra .lx-near-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; } }
+  @media (max-width: 380px) { .listing-extra .lx-near-card .lx-near-body { padding: 9px 10px 9px; } .listing-extra .lx-near-card .lx-near-name { font-size: 12.5px; } .listing-extra .lx-near-card .lx-near-where { font-size: 11.5px; } .listing-extra .lx-near-card .lx-near-cta { font-size: 10.5px; padding: 5px 6px; } }
+  /* Alert form - lives inside .newsletter-cta. Same form markup +
+     styles whether it's the all-Toronto weekly digest (homepage,
+     listing pages) or per-cuisine / per-district instant alerts
+     (cuisine + district pages). Wiring lives in the bottom JS
+     block, keyed off form.dataset.kind. */
+  .alert-form { display: flex; gap: 8px; flex-wrap: wrap; margin: 0; }
+  .alert-form input[type=email] { flex: 1; min-width: 180px; padding: 10px 12px; font: inherit; color: var(--ink); background: #fff; border: 1px solid #d8dade; border-radius: 8px; transition: border-color 0.12s, box-shadow 0.12s; }
+  .alert-form input[type=email]:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(200,54,36,0.14); }
+  .alert-form button { background: var(--ink); color: #fff; border: 0; padding: 10px 18px; font: 600 14px/1 var(--sans); border-radius: 8px; cursor: pointer; transition: background 0.12s; }
+  .alert-form button:hover { background: var(--accent); }
+  .alert-form button:disabled { background: #aaa; cursor: not-allowed; }
+  .alert-status { width: 100%; font-size: 13px; margin-top: 4px; min-height: 0; }
+  .alert-status.ok { color: #1f7a3a; }
+  .alert-status.err { color: var(--accent); }
+  .alert-hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
   .site-foot { margin: 36px 0 8px; padding-top: 18px; border-top: 1px solid var(--line); font: 400 12.5px/1.6 var(--sans); color: var(--muted); text-align: center; }
   .site-foot a { color: var(--ink2); text-decoration: none; font-weight: 600; transition: color 0.12s; }
   .site-foot a:hover { color: var(--accent); }
@@ -299,30 +468,39 @@
     .open-row { grid-template-columns: 1fr 130px; gap: 12px; padding: 14px 14px; }
     .open-row.has-pic { grid-template-columns: 56px 1fr 130px; }
     .open-row.has-pic .row-pic { width: 56px; height: 56px; border-radius: 8px; }
-    .open-feed.single-cuisine .open-row { grid-template-columns: 1fr; }
-    .open-feed.single-cuisine .open-row .on { grid-column: 1 / -1; }
     .open-row .od { grid-column: 1 / 3; order: -1; display: flex; gap: 10px; align-items: baseline; }
     .open-row.has-pic .od { grid-column: 1 / 4; }
     .open-row.has-pic .row-pic { grid-row: 2; grid-column: 1; }
     .open-row.has-pic .on { grid-column: 2; }
     .open-row.has-pic .oc { grid-column: 3; }
+    /* Single-cuisine pages on mobile: the .oc pill column is display:none
+       per the .open-feed.single-cuisine .open-row:not([data-multi]) .oc
+       rule above, but the grid still reserves its 130px column, leaving
+       a blank gutter on the right. Drop the pill column entirely in this
+       case so the body column eats the leftover and the address stops
+       wrapping into 5 lines. */
+    .open-feed.single-cuisine .open-row.has-pic:not([data-multi]) { grid-template-columns: 56px 1fr; }
+    .open-feed.single-cuisine .open-row.has-pic:not([data-multi]) .od { grid-column: 1 / 3; }
+    .open-feed.single-cuisine .open-row:not([data-multi]):not(.has-pic) { grid-template-columns: 1fr; }
+    .open-feed.single-cuisine .open-row:not([data-multi]):not(.has-pic) .od { grid-column: 1 / 2; }
     .open-row .od .ago { display: inline; margin-top: 0; }
     .open-row .on { grid-column: 1; }
     .open-row .oc { grid-column: 2; }
   }
 </style>
 </head>
-<body>
+<body class="page-listing">
 
 <header class="mast">
   <div class="wrap">
     <a href="/" class="brand" id="brand-link">NowServingTO</a>
-    <h1 class="sub">MIKAKU UDON CARLTON</h1>
+    <h1 class="sub">MIKAKU UDON CARLTON</h1><div class="listing-lede">Registered 8 months ago</div>
   </div>
 </header>
 
 <main class="wrap">
   <!-- BREADCRUMB-START --><nav class="breadcrumb" aria-label="Breadcrumb"><a href="https://nowservingto.com/">Home</a><span class="sep">›</span><a href="https://nowservingto.com/cuisine/japanese">Japanese restaurants</a><span class="sep">›</span><span aria-current="page">MIKAKU UDON CARLTON</span></nav><!-- BREADCRUMB-END -->
+  <!-- PAGE-INTRO-START --><!-- PAGE-INTRO-END -->
   <div class="filters">
     <div class="cuisine-picker">
       <button id="cp-trigger" class="cp-trigger" aria-haspopup="listbox" aria-expanded="false" aria-label="Filter by cuisine">All cuisines</button>
@@ -341,11 +519,11 @@
   </div>
   <div class="open-feed" id="open-feed">
     <!-- STATIC-FEED-START - pre-rendered daily by tools/inject_openings.py for crawlers + no-JS visitors. Replaced by interactive JS render on page load. -->
-    <div class="open-row has-pic"><a class="row-pic-link" href="https://maps.google.com/?cid=13642878946211536901" rel="noopener" aria-label="View MIKAKU UDON CARLTON"><img class="row-pic" src="/og/thumb/mikaku-udon-carlton-229.webp" alt="" loading="lazy" decoding="async"></a><div class="od"><span class="ago">licensed 8mo ago</span></div><div class="on"><a href="https://www.instagram.com/mikaku_udon_bar_carlton/" rel="noopener">MIKAKU UDON CARLTON</a><span class="oad"><a href="https://maps.google.com/?cid=13642878946211536901" rel="noopener">229 Carlton St., Toronto, ON M5A 2L2</a><span class="oad-d"> · Downtown</span></span></div><div class="oc"><span class="pill" style="background:#2f3aa3">Japanese</span></div></div>
+    <div class="open-row has-pic" data-slug="mikaku-udon-carlton-229" style="--row-accent: #2f3aa3"><a class="row-pic-link" href="https://maps.google.com/?cid=13642878946211536901" target="_blank" rel="noopener" aria-label="View MIKAKU UDON CARLTON"><img class="row-pic" src="/og/thumb/mikaku-udon-carlton-229.webp" alt="MIKAKU UDON CARLTON" loading="eager" fetchpriority="high" decoding="async"></a><div class="od"><span class="ago">8mo ago</span></div><div class="on"><a href="https://www.instagram.com/mikaku_udon_bar_carlton/" target="_blank" rel="noopener">MIKAKU UDON CARLTON</a><span class="oad"><a href="https://maps.google.com/?cid=13642878946211536901" target="_blank" rel="noopener">229 Carlton St., Toronto, ON M5A 2L2</a><span class="oad-d"> · Downtown</span></span></div><div class="oc"><span class="pill" style="background:#2f3aa3">Japanese</span></div></div>
     <!-- STATIC-FEED-END -->
   </div>
 
-  <!-- XAXIS-START --><!-- XAXIS-END -->
+  <!-- LISTING-EXTRA-START --><section class="listing-extra" aria-label="Listing detail"><div class="lx-card"><p class="lx-evidence">This udon bar built a devoted following around its viral chicken curry udon, where hand-pulled noodles soak up rich, complex sauce. diners consistently rave about the chewy texture of the noodles and the inventive flavour combinations that set each bowl apart.</p></div><div class="lx-card"><h2 class="lx-near-h">Other newly registered Japanese kitchens nearby</h2><div class="lx-near-grid"><div class="lx-near-card"><a class="lx-near-pic" href="/r/sushi96-684" aria-label="SUSHI96 listing"><img src="/og/thumb/sushi96-684.webp" alt="SUSHI96" loading="lazy" decoding="async"></a><div class="lx-near-body"><span class="lx-near-when">7mo ago</span><a class="lx-near-name" href="/r/sushi96-684">SUSHI96</a><span class="lx-near-where">Downtown</span><div class="lx-near-ctas"><a class="lx-near-cta" href="https://sushi96.ca/" target="_blank" rel="noopener"><span class="lx-near-arrow">↗</span>Website</a><a class="lx-near-cta" href="https://maps.google.com/?cid=11146368258921702213" target="_blank" rel="noopener"><span class="lx-near-arrow">↗</span>Maps</a></div></div></div><div class="lx-near-card"><a class="lx-near-pic" href="/r/kiyomi-76" aria-label="KIYOMI listing"><img src="/og/thumb/kiyomi-76.webp" alt="KIYOMI" loading="lazy" decoding="async"></a><div class="lx-near-body"><span class="lx-near-when">4mo ago</span><a class="lx-near-name" href="/r/kiyomi-76">KIYOMI</a><span class="lx-near-where">Downtown</span><div class="lx-near-ctas"><a class="lx-near-cta" href="https://kiyomiomakase.ca/" target="_blank" rel="noopener"><span class="lx-near-arrow">↗</span>Website</a><a class="lx-near-cta" href="https://maps.google.com/?cid=18295646259555994269" target="_blank" rel="noopener"><span class="lx-near-arrow">↗</span>Maps</a></div></div></div><div class="lx-near-card"><a class="lx-near-pic" href="/r/katsuya-toronto-66" aria-label="KATSUYA TORONTO listing"><img src="/og/thumb/katsuya-toronto-66.webp" alt="KATSUYA TORONTO" loading="lazy" decoding="async"></a><div class="lx-near-body"><span class="lx-near-when">4mo ago</span><a class="lx-near-name" href="/r/katsuya-toronto-66">KATSUYA TORONTO</a><span class="lx-near-where">Downtown</span><div class="lx-near-ctas"><a class="lx-near-cta" href="https://drive.google.com/file/d/1TtVywCHhjfKWTohmJHhUGkfGrSOp8LpK/view?usp=sharing" target="_blank" rel="noopener"><span class="lx-near-arrow">↗</span>Website</a><a class="lx-near-cta" href="https://maps.google.com/?cid=17724287172026553166" target="_blank" rel="noopener"><span class="lx-near-arrow">↗</span>Maps</a></div></div></div><div class="lx-near-card"><a class="lx-near-pic" href="/r/onigiri-co-333" aria-label="ONIGIRI CO listing"><img src="/og/thumb/onigiri-co-333.webp" alt="ONIGIRI CO" loading="lazy" decoding="async"></a><div class="lx-near-body"><span class="lx-near-when">8mo ago</span><a class="lx-near-name" href="/r/onigiri-co-333">ONIGIRI CO</a><span class="lx-near-where">Downtown</span><div class="lx-near-ctas"><a class="lx-near-cta" href="https://www.onigirico.com/" target="_blank" rel="noopener"><span class="lx-near-arrow">↗</span>Website</a><a class="lx-near-cta" href="https://maps.google.com/?cid=7231106426304363865" target="_blank" rel="noopener"><span class="lx-near-arrow">↗</span>Maps</a></div></div></div></div></div></section><!-- LISTING-EXTRA-END -->
 
   <div class="map-view" id="map-view" hidden>
     <div class="map-toolbar">
@@ -354,24 +532,22 @@
     <div id="map" role="region" aria-label="Map of new restaurant openings"></div>
   </div>
 
-  <section class="newsletter-cta" aria-label="Email newsletter signup">
-    <div class="nl-pitch">
-      <h2>Get new Toronto restaurant openings in your inbox</h2>
-      <p>A short weekly digest of newly licensed restaurants by cuisine - straight from City open data, classified, and curated. Free, no spam.</p>
-    </div>
-    <iframe src="https://nowservingto.substack.com/embed" width="100%" height="150" style="border:1px solid var(--line);background:#fff;border-radius:8px;" frameborder="0" scrolling="no" loading="lazy"></iframe>
-  </section>
+  <!-- RELATED-CUISINES-START --><!-- RELATED-CUISINES-END -->
+  <section class="newsletter-cta" aria-label="Email alert signup"><div class="nl-pitch"><h2 id="alert-title">Get an email when a new Japanese restaurant opens</h2><p id="alert-blurb">You&#39;ll get one email the moment a new Japanese restaurant is registered with the City of Toronto - typically a handful of times per year. No weekly digest, no spam, one-click unsub.</p></div><form class="alert-form" data-kind="cuisine" data-value="japanese" data-label="Japanese" data-base-kind="cuisine" data-base-value="japanese" data-base-label="Japanese" novalidate><input type="email" required autocomplete="email" placeholder="you@example.com" aria-label="Email address"><button type="submit">Subscribe</button><div class="alert-status" role="status" aria-live="polite"></div><div class="alert-hp" aria-hidden="true"><label>Website (leave blank): <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div></form></section>
 
   <footer class="site-foot">
     <a href="https://x.com/nowservingto" target="_blank" rel="noopener">Follow @nowservingto on X</a>
     <span class="dot">·</span>
     <a href="/contribute">Got a tip?</a>
     <span class="dot">·</span>
+    <a href="/press">Press kit</a>
+    <span class="dot">·</span>
     <a href="/usage">Sources</a>
     <span class="dot">·</span>
-    City of Toronto Open Data <span class="dot">·</span>
+    <a href="https://open.toronto.ca/dataset/municipal-licensing-and-standards-business-licences-and-permits/" target="_blank" rel="noopener">City of Toronto Open Data</a> <span class="dot">·</span>
     Google Places <span class="dot">·</span>
-    Anthropic Claude
+    Anthropic Claude <span class="dot">·</span>
+    <a href="https://github.com/jopolko/nowservingto" target="_blank" rel="noopener">GitHub</a>
   </footer>
 </main>
 
@@ -441,15 +617,24 @@ function nameJaccard(a, b) {
 }
 
 function agoLabel(days) {
-  if (days <= 1)   return 'licensed today';
-  if (days <= 60)  return 'licensed ' + days + 'd ago';
-  if (days <= 365) return 'licensed ' + Math.round(days/30) + 'mo ago';
-  return 'licensed ' + (days/365).toFixed(1) + 'y ago';
+  // Time-only labels - the masthead carries the "newest registered" anchor
+  // so rows don't need to repeat it. Word "licensed" was avoided here
+  // because in Ontario it ambiguously implies LLBO/alcohol licensing -
+  // most entries on the site don't have an alcohol licence.
+  if (days <= 1)   return 'today';
+  if (days <= 60)  return days + 'd ago';
+  if (days <= 365) return Math.round(days/30) + 'mo ago';
+  return (days/365).toFixed(1) + 'y ago';
 }
 
+// On single-restaurant /r/<slug> pages the body carries .page-listing.
+// Skip the directory-level fetch entirely - the static single-row feed
+// and the LISTING-EXTRA block already carry everything the page needs,
+// and the alert-form submit handler is wired separately below.
+if (!document.body.classList.contains('page-listing'))
 fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
   const no = data.newOpenings;
-  // (Subtitle reads "updated weekly" - no dynamic date to inject.)
+  // (Subtitle reads "updated daily" - no dynamic date to inject.)
 
   // Dynamic cuisine taxonomy: corridors.json carries label + color for every
   // active cuisine (curated palette for seed keys, hash-derived hex for
@@ -532,17 +717,18 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
         return `<span class="pill" style="background:${bg}">${lab}</span>`;
       }).join('');
     const isHot = r.daysOpen <= 30;
+    // Primary cuisine colour → left-edge accent strip (mirrors the
+    // server-rendered row builder's --row-accent inline style).
+    const accentKey = cuisineKeys[0];
+    const accentMeta = accentKey ? CUISINE_META[accentKey] : null;
+    const accentBg = (accentMeta && accentMeta.color) || (accentKey && CUISINE_PALETTE[accentKey]) || null;
     const row = document.createElement('div');
+    if (accentBg) row.style.setProperty('--row-accent', accentBg);
     row.className = 'open-row';
+    if (r.slug) row.setAttribute('data-slug', r.slug);
     if (isHot) row.setAttribute('data-fresh', 'hot');
     if (cuisineKeys.length > 1) row.setAttribute('data-multi', '');
     const trustMatch = !r.matchedName || nameJaccard(r.operatingName, r.matchedName) >= 0.34;
-    // Per user directive 2026-05-15: name link is shown when the validator
-    // approved a website - either from Places or from the Google-search
-    // fallback (top match, judged on small-scale/independent/immigrant-owned
-    // ethnic-cuisine criteria). The validator-approved URL is in r.website;
-    // if absent, no link. trustMatch still gates against wrong-business
-    // Places matches (suppresses link + rating when the matched name diverges).
     // Name link precedence: own website (when trust gate passes) > Places
     // deep-link > our own /r/<slug> listing page. The listing page is the
     // always-available fallback - never sends to a wrong business or a
@@ -551,10 +737,14 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
     const internalUrl = r.slug ? `/r/${r.slug}` : null;
     const link = (trustMatch && r.website) ? r.website : (r.mapsUrl || internalUrl);
     const linkClass = link ? 'ext' : '';
-    // target=_blank on desktop (preserve NowServingTO tab); same-tab on mobile so
-    // the back button cleanly returns from Maps without stranding the user on a
-    // separate browser tab.
-    const desktopUA = window.matchMedia('(min-width: 700px)').matches && !('ontouchstart' in window);
+    // target=_blank on devices with a mouse / trackpad available (preserve
+    // NowServingTO tab); same-tab on pure-touch so the back button cleanly
+    // returns from Maps. `(any-pointer: fine)` is the correct signal:
+    // it's true on Windows touchscreen laptops where the PRIMARY input is
+    // touch but a mouse is also attached - `(pointer: fine)` returns
+    // false there because it only checks the primary. Phones/tablets
+    // with no mouse return false on both.
+    const desktopUA = window.matchMedia('(any-pointer: fine)').matches;
     const tgt = desktopUA ? ' target="_blank"' : '';
     const nameHtml = link
       ? `<a class="${linkClass}" href="${link}"${tgt} rel="noopener">${r.operatingName}</a>`
@@ -569,13 +759,16 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
     // and concatenating it next to the restaurant name in SERP snippets
     // ("CAFEMIA ITALIAN BAKERYunverified 84 OAKDALE RD"), which read
     // worse to searchers than the protective behavior was worth.)
-// Address link: ONLY the Places CID deep-link. When there's no Places
-    // match we previously fell back to a name+address search URL, but that
-    // lands on neighboring businesses (CAFEMIA case → Messina/Amico/Tre
-    // Mari bakeries instead of CAFEMIA) and an address-only search lands
-    // on a generic building. Plain text is more honest when we don't have
-    // an authoritative deep-link.
-    const addrUrl = r.mapsUrl;
+// Address link ladder:
+    //   1) Places CID (mapsUrl) - exact business profile match
+    //   2) coord-pin (?q=lat,lng) - geocoded address, gives map + Street View
+    //      pegman without falsely claiming "this IS the restaurant" the way
+    //      a name+address search would (CAFEMIA-style false positives).
+    //   3) plain text - no Places, no lat/lng (rare; <5% of no-Places).
+    const coordPin = (r.lat != null && r.lng != null)
+      ? `https://www.google.com/maps?q=${r.lat},${r.lng}`
+      : '';
+    const addrUrl = r.mapsUrl || coordPin;
     const addrText = r.address || '-';
     const addrLink = addrUrl ? `<a href="${addrUrl}"${tgt} rel="noopener">${addrText}</a>` : addrText;
     // Suffix the address with either distance (when Near me is active and we
@@ -602,20 +795,26 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
       ? `<button class="row-share" type="button" aria-label="Share this listing"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button>`
       : '';
     const thumb = r.thumb || '';
-    // Thumbnail click → restaurant's own website if validated, else the
-    // Places Maps card. Direct destination, no aggregator detour.
-    // Photo click → Google Places card preferred (Maps has more photos +
-    // reviews + hours than a typical one-page restaurant website). Falls
-    // back to website then internal listing page.
-    const thumbTarget = r.mapsUrl || r.website || internalUrl || '';
+    // Thumbnail click → Google Places card preferred (Maps has more photos
+    // + reviews + hours than a typical one-page restaurant website). Falls
+    // back to coord-pin, then website, then the internal listing page.
+    // Same ladder as addrUrl above; coordPin slots between Places and the
+    // website because for entries whose thumb is a Street View image (the
+    // photogenic fallback for no-Places entries), tapping the pic should
+    // land the user at the exact same view.
+    const thumbTarget = r.mapsUrl || coordPin || r.website || internalUrl || '';
     const thumbHtml = thumb && thumbTarget
-      ? `<a class="row-pic-link" href="${thumbTarget}"${tgt} rel="noopener" aria-label="View ${r.operatingName}"><img class="row-pic" src="${thumb}" alt="" loading="lazy" decoding="async"></a>`
+      ? `<a class="row-pic-link" href="${thumbTarget}"${tgt} rel="noopener" aria-label="View ${r.operatingName}"><img class="row-pic" src="${thumb}" alt="${r.operatingName}" loading="lazy" decoding="async"></a>`
       : thumb
-      ? `<img class="row-pic" src="${thumb}" alt="" loading="lazy" decoding="async">`
+      ? `<img class="row-pic" src="${thumb}" alt="${r.operatingName}" loading="lazy" decoding="async">`
       : '';
     if (thumb) row.classList.add('has-pic');
+    const agoText = agoLabel(r.daysOpen);
+    const agoHtml = r.slug
+      ? `<a class="ago" href="/r/${r.slug}">${agoText}</a>`
+      : `<span class="ago">${agoText}</span>`;
     row.innerHTML = `${thumbHtml}
-      <div class="od"><span class="ago">${agoLabel(r.daysOpen)}</span></div>
+      <div class="od">${agoHtml}</div>
       <div class="on">${nameHtml}${ratingHtml}<span class="oad">${addrLine}</span></div>
       <div class="oc">${favHtml}${shareHtml}${pillsHtml}</div>`;
     const favBtn = row.querySelector('.row-fav');
@@ -642,24 +841,43 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
   function paintFeed() {
     feed.innerHTML = '';
     if (!currentRows.length) {
-      let msg = 'No tagged openings in the last 365 days.';
-      if (currentCuisine !== '__all' && currentRegion !== '__all') {
-        const c = no.cuisines.find(x => x.key === currentCuisine);
-        msg = `No new ${c ? c.label : ''} kitchens in ${currentRegion} yet.`;
-      } else if (currentCuisine !== '__all') {
-        const c = no.cuisines.find(x => x.key === currentCuisine);
-        msg = `No new ${c ? c.label : ''} kitchens in the last 365 days.`;
+      // Filter-aware empty state. Composes "No newly registered <Cuisine>
+      // restaurants <where>" from whichever filters are active. Vocab is
+      // "registered restaurants" (per the City licence-data framing in
+      // CLAUDE.md - the site knows registration date, not opening date,
+      // and "licensed" implies LLBO/alcohol licensing in Ontario).
+      const c = currentCuisine !== '__all'
+        ? no.cuisines.find(x => x.key === currentCuisine)
+        : null;
+      const cuisineFrag = c ? `${c.label} ` : '';
+      let whereFrag = ' in the last 365 days';
+      if (nearMeActive && userLatLng) {
+        whereFrag = ' near you';
       } else if (currentRegion !== '__all') {
-        msg = `No new kitchens in ${currentRegion} yet.`;
+        whereFrag = ` in ${currentRegion}`;
+      }
+      let msg = `No newly registered ${cuisineFrag}restaurants${whereFrag}.`;
+      // Bare "No tagged openings..." when both filters are __all (homepage
+      // edge case - shouldn't normally happen, but safe fallback).
+      if (currentCuisine === '__all' && currentRegion === '__all' && !nearMeActive) {
+        msg = 'No newly registered restaurants in the last 365 days.';
       }
       const empty = document.createElement('div');
       empty.className = 'empty';
-      empty.innerHTML = msg + (currentRegion !== '__all'
-        ? ' <button class="filter-clear" id="clear-region">Clear region filter</button>'
-        : '');
+      // Offer to clear whichever location filter is active (region OR near-me).
+      let clearBtn = '';
+      if (nearMeActive) {
+        clearBtn = ' <button class="filter-clear" id="clear-region">Clear near-me filter</button>';
+      } else if (currentRegion !== '__all') {
+        clearBtn = ' <button class="filter-clear" id="clear-region">Clear region filter</button>';
+      }
+      empty.innerHTML = msg + clearBtn;
       feed.appendChild(empty);
       const clr = document.getElementById('clear-region');
-      if (clr) clr.addEventListener('click', () => applyFilters(currentCuisine, '__all'));
+      if (clr) clr.addEventListener('click', () => {
+        if (nearMeActive) { nearMeActive = false; applyFilters(currentCuisine, currentRegion); }
+        else applyFilters(currentCuisine, '__all');
+      });
       return;
     }
     const visible = currentRows.slice(0, currentShown);
@@ -765,6 +983,63 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
       o.hidden = (cuisineFilterActive && n === 0 && !isAll);
     });
   }
+  // The alert-form at the bottom of /cuisine/* and /district/* pages
+  // morphs as the user narrows: a visitor on /cuisine/argentinian who
+  // picks Scarborough sees the form flip to an "Argentine in Scarborough"
+  // intersection signup without leaving the page. data-base-* on the
+  // form is the page's "primary" identity (what it's about even when
+  // unfiltered); data-kind/value/label is the live state the submit
+  // handler POSTs. Homepage has no .alert-form, so this is a no-op there.
+  function updateAlertForm(cuisineKey, regionKey) {
+    const form = document.querySelector('form.alert-form');
+    if (!form) return;
+    const titleEl = document.getElementById('alert-title');
+    const blurbEl = document.getElementById('alert-blurb');
+    if (!titleEl || !blurbEl) return;
+    const baseKind = form.dataset.baseKind;
+    const baseValue = form.dataset.baseValue;
+    const baseLabel = form.dataset.baseLabel;
+    const cuisineActive = cuisineKey && cuisineKey !== '__all';
+    const regionActive  = regionKey  && regionKey  !== '__all';
+    let kind, value, label, title, blurb;
+    if (baseKind === 'cuisine') {
+      // /cuisine/<X> page - base is the cuisine, region narrows it
+      if (regionActive) {
+        kind = 'intersection';
+        value = baseValue + '|' + districtSlug(regionKey);
+        label = baseLabel + ' in ' + regionKey;
+        title = 'Get an email when a new ' + baseLabel + ' restaurant opens in ' + regionKey;
+        blurb = "You'll get one email the moment a new " + baseLabel + ' restaurant is registered with the City in ' + regionKey + " specifically. Rare - possibly a few times a year at most. No weekly digest, no spam, one-click unsub.";
+      } else {
+        kind = baseKind; value = baseValue; label = baseLabel;
+        title = 'Get an email when a new ' + baseLabel + ' restaurant opens';
+        blurb = "You'll get one email the moment a new " + baseLabel + " restaurant is registered with the City of Toronto - typically a handful of times per year. No weekly digest, no spam, one-click unsub.";
+      }
+    } else if (baseKind === 'district') {
+      // /district/<Y> page - base is the district, cuisine narrows it
+      if (cuisineActive) {
+        const c = no.cuisines.find(x => x.key === cuisineKey);
+        const cLabel = c ? c.label : cuisineKey;
+        kind = 'intersection';
+        value = cuisineKey + '|' + baseValue;
+        label = cLabel + ' in ' + baseLabel;
+        title = 'Get an email when a new ' + cLabel + ' restaurant opens in ' + baseLabel;
+        blurb = "You'll get one email the moment a new " + cLabel + ' restaurant is registered with the City in ' + baseLabel + " specifically. Rare - possibly a few times a year at most. No weekly digest, no spam, one-click unsub.";
+      } else {
+        kind = baseKind; value = baseValue; label = baseLabel;
+        title = 'Get an email when a new restaurant opens in ' + baseLabel;
+        blurb = "You'll get one email the moment a new restaurant is registered with the City in " + baseLabel + ". No weekly digest, no spam, one-click unsub.";
+      }
+    } else {
+      return; // unknown base kind - leave form alone
+    }
+    form.dataset.kind = kind;
+    form.dataset.value = value;
+    form.dataset.label = label;
+    titleEl.textContent = title;
+    blurbEl.textContent = blurb;
+  }
+
   function applyFilters(cuisineKey, regionKey, updateHash=true) {
     currentCuisine = cuisineKey;
     currentRegion = regionKey;
@@ -785,6 +1060,7 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
     rPanel.querySelectorAll('.cp-opt').forEach(o => o.setAttribute('aria-selected', !nearMeActive && o.dataset.key === regionKey ? 'true' : 'false'));
     renderFeed();
     renderMapPins();  // no-op if map hasn't been initialized yet
+    updateAlertForm(cuisineKey, regionKey);
     if (updateHash) {
       const parts = [];
       if (cuisineKey !== '__all') parts.push('cuisine=' + cuisineKey);
@@ -813,9 +1089,13 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
   if (initialCuisine !== '__all' && pathCuisineMatch) {
     const c = no.cuisines.find(x => x.key === initialCuisine);
     if (c) {
-      const t = `Toronto's newest ${c.label} restaurants - NowServingTO`;
+      const n = c.count365d;
+      const yr = new Date().getFullYear();
+      const t = n === 1
+        ? `Toronto's Newest ${c.label} Restaurant (${yr}) · NowServingTO`
+        : `Toronto's ${n} Newest ${c.label} Restaurants (${yr}) · NowServingTO`;
       document.title = t;
-      const desc = `A daily-fresh list of every new ${c.label} restaurant licensed in Toronto in the past 365 days. ${c.count365d} entries currently tracked.`;
+      const desc = `Every newly registered ${c.label} restaurant in Toronto over the past 365 days, updated daily. ${n} entries tracked, ${c.count30d} from the last 30 days.`;
       const setMeta = (sel, attr, val) => {
         const el = document.querySelector(sel);
         if (el) el.setAttribute(attr, val);
@@ -849,7 +1129,7 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
         const back = document.createElement('a');
         back.id = 'single-back';
         back.href = '/';
-        back.textContent = '← Browse all newly licensed restaurants';
+        back.textContent = '← Browse all newly registered restaurants';
         back.style.cssText = 'display:inline-block;margin:12px 4px 18px;font:600 14px/1 var(--sans);color:var(--accent);text-decoration:none;';
         feedEl.parentNode.insertBefore(back, feedEl);
       }
@@ -906,6 +1186,14 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
       applyFilters(key, currentRegion);
       return;
     }
+    // On a district landing page, picking a cuisine should DRILL DOWN
+    // to the intersection ("Argentinian restaurants in Scarborough"),
+    // not navigate away to /cuisine/X and drop the district context.
+    // applyFilters handles both axes; the rich district landing remains.
+    if (pathDistrictMatch) {
+      applyFilters(key, currentRegion);
+      return;
+    }
     location.href = '/cuisine/' + key;
   });
   setupPicker(rTrigger, rPanel, key => {
@@ -931,6 +1219,13 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
       return;
     }
     if (pathDistrictMatch && districtSlug(key) === pathDistrictMatch[1]) {
+      applyFilters(currentCuisine, key);
+      return;
+    }
+    // On a cuisine landing page, picking a region should DRILL DOWN
+    // to the intersection ("Argentine in Scarborough"), not navigate
+    // away to /district/X and drop the cuisine context.
+    if (pathCuisineMatch) {
       applyFilters(currentCuisine, key);
       return;
     }
@@ -1184,7 +1479,7 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
       ? ` at ${r.address} in ${districtPhrase}`
       : r.address ? ` at ${r.address}`
       : districtPhrase ? ` in ${districtPhrase}` : '';
-    const text = `${r.operatingName} - newly-licensed ${cuisineLbl} kitchen${where}. Licensed ${ago}.`;
+    const text = `${r.operatingName} - newly-registered ${cuisineLbl} kitchen${where}. Registered ${ago}.`;
     if (navigator.share) {
       try { await navigator.share({ title: r.operatingName, text, url }); }
       catch (e) { /* user dismissed */ }
@@ -1360,9 +1655,66 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
     renderMapPins();
   });
 
+  // Row "white-space" tap → /r/<slug> profile page. The pic, name, and
+  // address keep their existing destinations (Maps / website / Maps);
+  // taps anywhere ELSE in the row navigate to the per-listing profile.
+  // Delegated on #open-feed so it works after every renderFeed().
+  document.getElementById('open-feed').addEventListener('click', (e) => {
+    // Bail if the click landed on an interactive element - let its own
+    // handler / href win.
+    if (e.target.closest('a, button, input, textarea, select, label')) return;
+    const row = e.target.closest('.open-row[data-slug]');
+    if (!row) return;
+    const slug = row.getAttribute('data-slug');
+    if (slug) window.location.href = `/r/${slug}`;
+  });
+
 }).catch(err => {
   document.getElementById('open-feed').innerHTML = '<div class="empty">error loading data - ' + (err && err.message ? err.message : String(err)) + '</div>';
   console.error('NSTO load error:', err && err.stack ? err.stack : err);
+});
+
+// Per-cuisine + per-district real-time alert signup. The form's
+// data-kind + data-value attributes are baked in by inject_openings.py
+// when the page is generated; no extra JS bundle needed per page.
+document.querySelectorAll('form.alert-form').forEach(function(form) {
+  var status = form.querySelector('.alert-status');
+  var btn = form.querySelector('button');
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    if (form.querySelector('input[name=website]').value) return; // honeypot
+    var email = form.querySelector('input[type=email]').value.trim();
+    if (!email) return;
+    btn.disabled = true; btn.textContent = 'Subscribing…';
+    status.className = 'alert-status'; status.textContent = '';
+    fetch('/api/subscribe', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({email: email, kind: form.dataset.kind, value: form.dataset.value}),
+    }).then(function(r) { return r.json().then(function(j) { return {ok: r.ok, j: j}; }); })
+      .then(function(res) {
+        if (res.ok) {
+          var msg;
+          if (form.dataset.kind === 'digest_all') {
+            msg = 'Subscribed. Check your inbox for a welcome note. You\'ll get a Sunday digest of the week\'s newest restaurants - one email a week, never more.';
+          } else if (form.dataset.kind === 'cuisine') {
+            msg = 'Subscribed. Check your inbox for a welcome note. You\'ll only hear from us when a new ' + form.dataset.label + ' spot is registered with the City.';
+          } else {
+            msg = 'Subscribed. Check your inbox for a welcome note. You\'ll only hear from us when a new spot in ' + form.dataset.label + ' is registered with the City.';
+          }
+          form.innerHTML = '<div class="alert-status ok" style="margin:0">' + msg + '</div>';
+        } else {
+          btn.disabled = false; btn.textContent = 'Subscribe';
+          status.className = 'alert-status err';
+          status.textContent = (res.j && res.j.error) || 'Something went wrong. Try again?';
+        }
+      })
+      .catch(function() {
+        btn.disabled = false; btn.textContent = 'Subscribe';
+        status.className = 'alert-status err';
+        status.textContent = 'Network error. Try again?';
+      });
+  });
 });
 </script>
 

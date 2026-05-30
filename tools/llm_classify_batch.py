@@ -38,22 +38,38 @@ SECRETS = Path('/var/secrets/nowservingto.env')
 MODEL = 'claude-haiku-4-5-20251001'
 POLL_INTERVAL_SEC = 30
 
-SYSTEM_PROMPT = """You classify a Toronto restaurant by cuisine from the operating
+# Cuisine taxonomy is the canonical one from cuisines.py.
+import sys as _sys
+_sys.path.insert(0, str(Path(__file__).resolve().parent))
+from cuisines import CUISINE_LABEL, VALID_CUISINE_KEYS as VALID_KEYS, parse_cuisines_from_llm
+
+def _build_system_prompt():
+    """Compose the system prompt with the live taxonomy. Generating this at
+    runtime (vs hardcoding the list) means: (1) novel cuisines that the
+    validator registered yesterday (e.g. Uyghur, Palestinian, Kurdish) are
+    surfaced to the name-only classifier today, so first-pass classifications
+    stay coherent with the validator's canonical labels; (2) no drift between
+    cuisines.py and this prompt - removing the maintenance burden the
+    hardcoded list used to carry."""
+    # Format as "Italian (italian), Chinese (chinese), ..." so Haiku sees both
+    # the canonical key (the value we want back) and the human label (the form
+    # it tends to think in). Discourages slug-drift like "argentine" vs
+    # "argentinian" by showing the canonical form explicitly.
+    lines = sorted(f"{label} ({key})" for key, label in CUISINE_LABEL.items())
+    taxonomy = ", ".join(lines)
+    return f"""You classify a Toronto restaurant by cuisine from the operating
 name + licence address ALONE - no Places match, no website, no reviews available
 at this stage of the pipeline. A later validator pass sees the richer evidence.
 
-Return JSON on one line: {"cuisines":["k1","k2",...],"evidence":"<short>"}
+Return JSON on one line: {{"cuisines":["k1","k2",...],"evidence":"<short>"}}
 
-Valid cuisine keys (use only these):
-italian, chinese, japanese, korean, vietnamese, filipino, thai, indonesian, malaysian,
-burmese, cambodian, laotian, south_asian, indian, pakistani, afghan, bangladeshi, tamil,
-tibetan, sri_lankan, nepalese, caribbean, jamaican, trinidadian, guyanese, haitian,
-cuban, dominican, greek, portuguese, polish, french, irish_uk, german, jewish_deli,
-spanish, eastern_eu, ukrainian, russian, hungarian, middle_east, lebanese, turkish,
-syrian, persian, israeli, egyptian, yemeni, armenian, georgian, latin, mexican,
-salvadoran, peruvian, colombian, brazilian, argentinian, venezuelan, african_horn,
-ethiopian, eritrean, somali, african_west, nigerian, ghanaian, moroccan, senegalese,
-unknown.
+PREFERRED cuisine keys (reuse these exact slugs when applicable):
+{taxonomy}, unknown.
+
+If the name clearly indicates a country/diaspora not in the list above
+(e.g. "Uyghur", "Palestinian", "Cape Verdean"), return the natural label -
+the system will slugify and register it. Do NOT invent vague labels like
+"Asian Fusion" or "International"; return ["unknown"] instead.
 
 Multi-cuisine OK when the name explicitly states 2-3 countries side-by-side
 ("Afghan, Pakistani & Indian Flavors"). Default to ["unknown"] when the name
@@ -62,10 +78,7 @@ signal is a regional dish shared across multiple countries (jollof, kebab,
 shawarma, biryani, dumpling, roti), tag the umbrella (african_west, middle_east,
 south_asian) instead of guessing a specific country."""
 
-# Cuisine taxonomy is the canonical one from cuisines.py.
-import sys as _sys
-_sys.path.insert(0, str(Path(__file__).resolve().parent))
-from cuisines import VALID_CUISINE_KEYS as VALID_KEYS, parse_cuisines_from_llm
+SYSTEM_PROMPT = _build_system_prompt()
 from places_key import cache_key
 from chain_filter import is_known_chain, chain_match
 

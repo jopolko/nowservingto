@@ -30,7 +30,16 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from cuisines import VALID_CUISINE_KEYS, parse_cuisines_from_llm
+from cuisines import CUISINE_LABEL, VALID_CUISINE_KEYS, parse_cuisines_from_llm
+
+# Generated at runtime from CUISINE_LABEL so that novel cuisines registered
+# yesterday show up in today's prompt - Haiku reuses the canonical slug
+# instead of inventing a near-duplicate (e.g. "argentine" when "argentinian"
+# already exists, "jewish" when "jewish_deli" already exists, "latin_american"
+# when "latin" already exists).
+_TAXONOMY_FORMATTED = ", ".join(
+    sorted(f"{label} ({key})" for key, label in CUISINE_LABEL.items())
+)
 from llm_verify_batch import submit_batch, poll, download_results
 from llm_search_recover_batch import MODEL, API_KEY, HEADERS, http
 from llm_recover_cuisine import fetch_page_text, extract_socials  # fetched text + IG/X/FB handle sweep
@@ -61,6 +70,28 @@ We do NOT want to surface - drop with is_restaurant=no:
   - Pan-Asian fusion blending 3+ unrelated Asian cuisines (Korean + Hawaiian + bao
     + banh mi) - that's not authentic to any one diaspora.
   - American Southern / Cajun / BBQ themed (we have no taxonomy bucket for US South).
+
+We ALSO want to drop with is_brand_new=no:
+  - Businesses that have been operating under the SAME name and concept for 2+
+    years at any location. A 30-year-old family restaurant that just got a new
+    licence at a new address is a RELOCATION, not a new opening. The directory
+    is "Toronto's newest", so existing institutions don't belong even when they
+    just renewed/transferred their City licence. Evidence: web text saying
+    "for over X years", "since 19YY", "established 19YY", "X-year-old", press
+    coverage referencing a long history, owner bios mentioning decades of
+    operation, 500+ Google reviews with reviews dating back many years.
+  - License renewals / transfers / ownership changes of a continuing business
+    (same concept + same staff + just new paperwork). The City re-issues
+    a licence when address changes, ownership transfers, or after cancellation
+    and re-application; none of those create a NEW business.
+  - Use is_brand_new="yes" when web evidence shows the business is freshly
+    opened (within ~2 years), is a NEW CONCEPT by a possibly-experienced
+    operator (e.g. a 30-year veteran opens a brand-new bakery concept), or
+    when web evidence is too thin to suggest anything but "we just opened".
+  - Use is_brand_new="unclear" when evidence is genuinely ambiguous (e.g.
+    Places match has only 5 reviews but their dates span 4 years - suggests
+    older business with weak online presence, but not certain). Default to
+    "yes" if you'd otherwise have to guess.
 
 You see the City of Toronto licence data - the SOURCE OF TRUTH for what business
 should be at what address. That's:
@@ -114,6 +145,7 @@ Return a single JSON object, no prose, no markdown code fences:
 {
   "is_same_business":"yes"|"no"|"no_match",
   "is_restaurant":"yes"|"no",
+  "is_brand_new":"yes"|"no"|"unclear",
   "cuisines":["k1","k2"]|["unknown"],
   "best_website":"<url>"|null,
   "evidence":"<one short sentence>"
@@ -260,10 +292,18 @@ country/diaspora identity visible somewhere in the evidence.
 
 cuisines - list of 1 to 3 SPECIFIC country / diaspora cuisine labels.
 
-  Return labels in any natural casing - e.g., "Sri Lankan", "Cape Verdean",
-  "Uyghur", "Persian", "Trinidadian-Chinese". The system slugifies and
-  auto-registers any cuisine it hasn't seen before; no ethnicity goes
-  unrecognized.
+  PREFERRED canonical labels (REUSE these exact spellings when applicable -
+  the system already has these registered):
+  __TAXONOMY__
+
+  If the cuisine matches one of the above, return the EXACT label shown
+  (e.g. "Argentinian" not "Argentine", "Jewish deli" not "Jewish", "Latin
+  American" not "Latin American Hispanic"). This prevents near-duplicates.
+
+  For genuine country/diaspora cuisines NOT in the list above, return the
+  natural label in any casing (e.g., "Sri Lankan", "Cape Verdean", "Uyghur",
+  "Persian", "Trinidadian-Chinese"). The system slugifies and auto-registers
+  any cuisine it hasn't seen before; no ethnicity goes unrecognized.
 
   GRANULARITY: use the PARENT COUNTRY, never regional sub-cuisines or
   dish-types. A user browsing the cuisine dropdown shouldn't have to
@@ -418,6 +458,8 @@ When content evaluation says approve:
 
 evidence - one short sentence quoting the strongest signal that justified the
 above judgments (a review excerpt, an editorial line, a menu phrase)."""
+
+SYSTEM_PROMPT = SYSTEM_PROMPT.replace('__TAXONOMY__', _TAXONOMY_FORMATTED)
 
 def _days_since_issued(s):
     """Parse the Issued date out of the CSV row and return integer days

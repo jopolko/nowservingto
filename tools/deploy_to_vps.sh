@@ -96,6 +96,8 @@ rsync -avz $DRY_RUN --human-readable --info=progress2 \
     --exclude='tools/cache/osm_*.json' \
     --exclude='tools/cache/preliminary_zoning_reviews.json' \
     --exclude='tools/cache/property_violations.json' \
+    --exclude='data/usage.json' \
+    --exclude='data/bot_traffic.json' \
     "$LOCAL_ROOT/" "$SSH_TARGET:$REMOTE_ROOT/"
 
 # ---- 3. Secrets file ----

@@ -1,15 +1,111 @@
 {
-  "generatedAt": "2026-05-18T01:09:43.035848+00:00",
+  "generatedAt": "2026-05-27T13:11:28.394433+00:00",
+  "first": "2026-05-22",
   "totals": {
     "all": {
-      "cost": 0,
-      "calls": 0
+      "cost": 1.981,
+      "calls": 356
     },
     "today": {
-      "cost": 0,
-      "calls": 0
+      "cost": 0.8023,
+      "calls": 47
     }
   },
-  "byProvider": [],
-  "byDay": []
+  "byProvider": [
+    {
+      "provider": "google_streetview",
+      "cost": 1.057,
+      "calls": 315,
+      "skus": [
+        {
+          "sku": "streetview.image",
+          "cost": 1.057,
+          "calls": 151
+        },
+        {
+          "sku": "streetview.metadata",
+          "cost": 0.0,
+          "calls": 164
+        }
+      ]
+    },
+    {
+      "provider": "anthropic",
+      "cost": 0.466,
+      "calls": 15,
+      "skus": [
+        {
+          "sku": "anthropic.haiku.batch.in",
+          "cost": 0.2111,
+          "calls": 7
+        },
+        {
+          "sku": "anthropic.web_search.batch",
+          "cost": 0.17,
+          "calls": 1
+        },
+        {
+          "sku": "anthropic.haiku.batch.out",
+          "cost": 0.0848,
+          "calls": 7
+        }
+      ]
+    },
+    {
+      "provider": "google_places",
+      "cost": 0.428,
+      "calls": 24,
+      "skus": [
+        {
+          "sku": "places.details",
+          "cost": 0.25,
+          "calls": 10
+        },
+        {
+          "sku": "places.find_place",
+          "cost": 0.136,
+          "calls": 8
+        },
+        {
+          "sku": "places.photo",
+          "cost": 0.042,
+          "calls": 6
+        }
+      ]
+    },
+    {
+      "provider": "jina",
+      "cost": 0.03,
+      "calls": 2,
+      "skus": [
+        {
+          "sku": "jina.reader",
+          "cost": 0.03,
+          "calls": 2
+        }
+      ]
+    }
+  ],
+  "byDay": [
+    {
+      "day": "2026-05-22",
+      "cost": 1.1717,
+      "calls": 301
+    },
+    {
+      "day": "2026-05-23",
+      "cost": 0.0,
+      "calls": 2
+    },
+    {
+      "day": "2026-05-26",
+      "cost": 0.007,
+      "calls": 6
+    },
+    {
+      "day": "2026-05-27",
+      "cost": 0.8023,
+      "calls": 47
+    }
+  ]
 }

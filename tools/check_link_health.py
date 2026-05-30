@@ -24,11 +24,42 @@ WEB_CACHE = ROOT / 'tools' / 'cache' / 'web_verify_cache.json'
 HEALTH_CACHE = ROOT / 'tools' / 'cache' / 'url_health_cache.json'
 SECRETS = Path('/var/secrets/nowservingto.env')
 
-CHECK_DAYS = 14
+CHECK_DAYS = 1   # daily re-check for OK URLs - was 14, dropped 2026-05-29
+                 # after a Netlify-hosted listing went 404 within 13 days
+                 # of validation. Small-operator sites churn fast; HEAD
+                 # requests cost nothing, so check every cron.
 TIMEOUT_SEC = 6
 WORKERS = 12
 UA = 'Mozilla/5.0 (compatible; nowservingto-healthcheck/1.0)'
 MODEL = 'claude-haiku-4-5-20251001'
+
+
+def normalize_url(url):
+    """Canonicalize URLs so that http/https, www./bare-host, and uppercase
+    scheme variants all share one cache entry. Without this, an entry
+    storing `https://www.x.com/` and the cache storing `https://x.com/`
+    would be treated as different URLs and the with-www version would
+    never get health-checked. Strips:
+      - trailing slash on the bare-domain root path
+      - leading `www.` on the host
+      - tracking query params (utm_*, fbclid, gclid)
+      - the scheme/host case (lowercased)
+    Keeps the path + non-tracking query params + fragment as-is."""
+    from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
+    try:
+        s = urlsplit(url.strip())
+    except Exception:
+        return url
+    scheme = (s.scheme or 'https').lower()
+    netloc = s.netloc.lower()
+    if netloc.startswith('www.'):
+        netloc = netloc[4:]
+    path = s.path or '/'
+    # Drop tracking params; sort the rest for stability
+    keep = [(k, v) for k, v in parse_qsl(s.query, keep_blank_values=True)
+            if not (k.lower().startswith('utm_') or k.lower() in {'fbclid', 'gclid', 'mc_cid', 'mc_eid'})]
+    query = urlencode(sorted(keep)) if keep else ''
+    return urlunsplit((scheme, netloc, path, query, s.fragment))
 
 def _load_api_key():
     if not SECRETS.exists(): return None
@@ -186,10 +217,20 @@ def needs_check(entry):
     return age >= CHECK_DAYS
 
 def _host_of(url):
+    """Canonical host for cross-domain comparison.
+    Strips `www.` prefix AND explicit default ports (:80 for http, :443
+    for https) so `parsgrill.ca` and `parsgrill.ca:443` compare equal -
+    redirecting from http://x to https://x:443/ is the same host."""
     try:
         from urllib.parse import urlparse
-        h = urlparse(url).netloc.lower()
-        return h[4:] if h.startswith('www.') else h
+        parsed = urlparse(url)
+        h = (parsed.netloc or '').lower()
+        scheme = (parsed.scheme or 'https').lower()
+        # Strip default ports
+        if h.endswith(':80') and scheme == 'http':   h = h[:-3]
+        if h.endswith(':443') and scheme == 'https': h = h[:-4]
+        if h.startswith('www.'): h = h[4:]
+        return h
     except Exception:
         return ''
 
@@ -220,25 +261,45 @@ def probe(url):
             if e.code in SOFT_FAIL_CODES:
                 # rate-limit / soft block - page exists, just won't let us probe it
                 return {'status': e.code, 'ok': True, 'reason': f'soft-fail {e.code} (page assumed live)'}
+            # 3xx that Python's urlopen raised instead of following (308 in
+            # particular - older stdlib doesn't follow it). The redirect
+            # target IS the live page; treat the original as alive.
+            if 300 <= e.code < 400:
+                return {'status': e.code, 'ok': True, 'reason': f'redirect {e.code} (page assumed live)'}
             if method == 'HEAD': continue
             return {'status': e.code, 'ok': False, 'reason': f'HTTP {e.code}'}
         except URLError as e:
             if method == 'HEAD': continue
-            return {'status': None, 'ok': False, 'reason': f'URLError: {str(e.reason)[:80]}'}
+            reason_str = str(e.reason)
+            # URLError-wrapped timeout - soft-OK same as the bare timeout.
+            if 'timed out' in reason_str.lower() or isinstance(e.reason, socket.timeout):
+                return {'status': None, 'ok': True, 'reason': 'timeout (soft-OK; page assumed live)'}
+            return {'status': None, 'ok': False, 'reason': f'URLError: {reason_str[:80]}'}
         except (socket.timeout, TimeoutError):
             if method == 'HEAD': continue
-            return {'status': None, 'ok': False, 'reason': 'timeout'}
+            # Timeout is flaky network state, not a dead site. Mark soft-OK
+            # so we don't drop the website link on a transient hiccup -
+            # tomorrow's daily re-check will catch a genuinely dead site.
+            return {'status': None, 'ok': True, 'reason': 'timeout (soft-OK; page assumed live)'}
         except Exception as e:
             if method == 'HEAD': continue
             return {'status': None, 'ok': False, 'reason': f'{type(e).__name__}: {str(e)[:80]}'}
     return {'status': None, 'ok': False, 'reason': 'unknown'}
 
 def main():
-    cache = json.loads(HEALTH_CACHE.read_text()) if HEALTH_CACHE.exists() else {}
-    urls = collect_urls()
+    raw_cache = json.loads(HEALTH_CACHE.read_text()) if HEALTH_CACHE.exists() else {}
+    # Migrate any non-normalized cache keys to the canonical form. Newer
+    # writes always use normalize_url(); this folds older variants in so
+    # we don't double-check www. and bare-host forms of the same URL.
+    cache = {}
+    for k, v in raw_cache.items():
+        cache[normalize_url(k)] = v
+    urls = {normalize_url(u) for u in collect_urls()}
     targets = [u for u in urls if needs_check(cache.get(u))]
     print(f"total URLs across caches: {len(urls)}  to probe: {len(targets)}")
     if not targets:
+        # Still write back the normalized cache so the migration sticks.
+        HEALTH_CACHE.write_text(json.dumps(cache, separators=(',', ':')))
         return
 
     now_iso = lambda: datetime.now(timezone.utc).isoformat()

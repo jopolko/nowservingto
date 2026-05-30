@@ -47,6 +47,31 @@
   .sku-calls { color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; min-width: 60px; }
   .footer-note { color: var(--muted); font: italic 13px/1.5 var(--serif); margin-top: 24px; }
   .stamp { font: 500 12px/1 var(--mono); color: var(--muted); }
+  /* Crawl section - same card chrome as .providers so the page reads
+     as one document with two ledgers, not two unrelated widgets. */
+  .crawl-totals { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 16px 0 18px; }
+  .crawl-totals .card .num { font-size: 28px; }
+  .crawl-group { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); overflow: hidden; margin-top: 14px; }
+  .crawl-group h3 { font: 700 13px/1 var(--sans); color: var(--ink); margin: 0; padding: 14px 20px; border-bottom: 1px solid var(--line); text-transform: uppercase; letter-spacing: 0.06em; }
+  .bot-row { display: grid; grid-template-columns: 1fr auto auto auto; gap: 14px; padding: 12px 20px; border-bottom: 1px solid var(--line); align-items: baseline; font-variant-numeric: tabular-nums; }
+  .bot-row:last-child { border-bottom: 0; }
+  .bot-name { font: 700 14px/1 var(--mono); color: var(--ink); }
+  .bot-verify { display: inline-block; margin-left: 8px; font: 500 11px/1.4 var(--sans); padding: 1px 6px; border-radius: 6px; vertical-align: 2px; }
+  .bot-verify.ok   { background: #e5f5ec; color: #146c43; }
+  .bot-verify.bad  { background: #fdecec; color: #a02828; }
+  .bot-verify.partial { background: #fff4d6; color: #8a5a00; }
+  .bot-hits { font: 600 13px/1 var(--sans); color: var(--ink2); text-align: right; }
+  .bot-hits .lbl-inline { color: var(--muted); font-weight: 500; margin-left: 4px; }
+  .bot-last { font: 500 12px/1 var(--mono); color: var(--muted); text-align: right; min-width: 100px; }
+  .crawl-empty { padding: 18px 20px; color: var(--muted); font: italic 14px/1.5 var(--serif); }
+  .crawl-warn { background: #fff8ec; border: 1px solid #f5d98b; color: #6b5210; border-radius: 10px; padding: 12px 16px; margin-top: 14px; font: 13px/1.5 var(--sans); }
+  /* Bot-farm rows: path + hit count. Mono font on the path so the
+     ./env / .git / wp-admin probes line up visually. */
+  .exploit-summary { padding: 14px 20px; color: var(--ink2); font: 14px/1.5 var(--sans); border-bottom: 1px solid var(--line); background: #fafafa; }
+  .exploit-row { display: grid; grid-template-columns: 1fr auto; gap: 14px; padding: 10px 20px; border-bottom: 1px solid var(--line); align-items: baseline; font-variant-numeric: tabular-nums; }
+  .exploit-row:last-child { border-bottom: 0; }
+  .exploit-path { font: 500 13px/1.3 var(--mono); color: var(--ink2); word-break: break-all; }
+  .exploit-hits { font: 700 13px/1 var(--sans); color: var(--ink); text-align: right; }
 </style>
 </head>
 <body>
@@ -78,6 +103,53 @@
 
   <h2>By provider</h2>
   <div class="providers" id="providers"></div>
+
+  <h1 style="margin-top:48px">Who's crawling</h1>
+  <p>Search engines and AI assistants that have fetched pages in the last
+     30 days, parsed straight from the Apache access log. Useful sanity check
+     that the sitemap, IndexNow ping, and llms.txt are pulling the right bots
+     in.</p>
+
+  <div class="crawl-totals">
+    <div class="card">
+      <div class="lbl">Last 7 days</div>
+      <div class="num" id="crawl-7d">-</div>
+      <div class="calls">bot fetches</div>
+    </div>
+    <div class="card">
+      <div class="lbl">Last 30 days</div>
+      <div class="num" id="crawl-30d">-</div>
+      <div class="calls">bot fetches</div>
+    </div>
+  </div>
+
+  <div id="crawl-warn-box"></div>
+
+  <div class="crawl-group">
+    <h3>Search engines</h3>
+    <div id="search-bots"></div>
+  </div>
+  <div class="crawl-group">
+    <h3>AI &amp; LLM crawlers</h3>
+    <div id="ai-bots"></div>
+  </div>
+  <div class="crawl-group" id="exploit-group" hidden>
+    <h3>Bot farms <span style="font-weight:500;color:var(--muted);text-transform:none;letter-spacing:0">(exploit scanners - filtered out of bot counts above)</span></h3>
+    <div class="crawl-empty" id="exploit-summary"></div>
+    <div id="exploit-paths"></div>
+  </div>
+  <p class="footer-note">
+    Per-bot row shows hits in the last 7 days · 30 days · last-seen.
+    "Hits" is HTTP requests, not unique URLs - a single bot fetching
+    the sitemap + 50 listings counts as 51 hits. Bots with zero hits
+    are omitted. The "Search engines" section only counts HTML-page
+    crawlers; image / video / news variants (which feed separate
+    indices) are excluded entirely. Requests to common exploit-scanner
+    paths (<code>/.env</code>, <code>/wp-admin/</code>, etc.) are
+    bucketed under "Bot farms" so they don't inflate the legitimate
+    counts. Generated daily from
+    <code>/var/log/apache2/nowservingto-access.log</code>.
+  </p>
 
   <p class="footer-note">
     These are our internal estimates from a per-call ledger
@@ -128,6 +200,88 @@ fetch('/data/usage.json?v=' + Date.now()).then(r => r.json()).then(data => {
   }
 }).catch(e => {
   document.getElementById('providers').innerHTML = '<div class="prov"><div class="prov-name">Could not load /data/usage.json</div></div>';
+});
+
+// Crawl section - separate file so this whole block degrades cleanly
+// if bot_traffic.json hasn't been generated yet.
+fetch('/data/bot_traffic.json?v=' + Date.now()).then(r => r.json()).then(data => {
+  const fmt = n => (n||0).toLocaleString();
+  document.getElementById('crawl-7d').textContent = fmt(data.totals?.last7d);
+  document.getElementById('crawl-30d').textContent = fmt(data.totals?.last30d);
+
+  if (data.status === 'unavailable') {
+    document.getElementById('crawl-warn-box').innerHTML =
+      `<div class="crawl-warn"><b>Crawl data unavailable.</b> ${data.reason || ''}</div>`;
+  }
+
+  const fmtLast = iso => {
+    if (!iso) return '-';
+    const t = new Date(iso);
+    const dh = (Date.now() - t.getTime()) / 36e5;
+    if (dh < 1)  return Math.round(dh * 60) + 'm ago';
+    if (dh < 24) return Math.round(dh) + 'h ago';
+    return Math.round(dh / 24) + 'd ago';
+  };
+
+  const verifyBadge = v => {
+    if (!v) return '';
+    const pct = Math.round((v.rate || 0) * 100);
+    let klass = 'partial', txt = `${pct}% verified`;
+    if (v.rate >= 0.9) { klass = 'ok'; txt = `verified ${v.expected}`; }
+    else if (v.rate === 0) { klass = 'bad'; txt = `unverified - 0% from ${v.expected}`; }
+    return ` <span class="bot-verify ${klass}" title="${v.verified}/${v.sampled} hits from ${v.expected} IPs">${txt}</span>`;
+  };
+  const render = (rows, container, emptyMsg) => {
+    if (!rows || !rows.length) {
+      container.innerHTML = `<div class="crawl-empty">${emptyMsg}</div>`;
+      return;
+    }
+    container.innerHTML = rows.map(r => `
+      <div class="bot-row">
+        <span class="bot-name">${r.bot}${verifyBadge(r.verification)}</span>
+        <span class="bot-hits">${fmt(r.hits7d)}<span class="lbl-inline">/ 7d</span></span>
+        <span class="bot-hits">${fmt(r.hits30d)}<span class="lbl-inline">/ 30d</span></span>
+        <span class="bot-last">${fmtLast(r.lastSeen)}</span>
+      </div>`).join('');
+  };
+  render(data.searchEngines, document.getElementById('search-bots'),
+         'No search-engine crawls in the last 30 days.');
+  render(data.aiBots, document.getElementById('ai-bots'),
+         'No AI crawler hits in the last 30 days. Expected for the first ~week after IndexNow setup.');
+
+  // Bot farms / exploit scanners: show top SOURCE HOSTS once we have
+  // CF-Connecting-IP data (post-2026-05-27). Falls back to probed paths
+  // for legacy log lines that don't carry a real client IP.
+  const ex = data.exploitScanners;
+  if (ex && ex.hits30d) {
+    document.getElementById('exploit-group').hidden = false;
+    let summary = `<b>${fmt(ex.hits30d)} probes</b> over the last 30 days · ` +
+      `${fmt(ex.hits7d)} in the last 7 days · ` +
+      `${fmt(ex.uniquePaths30d)} unique paths. All served 404.`;
+    if (ex.topSources && ex.topSources.length) {
+      summary += `<br><span style="color:var(--muted);font-size:13px">Showing top hosts probing the site, identified by IP org + country (via ip-api.com).</span>`;
+    } else {
+      summary += `<br><span style="color:var(--muted);font-size:13px">Source-host data populates as new traffic accumulates under the upgraded log format (since 2026-05-27).</span>`;
+    }
+    if (ex.topCountries && ex.topCountries.length) {
+      const ccBar = ex.topCountries.slice(0, 8).map(c =>
+        `<span style="display:inline-block;margin-right:14px;font:600 12px/1.4 var(--mono)">${c.country} <span style="color:var(--muted);font-weight:500">${fmt(c.hits)}</span></span>`
+      ).join('');
+      summary += `<div style="margin-top:10px">${ccBar}</div>`;
+    }
+    document.getElementById('exploit-summary').innerHTML = summary;
+
+    const rows = (ex.topSources && ex.topSources.length)
+      ? ex.topSources.map(s =>
+          `<div class="exploit-row"><span class="exploit-path">${s.host}</span><span class="exploit-hits">${fmt(s.hits)}</span></div>`).join('')
+      : (ex.topPaths || []).map(p =>
+          `<div class="exploit-row"><span class="exploit-path">${p.path}</span><span class="exploit-hits">${fmt(p.hits)}</span></div>`).join('');
+    document.getElementById('exploit-paths').innerHTML = rows;
+  }
+}).catch(e => {
+  document.getElementById('search-bots').innerHTML =
+    '<div class="crawl-empty">Could not load /data/bot_traffic.json yet - runs on the next daily cron.</div>';
+  document.getElementById('ai-bots').innerHTML = '';
 });
 </script>
 </body>

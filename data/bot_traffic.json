@@ -1,0 +1,807 @@
+{
+  "generatedAt": "2026-05-27T12:31:33.136647+00:00",
+  "status": "ok",
+  "logSource": "vhost",
+  "searchEngines": [
+    {
+      "bot": "Bingbot",
+      "hits30d": 1144,
+      "hits7d": 1064,
+      "uniquePaths30d": 582,
+      "lastSeen": "2026-05-27T12:25:02+00:00",
+      "daily": [
+        {
+          "day": "2026-05-15",
+          "hits": 6
+        },
+        {
+          "day": "2026-05-16",
+          "hits": 13
+        },
+        {
+          "day": "2026-05-17",
+          "hits": 29
+        },
+        {
+          "day": "2026-05-18",
+          "hits": 4
+        },
+        {
+          "day": "2026-05-19",
+          "hits": 28
+        },
+        {
+          "day": "2026-05-20",
+          "hits": 33
+        },
+        {
+          "day": "2026-05-21",
+          "hits": 26
+        },
+        {
+          "day": "2026-05-22",
+          "hits": 24
+        },
+        {
+          "day": "2026-05-23",
+          "hits": 18
+        },
+        {
+          "day": "2026-05-24",
+          "hits": 22
+        },
+        {
+          "day": "2026-05-25",
+          "hits": 27
+        },
+        {
+          "day": "2026-05-26",
+          "hits": 34
+        },
+        {
+          "day": "2026-05-27",
+          "hits": 880
+        }
+      ],
+      "verification": {
+        "expected": "Microsoft / Bing",
+        "verified": 701,
+        "sampled": 701,
+        "rate": 1.0
+      }
+    },
+    {
+      "bot": "Googlebot",
+      "hits30d": 383,
+      "hits7d": 272,
+      "uniquePaths30d": 63,
+      "lastSeen": "2026-05-27T12:15:31+00:00",
+      "daily": [
+        {
+          "day": "2026-05-14",
+          "hits": 37
+        },
+        {
+          "day": "2026-05-15",
+          "hits": 22
+        },
+        {
+          "day": "2026-05-16",
+          "hits": 12
+        },
+        {
+          "day": "2026-05-17",
+          "hits": 15
+        },
+        {
+          "day": "2026-05-18",
+          "hits": 5
+        },
+        {
+          "day": "2026-05-19",
+          "hits": 20
+        },
+        {
+          "day": "2026-05-20",
+          "hits": 21
+        },
+        {
+          "day": "2026-05-21",
+          "hits": 19
+        },
+        {
+          "day": "2026-05-22",
+          "hits": 41
+        },
+        {
+          "day": "2026-05-23",
+          "hits": 13
+        },
+        {
+          "day": "2026-05-24",
+          "hits": 47
+        },
+        {
+          "day": "2026-05-25",
+          "hits": 27
+        },
+        {
+          "day": "2026-05-26",
+          "hits": 73
+        },
+        {
+          "day": "2026-05-27",
+          "hits": 31
+        }
+      ],
+      "verification": {
+        "expected": "Google",
+        "verified": 31,
+        "sampled": 31,
+        "rate": 1.0
+      }
+    },
+    {
+      "bot": "YandexBot",
+      "hits30d": 187,
+      "hits7d": 185,
+      "uniquePaths30d": 123,
+      "lastSeen": "2026-05-27T07:34:19+00:00",
+      "daily": [
+        {
+          "day": "2026-05-16",
+          "hits": 2
+        },
+        {
+          "day": "2026-05-26",
+          "hits": 113
+        },
+        {
+          "day": "2026-05-27",
+          "hits": 72
+        }
+      ],
+      "verification": {
+        "expected": "Yandex",
+        "verified": 26,
+        "sampled": 26,
+        "rate": 1.0
+      }
+    },
+    {
+      "bot": "Applebot",
+      "hits30d": 121,
+      "hits7d": 20,
+      "uniquePaths30d": 44,
+      "lastSeen": "2026-05-27T09:37:49+00:00",
+      "daily": [
+        {
+          "day": "2026-05-14",
+          "hits": 26
+        },
+        {
+          "day": "2026-05-15",
+          "hits": 24
+        },
+        {
+          "day": "2026-05-16",
+          "hits": 25
+        },
+        {
+          "day": "2026-05-17",
+          "hits": 8
+        },
+        {
+          "day": "2026-05-18",
+          "hits": 3
+        },
+        {
+          "day": "2026-05-19",
+          "hits": 15
+        },
+        {
+          "day": "2026-05-24",
+          "hits": 16
+        },
+        {
+          "day": "2026-05-26",
+          "hits": 2
+        },
+        {
+          "day": "2026-05-27",
+          "hits": 2
+        }
+      ],
+      "verification": {
+        "expected": "Apple",
+        "verified": 2,
+        "sampled": 2,
+        "rate": 1.0
+      }
+    },
+    {
+      "bot": "DuckDuckBot",
+      "hits30d": 18,
+      "hits7d": 9,
+      "uniquePaths30d": 5,
+      "lastSeen": "2026-05-26T13:37:09+00:00",
+      "daily": [
+        {
+          "day": "2026-05-15",
+          "hits": 3
+        },
+        {
+          "day": "2026-05-16",
+          "hits": 1
+        },
+        {
+          "day": "2026-05-19",
+          "hits": 5
+        },
+        {
+          "day": "2026-05-22",
+          "hits": 3
+        },
+        {
+          "day": "2026-05-24",
+          "hits": 3
+        },
+        {
+          "day": "2026-05-26",
+          "hits": 3
+        }
+      ],
+      "verification": null
+    },
+    {
+      "bot": "Baiduspider",
+      "hits30d": 3,
+      "hits7d": 0,
+      "uniquePaths30d": 3,
+      "lastSeen": "2026-05-19T23:33:34+00:00",
+      "daily": [
+        {
+          "day": "2026-05-16",
+          "hits": 2
+        },
+        {
+          "day": "2026-05-19",
+          "hits": 1
+        }
+      ],
+      "verification": null
+    }
+  ],
+  "aiBots": [
+    {
+      "bot": "GPTBot",
+      "hits30d": 346,
+      "hits7d": 296,
+      "uniquePaths30d": 322,
+      "lastSeen": "2026-05-26T23:07:07+00:00",
+      "daily": [
+        {
+          "day": "2026-05-13",
+          "hits": 3
+        },
+        {
+          "day": "2026-05-14",
+          "hits": 1
+        },
+        {
+          "day": "2026-05-15",
+          "hits": 5
+        },
+        {
+          "day": "2026-05-16",
+          "hits": 4
+        },
+        {
+          "day": "2026-05-17",
+          "hits": 32
+        },
+        {
+          "day": "2026-05-18",
+          "hits": 1
+        },
+        {
+          "day": "2026-05-19",
+          "hits": 4
+        },
+        {
+          "day": "2026-05-20",
+          "hits": 13
+        },
+        {
+          "day": "2026-05-21",
+          "hits": 1
+        },
+        {
+          "day": "2026-05-22",
+          "hits": 2
+        },
+        {
+          "day": "2026-05-23",
+          "hits": 275
+        },
+        {
+          "day": "2026-05-24",
+          "hits": 1
+        },
+        {
+          "day": "2026-05-25",
+          "hits": 3
+        },
+        {
+          "day": "2026-05-26",
+          "hits": 1
+        }
+      ],
+      "verification": null
+    },
+    {
+      "bot": "ClaudeBot",
+      "hits30d": 184,
+      "hits7d": 1,
+      "uniquePaths30d": 89,
+      "lastSeen": "2026-05-20T16:23:42+00:00",
+      "daily": [
+        {
+          "day": "2026-05-13",
+          "hits": 4
+        },
+        {
+          "day": "2026-05-14",
+          "hits": 72
+        },
+        {
+          "day": "2026-05-15",
+          "hits": 36
+        },
+        {
+          "day": "2026-05-16",
+          "hits": 56
+        },
+        {
+          "day": "2026-05-17",
+          "hits": 8
+        },
+        {
+          "day": "2026-05-19",
+          "hits": 7
+        },
+        {
+          "day": "2026-05-20",
+          "hits": 1
+        }
+      ],
+      "verification": null
+    },
+    {
+      "bot": "OAI-SearchBot",
+      "hits30d": 119,
+      "hits7d": 81,
+      "uniquePaths30d": 49,
+      "lastSeen": "2026-05-27T08:32:46+00:00",
+      "daily": [
+        {
+          "day": "2026-05-13",
+          "hits": 4
+        },
+        {
+          "day": "2026-05-14",
+          "hits": 1
+        },
+        {
+          "day": "2026-05-15",
+          "hits": 11
+        },
+        {
+          "day": "2026-05-16",
+          "hits": 6
+        },
+        {
+          "day": "2026-05-17",
+          "hits": 6
+        },
+        {
+          "day": "2026-05-18",
+          "hits": 2
+        },
+        {
+          "day": "2026-05-19",
+          "hits": 8
+        },
+        {
+          "day": "2026-05-20",
+          "hits": 23
+        },
+        {
+          "day": "2026-05-21",
+          "hits": 5
+        },
+        {
+          "day": "2026-05-22",
+          "hits": 5
+        },
+        {
+          "day": "2026-05-23",
+          "hits": 28
+        },
+        {
+          "day": "2026-05-24",
+          "hits": 7
+        },
+        {
+          "day": "2026-05-25",
+          "hits": 5
+        },
+        {
+          "day": "2026-05-26",
+          "hits": 5
+        },
+        {
+          "day": "2026-05-27",
+          "hits": 3
+        }
+      ],
+      "verification": {
+        "expected": "OpenAI",
+        "verified": 0,
+        "sampled": 3,
+        "rate": 0.0
+      }
+    },
+    {
+      "bot": "Meta-ExternalAgent",
+      "hits30d": 86,
+      "hits7d": 82,
+      "uniquePaths30d": 71,
+      "lastSeen": "2026-05-25T04:23:52+00:00",
+      "daily": [
+        {
+          "day": "2026-05-14",
+          "hits": 1
+        },
+        {
+          "day": "2026-05-16",
+          "hits": 1
+        },
+        {
+          "day": "2026-05-19",
+          "hits": 2
+        },
+        {
+          "day": "2026-05-21",
+          "hits": 1
+        },
+        {
+          "day": "2026-05-22",
+          "hits": 79
+        },
+        {
+          "day": "2026-05-24",
+          "hits": 1
+        },
+        {
+          "day": "2026-05-25",
+          "hits": 1
+        }
+      ],
+      "verification": null
+    },
+    {
+      "bot": "ChatGPT-User",
+      "hits30d": 25,
+      "hits7d": 14,
+      "uniquePaths30d": 13,
+      "lastSeen": "2026-05-27T01:49:08+00:00",
+      "daily": [
+        {
+          "day": "2026-05-13",
+          "hits": 2
+        },
+        {
+          "day": "2026-05-14",
+          "hits": 4
+        },
+        {
+          "day": "2026-05-15",
+          "hits": 3
+        },
+        {
+          "day": "2026-05-19",
+          "hits": 2
+        },
+        {
+          "day": "2026-05-20",
+          "hits": 3
+        },
+        {
+          "day": "2026-05-22",
+          "hits": 1
+        },
+        {
+          "day": "2026-05-23",
+          "hits": 7
+        },
+        {
+          "day": "2026-05-24",
+          "hits": 2
+        },
+        {
+          "day": "2026-05-27",
+          "hits": 1
+        }
+      ],
+      "verification": {
+        "expected": "OpenAI",
+        "verified": 0,
+        "sampled": 1,
+        "rate": 0.0
+      }
+    },
+    {
+      "bot": "Bytespider",
+      "hits30d": 10,
+      "hits7d": 3,
+      "uniquePaths30d": 6,
+      "lastSeen": "2026-05-25T05:10:59+00:00",
+      "daily": [
+        {
+          "day": "2026-05-14",
+          "hits": 1
+        },
+        {
+          "day": "2026-05-15",
+          "hits": 4
+        },
+        {
+          "day": "2026-05-16",
+          "hits": 1
+        },
+        {
+          "day": "2026-05-19",
+          "hits": 1
+        },
+        {
+          "day": "2026-05-20",
+          "hits": 1
+        },
+        {
+          "day": "2026-05-25",
+          "hits": 2
+        }
+      ],
+      "verification": null
+    },
+    {
+      "bot": "PerplexityBot",
+      "hits30d": 8,
+      "hits7d": 1,
+      "uniquePaths30d": 7,
+      "lastSeen": "2026-05-20T16:23:43+00:00",
+      "daily": [
+        {
+          "day": "2026-05-16",
+          "hits": 2
+        },
+        {
+          "day": "2026-05-19",
+          "hits": 5
+        },
+        {
+          "day": "2026-05-20",
+          "hits": 1
+        }
+      ],
+      "verification": null
+    },
+    {
+      "bot": "CCBot",
+      "hits30d": 7,
+      "hits7d": 1,
+      "uniquePaths30d": 6,
+      "lastSeen": "2026-05-20T16:23:43+00:00",
+      "daily": [
+        {
+          "day": "2026-05-16",
+          "hits": 4
+        },
+        {
+          "day": "2026-05-19",
+          "hits": 2
+        },
+        {
+          "day": "2026-05-20",
+          "hits": 1
+        }
+      ],
+      "verification": null
+    },
+    {
+      "bot": "Perplexity-User",
+      "hits30d": 6,
+      "hits7d": 0,
+      "uniquePaths30d": 3,
+      "lastSeen": "2026-05-19T23:34:12+00:00",
+      "daily": [
+        {
+          "day": "2026-05-19",
+          "hits": 6
+        }
+      ],
+      "verification": null
+    },
+    {
+      "bot": "Claude-User",
+      "hits30d": 6,
+      "hits7d": 1,
+      "uniquePaths30d": 3,
+      "lastSeen": "2026-05-20T16:23:43+00:00",
+      "daily": [
+        {
+          "day": "2026-05-16",
+          "hits": 2
+        },
+        {
+          "day": "2026-05-19",
+          "hits": 3
+        },
+        {
+          "day": "2026-05-20",
+          "hits": 1
+        }
+      ],
+      "verification": null
+    },
+    {
+      "bot": "Amazonbot",
+      "hits30d": 5,
+      "hits7d": 3,
+      "uniquePaths30d": 3,
+      "lastSeen": "2026-05-22T17:55:48+00:00",
+      "daily": [
+        {
+          "day": "2026-05-15",
+          "hits": 1
+        },
+        {
+          "day": "2026-05-19",
+          "hits": 1
+        },
+        {
+          "day": "2026-05-21",
+          "hits": 1
+        },
+        {
+          "day": "2026-05-22",
+          "hits": 2
+        }
+      ],
+      "verification": null
+    },
+    {
+      "bot": "YouBot",
+      "hits30d": 4,
+      "hits7d": 0,
+      "uniquePaths30d": 4,
+      "lastSeen": "2026-05-19T23:33:31+00:00",
+      "daily": [
+        {
+          "day": "2026-05-16",
+          "hits": 3
+        },
+        {
+          "day": "2026-05-19",
+          "hits": 1
+        }
+      ],
+      "verification": null
+    },
+    {
+      "bot": "Google-Extended",
+      "hits30d": 1,
+      "hits7d": 1,
+      "uniquePaths30d": 1,
+      "lastSeen": "2026-05-20T16:23:43+00:00",
+      "daily": [
+        {
+          "day": "2026-05-20",
+          "hits": 1
+        }
+      ],
+      "verification": null
+    },
+    {
+      "bot": "Applebot-Extended",
+      "hits30d": 1,
+      "hits7d": 1,
+      "uniquePaths30d": 1,
+      "lastSeen": "2026-05-20T16:23:44+00:00",
+      "daily": [
+        {
+          "day": "2026-05-20",
+          "hits": 1
+        }
+      ],
+      "verification": null
+    }
+  ],
+  "exploitScanners": {
+    "hits30d": 3999,
+    "hits7d": 1891,
+    "uniquePaths30d": 152,
+    "topPaths": [
+      {
+        "path": "/wp-admin/install.php",
+        "hits": 2503
+      },
+      {
+        "path": "/xmlrpc.php",
+        "hits": 177
+      },
+      {
+        "path": "/wp-login.php",
+        "hits": 160
+      },
+      {
+        "path": "/.env",
+        "hits": 89
+      },
+      {
+        "path": "/.git/config",
+        "hits": 70
+      },
+      {
+        "path": "/.env.local",
+        "hits": 45
+      },
+      {
+        "path": "/.env.bak",
+        "hits": 41
+      },
+      {
+        "path": "/.env.save",
+        "hits": 36
+      },
+      {
+        "path": "/.env.production",
+        "hits": 33
+      },
+      {
+        "path": "/config.json",
+        "hits": 32
+      },
+      {
+        "path": "/.env.backup",
+        "hits": 32
+      },
+      {
+        "path": "/.env.development",
+        "hits": 25
+      }
+    ],
+    "topSources": [
+      {
+        "host": "Cloudflare",
+        "hits": 50
+      }
+    ],
+    "topCountries": [
+      {
+        "country": "US",
+        "hits": 47
+      },
+      {
+        "country": "SG",
+        "hits": 3
+      }
+    ],
+    "sourcesAvailable": 50
+  },
+  "totals": {
+    "last7d": 2035,
+    "last30d": 2664
+  }
+}

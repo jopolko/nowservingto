@@ -5,9 +5,13 @@
 #     short enough that an updated favicon / og card propagates within
 #     a week without a cache-bust query string.
 #   - Fonts (woff/woff2): 30-day cache - they never change.
-#   - Thumbnails under og/thumb/* are content-addressed by slug and only
-#     regenerate when the source photo changes - 30-day cache + immutable
-#     hint. Saves repeat-visitor bandwidth + improves perceived load.
+#   - Thumbnails under og/thumb/* get a 30-day cache but NOT immutable.
+#     They CAN change in place when the photo-recovery cron replaces a
+#     wrong-business photo (Places returned a better photo, or Street
+#     View fallback succeeded). Without immutable, browsers + Cloudflare
+#     revalidate via ETag on the next request - changed thumbs propagate
+#     without manual purges. Tradeoff: small uptick in conditional-GET
+#     bandwidth when nothing changed, in exchange for self-healing.
 <IfModule mod_headers.c>
     <FilesMatch "\.(html|json)$">
         Header set Cache-Control "public, max-age=3600, must-revalidate"
@@ -24,6 +28,14 @@
     <FilesMatch "\.txt$|sitemap.*\.xml$">
         Header set Cache-Control "public, max-age=300"
     </FilesMatch>
+    # CORS for the public JSON feed + embed widget. Third-party sites
+    # embedding the widget need to fetch /data/corridors.json cross-origin,
+    # and /embed.js gets loaded into their pages. Both are explicitly
+    # public, no auth, no PII.
+    <FilesMatch "(corridors\.json|embed\.js)$">
+        Header set Access-Control-Allow-Origin "*"
+        Header set Access-Control-Allow-Methods "GET, OPTIONS"
+    </FilesMatch>
 </IfModule>
 <IfModule mod_headers.c>
     # Thumbnail override: must come AFTER the broad FilesMatch above so it
@@ -34,7 +46,12 @@
     # specificity level as FilesMatch, so source order decides - and we
     # win by being last.
     <If "%{REQUEST_URI} =~ m#^/og/thumb/#">
-        Header set Cache-Control "public, max-age=2592000, immutable"
+        # 30-day cache but NOT immutable - the photo-recovery cron can
+        # replace a thumb in-place if Places returns a better photo for
+        # the same slug. Without "immutable", browsers + Cloudflare
+        # revalidate via the ETag header (which Apache already sets) so
+        # changed files propagate without manual purges.
+        Header set Cache-Control "public, max-age=2592000"
     </If>
 </IfModule>
 
@@ -54,19 +71,46 @@ RewriteCond %{HTTP_HOST} ^www\.nowservingto\.com$ [NC]
 RewriteRule ^(.*)$ https://nowservingto.com/$1 [R=301,L]
 
 # SEO landing pages: /cuisine/{key} → cuisine/{key}.html when present.
-# No fallback to /index.html for unknown keys - Apache returns a real 404,
-# which Google de-indexes cleanly. The old fallback made every typo or
-# stale URL look like a duplicate of the homepage in GSC, and pages that
-# don't generate (e.g. cuisine keys with zero entries like african_horn
-# after the parent-country collapse) silently served the homepage.
+# This runs FIRST so that a key which gains entries tomorrow (e.g. a brand
+# new "Uyghur" cuisine the validator just registered) starts serving its
+# generated page automatically, even if it appears in the historical-redirect
+# lists below. No fallback to /index.html for unknown keys - Apache returns
+# a real 404, which Google de-indexes cleanly.
 RewriteCond %{DOCUMENT_ROOT}/cuisine/$1.html -f
 RewriteRule ^cuisine/([a-z_]+)/?$ /cuisine/$1.html [L]
+
+# Canonical-alias redirects. Mirrors _CANONICAL_ALIASES in tools/cuisines.py
+# (validator collapses these slugs to the seed canonical form). Preserves
+# link equity from any historically-indexed alias URL.
+RewriteRule ^cuisine/argentine/?$ /cuisine/argentinian [R=301,L]
+RewriteRule ^cuisine/(british|irish)/?$ /cuisine/irish_uk [R=301,L]
+RewriteRule ^cuisine/eastern_european/?$ /cuisine/eastern_eu [R=301,L]
+RewriteRule ^cuisine/jewish/?$ /cuisine/jewish_deli [R=301,L]
+RewriteRule ^cuisine/latin_american/?$ /cuisine/latin [R=301,L]
+RewriteRule ^cuisine/middle_eastern/?$ /cuisine/middle_east [R=301,L]
+RewriteRule ^cuisine/(gujarati|hyderabadi|maharashtrian|south_indian|north_indian|punjabi)/?$ /cuisine/indian [R=301,L]
+RewriteRule ^cuisine/(hakka|indian_hakka|sichuan|southern_chinese)/?$ /cuisine/chinese [R=301,L]
+RewriteRule ^cuisine/southern_italian/?$ /cuisine/italian [R=301,L]
+
+# Banned labels (validator prompt forbids these as cuisine identities) - 301
+# to home. Stale Google index entries from before the bans were enforced.
+RewriteRule ^cuisine/(cajun|canadian|european|hawaiian|mediterranean)/?$ / [R=301,L]
 
 # /usage → usage.html (one-pager showing per-provider API spend)
 RewriteRule ^usage/?$ /usage.html [L]
 
 # /contribute → contribute.html (Tally form for tips + corrections)
 RewriteRule ^contribute/?$ /contribute.html [L]
+
+# /press → press.html (media kit: stats, embed widget, citation format)
+RewriteRule ^press/?$ /press.html [L]
+
+# /wire/{cuisine} → wire/{cuisine}.html. Diaspora media pitch pages -
+# self-contained editorial briefs (inline SVG charts, no JS) generated
+# by tools/build_wire_pages.py from corridors.json. Same no-fallback
+# pattern as /cuisine/{key} - unknown wire keys return a real 404.
+RewriteCond %{DOCUMENT_ROOT}/wire/$1.html -f
+RewriteRule ^wire/([a-z_]+)/?$ /wire/$1.html [L]
 
 # Per-district SEO landing pages: /district/{slug} → district/{slug}.html
 RewriteCond %{DOCUMENT_ROOT}/district/$1.html -f
