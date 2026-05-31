@@ -70,6 +70,9 @@ def main():
     today = datetime.now(timezone.utc).strftime('%Y-%m-%d')
     by_provider_sku = defaultdict(lambda: {'cost': 0.0, 'calls': 0})
     by_day = defaultdict(lambda: {'cost': 0.0, 'calls': 0})
+    # New: per-day per-provider breakdown so the daily-spend chart can
+    # render a separate line per provider instead of one aggregate line.
+    by_day_provider = defaultdict(lambda: defaultdict(float))
     total_cost = total_calls = 0.0
     today_cost = today_calls = 0
     for r in rows:
@@ -81,6 +84,7 @@ def main():
         by_provider_sku[(provider, sku)]['calls'] += 1
         by_day[day]['cost'] += cost
         by_day[day]['calls'] += 1
+        by_day_provider[day][provider] += cost
         total_cost += cost
         total_calls += 1
         if day == today:
@@ -106,6 +110,13 @@ def main():
     byDay = [{'day': d, 'cost': round(g['cost'], 4), 'calls': g['calls']}
              for d, g in sorted(by_day.items())]
 
+    # Per-day per-provider: each entry is {day, providers: {provider: cost}}
+    # Providers absent on a given day = $0 (frontend should default to 0).
+    byDayProvider = [{
+        'day': d,
+        'providers': {p: round(v, 4) for p, v in sorted(provs.items())},
+    } for d, provs in sorted(by_day_provider.items())]
+
     first = (sorted(by_day.keys())[0] if by_day else None)
 
     payload = {
@@ -117,6 +128,7 @@ def main():
         },
         'byProvider': byProvider,
         'byDay': byDay,
+        'byDayProvider': byDayProvider,
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(payload, indent=2))

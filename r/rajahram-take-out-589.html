@@ -101,14 +101,21 @@
 <!-- LD-ITEMLIST-END -->
 <style>
   :root {
-    --bg: #f1f3f6;
-    --paper: #ffffff;
-    --ink: #131516;
-    --ink2: #46494c;
-    --muted: #74787c;
-    --line: #ebecef;
-    --rule: #131516;
-    --accent: #c83624;
+    /* Modern food-tech palette 2026-05-31b - the cream/taupe variant
+       read as "1987 cookbook cover" (Joy of Cooking aesthetic); shifted
+       to off-white + coral + mint which reads as 2024 indie food media
+       (Eater 2.0, Resy, Toast). The masthead splotch pattern uses the
+       full cuisine palette so the page picks up vibrancy without
+       committing to any single culture's flag colours. */
+    --bg: #faf6ed;        /* soft latte cream - warm-affirming without going 1987 saturated */
+    --paper: #ffffff;     /* pure white cards - layered depth signal */
+    --ink: #1a1a1a;       /* near-pure black, modern */
+    --ink2: #2d2d2b;      /* dark grey - NOT brown taupe */
+    --muted: #6f6e6a;     /* warm-but-clean grey, not wood-panel */
+    --line: #ebe9e4;      /* warm-but-clean hairline */
+    --rule: #1a1a1a;
+    --accent: #e84e3a;    /* coral-red - friendlier, more vibrant than brick */
+    --accent-2: #3fb37f;  /* fresh mint/sage - "fresh produce" not "harvest moon" */
     --moss: #4a6b2b;
     --fresh: #1a7340;
     /* cuisine palette */
@@ -229,7 +236,18 @@
   .cuisine-picker button.cp-trigger[aria-expanded="true"]::after { transform: translateY(-50%) rotate(180deg); }
   .cuisine-picker button.cp-trigger:hover { border-color: var(--rule); }
   .cuisine-picker button.cp-trigger:focus-visible { outline: none; border-color: var(--ink); box-shadow: 0 0 0 3px rgba(21,17,13,0.08); }
-  .cuisine-picker .cp-panel { position: absolute; top: calc(100% + 4px); left: 0; min-width: 240px; max-width: min(360px, calc(100vw - 28px)); max-height: 50vh; overflow-y: auto; overscroll-behavior: contain; background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; box-shadow: 0 8px 28px rgba(21,17,13,0.18); z-index: 1001; padding: 4px 0; -webkit-overflow-scrolling: touch; }
+  /* Panel sizes to the widest option's natural width (longest cuisine
+     label like "Middle Eastern" + count), capped at 360px / viewport-28.
+     min-width: 100% guarantees the panel is never narrower than the
+     trigger itself, so it visually anchors to the button. */
+  .cuisine-picker .cp-panel { position: absolute; top: calc(100% + 4px); left: 0; min-width: 100%; width: max-content; max-width: min(360px, calc(100vw - 28px)); max-height: 50vh; overflow-y: auto; overscroll-behavior: contain; background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; box-shadow: 0 8px 28px rgba(21,17,13,0.18); z-index: 1001; padding: 4px 0; -webkit-overflow-scrolling: touch; }
+  /* Region picker sits on the right side of the filter row - anchor its
+     panel to the trigger's RIGHT edge instead of left, so the dropdown
+     opens leftward into available space on narrow viewports. */
+  #rp-panel { left: auto; right: 0; }
+  /* Tighten option padding so short district / cuisine names don't have
+     stranded whitespace next to the count column. */
+  .cuisine-picker .cp-opt { padding-left: 12px; padding-right: 12px; }
   .cuisine-picker .cp-panel[hidden] { display: none; }
   .cuisine-picker .cp-opt { display: flex; align-items: baseline; gap: 8px; padding: 10px 16px; cursor: pointer; font: 500 14px/1.3 var(--sans); color: var(--ink); border: 0; background: transparent; width: 100%; text-align: left; min-height: 40px; }
   .cuisine-picker .cp-opt:hover, .cuisine-picker .cp-opt:focus-visible { background: var(--bg); outline: none; }
@@ -257,9 +275,15 @@
      paragraph that routes to the matching /wire/<key> page. Without
      this, the 28 wire pages had zero internal-link signal and were
      orphaned from the crawl graph (0 Googlebot hits in 30 days). */
-  .page-intro-wire { margin: 8px 0 0; font: 600 12.5px/1.4 var(--sans); }
-  .page-intro-wire a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.12s; }
-  .page-intro-wire a:hover { border-bottom-color: var(--accent); }
+  /* Standalone block variant (when there's no intro text to ride on). */
+  p.page-intro-wire { margin: 8px 0 0; font: 600 12.5px/1.4 var(--sans); }
+  p.page-intro-wire a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.12s; }
+  p.page-intro-wire a:hover { border-bottom-color: var(--accent); }
+  /* Inline variant (rides at the end of the intro paragraph). Matches
+     the intro's body-text rhythm but in accent red to read as a clear
+     "more reading" hint without breaking the line. */
+  a.page-intro-wire { color: var(--accent); text-decoration: none; font-weight: 600; border-bottom: 1px solid transparent; transition: border-color 0.12s; white-space: nowrap; }
+  a.page-intro-wire:hover { border-bottom-color: var(--accent); }
   /* White-space tap → /r/<slug> profile. Cursor signals tappability;
      inner <a>/<button> elements keep their existing destinations (the
      JS handler bails when the click target is interactive). On listing
@@ -283,6 +307,19 @@
   .open-row .on a { color: var(--ink); text-decoration: none; transition: color 0.12s; }
   .open-row .on a:hover,
   .open-row .on a:active { color: var(--accent); }
+  /* Diagonal-arrow indicator next to the name when the link is the
+     restaurant's own website (not Maps fallback, not internal listing).
+     Muted by default, picks up the accent on hover with the name. */
+  .open-row .on a .ext-arrow {
+    display: inline-block;
+    margin-left: 4px;
+    font-size: 0.78em;
+    color: var(--muted);
+    transition: color 0.12s;
+    transform: translateY(-1px);
+  }
+  .open-row .on a:hover .ext-arrow,
+  .open-row .on a:active .ext-arrow { color: var(--accent); }
   .open-row .on .rating { display: inline-block; margin-left: 10px; font: 700 12px/1 var(--sans); color: var(--ink2); font-variant-numeric: tabular-nums; vertical-align: 1px; white-space: nowrap; }
   .open-row .on .rating::before { content: '★'; color: #d4a017; margin-right: 3px; font-size: 13px; }
   .open-row .on .rating .rc { color: #5d6166; font-weight: 500; margin-left: 4px; font-size: 11px; }
@@ -348,7 +385,11 @@
      orientation). Renders only on /cuisine/* and /district/* pages; the
      homepage's marker collapses to empty. Quiet visual weight - reads
      as a subtitle paragraph, not a body-text block. */
-  .page-intro { margin: 4px 0 18px; max-width: 720px; }
+  /* Editorial intro fills the column width (matches filter row + cards
+     below it). The previous 720px max-width was a print-style reading-
+     measure cap, but on desktop it left obvious whitespace to the right
+     while every other block on the page used the full column. */
+  .page-intro { margin: 4px 0 18px; }
   .page-intro p { font: 400 14.5px/1.55 var(--sans); margin: 0; color: var(--ink2); letter-spacing: -0.002em; }
   /* Related-cuisines strip. Sits just above the newsletter CTA. Three
      siblings, comma-separated; visual rhythm matches the footer link row. */
@@ -356,6 +397,15 @@
   .related-cuisines .rc-label { font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; font-size: 11px; color: var(--muted); margin-right: 6px; }
   .related-cuisines a { color: var(--ink); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.12s; }
   .related-cuisines a:hover { border-bottom-color: var(--accent); }
+  /* Community partners: reciprocal links to cultural-community directories
+     that list our cuisine page back. Quiet footer block, same visual
+     register as related-cuisines so the page doesn't get heavier. */
+  .community-partners { margin: 24px 0 8px; padding: 14px 0 0; border-top: 1px solid var(--line); font: 400 13px/1.6 var(--sans); color: var(--muted); }
+  .community-partners .cp-heading { font: 700 11px/1.4 var(--sans); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 6px; }
+  .community-partners .cp-list { list-style: none; padding: 0; margin: 0; }
+  .community-partners .cp-item { padding: 2px 0; }
+  .community-partners .cp-link { color: var(--ink); text-decoration: none; border-bottom: 1px solid transparent; font-weight: 600; transition: border-color 0.12s; }
+  .community-partners .cp-link:hover { border-bottom-color: var(--accent); }
   /* LISTING-EXTRA: differentiated content shown ONLY on /r/<slug>.html
      pages. Provides verifier evidence, license timeline, cohort context,
      and a nearby same-cuisine card grid - the value-over-Google-Maps
@@ -408,6 +458,118 @@
     max-width: 720px;
     letter-spacing: 0.005em;
   }
+  /* Compact horizontal masthead: NowServingTO on the left, the page-
+     specific h1 + (listing only) registration age as a single inline run
+     on the right. Applied to /r/ (listing), /cuisine/, and /district/
+     pages - all three are "inner" pages where the brand is reference info,
+     not the headline. Homepage keeps the original stacked layout because
+     the masthead IS the headline there. */
+  body.page-listing .mast .wrap,
+  body.page-cuisine .mast .wrap,
+  body.page-district .mast .wrap {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    column-gap: 18px;
+    row-gap: 4px;
+  }
+  body.page-listing .mast .sub,
+  body.page-cuisine .mast .sub,
+  body.page-district .mast .sub {
+    margin: 0;
+    font-style: normal;
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--ink);
+    letter-spacing: -0.005em;
+  }
+  /* Cuisine + district pages keep the "newest registered" accent span;
+     listing pages have plain restaurant name only. */
+  body.page-cuisine .mast .sub .hl,
+  body.page-district .mast .sub .hl {
+    font-weight: 800;
+    color: var(--accent);
+  }
+  body.page-listing .mast .listing-lede {
+    margin: 0;
+    font-size: 13.5px;
+    color: var(--muted);
+    display: inline;
+  }
+  body.page-listing .mast .listing-lede::before {
+    content: "·";
+    color: var(--muted);
+    margin: 0 8px 0 0;
+    font-weight: 700;
+  }
+  @media (max-width: 560px) {
+    body.page-listing .mast .listing-lede::before { content: none; }
+    body.page-listing .mast .sub,
+    body.page-cuisine .mast .sub,
+    body.page-district .mast .sub { font-size: 15px; }
+    body.page-listing .mast .listing-lede { font-size: 13px; }
+  }
+
+  /* "N new since you last visited" badge - tracks lastVisitedAt in
+     localStorage and shows a pulsing red pill when there are fresh
+     entries to surface. Habit loop: visit, see new things, come back
+     tomorrow to see what's been added. */
+  .fresh-badge {
+    display: none; align-items: center; gap: 6px;
+    margin: 8px 0 0; padding: 6px 14px;
+    /* Uses --accent-2 (saffron) instead of --accent (red) so the
+       freshness signal stays visually distinct from the brand red CTAs.
+       Reads as "new content available" without competing with the
+       primary action colour. */
+    background: var(--accent-2); color: #15110d;
+    border: 0; border-radius: 999px;
+    font: 700 13px/1 var(--sans); letter-spacing: 0.01em;
+    cursor: pointer;
+    box-shadow: 0 2px 12px rgba(230,166,58,0.42);
+    animation: fresh-pulse 2.4s ease-in-out infinite;
+    transition: transform 0.12s, box-shadow 0.12s;
+  }
+  .fresh-badge.is-visible { display: inline-flex; }
+  .fresh-badge:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(230,166,58,0.55); }
+  .fresh-badge .fb-spark { font-size: 14px; line-height: 1; }
+  @keyframes fresh-pulse {
+    0%, 100% { box-shadow: 0 2px 12px rgba(230,166,58,0.42); }
+    50%      { box-shadow: 0 2px 18px rgba(230,166,58,0.62); }
+  }
+  /* Highlight applied to rows that are "new since last visit" after the
+     badge is clicked. Soft accent-tinted background, fades after 4s. */
+  .open-row.is-fresh-flash { background: rgba(200, 54, 36, 0.06); transition: background 1.2s ease-out; }
+
+  /* "🎲 Surprise me" floating action button - bottom-right, picks a
+     random restaurant from the freshest cohort (≤30 days). Pure curiosity
+     bait; high tap rate from new visitors. Hidden on /r/<slug> pages
+     (already in single-listing view, no need to surprise). */
+  .surprise-fab {
+    position: fixed; right: 18px; bottom: 18px; z-index: 950;
+    width: 56px; height: 56px;
+    border: 0; border-radius: 50%;
+    background: var(--accent); color: #fff;
+    font-size: 24px; line-height: 1; cursor: pointer;
+    box-shadow: 0 6px 18px rgba(20,24,34,0.22), 0 2px 4px rgba(20,24,34,0.12);
+    transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .surprise-fab:hover, .surprise-fab:focus-visible {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 10px 24px rgba(20,24,34,0.32), 0 3px 6px rgba(20,24,34,0.16);
+    outline: none;
+  }
+  .surprise-fab:active { transform: translateY(0) scale(0.95); }
+  .surprise-fab .sf-tooltip {
+    position: absolute; right: calc(100% + 12px); top: 50%; transform: translateY(-50%);
+    background: var(--ink); color: var(--paper);
+    padding: 6px 10px; border-radius: 6px;
+    font: 600 12px/1 var(--sans);
+    white-space: nowrap; pointer-events: none;
+    opacity: 0; transition: opacity 0.16s;
+  }
+  .surprise-fab:hover .sf-tooltip, .surprise-fab:focus-visible .sf-tooltip { opacity: 1; }
+  body.page-listing .surprise-fab { display: none; }  /* hide on single-restaurant pages */
   .listing-extra { margin: 4px 0 32px; display: flex; flex-direction: column; gap: 22px; }
   .listing-extra .lx-card { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
   .listing-extra .lx-eyebrow { font: 700 10.5px/1 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
@@ -495,6 +657,10 @@
   <div class="wrap">
     <a href="/" class="brand" id="brand-link">NowServingTO</a>
     <h1 class="sub">RAJAHRAM TAKE-OUT</h1><div class="listing-lede">Registered 5 months ago · biryani, kothu rotti, idiyappam</div>
+    <button type="button" id="fresh-badge" class="fresh-badge" aria-label="Jump to restaurants new since your last visit">
+      <span class="fb-spark" aria-hidden="true">✨</span>
+      <span id="fb-text">new since you last looked</span>
+    </button>
   </div>
 </header>
 
@@ -519,7 +685,7 @@
   </div>
   <div class="open-feed" id="open-feed">
     <!-- STATIC-FEED-START - pre-rendered daily by tools/inject_openings.py for crawlers + no-JS visitors. Replaced by interactive JS render on page load. -->
-    <div class="open-row has-pic" data-slug="rajahram-take-out-589" style="--row-accent: #a9882c"><a class="row-pic-link" href="https://maps.google.com/?cid=11371339024371341658" target="_blank" rel="noopener" aria-label="View RAJAHRAM TAKE-OUT"><img class="row-pic" src="/og/thumb/rajahram-take-out-589.webp" alt="RAJAHRAM TAKE-OUT" loading="eager" fetchpriority="high" decoding="async"></a><div class="od"><span class="ago">5mo ago</span></div><div class="on"><a href="https://rajahramtakeout.ca/" target="_blank" rel="noopener">RAJAHRAM TAKE-OUT</a><span class="oad"><a href="https://maps.google.com/?cid=11371339024371341658" target="_blank" rel="noopener">589 Middlefield Rd #22, Scarborough, ON M1V 4Y6</a><span class="oad-d"> · Scarborough</span></span></div><div class="oc"><span class="pill" style="background:#a9882c">Sri Lankan</span></div></div>
+    <div class="open-row has-pic" data-slug="rajahram-take-out-589" style="--row-accent: #a9882c"><a class="row-pic-link" href="https://maps.google.com/?cid=11371339024371341658" target="_blank" rel="noopener" aria-label="View RAJAHRAM TAKE-OUT"><img class="row-pic" src="/og/thumb/rajahram-take-out-589.webp" alt="RAJAHRAM TAKE-OUT" loading="eager" fetchpriority="high" decoding="async"></a><div class="od"><span class="ago">5mo ago</span></div><div class="on"><a href="https://rajahramtakeout.ca/" target="_blank" rel="noopener">RAJAHRAM TAKE-OUT<span class="ext-arrow" aria-hidden="true">↗</span></a><span class="oad"><a href="https://maps.google.com/?cid=11371339024371341658" target="_blank" rel="noopener">589 Middlefield Rd #22, Scarborough, ON M1V 4Y6</a><span class="oad-d"> · Scarborough</span></span></div><div class="oc"><span class="pill" style="background:#a9882c">Sri Lankan</span></div></div>
     <!-- STATIC-FEED-END -->
   </div>
 
@@ -746,8 +912,14 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
     // with no mouse return false on both.
     const desktopUA = window.matchMedia('(any-pointer: fine)').matches;
     const tgt = desktopUA ? ' target="_blank"' : '';
+    // ↗ arrow only when the name link is the restaurant's OWN website
+    // (not Maps fallback, not our internal /r/ page). Signals to the
+    // visitor that the click leaves NowServingTO for the restaurant's
+    // actual site.
+    const isOwnerSite = trustMatch && r.website && link === r.website;
+    const extArrow = isOwnerSite ? '<span class="ext-arrow" aria-hidden="true">↗</span>' : '';
     const nameHtml = link
-      ? `<a class="${linkClass}" href="${link}"${tgt} rel="noopener">${r.operatingName}</a>`
+      ? `<a class="${linkClass}" href="${link}"${tgt} rel="noopener">${r.operatingName}${extArrow}</a>`
       : r.operatingName;
     const ratingHtml = (trustMatch && r.rating)
       ? `<span class="rating">${r.rating.toFixed(1)}<span class="rc">· ${r.reviewCount ? r.reviewCount.toLocaleString() : '?'}</span></span>`
@@ -928,6 +1100,11 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
     }
     if (nearMeActive && userLatLng) {
       rows = rows.filter(r => r.lat && r.lng && haversineKm(userLatLng, [r.lat, r.lng]) <= nearMeRadius);
+      // Near Me overrides the default freshest-first sort with closest-first.
+      // Memoize the distance on the row so we don't haversine twice per row
+      // (sort + later distance label rendering both want it).
+      rows.forEach(r => { r._distKm = haversineKm(userLatLng, [r.lat, r.lng]); });
+      rows.sort((a, b) => a._distKm - b._distKm);
     } else if (currentRegion !== '__all') {
       rows = rows.filter(r => r.district === currentRegion);
     }
@@ -1081,8 +1258,96 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
   const cuisineFromUrl = hashCuisine || (pathCuisineMatch && pathCuisineMatch[1]);
   const initialCuisine = (cuisineFromUrl && no.cuisines.some(c => c.key === cuisineFromUrl)) ? cuisineFromUrl : '__all';
   const decodedRegion = hashRegion ? decodeURIComponent(hashRegion) : '';
-  const initialRegion = DISTRICTS.includes(decodedRegion) ? decodedRegion : '__all';
+  // District-from-path: when visiting /district/scarborough directly (no hash),
+  // resolve the slug back to the DISTRICTS label so the in-page filter syncs
+  // with the URL. Without this, the JS hydrates with currentRegion='__all'
+  // and re-renders ALL entries on top of the server-rendered district feed -
+  // visitors see every Toronto restaurant on a page labeled "Scarborough".
+  // Slug logic mirrors `districtSlug` defined later in this script.
+  const _slugize = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const pathDistrictRegion = pathDistrictMatch
+    ? (DISTRICTS.find(d => _slugize(d) === pathDistrictMatch[1]) || '')
+    : '';
+  const initialRegion = decodedRegion && DISTRICTS.includes(decodedRegion)
+    ? decodedRegion
+    : (pathDistrictRegion || '__all');
   applyFilters(initialCuisine, initialRegion, false);
+
+  // -- Gamification: "N new since you last looked" badge ----------------
+  // Compares no.recent[].issuedDate against localStorage 'nsto.lastVisitedAt'.
+  // If there are entries issued since the user's last visit, show a pulsing
+  // accent pill in the masthead. Click jumps to the feed with the new
+  // entries flashed; updates lastVisitedAt to NOW so the badge resets.
+  // First-ever visit: skipped (no baseline to diff against).
+  (function freshSinceLastVisit() {
+    if (singleSlug) return;  // single-listing pages: not relevant
+    const LS_KEY = 'nsto.lastVisitedAt';
+    let lastVisited = null;
+    try { lastVisited = localStorage.getItem(LS_KEY); } catch (_) {}
+    // First visit: stamp now and bail (no "new" to show against an empty baseline)
+    if (!lastVisited) {
+      try { localStorage.setItem(LS_KEY, new Date().toISOString()); } catch (_) {}
+      return;
+    }
+    const fresh = (no.recent || []).filter(r => r.issuedDate && r.issuedDate > lastVisited.slice(0, 10));
+    if (!fresh.length) return;
+    const badge = document.getElementById('fresh-badge');
+    const txt = document.getElementById('fb-text');
+    if (!badge || !txt) return;
+    const n = fresh.length;
+    txt.textContent = n === 1
+      ? `1 new since you last looked - jump to it`
+      : `${n} new since you last looked - jump to them`;
+    badge.classList.add('is-visible');
+    const freshSlugs = new Set(fresh.map(r => r.slug));
+    badge.addEventListener('click', () => {
+      // Stamp now so the badge doesn't re-show on next refresh
+      try { localStorage.setItem(LS_KEY, new Date().toISOString()); } catch (_) {}
+      badge.classList.remove('is-visible');
+      // Scroll to feed + flash the new rows
+      const feed = document.getElementById('open-feed');
+      if (feed) feed.scrollIntoView({behavior: 'smooth', block: 'start'});
+      setTimeout(() => {
+        document.querySelectorAll('.open-row[data-slug]').forEach(row => {
+          if (freshSlugs.has(row.dataset.slug)) {
+            row.classList.add('is-fresh-flash');
+            setTimeout(() => row.classList.remove('is-fresh-flash'), 4000);
+          }
+        });
+      }, 400);
+    });
+  })();
+
+  // -- Gamification: "Surprise me" FAB ---------------------------------
+  // Picks a random restaurant from the freshest cohort (≤30 days). Smooth-
+  // scrolls to its row + flashes it; if not visible in the current feed
+  // (filtered out by current cuisine/region), navigates to /r/<slug>.
+  (function surpriseMe() {
+    const fab = document.getElementById('surprise-fab');
+    if (!fab) return;
+    fab.addEventListener('click', () => {
+      const pool = (no.recent || []).filter(r =>
+        r.slug && (r.daysOpen == null || r.daysOpen <= 30)
+      );
+      if (!pool.length) {
+        // Fall back to whole 365d pool if nothing fresh
+        const broader = (no.recent || []).filter(r => r.slug);
+        if (!broader.length) return;
+        pool.push(...broader);
+      }
+      const pick = pool[Math.floor(Math.random() * pool.length)];
+      // If the pick is already rendered in the current feed, scroll + flash
+      const row = document.querySelector(`.open-row[data-slug="${pick.slug}"]`);
+      if (row) {
+        row.scrollIntoView({behavior: 'smooth', block: 'center'});
+        row.classList.add('is-fresh-flash');
+        setTimeout(() => row.classList.remove('is-fresh-flash'), 4000);
+      } else {
+        // Not in current view: navigate to its listing page
+        window.location.href = `/r/${pick.slug}`;
+      }
+    });
+  })();
 
   // Cuisine landing pages get a per-cuisine title + description for SEO. Done
   // post-render since the JS app boots from a single index.html in all cases.
@@ -1718,5 +1983,9 @@ document.querySelectorAll('form.alert-form').forEach(function(form) {
 });
 </script>
 
+<button type="button" id="surprise-fab" class="surprise-fab" aria-label="Surprise me with a random new restaurant">
+  <span aria-hidden="true">🎲</span>
+  <span class="sf-tooltip">Surprise me</span>
+</button>
 </body>
 </html>

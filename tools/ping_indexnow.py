@@ -26,6 +26,12 @@ from urllib.error import HTTPError, URLError
 
 ROOT = Path(__file__).resolve().parent.parent
 SITEMAP = ROOT / 'sitemap.xml'
+# Per-run URL snapshot. Diff against this on next run to identify NEW URLs
+# (a new /r/<slug>.html created by tonight's inject because a fresh licence
+# appeared in today's CSV pull). New URLs get a dedicated priority ping
+# BEFORE the full-set batch ping, so Bing's crawler hits them within
+# minutes of generation instead of waiting in the daily-batch queue.
+LAST_SEEN = ROOT / 'tools' / 'cache' / 'indexnow_last_seen.json'
 
 HOST = 'nowservingto.com'
 # Public key. Must match the filename + content of the file at
@@ -49,27 +55,23 @@ def read_sitemap_urls():
     return [u for u in urls if u.startswith(f'https://{HOST}/')]
 
 
-def main():
-    dry_run = '--dry-run' in sys.argv
-
-    urls = read_sitemap_urls()
-    if not urls:
-        sys.exit('no on-host URLs found in sitemap.xml')
-
+def _submit(urls, label, dry_run=False):
+    """POST a URL list to IndexNow. Returns True on success."""
     body = {
         'host': HOST,
         'key': KEY,
         'keyLocation': KEY_LOCATION,
         'urlList': urls,
     }
-    print(f'IndexNow: submitting {len(urls)} URLs to {ENDPOINT}')
-    print(f'  first 3: {urls[:3]}')
-    print(f'  last  3: {urls[-3:]}')
-
+    print(f'IndexNow [{label}]: submitting {len(urls)} URL(s)')
+    if len(urls) <= 6:
+        for u in urls: print(f'    {u}')
+    else:
+        print(f'    first 3: {urls[:3]}')
+        print(f'    last  3: {urls[-3:]}')
     if dry_run:
-        print('(dry-run, not sending)')
-        return
-
+        print('  (dry-run, not sending)')
+        return True
     req = Request(
         ENDPOINT,
         data=json.dumps(body).encode('utf-8'),
@@ -86,15 +88,71 @@ def main():
             resp_body = r.read().decode('utf-8', errors='replace').strip()
             if resp_body:
                 print(f'  body: {resp_body[:500]}')
+            return True
     except HTTPError as e:
         # 422 = key file missing/mismatched on host. 429 = rate-limited.
         # 400 = malformed body or off-host URL slipped through.
         msg = e.read().decode('utf-8', errors='replace').strip()
         print(f'  ERROR HTTP {e.code} {e.reason}: {msg[:500]}')
-        sys.exit(2)
+        return False
     except URLError as e:
         print(f'  ERROR network: {e}')
-        sys.exit(3)
+        return False
+
+
+def main():
+    dry_run = '--dry-run' in sys.argv
+
+    urls = read_sitemap_urls()
+    if not urls:
+        sys.exit('no on-host URLs found in sitemap.xml')
+    url_set = set(urls)
+
+    # Diff against last run's URL set to find NEW URLs created by this
+    # cron (a /r/<slug> for a restaurant licensed today, a /cuisine/<key>
+    # for a freshly-registered novel cuisine bucket).
+    fresh = []
+    try:
+        prev = set(json.loads(LAST_SEEN.read_text())) if LAST_SEEN.exists() else set()
+    except Exception:
+        prev = set()
+    if prev:
+        fresh = sorted(url_set - prev)
+
+    # 1) Priority ping for NEW urls only. Sends a small targeted payload
+    # FIRST so Bing's crawl queue prioritizes today's brand-new pages.
+    # Cap at 100 because if the diff is larger than that something
+    # weird happened (sitemap regen with a different base URL, etc.)
+    # and we'd rather fall through to the full batch than spray noise.
+    priority_ok = True
+    if fresh and len(fresh) <= 100:
+        priority_ok = _submit(fresh, 'priority/new', dry_run=dry_run)
+    elif fresh and len(fresh) > 100:
+        print(f'IndexNow [priority/new]: skipped - {len(fresh)} fresh URLs is too '
+              f'many for a targeted ping (sitemap reset?), full batch below covers it')
+    elif not prev:
+        print('IndexNow [priority/new]: skipped - first run, no previous snapshot to diff against')
+    else:
+        print('IndexNow [priority/new]: no new URLs since last run')
+
+    # 2) Full batch ping for everything in the current sitemap. This is
+    # the unchanged-behavior catch-all that keeps stale-content signals
+    # flowing (counts, prices, dates that drift even when the URL set
+    # doesn't change).
+    batch_ok = _submit(urls, 'full batch', dry_run=dry_run)
+
+    # 3) Persist current URL set for next run's diff. Only writes when
+    # at least one submission succeeded, so a network blip doesn't
+    # silently mask the diff on the following cron.
+    if not dry_run and (priority_ok or batch_ok):
+        try:
+            LAST_SEEN.parent.mkdir(parents=True, exist_ok=True)
+            LAST_SEEN.write_text(json.dumps(sorted(url_set)))
+        except Exception as e:
+            print(f'  WARN: could not persist last-seen snapshot: {e}')
+
+    if not (priority_ok or batch_ok):
+        sys.exit(2)
 
 
 if __name__ == '__main__':

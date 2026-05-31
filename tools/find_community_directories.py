@@ -76,12 +76,35 @@ For each cuisine you research, return a JSON object on ONE line. Schema:
       "audience": "Tamil-Canadian diaspora, GTA-focused",
       "accepts_submissions": "yes|no|unclear",
       "still_active": "yes|no|unclear",
+      "freshness_evidence": "quoted snippet from the site showing a 2025+
+                             date, e.g. 'Posted May 14, 2026' or 'New
+                             listing added April 2025'",
+      "last_dated_content_year": 2024 | 2025 | 2026 | null,
       "confidence": 0.0-1.0,
       "rationale": "one sentence explaining the score"
     },
     ...
   ]
 }
+
+FRESHNESS IS A FIRST-CLASS GATE (added 2026-05-30 - hard-won lesson):
+  - DO NOT rely on "the site loads" or "looks alive structurally". Many
+    dead community directories return HTTP 200 with a frozen 2019
+    homepage indefinitely.
+  - Search for explicit date markers on the candidate site: "Posted YYYY",
+    "Last updated YYYY", "Copyright YYYY", a recent blog post, a recent
+    listing addition. Quote the EVIDENCE in freshness_evidence.
+  - If the homepage has no dates, check sub-paths like /listings,
+    /directory, /blog, /news, /recent before judging. SPA-style sites
+    hide dates in JS-loaded content.
+  - Set last_dated_content_year to the MOST RECENT year you can prove
+    with quoted evidence. null if you can't find any year marker.
+  - Down-rank confidence sharply if last_dated_content_year <= 2024
+    (probably stale; submission may sit forever in a moderation queue
+    that nobody checks).
+  - Exclude entirely if last_dated_content_year <= 2022 OR no year
+    evidence found AND the site looks like a static brochure rather
+    than an active directory.
 
 WHAT COUNTS as a good candidate:
   - Cultural-community directory (Tamil Directory, Filipino Channel,
@@ -103,7 +126,7 @@ WHAT TO EXCLUDE:
 
 For each candidate, search to verify the submission URL actually loads
 and looks live. Confidence should reflect both relevance to the cuisine's
-diaspora AND likelihood the submission gets approved.
+diaspora AND likelihood the submission gets approved AND freshness.
 
 If you find ZERO good candidates for a cuisine, return {"candidates": []}
 rather than padding the list with low-quality results."""

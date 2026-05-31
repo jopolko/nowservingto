@@ -1242,7 +1242,13 @@ def build_static_rows(entries, link_to_listing=False):
         if _is_aggregator_url(site): site = None
         link = site or r.get('mapsUrl') or internal_url
         name_ext_tgt = ' target="_blank" rel="noopener"' if link and not link.startswith('/r/') else ' rel="noopener"'
-        name_html = f'<a href="{_esc(link)}"{name_ext_tgt}>{name}</a>' if link else name
+        # Diagonal-arrow indicator (↗) only when the name link goes to the
+        # restaurant's OWN website - not Maps fallback, not internal /r/ page.
+        # Tells the visitor "this opens the actual restaurant's site, not
+        # another listing or Maps result." Same convention as the .lx-near-cta
+        # rows below.
+        ext_arrow = '<span class="ext-arrow" aria-hidden="true">↗</span>' if link and link == site else ''
+        name_html = f'<a href="{_esc(link)}"{name_ext_tgt}>{name}{ext_arrow}</a>' if link else name
         multi_attr = ' data-multi' if len(cuisine_keys) > 1 else ''
         thumb = r.get('thumb')
         # Thumb-click ladder mirrors the address ladder, with website as
@@ -1631,16 +1637,23 @@ def build_page_intro(cuisine_key):
     from pathlib import Path as _PathLib
     has_wire = (_PathLib(ROOT) / 'wire' / f'{cuisine_key}.html').exists()
     if not intro and not has_wire: return ''
-    parts = []
+    # Wire link rides INLINE at the end of the intro paragraph so the
+    # editorial reads as one continuous thought, not two stacked blocks.
+    # Falls back to a standalone block when there's no intro text to
+    # ride on (cuisine with a wire page but no intro entry yet).
+    wire_inline = (
+        f' <a class="page-intro-wire" href="/wire/{cuisine_key}">Read the editorial brief →</a>'
+        if has_wire else ''
+    )
     if intro:
-        parts.append(f'<p>{_esc(intro)}</p>')
-    if has_wire:
-        parts.append(
-            f'<p class="page-intro-wire">'
-            f'<a href="/wire/{cuisine_key}">Read the editorial brief →</a>'
-            f'</p>'
-        )
-    return f'<div class="page-intro">{"".join(parts)}</div>'
+        return f'<div class="page-intro"><p>{_esc(intro)}{wire_inline}</p></div>'
+    # No intro - render wire link as its own paragraph so the marker
+    # block doesn't render empty.
+    return (
+        f'<div class="page-intro"><p class="page-intro-wire">'
+        f'<a href="/wire/{cuisine_key}">Read the editorial brief →</a>'
+        f'</p></div>'
+    )
 
 
 def build_related_cuisines(cuisine_key):
@@ -1812,6 +1825,9 @@ for c in cuisines_out:
         lcp_preload_url=(entries[0].get('thumb') or '') if entries else '',
     )
     page = swap_newsletter_cta(page, build_alert_section('cuisine', key, label))
+    # Body class lets CSS lay out the cuisine-page masthead differently
+    # from the homepage (compact horizontal brand+h1 instead of stacked).
+    page = page.replace('<body>', '<body class="page-cuisine">', 1)
 
     (CUISINE_DIR / f'{key}.html').write_text(page)
     cuisine_pages_written += 1
@@ -1918,6 +1934,8 @@ for label, entries in by_district.items():
         lcp_preload_url=(entries[0].get('thumb') or '') if entries else '',
     )
     page = swap_newsletter_cta(page, build_alert_section('district', slug, label))
+    # Body class - same horizontal-masthead treatment as cuisine pages.
+    page = page.replace('<body>', '<body class="page-district">', 1)
 
     (DISTRICT_DIR / f'{slug}.html').write_text(page)
     district_pages_written += 1
