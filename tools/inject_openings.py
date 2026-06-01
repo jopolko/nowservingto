@@ -692,12 +692,24 @@ with open(CSV_PATH, encoding='utf-8', errors='replace') as f:
         # data where Places has authoritative info. Use the matchedAddress as
         # the displayed address (cleaner formatting, validated location).
         # Fallback: permit address (when no Places match).
+        # 2026-06-01: postal-mismatch guard. When the operator has multiple
+        # licences (e.g. commissary at one address + retail at another),
+        # Places often returns the retail location for ALL of them via
+        # fuzzy name match. If the postal code in the matchedAddress differs
+        # from the licence's postal, it's a wrong-business override.
+        # Keep the licence address; don't trust Places.
         places_match = PLACES_CACHE.get(entry['_cacheKey'])
         if places_match and places_match.get('status') == 'ok' and places_match.get('matchedAddress'):
-            # Strip the ", Canada" suffix; keep "123 Main St, Toronto, ON M5V 1A1"
             ma = places_match['matchedAddress']
             ma = _re.sub(r',\s*Canada\s*$', '', ma)
-            entry['address'] = ma
+            _lp = _re.search(r'[A-Z]\d[A-Z]\s?\d[A-Z]\d', (address_full or '').upper())
+            _pp = _re.search(r'[A-Z]\d[A-Z]\s?\d[A-Z]\d', ma.upper())
+            _postal_ok = (
+                not (_lp and _pp)
+                or _lp.group(0).replace(' ', '') == _pp.group(0).replace(' ', '')
+            )
+            if _postal_ok:
+                entry['address'] = ma
 
         # fallbackMapsUrl removed 2026-05-19. The previous design assumed
         # every entry reaching this code path had been independently verified
@@ -786,6 +798,36 @@ with open(CSV_PATH, encoding='utf-8', errors='replace') as f:
             n_deduped += 1
             if iss.isoformat() < existing['issuedDate']:
                 seen_entries[dedup_key] = entry  # this row is earlier - keep it
+
+# Dedup-by-place_id (2026-06-01): when two licence rows under the same
+# operator name resolve to the same Google Places place_id, they're the
+# same physical business. Common pattern: a commissary licence at one
+# address + a retail storefront licence at another, where Places matches
+# both rows to the storefront via fuzzy name search. Without this dedup
+# the page shows two rows for one restaurant, with the commissary row
+# carrying a misleading district label (computed from commissary postal,
+# not storefront postal). Keep the entry with the latest issuedDate -
+# typically the storefront, since commissaries are usually licensed
+# earlier than the retail front-of-house.
+_pid_groups = {}
+for _k, _e in seen_entries.items():
+    _pmatch = PLACES_CACHE.get(_e.get('_cacheKey') or '') or {}
+    # Cache uses both 'place_id' (canonical, from Places API) and 'placeId'
+    # (set by ad-hoc refetch scripts). Check both for safety.
+    _pid = (_e.get('placeId') or _pmatch.get('placeId')
+            or _pmatch.get('place_id'))
+    if _pid:
+        _pid_groups.setdefault(_pid, []).append(_k)
+_n_dedup_pid = 0
+for _pid, _keys in _pid_groups.items():
+    if len(_keys) <= 1: continue
+    _keep = max(_keys, key=lambda k: seen_entries[k].get('issuedDate', ''))
+    for _k in _keys:
+        if _k != _keep:
+            del seen_entries[_k]
+            _n_dedup_pid += 1
+if _n_dedup_pid:
+    print(f"  place_id dedup: collapsed {_n_dedup_pid} extra entries (same operator + same Places match - commissary/storefront pairs)")
 
 # Date-source swap (2026-06-01): when a stronger operating-since signal
 # exists than the licence-issued date, surface it as the displayed
