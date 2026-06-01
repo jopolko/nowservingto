@@ -845,17 +845,21 @@ function nameJaccard(a, b) {
   return inter / (A.size + B.size - inter);
 }
 
-function tierLabel(days) {
-  // Three-tier freshness label for the row pill (2026-06-01). Replaces the
-  // prior 'Xd ago' / 'Nmo ago' numeric badge. The numeric pill on 7-month-
-  // old entries read as 'kinda new' - psychologically worse than no claim.
-  // 0-30d gets 'New' + ★ (via data-fresh="hot"); 31-90d gets 'Recent' in
-  // muted styling; 91-365d gets no badge. The 365d inclusion rule still
-  // anchors the directory; only the per-row claim shrinks to where the
-  // news-value actually lives.
+const _TIER_MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function tierLabel(days, isoDate) {
+  // Three-tier freshness label for the row pill.
+  //   0-30d   -> 'New' (★ via data-fresh="hot")
+  //   31-90d  -> 'Recent' (muted)
+  //   91-365d -> month + year of the registered date ('Mar 2026'),
+  //              muted; supplies a quiet temporal anchor so older-
+  //              in-window rows don't look orphaned in the feed.
   if (days == null) return '';
   if (days <= 30)   return 'New';
   if (days <= 90)   return 'Recent';
+  if (isoDate) {
+    const m = isoDate.match(/^(\d{4})-(\d{2})/);
+    if (m) return _TIER_MONTHS[parseInt(m[2], 10) - 1] + ' ' + m[1];
+  }
   return '';
 }
 
@@ -1049,7 +1053,7 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
       ? `<img class="row-pic" src="${thumb}" alt="${r.operatingName}" loading="lazy" decoding="async">`
       : '';
     if (thumb) row.classList.add('has-pic');
-    const agoText = tierLabel(r.daysOpen);
+    const agoText = tierLabel(r.daysOpen, r.issuedDate);
     const agoHtml = agoText
       ? (r.slug
         ? `<a class="ago" href="/r/${r.slug}">${agoText}</a>`

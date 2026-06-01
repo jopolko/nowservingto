@@ -1064,21 +1064,26 @@ def _ago(days):
     return f'{days/365:.1f}y ago'
 
 
-def _tier_label(days):
+def _tier_label(days, iso_date=None):
     """Three-tier freshness label for the row pill (2026-06-01).
-    Replaces the prior numeric '5d ago / 9mo ago' pill, which was
-    pulling double duty (freshness signal + sort key) and only
-    earning value at the fresh end. The numeric badges on 7-month-
-    old entries read as 'kinda new' - psychologically worse than
-    no claim at all.
-      0-30d  -> 'New'     (★ added by CSS via data-fresh="hot")
-      31-90d -> 'Recent'  (muted styling, no star)
-      91d+   -> ''        (badge omitted; entry still listed)
-    The 365d inclusion rule remains; only the per-row claim shrinks
-    to where the news-value actually lives."""
+      0-30d   -> 'New'        (★ added by CSS via data-fresh="hot")
+      31-90d  -> 'Recent'     (muted, no star)
+      91-365d -> 'Mar 2026'   (month + year of the displayed registered-date,
+                               muted; supplies a quiet temporal anchor so
+                               older-in-window rows don't look orphaned)
+    The 365d inclusion rule still anchors the directory; the per-row claim
+    just shrinks to where the news-value lives, and the month name tells
+    the reader 'this was registered in X' instead of leaving them to
+    wonder why the row appears at all."""
     if days is None: return ''
     if days <= 30:  return 'New'
     if days <= 90:  return 'Recent'
+    if iso_date:
+        try:
+            _dt = datetime.strptime(iso_date, '%Y-%m-%d')
+            return _dt.strftime('%b %Y')  # 'Oct 2025', 'Mar 2026'
+        except Exception:
+            pass
     return ''
 
 # ---------------------------------------------------------------------------
@@ -1425,7 +1430,7 @@ def build_static_rows(entries, link_to_listing=False):
         ext_tgt = ' target="_blank" rel="noopener"' if addr_url and not addr_url.startswith('/r/') else ' rel="noopener"'
         addr_inner = f'<a href="{_esc(addr_url)}"{ext_tgt}>{addr}</a>' if addr_url and addr else addr
         addr_html = f'{addr_inner}<span class="oad-d"> · {district}</span>' if district else addr_inner
-        ago = _esc(_tier_label(r['daysOpen']))
+        ago = _esc(_tier_label(r['daysOpen'], r.get('issuedDate')))
         # Click-target precedence by intent:
         #   - Name click = "go to the business's own site" → website preferred
         #   - Photo click = "see more photos / business info" → Places card
@@ -2406,7 +2411,7 @@ def build_listing_extra(entry, all_entries, cuisines_index):
             n_slug = e.get('slug') or ''
             n_name = _esc(e.get('operatingName', ''))
             n_thumb = e.get('thumb') or ''
-            n_when = _esc(_tier_label(e.get('daysOpen', 0)))
+            n_when = _esc(_tier_label(e.get('daysOpen', 0), e.get('issuedDate')))
             n_where = _esc(e.get('district') or '')
             # Link ladder: owner website > Places card > coord-pin > internal /r/<slug>.
             # Matches the row name-link convention - "more info" should land
