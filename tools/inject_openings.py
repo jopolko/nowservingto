@@ -3054,10 +3054,14 @@ for _sel, _val in [
 _trends_page = re.sub(r'<h1 class="sub">[\s\S]*?</h1>(?:<div class="listing-lede">[\s\S]*?</div>)?',
                       lambda m: _trends_h1, _trends_page, count=1)
 _trends_page = _trends_page.replace('<body>', '<body class="page-trends">', 1)
-# Replace the open-feed div with the trends body
+# Insert trends body BEFORE the open-feed div; CSS hides the feed on
+# .page-trends so the chart fully occupies the content area. (Tried to
+# replace the feed div via regex but the nested .open-row divs make
+# matching the closing </div> brittle — sibling-insert + CSS hide is
+# both simpler and more robust.)
 _trends_page = re.sub(
-    r'<div class="open-feed"[^>]*>[\s\S]*?</div>\s*(?=<section)',
-    _trends_body + '\n', _trends_page, count=1)
+    r'(<div class="open-feed")',
+    _trends_body + '\n  \\1', _trends_page, count=1)
 (Path(ROOT) / 'trends.html').write_text(_trends_page)
 print(f"  wrote /trends.html ({len(_trend_top)} cuisines, {len(_drought_broken)} drought-broken, {len(_spikes)} spikes)")
 

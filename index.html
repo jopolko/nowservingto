@@ -454,7 +454,9 @@
   body.page-dispatch .fresh-badge,
   body.page-trends .filters,
   body.page-trends .map-view,
-  body.page-trends .fresh-badge { display: none !important; }
+  body.page-trends .fresh-badge,
+  body.page-trends .open-feed,
+  body.page-trends .newsletter-cta { display: none !important; }
   /* Trends page: cuisine-velocity chart + callouts + share button.
      Screenshot-shareable artifact for social distribution. */
   body.page-trends .trends-section { margin: 24px 0; }
@@ -922,14 +924,15 @@ function tierLabel(days) {
   return '';
 }
 
-// On single-restaurant /r/<slug> pages (.page-listing) and monthly
-// dispatch archive pages (.page-dispatch), skip the directory-level
-// fetch entirely. Those pages are pre-rendered with curated static
-// content - hydrating against /data/corridors.json would replace the
-// curated rows with the full 280-entry feed and break the editorial
-// scope (a 'May 2026 dispatch' shouldn't render entries from January).
+// On single-restaurant /r/<slug> pages (.page-listing), monthly
+// dispatch archive pages (.page-dispatch), and trends pages
+// (.page-trends), skip the directory-level fetch entirely. Those
+// pages are pre-rendered with curated/computed static content -
+// hydrating against /data/corridors.json would replace it with the
+// full 280-entry feed and break the editorial scope.
 if (!document.body.classList.contains('page-listing')
-    && !document.body.classList.contains('page-dispatch'))
+    && !document.body.classList.contains('page-dispatch')
+    && !document.body.classList.contains('page-trends'))
 fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
   const no = data.newOpenings;
   // (Subtitle reads "updated daily" - no dynamic date to inject.)
