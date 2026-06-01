@@ -335,13 +335,25 @@ def enrich_one(operating_name, address):
     if not details:
         return {'status': 'no_details', 'place_id': cand['place_id'], 'query': query}
     loc = (details.get('geometry') or {}).get('location') or {}
-    # Trim reviews to text-only and cap length - full review objects are bulky
-    # (author photos, profile URLs, timestamps) and we only need the prose for
-    # cultural-marker extraction downstream.
+    # Trim reviews to text + timestamp + relative-time. Used to be text-only
+    # but we now need date data to gate "newly registered" inclusion: a
+    # restaurant whose 5 returned reviews include any > 365 days old has
+    # been operating before its current City licence, which means our
+    # "newly registered" claim is misleading (the City paperwork event is
+    # not the same as the restaurant's opening). See the suppression
+    # logic in inject_openings.py.
     reviews_raw = details.get('reviews') or []
-    reviews_text = []
+    reviews = []
+    reviews_text = []   # keep the legacy text-only list for backward compat with downstream code
     for r in reviews_raw[:5]:
         t = (r.get('text') or '').strip()
+        review_obj = {
+            'time': r.get('time'),                                  # unix epoch seconds
+            'relative_time': r.get('relative_time_description'),    # "8 months ago" etc.
+            'rating': r.get('rating'),
+            'text': t[:600] if t else '',
+        }
+        reviews.append(review_obj)
         if t: reviews_text.append(t[:600])
     editorial = (details.get('editorial_summary') or {}).get('overview') if isinstance(details.get('editorial_summary'), dict) else None
     # First photo reference (if any) - downloading the bytes is a separate
@@ -361,8 +373,9 @@ def enrich_one(operating_name, address):
         'lat': loc.get('lat'),
         'lng': loc.get('lng'),
         'businessStatus': details.get('business_status'),
-        'reviews': reviews_text,             # list[str] - up to 5 trimmed review texts
-        'editorialSummary': editorial,       # str or None - Google's curated description
+        'reviews': reviews_text,             # list[str] - up to 5 trimmed review texts (legacy field, kept for downstream consumers)
+        'reviewsDetail': reviews,            # list[dict] - {time, relative_time, rating, text} - date data for opening-gate logic
+        'editorialSummary': editorial,       # str or None - Google's curated description (sometimes mentions "since YYYY")
         'photoRef': photo_ref,               # str or None - first photo_reference for og:image
         'query': query,
     }
@@ -402,10 +415,26 @@ def main():
         if is_known_chain(name): return 'chain'
         if (wv.get(k) or {}).get('validator_drop'): return 'validator-drop'
         return None
+    # --refetch-missing-reviews: re-fetch entries already in cache that lack
+    # the new `reviewsDetail` field (time + relative_time + rating per review).
+    # Used after the 2026-06-01 schema upgrade to backfill date data needed
+    # for the opening-gate logic without re-fetching entries we already have
+    # full review-detail data for.
+    refetch_missing = '--refetch-missing-reviews' in sys.argv
     n_chain = n_drop = 0
     to_fetch = []
     for k, e in pairs.items():
-        if k in cache: continue
+        if k in cache:
+            if refetch_missing:
+                # Only re-fetch if reviewsDetail is missing (didn't exist
+                # in the cache before the schema upgrade)
+                c = cache[k]
+                if c.get('status') == 'ok' and 'reviewsDetail' not in c:
+                    reason = _skip_reason(k, e)
+                    if reason == 'chain': n_chain += 1; continue
+                    if reason == 'validator-drop': n_drop += 1; continue
+                    to_fetch.append((k, e))
+            continue
         reason = _skip_reason(k, e)
         if reason == 'chain': n_chain += 1; continue
         if reason == 'validator-drop': n_drop += 1; continue

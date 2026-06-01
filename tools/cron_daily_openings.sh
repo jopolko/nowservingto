@@ -92,6 +92,20 @@ if [[ "$ROWS" -lt 100000 ]]; then
     log "ERROR: CSV looks truncated (rows=$ROWS); aborting"; exit 1
 fi
 
+# Step 1b: refresh DineSafe inspection lookup. Toronto Public Health
+# publishes inspection records daily on CKAN. Used by inject_openings'
+# pre-existing-restaurant gate (Phase B): if DineSafe inspected this
+# address+name >180d before the licence-issued date, the licence event
+# is a re-licensing of a long-operating place, not a new opening, and
+# the entry is suppressed. Also powers the licence→DineSafe-earliest
+# date swap (use the inspection date as 'registered' when it's later).
+# Non-fatal: if the fetch fails, inject falls back to whatever lookup
+# is on disk; gate just gets staler but doesn't break.
+log "→ fetch_dinesafe.py (Toronto Public Health inspection lookup)"
+if ! "$PYTHON" -u tools/fetch_dinesafe.py >> "$LOG_FILE" 2>&1; then
+    log "WARN: DineSafe fetch failed (non-fatal — gate will use cached lookup)"
+fi
+
 # Step 2: initial inject (uses existing caches)
 log "→ inject_openings.py (initial pass)"
 if ! "$PYTHON" tools/inject_openings.py >> "$LOG_FILE" 2>&1; then

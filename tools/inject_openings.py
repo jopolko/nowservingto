@@ -19,6 +19,7 @@ PLACES_CACHE_PATH = f'{ROOT}/tools/cache/places_cache.json'
 WEB_VERIFY_CACHE_PATH = f'{ROOT}/tools/cache/web_verify_cache.json'
 MENU_HIGHLIGHTS_CACHE_PATH = f'{ROOT}/tools/cache/menu_highlights_cache.json'
 EVIDENCE_REWRITE_CACHE_PATH = f'{ROOT}/tools/cache/evidence_rewrite_cache.json'
+FEATURED_IN_CACHE_PATH = f'{ROOT}/tools/cache/featured_in_cache.json'
 GEOCODE_CACHE_PATH = f'{ROOT}/tools/cache/geocode_cache.json'
 DATA_PATH = f'{ROOT}/data/corridors.json'
 
@@ -43,6 +44,11 @@ try:
     EVIDENCE_REWRITE_CACHE = json.load(open(EVIDENCE_REWRITE_CACHE_PATH))
 except FileNotFoundError:
     EVIDENCE_REWRITE_CACHE = {}
+try:
+    FEATURED_IN_CACHE = json.load(open(FEATURED_IN_CACHE_PATH))
+    FEATURED_IN_CACHE.pop('_doc', None)
+except FileNotFoundError:
+    FEATURED_IN_CACHE = {}
 try:
     GEOCODE_CACHE = json.load(open(GEOCODE_CACHE_PATH))
 except FileNotFoundError:
@@ -347,7 +353,99 @@ from urllib.parse import quote_plus
 # Issued date - that's when the kitchen actually opened, not just when a category was added.
 seen_entries = {}
 n_food_active = 0; n_food_active_365 = 0; n_tagged_365 = 0; n_tagged_30 = 0
-n_dropped_unverified = 0; n_dropped_closed = 0; n_deduped = 0; n_dropped_instore = 0; n_dropped_institutional = 0; n_dropped_weak_match = 0; n_dropped_brand_new_unverified = 0; n_dropped_validator = 0; n_dropped_chain_osm = 0
+n_dropped_unverified = 0; n_dropped_closed = 0; n_deduped = 0; n_dropped_instore = 0; n_dropped_institutional = 0; n_dropped_weak_match = 0; n_dropped_brand_new_unverified = 0; n_dropped_validator = 0; n_dropped_chain_osm = 0; n_dropped_pre_existing = 0
+
+# Pre-existing-restaurant gate: drop entries where Google Places returned
+# at least one review whose timestamp is >180 days BEFORE the City licence-
+# issued date. That's hard evidence the restaurant was operating before
+# its current licence event, so "newly registered" is misleading. Phase A
+# of the opening-date-credibility fix (2026-06-01). Phase B (full review
+# history via SerpApi/Outscraper) is queued for entries that PASS this
+# gate but still feel suspicious; not shipped yet.
+PRE_EXISTING_GAP_DAYS = 180
+def _pre_existing_evidence(cache_key_val, issued_date_str):
+    """Returns (is_pre_existing, gap_days, earliest_review_date) tuple.
+    is_pre_existing=True means at least one Places-returned review predates
+    the licence by >PRE_EXISTING_GAP_DAYS. is_pre_existing=False either
+    means the gate passes OR there's no review-timestamp data to gate on."""
+    from datetime import timezone as _tz
+    p = PLACES_CACHE.get(cache_key_val) or {}
+    rd = p.get('reviewsDetail') or []
+    if not rd: return (False, None, None)
+    times = [r.get('time') for r in rd if r.get('time')]
+    if not times: return (False, None, None)
+    earliest_ts = min(times)
+    earliest_dt = datetime.fromtimestamp(earliest_ts, tz=_tz.utc)
+    try:
+        licence_dt = datetime.strptime(issued_date_str, '%Y-%m-%d').replace(tzinfo=_tz.utc)
+    except Exception:
+        return (False, None, None)
+    gap = (licence_dt - earliest_dt).days
+    return (gap > PRE_EXISTING_GAP_DAYS, gap, earliest_dt.strftime('%Y-%m-%d'))
+
+
+# DineSafe lookup, loaded once at module import. Maps "<streetnum>
+# <streetword> <postalcode>" -> list of per-name inspection summaries.
+# Source: tools/fetch_dinesafe.py (Toronto Public Health open data).
+DINESAFE_LOOKUP_PATH = f'{ROOT}/tools/cache/dinesafe_lookup.json'
+try:
+    _ds_payload = json.load(open(DINESAFE_LOOKUP_PATH))
+    DINESAFE_LOOKUP = _ds_payload.get('lookup') or {}
+except FileNotFoundError:
+    DINESAFE_LOOKUP = {}
+
+
+def _dinesafe_key(addr_str):
+    """Normalize a licence-feed address to match DineSafe's keying scheme."""
+    s = (addr_str or '').upper()
+    s = _re.sub(r'\s+(NONE|UNIT.*|SUITE.*)\s+', ' ', s)
+    s = _re.sub(r"[^A-Z0-9 ]+", ' ', s)
+    s = _re.sub(r'\s+', ' ', s).strip()
+    m = _re.match(r'^(\d+) (\w+).*?([A-Z]\d[A-Z] ?\d[A-Z]\d)', s)
+    if not m: return None
+    return f"{m.group(1)} {m.group(2)} {m.group(3).replace(' ','')}"
+
+
+def _name_tokens_for_match(n):
+    """Strip generic restaurant words so name overlap reflects the
+    distinctive part of the name (MAKILALA, KENKOU SUSHI -> {KENKOU,
+    SUSHI} -> distinctive tokens), not the generic 'RESTAURANT KITCHEN
+    BAR' chrome that every entry has."""
+    n = _re.sub(r'[^A-Z0-9 ]+', ' ', (n or '').upper())
+    BAD = {'THE','A','AN','OF','AND','TO','TORONTO','RESTAURANT','CAFE',
+           'KITCHEN','BAR','GRILL','FOOD','HOUSE','CO','INC','LTD',
+           'LIMITED','BY','ON','AT'}
+    return [t for t in n.split() if len(t) >= 3 and t not in BAD]
+
+
+def _name_overlap(a, b):
+    ta, tb = set(_name_tokens_for_match(a)), set(_name_tokens_for_match(b))
+    if not ta or not tb: return 0.0
+    return len(ta & tb) / max(len(ta), len(tb))
+
+
+def _pre_existing_dinesafe(operating_name, addr_str, issued_date_str):
+    """Returns (is_pre_existing, gap_days, earliest_inspection, matched_name)
+    or (False, None, None, None) when no DineSafe match found.
+
+    Matches by address THEN requires name-overlap >= 0.3 with at least
+    one DineSafe inspection at that address. Without the name filter we'd
+    suppress new restaurants opening in former-tenant spaces (PROFOUND
+    PIZZA opened where THE SWEET POTATO used to be - same address,
+    different business, NOT pre-existing)."""
+    key = _dinesafe_key(addr_str)
+    if not key or not DINESAFE_LOOKUP: return (False, None, None, None)
+    entries = DINESAFE_LOOKUP.get(key) or []
+    if not entries: return (False, None, None, None)
+    matching = [e for e in entries if _name_overlap(operating_name, e.get('name', '')) >= 0.3]
+    if not matching: return (False, None, None, None)
+    earliest = min(e['earliest'] for e in matching)
+    try:
+        gap = (datetime.strptime(issued_date_str, '%Y-%m-%d')
+               - datetime.strptime(earliest, '%Y-%m-%d')).days
+    except Exception:
+        return (False, None, None, None)
+    return (gap > PRE_EXISTING_GAP_DAYS, gap, earliest, matching[0]['name'])
 
 # Grocery/retail chains whose in-store sushi/sandwich counters are NOT consumer-
 # destination restaurants. Three orthogonal signals catch them:
@@ -608,6 +706,22 @@ with open(CSV_PATH, encoding='utf-8', errors='replace') as f:
                 n_dropped_brand_new_unverified += 1
                 continue
 
+        # Pre-existing-restaurant gate (Phase A + B, 2026-06-01):
+        # EITHER signal triggers suppression:
+        #   A) Places-returned review > 180 days before licence
+        #   B) DineSafe inspection (TPH inspector visited this address +
+        #      name) > 180 days before licence - authoritative gov data
+        # B catches what A misses (MAKILALA-class: recent reviews crowd
+        # out old ones in the 5-review Places sample) and vice versa.
+        is_pre, _, _ = _pre_existing_evidence(cache_key(op_raw, address_full),
+                                              iss.isoformat())
+        if not is_pre:
+            is_pre, _, _, _ = _pre_existing_dinesafe(op_raw, address_full,
+                                                     iss.isoformat())
+        if is_pre:
+            n_dropped_pre_existing += 1
+            continue
+
         # Dedupe by (name_upper, addr_upper). Keep EARLIEST issuedDate.
         dedup_key = (op_raw.upper(), addr1.upper())
         existing = seen_entries.get(dedup_key)
@@ -617,6 +731,32 @@ with open(CSV_PATH, encoding='utf-8', errors='replace') as f:
             n_deduped += 1
             if iss.isoformat() < existing['issuedDate']:
                 seen_entries[dedup_key] = entry  # this row is earlier - keep it
+
+# Date-source swap (2026-06-01): when DineSafe's earliest inspection at
+# this address+name is LATER than the licence-issued date, surface
+# DineSafe-earliest as the displayed "registered" date. The licence
+# event answers "when did paperwork happen"; the DineSafe inspection
+# answers "when was the place definitely operating." For surviving
+# entries (the >180d pre-existing case is already dropped), DineSafe-
+# earliest is a tighter operating-since signal than the licence date.
+# Original licence date preserved as `licenceIssuedDate` for audit.
+_n_date_swapped = 0
+for _e in seen_entries.values():
+    _name = _e.get('operatingName') or ''
+    _addr = _e.get('address') or ''
+    _, _, _ds_earliest, _ = _pre_existing_dinesafe(_name, _addr, _e['issuedDate'])
+    if not _ds_earliest: continue
+    if _ds_earliest <= _e['issuedDate']: continue
+    try:
+        _ds_dt = datetime.strptime(_ds_earliest, '%Y-%m-%d').date()
+    except Exception:
+        continue
+    if _ds_dt > REFERENCE_DATE: continue  # future-dated, skip
+    _e['licenceIssuedDate'] = _e['issuedDate']
+    _e['issuedDate'] = _ds_earliest
+    _e['daysOpen'] = max(0, (REFERENCE_DATE - _ds_dt).days)
+    _n_date_swapped += 1
+print(f"  date swap: {_n_date_swapped} entries reassigned 'registered' date from licence to DineSafe-earliest (operating-since signal)")
 
 # Now bucket the deduped entries by cuisine and compute counts.
 # Multi-cuisine entries (e.g., "Afghan + Pakistani + Indian") appear in EACH
@@ -762,7 +902,7 @@ for entry in seen_entries.values():
     for c in entry.get('cuisines') or [entry['cuisine']]:
         opens_365_by_cuisine[c].append(entry)
 
-print(f"  verification gate: kept {n_tagged_365}, dropped {n_dropped_chain_osm} OSM-known chains + {n_dropped_validator} validator (Haiku: chain/institutional/ghost) + {n_dropped_unverified} unverified (no Places, no web_verify yet) + {n_dropped_closed} closed/temp + {n_dropped_instore} in-store kiosks + {n_dropped_institutional} institutional-operator rows + {n_dropped_weak_match} weak-match (no Places / no site / name-guess only) + {n_dropped_brand_new_unverified} brand-new-unverified (<30d, no Places/website) + {n_deduped} duplicate rows collapsed")
+print(f"  verification gate: kept {n_tagged_365}, dropped {n_dropped_chain_osm} OSM-known chains + {n_dropped_validator} validator (Haiku: chain/institutional/ghost) + {n_dropped_unverified} unverified (no Places, no web_verify yet) + {n_dropped_closed} closed/temp + {n_dropped_instore} in-store kiosks + {n_dropped_institutional} institutional-operator rows + {n_dropped_weak_match} weak-match (no Places / no site / name-guess only) + {n_dropped_brand_new_unverified} brand-new-unverified (<30d, no Places/website) + {n_dropped_pre_existing} pre-existing (review predates licence by >180d) + {n_deduped} duplicate rows collapsed")
 
 # Sort each cuisine's list by issued date desc (newest first)
 for c in opens_365_by_cuisine:
@@ -1196,7 +1336,7 @@ def build_static_rows(entries, link_to_listing=False):
     for i, r in enumerate(entries):
         cuisine_keys = r.get('cuisines') or ([r['cuisine']] if r.get('cuisine') else [])
         pills = ''.join(
-            f'<span class="pill" style="background:{PALETTE_HEX.get(k) or cuisine_color(k)}">{_esc(CUISINE_LABEL.get(k, k))}</span>'
+            f'<a class="pill" href="/cuisine/{k}" style="background:{PALETTE_HEX.get(k) or cuisine_color(k)}" aria-label="See newest {_esc(CUISINE_LABEL.get(k, k))} restaurants">{_esc(CUISINE_LABEL.get(k, k))}</a>'
             for k in cuisine_keys
         )
         # Primary cuisine colour drives a thin left-edge accent strip on
@@ -1956,15 +2096,9 @@ if PRESS_PATH.exists():
     n_districts = sum(1 for label, v in by_district.items() if v)
     updated_str = REFERENCE_DATE.strftime('%B %-d, %Y')
 
-    # Top-N rows for the cuisine table (top 10 by count365d, descending)
-    top_rows = []
-    for c in cuisines_out[:10]:
-        top_rows.append(
-            f'<tr><td><a href="/cuisine/{c["key"]}">{_esc(c["label"])}</a></td>'
-            f'<td>{c.get("count365d", 0)}</td>'
-            f'<td>{c.get("count30d", 0)}</td></tr>'
-        )
-    top_rows_html = '\n'.join(top_rows)
+    # (Top-N table HTML used to be built here for the PRESS-TOP-CUISINES
+    # block; removed 2026-05-31 - replaced by the client-rendered bar
+    # charts on /press.)
 
     swaps = [
         (r'<!-- PRESS-N-TOTAL -->.*?<!-- /PRESS-N-TOTAL -->',
@@ -1977,8 +2111,11 @@ if PRESS_PATH.exists():
          f'<!-- PRESS-N-DISTRICTS -->{n_districts}<!-- /PRESS-N-DISTRICTS -->'),
         (r'<!-- PRESS-UPDATED-DATE -->.*?<!-- /PRESS-UPDATED-DATE -->',
          f'<!-- PRESS-UPDATED-DATE -->{_esc(updated_str)}<!-- /PRESS-UPDATED-DATE -->'),
-        (r'<!-- PRESS-TOP-CUISINES-START -->.*?<!-- PRESS-TOP-CUISINES-END -->',
-         f'<!-- PRESS-TOP-CUISINES-START -->\n{top_rows_html}\n<!-- PRESS-TOP-CUISINES-END -->'),
+        # PRESS-TOP-CUISINES table removed 2026-05-31 - the two side-by-side
+        # bar charts (12mo + 30d) above it carry the same data with more
+        # visual punch. The cuisine-counts data still flows to the page
+        # via the client-side fetch of /data/corridors.json that drives
+        # those charts; this cron-injected table block is no longer needed.
     ]
     for pat, rep in swaps:
         press_html = re.sub(pat, rep, press_html, count=1, flags=re.DOTALL)
@@ -2136,28 +2273,56 @@ def build_listing_extra(entry, all_entries, cuisines_index):
             '</div>'
         )
 
-    # 2b) Menu signals - verbatim dishes extracted from the owner website by
-    # Haiku (tools/llm_menu_highlights_batch.py). Strict verbatim-only
-    # extraction; cache stores null when fewer than 2 confident dishes
-    # were found, so this line silently skips on those entries. Single
-    # short line, not a card - dish names are the dish-level keywords
-    # Google can't get from a Maps listing.
-    mh = MENU_HIGHLIGHTS_CACHE.get(cache_key_val) or {}
-    dishes = mh.get('dishes') if mh.get('status') == 'ok' else None
-    if dishes and len(dishes) >= 2:
-        blocks.append(
-            '<p class="lx-meta"><b>Menu signals</b> &middot; '
-            + _esc(', '.join(dishes))
-            + ' - <span style="color:var(--muted)">from the owner\'s website</span>.'
-            + '</p>'
-        )
+    # 2b) Menu signals - REMOVED 2026-06-01. The verbatim dish list
+    # (moussaka, souvlakis, etc.) duplicated dishes already named in
+    # the editorial blurb above. Keeping both made the panel read as
+    # repeating itself. The MENU_HIGHLIGHTS_CACHE still feeds the
+    # /r/ page meta description (build_listing_meta_desc above) where
+    # dish names are still the best SERP-snippet keyword carrier.
 
-    # We previously had a "licensed by the City of Toronto on <date>"
-    # provenance line and a "1 of N <cuisine> restaurants..." cohort
-    # paragraph here. Both removed - they read as filler / corporate-
-    # speak rather than something a visitor came to learn. Cohort
-    # cross-links live in the breadcrumb + the cuisine/district
-    # navigation in the header instead.
+    # 3) Featured in: Toronto food-press citations (BlogTO, Toronto Life,
+    # Eater, Toronto Guardian, etc.). Populated by a separate Haiku
+    # web_search pass per restaurant (tools/llm_featured_in_batch.py,
+    # to be shipped). Cache-keyed by cache_key. The single most
+    # editorially-substantive enrichment we can add - third-party
+    # validation, not just our claim.
+    fi = FEATURED_IN_CACHE.get(cache_key_val) or {}
+    citations = fi.get('citations') if fi.get('status') == 'ok' else None
+    if citations:
+        # Format publication date as "Jul 2025" style. Citations come pre-
+        # sorted by relevance from the Haiku pass; render up to 5.
+        def _fmt_date(d):
+            if not d: return ''
+            try:
+                from datetime import datetime as _dt
+                return _dt.strptime(d[:7], '%Y-%m').strftime('%b %Y')
+            except Exception:
+                return d
+        items = []
+        for c in citations[:5]:
+            pub = _esc(c.get('publication') or '')
+            url = _esc(c.get('url') or '')
+            excerpt = _esc(c.get('excerpt') or '')
+            date_s = _esc(_fmt_date(c.get('date') or ''))
+            if not (pub and url): continue
+            date_html = f'<span class="fi-date">{date_s}</span>' if date_s else ''
+            items.append(
+                f'<li class="fi-item">'
+                f'<a class="fi-link" href="{url}" target="_blank" rel="noopener">'
+                f'<span class="fi-pub">{pub}</span>'
+                f'{date_html}'
+                f'</a>'
+                f'{f"<span class=fi-excerpt>{excerpt}</span>" if excerpt else ""}'
+                f'</li>'
+            )
+        if items:
+            blocks.append(
+                '<div class="lx-card lx-featured">'
+                '<p class="lx-eyebrow">Featured in Toronto food press</p>'
+                f'<ul class="fi-list">{"".join(items)}</ul>'
+                '</div>'
+            )
+
     keys = entry.get('cuisines') or ([entry['cuisine']] if entry.get('cuisine') else [])
     primary_key = keys[0] if keys else ''
 

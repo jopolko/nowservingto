@@ -234,6 +234,69 @@ def _host_of(url):
     except Exception:
         return ''
 
+# Aggregator / delivery-platform hosts. If a restaurant's "own" domain
+# 301s to one of these, the domain is effectively just a stub redirector
+# for ordering. Drop the website link and let mapsUrl take over - visitors
+# clicking the name expect the restaurant's profile, not a SkipTheDishes
+# checkout page they could've reached from anywhere.
+AGG_HOSTS = (
+    'skipthedishes.', 'doordash.', 'ubereats.', 'grubhub.', 'foodora.',
+    'menulog.', 'seamless.', 'tripadvisor.', 'yelp.', 'chownow.',
+    'ritual.co', 'opentable.', 'resy.com', 'tock.com',
+    'order.online', 'order.toasttab.', 'orderspoon.', 'fantuan.ca',
+    'beyondmenu.', 'menufy.', 'getbento.', 'cloverleaf.',
+)
+
+def _aggregator_match(url):
+    """Return the matched aggregator host if `url`'s host contains one of
+    the AGG_HOSTS substrings, else None."""
+    try:
+        from urllib.parse import urlparse
+        host = (urlparse(url).hostname or '').lower()
+        for a in AGG_HOSTS:
+            if a in host: return host
+    except Exception: pass
+    return None
+
+
+def _peek_redirect_target(url, max_hops=4):
+    """HEAD with redirect-following disabled - returns the Location-chain
+    final URL without actually fetching the destination body. Lets us
+    detect cross-domain redirects even when the destination Cloudflare-
+    or WAF-blocks our probe (which would otherwise mask the redirect
+    behind a soft-fail 403/429).
+    Returns None on any error - caller falls through to the main probe."""
+    current = url
+    for _ in range(max_hops):
+        try:
+            req = Request(current, headers={'User-Agent': UA}, method='HEAD')
+            # urllib's default opener follows redirects; build a no-follow opener
+            import urllib.request as _ur
+            class _NoRedirect(_ur.HTTPRedirectHandler):
+                def redirect_request(self, req, fp, code, msg, headers, newurl):
+                    return None
+            opener = _ur.build_opener(_NoRedirect())
+            try:
+                with opener.open(req, timeout=TIMEOUT_SEC) as r:
+                    # Not a redirect (200 etc.) - no chain to peek
+                    return None
+            except HTTPError as e:
+                if 300 <= e.code < 400:
+                    loc = e.headers.get('Location')
+                    if not loc: return None
+                    # Resolve relative redirects against the current URL
+                    from urllib.parse import urljoin
+                    current = urljoin(current, loc)
+                    # If we've left the original host, we've found what we need
+                    if _host_of(current) != _host_of(url):
+                        return current
+                    continue  # same-host redirect; keep walking
+                return None
+        except Exception:
+            return None
+    return current if _host_of(current) != _host_of(url) else None
+
+
 def probe(url):
     """Try HEAD first; some servers refuse, retry GET with range. Treat 200/3xx as OK,
     AND treat known soft-fail codes (429/403/etc.) as OK since they mean the page exists
@@ -243,6 +306,21 @@ def probe(url):
     if any(d in url.lower() for d in SKIP_PROBE_DOMAINS):
         return {'status': None, 'ok': True, 'reason': 'skipped (HEAD probe blocked by site; page assumed live for browser visitors)'}
     origin_host = _host_of(url)
+    # Pre-flight: do a NO-FOLLOW HEAD/GET to peek at the Location header BEFORE
+    # we follow into a Cloudflare-protected destination that might soft-fail us
+    # and mask the redirect. The kings-delight.com case: 301 -> skipthedishes.com
+    # which 403s our probe; without this peek we'd cache it as "soft-fail 403,
+    # page assumed live" and never catch that it's an aggregator-wrapped stub.
+    pre = _peek_redirect_target(url)
+    if pre:
+        final_host = _host_of(pre)
+        if origin_host and final_host and origin_host != final_host:
+            agg = _aggregator_match(pre)
+            if agg:
+                return {'status': 301, 'ok': False,
+                        'reason': f'aggregator-wrapped redirect: {origin_host} → {agg} (delivery-platform stub)'}
+            return {'status': 301, 'ok': False,
+                    'reason': f'cross-domain redirect: {origin_host} → {final_host} (domain hijack/parked)'}
     for method in ('HEAD', 'GET'):
         try:
             req = Request(url, headers={'User-Agent': UA, 'Range': 'bytes=0-0'}, method=method)
@@ -250,6 +328,10 @@ def probe(url):
                 code = r.status
                 final_host = _host_of(r.geturl())
                 if origin_host and final_host and origin_host != final_host:
+                    agg = _aggregator_match(r.geturl())
+                    if agg:
+                        return {'status': code, 'ok': False,
+                                'reason': f'aggregator-wrapped redirect: {origin_host} → {agg} (delivery-platform stub)'}
                     return {'status': code, 'ok': False,
                             'reason': f'cross-domain redirect: {origin_host} → {final_host} (domain hijack/parked)'}
                 if 200 <= code < 400:
