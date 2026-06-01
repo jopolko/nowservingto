@@ -1011,15 +1011,31 @@ def _ago_long(days):
 
 
 def _ago(days):
-    # Time-only labels. The masthead carries the "newest registered"
-    # anchor so rows don't need to repeat it. Word "licensed" was
-    # deliberately avoided in user-facing copy because in Ontario it
-    # ambiguously implies LLBO/alcohol licensing - most entries here
-    # don't have an alcohol licence.
+    # Time-only labels. Kept for backward compatibility with the X tweet
+    # snippet builder and any other prose paths; the row pill no longer
+    # calls this - see _tier_label() below.
     if days <= 1: return 'today'
     if days <= 60: return f'{days}d ago'
     if days <= 365: return f'{round(days/30)}mo ago'
     return f'{days/365:.1f}y ago'
+
+
+def _tier_label(days):
+    """Three-tier freshness label for the row pill (2026-06-01).
+    Replaces the prior numeric '5d ago / 9mo ago' pill, which was
+    pulling double duty (freshness signal + sort key) and only
+    earning value at the fresh end. The numeric badges on 7-month-
+    old entries read as 'kinda new' - psychologically worse than
+    no claim at all.
+      0-30d  -> 'New'     (★ added by CSS via data-fresh="hot")
+      31-90d -> 'Recent'  (muted styling, no star)
+      91d+   -> ''        (badge omitted; entry still listed)
+    The 365d inclusion rule remains; only the per-row claim shrinks
+    to where the news-value actually lives."""
+    if days is None: return ''
+    if days <= 30:  return 'New'
+    if days <= 90:  return 'Recent'
+    return ''
 
 # ---------------------------------------------------------------------------
 # Static-feed + JSON-LD builders (shared between homepage and per-cuisine pages).
@@ -1365,7 +1381,7 @@ def build_static_rows(entries, link_to_listing=False):
         ext_tgt = ' target="_blank" rel="noopener"' if addr_url and not addr_url.startswith('/r/') else ' rel="noopener"'
         addr_inner = f'<a href="{_esc(addr_url)}"{ext_tgt}>{addr}</a>' if addr_url and addr else addr
         addr_html = f'{addr_inner}<span class="oad-d"> · {district}</span>' if district else addr_inner
-        ago = _esc(_ago(r['daysOpen']))
+        ago = _esc(_tier_label(r['daysOpen']))
         # Click-target precedence by intent:
         #   - Name click = "go to the business's own site" → website preferred
         #   - Photo click = "see more photos / business info" → Places card
@@ -1416,11 +1432,20 @@ def build_static_rows(entries, link_to_listing=False):
                       f'<img class="row-pic" src="{_esc(thumb)}" alt="{alt_text}" {load_attrs} decoding="async">'
                       if thumb else '')
         slug_attr = f' data-slug="{_esc(slug)}"' if slug else ''
-        ago_html = (f'<a class="ago" href="/r/{_esc(slug)}">{ago}</a>'
-                    if link_to_listing and slug
-                    else f'<span class="ago">{ago}</span>')
+        # Tier attribute drives the pill styling (CSS reads data-fresh).
+        # 0-30d gets the ★ accent treatment; 31-90d gets a quieter recent
+        # tag; 91-365d carries no badge and no data-fresh attribute.
+        _d = r.get('daysOpen')
+        fresh_attr = ''
+        if isinstance(_d, int):
+            if _d <= 30:   fresh_attr = ' data-fresh="hot"'
+            elif _d <= 90: fresh_attr = ' data-fresh="recent"'
+        ago_html = ((f'<a class="ago" href="/r/{_esc(slug)}">{ago}</a>'
+                     if link_to_listing and slug
+                     else f'<span class="ago">{ago}</span>')
+                    if ago else '')
         out.append(
-            f'<div class="open-row{ " has-pic" if thumb else "" }"{slug_attr}{multi_attr}{accent_style}>'
+            f'<div class="open-row{ " has-pic" if thumb else "" }"{slug_attr}{fresh_attr}{multi_attr}{accent_style}>'
             f'{thumb_html}'
             f'<div class="od">{ago_html}</div>'
             f'<div class="on">{name_html}<span class="oad">{addr_html}</span></div>'
@@ -2337,7 +2362,7 @@ def build_listing_extra(entry, all_entries, cuisines_index):
             n_slug = e.get('slug') or ''
             n_name = _esc(e.get('operatingName', ''))
             n_thumb = e.get('thumb') or ''
-            n_when = _esc(_ago(e.get('daysOpen', 0)))
+            n_when = _esc(_tier_label(e.get('daysOpen', 0)))
             n_where = _esc(e.get('district') or '')
             # Link ladder: owner website > Places card > coord-pin > internal /r/<slug>.
             # Matches the row name-link convention - "more info" should land
@@ -2369,11 +2394,12 @@ def build_listing_extra(entry, all_entries, cuisines_index):
                 )
             cta_html = (f'<div class="lx-near-ctas">{"".join(cta_parts)}</div>'
                         if cta_parts else '')
+            when_html = f'<span class="lx-near-when">{n_when}</span>' if n_when else ''
             cards.append(
                 f'<div class="lx-near-card">'
                 f'{pic_html}'
                 f'<div class="lx-near-body">'
-                f'<span class="lx-near-when">{n_when}</span>'
+                f'{when_html}'
                 f'<a class="lx-near-name" href="{_esc(internal_url)}">{n_name}</a>'
                 f'<span class="lx-near-where">{n_where}</span>'
                 f'{cta_html}'
