@@ -805,6 +805,26 @@ for _e in seen_entries.values():
 print(f"  date swap: {_n_date_swapped} entries reassigned 'registered' date "
       f"({_n_swap_dinesafe} via DineSafe, {_n_swap_review} via oldest Places review)")
 
+# >1yr drop (post-swap): the existing pre-existing gate compares licence
+# date vs evidence and drops if evidence predates licence by >180d. That
+# catches re-licensings of long-running places, but misses entries where
+# the licence-vs-evidence gap is ≤180d AND yet the absolute operating-
+# since signal still puts the place past the 365d window. Example: 11mo
+# old licence + reviews 6mo before that = 17mo operating, but only 5mo
+# licence-evidence gap (passes the 180d gate). Now that the swap surfaces
+# the actual operating-since lower bound, just drop anything whose
+# daysOpen exceeds 365 - the directory's whole promise is restaurants in
+# their first year, and a 17-month-old place doesn't belong even if its
+# paperwork looks recent.
+_n_dropped_over_1yr = 0
+for _k in list(seen_entries.keys()):
+    if seen_entries[_k].get('daysOpen', 0) > 365:
+        del seen_entries[_k]
+        _n_dropped_over_1yr += 1
+if _n_dropped_over_1yr:
+    print(f"  >1yr drop: {_n_dropped_over_1yr} entries cut (operating evidence dates back >365d, "
+          f"licence is recent but the place isn't actually new)")
+
 # Now bucket the deduped entries by cuisine and compute counts.
 # Multi-cuisine entries (e.g., "Afghan + Pakistani + Indian") appear in EACH
 # of their cuisine buckets - totalTagged365d counts entries (not bucket-rows),
@@ -949,7 +969,7 @@ for entry in seen_entries.values():
     for c in entry.get('cuisines') or [entry['cuisine']]:
         opens_365_by_cuisine[c].append(entry)
 
-print(f"  verification gate: kept {n_tagged_365}, dropped {n_dropped_chain_osm} OSM-known chains + {n_dropped_validator} validator (Haiku: chain/institutional/ghost) + {n_dropped_unverified} unverified (no Places, no web_verify yet) + {n_dropped_closed} closed/temp + {n_dropped_instore} in-store kiosks + {n_dropped_institutional} institutional-operator rows + {n_dropped_weak_match} weak-match (no Places / no site / name-guess only) + {n_dropped_brand_new_unverified} brand-new-unverified (<30d, no Places/website) + {n_dropped_pre_existing} pre-existing (review predates licence by >180d) + {n_deduped} duplicate rows collapsed")
+print(f"  verification gate: kept {n_tagged_365}, dropped {n_dropped_chain_osm} OSM-known chains + {n_dropped_validator} validator (Haiku: chain/institutional/ghost) + {n_dropped_unverified} unverified (no Places, no web_verify yet) + {n_dropped_closed} closed/temp + {n_dropped_instore} in-store kiosks + {n_dropped_institutional} institutional-operator rows + {n_dropped_weak_match} weak-match (no Places / no site / name-guess only) + {n_dropped_brand_new_unverified} brand-new-unverified (<30d, no Places/website) + {n_dropped_pre_existing} pre-existing (evidence predates licence by >180d) + {_n_dropped_over_1yr} operating >1yr per evidence + {n_deduped} duplicate rows collapsed")
 
 # Sort each cuisine's list by issued date desc (newest first)
 for c in opens_365_by_cuisine:
