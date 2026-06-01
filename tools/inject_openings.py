@@ -2953,9 +2953,20 @@ for _c, _by_m in _cuisine_month_count.items():
         'delta_pct': ((_curr - _avg) / _avg * 100) if _avg > 0 else None,
         'by_m': dict(_by_m),
     })
+# Add prior-month count for movement arrows
+_prior_ym = _ym_back(_dispatch_today, 2)  # month before the current dispatch month
+for r in _trend_rows:
+    r['prior'] = _cuisine_month_count[r['key']].get(_prior_ym, 0)
+    r['delta'] = r['curr'] - r['prior']
 # Sort: this-month-count desc, then avg desc as tiebreaker
 _trend_rows.sort(key=lambda r: (-r['curr'], -r['avg']))
 _trend_top = _trend_rows[:12]
+# Biggest mover this month - largest absolute delta vs 12-month avg
+# (positive). Highlights "this cuisine really had a month" regardless
+# of overall size.
+_movers = sorted(_trend_rows, key=lambda r: -(r['curr'] - r['avg']))
+_biggest_mover = next((r for r in _movers
+                       if r['curr'] >= 2 and (r['curr'] - r['avg']) > 0.5), None)
 
 # Drought-broken: cuisines with curr>=1 AND no openings in prior 3 months
 _drought_broken = []
@@ -2975,8 +2986,22 @@ for r in _trend_rows:
 _spikes = [(r['label'], r['curr'], round(r['avg'], 1))
            for r in _trend_rows if r['curr'] >= 2 and r['avg'] > 0 and r['curr'] >= r['avg'] * 2]
 
-# Build SVG bar chart - horizontal bars, top 12 cuisines this month
-_chart_w = 720; _bar_h = 22; _gap = 6; _label_w = 130; _bar_max_w = _chart_w - _label_w - 60
+# Build SVG bar chart - horizontal bars, top 12 cuisines this month.
+# Per-cuisine colors (from PALETTE_HEX/cuisine_color) so each cuisine
+# has its own visual identity instead of uniform coral. Movement arrow
+# right-aligned next to the count when there's meaningful change vs
+# prior month - gives the chart a little kinetic feel without being
+# competitive in tone.
+def _movement_arrow(delta):
+    if delta >= 3:  return '<tspan fill="#3fb37f" font-weight="800"> ↑↑↑</tspan>'
+    if delta == 2:  return '<tspan fill="#3fb37f" font-weight="700"> ↑↑</tspan>'
+    if delta == 1:  return '<tspan fill="#3fb37f" font-weight="600"> ↑</tspan>'
+    if delta == -1: return '<tspan fill="#9a9a96" font-weight="500"> ↓</tspan>'
+    if delta == -2: return '<tspan fill="#9a9a96" font-weight="500"> ↓↓</tspan>'
+    if delta <= -3: return '<tspan fill="#9a9a96" font-weight="500"> ↓↓↓</tspan>'
+    return ''
+
+_chart_w = 720; _bar_h = 22; _gap = 6; _label_w = 130; _bar_max_w = _chart_w - _label_w - 80
 _max_count = max((r['curr'] for r in _trend_top), default=1) or 1
 _chart_h = len(_trend_top) * (_bar_h + _gap) + 10
 _svg_bars = []
@@ -2984,15 +3009,16 @@ for i, r in enumerate(_trend_top):
     y = i * (_bar_h + _gap) + 5
     bw_curr = (r['curr'] / _max_count) * _bar_max_w if r['curr'] else 0
     bw_avg  = (r['avg']  / _max_count) * _bar_max_w if r['avg']  else 0
+    _bar_color = PALETTE_HEX.get(r['key']) or cuisine_color(r['key'])
     _svg_bars.append(
-        f'<text x="{_label_w - 10}" y="{y + _bar_h*0.7}" text-anchor="end" font="600 13px sans-serif" fill="#1a1a1a" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="12.5" font-weight="600">{_esc(r["label"])}</text>'
+        f'<text x="{_label_w - 10}" y="{y + _bar_h*0.7}" text-anchor="end" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="12.5" font-weight="600" fill="#1a1a1a">{_esc(r["label"])}</text>'
         f'<rect x="{_label_w}" y="{y + 4}" width="{bw_avg:.1f}" height="{_bar_h - 8}" fill="#ebe9e4" rx="2"/>'
-        f'<rect x="{_label_w}" y="{y}" width="{bw_curr:.1f}" height="{_bar_h}" fill="#e84e3a" rx="3"/>'
-        f'<text x="{_label_w + max(bw_curr, bw_avg) + 8}" y="{y + _bar_h*0.7}" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="11.5" font-weight="700" fill="#1a1a1a">{r["curr"]}</text>'
+        f'<rect x="{_label_w}" y="{y}" width="{bw_curr:.1f}" height="{_bar_h}" fill="{_bar_color}" rx="3"/>'
+        f'<text x="{_label_w + max(bw_curr, bw_avg) + 8}" y="{y + _bar_h*0.7}" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="11.5" font-weight="700" fill="#1a1a1a">{r["curr"]}{_movement_arrow(r["delta"])}</text>'
     )
 _trends_chart_svg = (
     f'<svg viewBox="0 0 {_chart_w} {_chart_h}" xmlns="http://www.w3.org/2000/svg" '
-    'role="img" aria-label="Toronto restaurant openings by cuisine, this month vs 12-month average" '
+    'role="img" aria-label="Toronto restaurant openings by cuisine, this month vs 12-month average, with month-over-month movement" '
     f'style="width:100%;max-width:{_chart_w}px;height:auto;display:block">'
     + ''.join(_svg_bars)
     + '</svg>'
@@ -3079,9 +3105,27 @@ _macro_context = (
     + f"Coral bar = 2020 COVID year. Grey bar = {_dispatch_today.year} (partial)."
 )
 
+# Biggest-mover hero stat - the cuisine that "really had a month"
+# vs its 12-month average. Designed as a single quote-able sentence
+# that works as the chart's narrative anchor.
+if _biggest_mover:
+    _bm = _biggest_mover
+    _bm_avg_int = round(_bm['avg'], 1)
+    _bm_hero = (
+        f'<div class="trends-hero">'
+        f'<span class="trends-hero-label">Biggest mover, {_esc(_dispatch_label)}</span>'
+        f'<span class="trends-hero-stat">{_esc(_bm["label"])} </span>'
+        f'<span class="trends-hero-num">{_bm["curr"]}</span>'
+        f'<span class="trends-hero-note"> openings (12-month avg: {_bm_avg_int}/mo)</span>'
+        f'</div>'
+    )
+else:
+    _bm_hero = ''
+
 _trends_body = (
     '<section class="trends-section">'
     '<h2 class="trends-h2">This month by cuisine</h2>'
+    f'{_bm_hero}'
     f'<div class="trends-chart-wrap">{_trends_chart_svg}</div>'
     f'{_callouts_html}'
     '</section>'
