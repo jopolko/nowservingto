@@ -3224,55 +3224,114 @@ def _pie_slice_path(pct, cx, cy, r):
 # and the screenshot-share unit is the row of 3. Cuisine name beneath
 # each; percentage in the slice's center. The visual ratio between
 # the three slices does all the editorial work.
-_total_this_month = sum(r['curr'] for r in _trend_rows) or 1
-_top_3 = sorted(_trend_rows, key=lambda r: -r['curr'])[:3]
-_pie_cards = []
-for r in _top_3:
-    pct = round((r['curr'] / _total_this_month) * 100)
-    color = PALETTE_HEX.get(r['key']) or cuisine_color(r['key'])
+# DRY pie card builder - used for both short-term and long-term rows
+def _build_pie_card(label, key, pct, aria_period):
+    color = PALETTE_HEX.get(key) or cuisine_color(key)
     slice_path = _pie_slice_path(pct, 50, 50, 45)
-    pie_svg = (
-        '<svg viewBox="0 0 100 100" width="120" height="120" '
+    svg = (
+        '<svg viewBox="0 0 100 100" width="105" height="105" '
         'xmlns="http://www.w3.org/2000/svg" '
-        f'role="img" aria-label="{_esc(r["label"])}: {pct} percent of {_esc(_dispatch_label)} openings">'
+        f'role="img" aria-label="{_esc(label)}: {pct} percent of {_esc(aria_period)}">'
         f'<circle cx="50" cy="50" r="45" fill="#ebe9e4"/>'
         f'<path d="{slice_path}" fill="{color}"/>'
         f'<text x="50" y="58" text-anchor="middle" '
         'font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" '
-        f'font-size="24" font-weight="800" fill="#1a1a1a">{pct}%</text>'
+        f'font-size="22" font-weight="800" fill="#1a1a1a">{pct}%</text>'
         '</svg>'
     )
-    _pie_cards.append(
-        '<div class="trends-pie-card">'
-        f'{pie_svg}'
-        f'<div class="trends-pie-name">{_esc(r["label"])}</div>'
-        '</div>'
-    )
-_period_start_label = _cal.month_name[int(_recent_6_months[0][-2:])] + ' ' + _recent_6_months[0][:4]
-_bm_hero = (
-    '<div class="trends-pies-row">' + ''.join(_pie_cards) + '</div>'
-    f'<p class="trends-pies-note">Share of the {_total_this_month} new restaurants registered in '
-    f'Toronto over the last 6 months ({_esc(_period_start_label)} – {_esc(_dispatch_label)}). '
-    'Updated daily.</p>'
-) if _top_3 else ''
+    return f'<div class="trends-pie-card">{svg}<div class="trends-pie-name">{_esc(label)}</div></div>'
+
+# Short-term: last 90 days from verified seen_entries (currently-operating).
+# This is what's HAPPENING - the dramatic, recent shifts.
+_short_months_n = 3
+_short_window = [_ym_back(_dispatch_today, i) for i in range(_short_months_n, 0, -1)]
+_short_cuisine_count = _dd(int)
+_short_total = 0
+for _e in seen_entries.values():
+    _iso = _e.get('issuedDate') or ''
+    if len(_iso) < 7 or _iso[:7] not in _short_window: continue
+    _cs = [c for c in (_e.get('cuisines') or ([_e.get('cuisine')] if _e.get('cuisine') else []))
+           if c and c != 'unknown']
+    if not _cs: continue
+    _short_total += 1
+    for _c in _cs:
+        _short_cuisine_count[_c] += 1
+_short_rows = sorted(
+    [{'key': _c, 'label': CUISINE_LABEL.get(_c, _c.replace('_', ' ').title()),
+      'count': _n, 'pct': round((_n / _short_total) * 100) if _short_total else 0}
+     for _c, _n in _short_cuisine_count.items()],
+    key=lambda r: -r['count']
+)[:6]
+_short_pies = ''.join(
+    _build_pie_card(r['label'], r['key'], r['pct'], 'last 90 days')
+    for r in _short_rows
+)
+# Long-term pies (3-year top 6 from already-computed _y3_rows)
+_long_top_6 = _y3_rows[:6] if _y3_rows else []
+_long_pies = ''.join(
+    _build_pie_card(r['label'], r['key'], int(r['pct']), 'last 3 years')
+    for r in _long_top_6
+)
+
+# Contrast callout - the editorial bridge between short and long views.
+# Auto-computes the "drama" line based on whether leaders match.
+_short_leader = _short_rows[0] if _short_rows else None
+_long_leader = _long_top_6[0] if _long_top_6 else None
+if _short_leader and _long_leader and _y3_total > 0:
+    if _short_leader['key'] == _long_leader['key']:
+        _contrast = (
+            f"<b>{_esc(_short_leader['label'])}</b> leads on both timeframes — "
+            f"{_short_leader['pct']}% of the last 90 days, {round(_long_leader['pct'])}% over 3 years. "
+            "Toronto's most consistent cuisine."
+        )
+    else:
+        _contrast = (
+            f"<b>{_esc(_long_leader['label'])}</b> has led Toronto food openings for the past 3 years "
+            f"({round(_long_leader['pct'])}% of all openings), "
+            f"but <b>{_esc(_short_leader['label'])}</b> just took {_short_leader['pct']}% of the last 90 days. "
+            "Whether that holds is anyone's guess."
+        )
+else:
+    _contrast = ''
+_contrast_html = (
+    f'<div class="trends-contrast">{_contrast}</div>' if _contrast else ''
+)
+
+_short_note = (
+    f'<p class="trends-pies-note">Share of {_short_total} new restaurants verified open in the last 90 days. '
+    'Highly volatile — small sample means standings can flip on a single opening.</p>'
+) if _short_total else ''
+_long_note = (
+    f'<p class="trends-pies-note">Share of {_y3_total:,} classified restaurant openings registered '
+    f'in Toronto over the past 3 years. The structural picture: who actually opens the most kitchens.</p>'
+) if _y3_total else ''
 
 _trends_body = (
+    # Short-term section (the dramatic, current view)
     '<section class="trends-section">'
-    f'<h2 class="trends-h2">Cuisine leaderboard, last 6 months</h2>'
-    f'{_bm_hero}'
-    '<h3 class="trends-h3">All cuisines, last 6 months</h3>'
-    f'<div class="trends-chart-wrap">{_trends_chart_svg}</div>'
+    '<h2 class="trends-h2">Right now — last 90 days</h2>'
+    f'<div class="trends-pies-row">{_short_pies}</div>'
+    f'{_short_note}'
+    '</section>'
+    # Contrast bridge
+    + _contrast_html +
+    # Long-term section (the authoritative, structural view)
+    '<section class="trends-section">'
+    '<h2 class="trends-h2">The long view — last 3 years</h2>'
+    f'<div class="trends-pies-row">{_long_pies}</div>'
+    f'{_long_note}'
     f'{_callouts_html}'
     '</section>'
-    + _y3_section +
+    # 16-year volume backdrop
     '<section class="trends-section">'
     '<h2 class="trends-h2">The 16-year backdrop</h2>'
     f'<div class="trends-chart-wrap">{_macro_chart_svg}</div>'
     f'<p class="trends-macro-note">{_esc(_macro_context)}</p>'
     '</section>'
+    # Share CTA
     '<p class="trends-share">'
     f'<a class="trends-tweet-btn" href="{_esc(_tweet_intent)}" target="_blank" rel="noopener">'
-    'Share the cuisine chart on X &rsaquo;</a> '
+    'Share this on X &rsaquo;</a> '
     '<span class="trends-note">Auto-refreshes daily from City open data + DineSafe.</span>'
     '</p>'
 )

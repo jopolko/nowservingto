@@ -461,18 +461,26 @@
      Screenshot-shareable artifact for social distribution. */
   body.page-trends .trends-section { margin: 28px 0; }
   body.page-trends .trends-h2 { font: 800 18px/1.2 var(--sans); margin: 0 0 14px; letter-spacing: -0.012em; color: var(--ink); }
-  /* Top-3 pie row: three side-by-side pies showing each top cuisine's
-     share of this month's openings. The visual ratio between the three
-     slices does the editorial work - no per-pie text needed. */
-  body.page-trends .trends-pies-row { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; margin: 12px 0 8px; padding: 8px 0; }
+  /* Top-N pie row: top 6 cuisines side by side, each showing its share
+     of the period's openings. The visual ratio between the slices does
+     the editorial work - no per-pie text needed. Sized to fit 6 across
+     a max-720 desktop column; flex-wraps to 3+3 or 2+2+2 on narrower
+     viewports. */
+  body.page-trends .trends-pies-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 12px 0 8px; padding: 8px 0; }
   body.page-trends .trends-pie-card { text-align: center; flex: 0 0 auto; }
   body.page-trends .trends-pie-card svg { display: block; margin: 0 auto; }
-  body.page-trends .trends-pie-name { font: 700 14.5px/1.2 var(--sans); margin-top: 10px; color: var(--ink); letter-spacing: -0.005em; }
+  body.page-trends .trends-pie-name { font: 700 13px/1.2 var(--sans); margin-top: 8px; color: var(--ink); letter-spacing: -0.005em; }
   body.page-trends .trends-pies-note { font: 400 13px/1.4 var(--serif); color: var(--muted); font-style: italic; text-align: center; margin: 4px 0 22px; }
   body.page-trends .trends-h3 { font: 700 12px/1.2 var(--sans); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 16px 0 10px; }
+  /* Contrast bridge between the short-term and long-term pie rows.
+     This is the editorial moment - the "wait, look what changed" line
+     that turns two static charts into a story. */
+  body.page-trends .trends-contrast { background: var(--paper); border-top: 3px solid var(--accent); border-bottom: 3px solid var(--accent); padding: 20px 22px; margin: 30px 0; font: 500 16px/1.55 var(--serif); color: var(--ink); text-align: center; letter-spacing: -0.005em; }
+  body.page-trends .trends-contrast b { font-weight: 800; color: var(--accent); letter-spacing: -0.012em; }
   @media (max-width: 500px) {
-    body.page-trends .trends-pies-row { gap: 14px; }
-    body.page-trends .trends-pie-card svg { width: 96px; height: 96px; }
+    body.page-trends .trends-pies-row { gap: 10px; }
+    body.page-trends .trends-pie-card svg { width: 88px; height: 88px; }
+    body.page-trends .trends-pie-name { font-size: 12px; }
   }
   body.page-trends .trends-chart-wrap { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 24px 20px; }
   body.page-trends .trends-callouts { margin: 20px 0; padding-left: 22px; font: 400 14.5px/1.6 var(--serif); color: var(--ink); }
