@@ -396,14 +396,32 @@ except FileNotFoundError:
 
 
 def _dinesafe_key(addr_str):
-    """Normalize a licence-feed address to match DineSafe's keying scheme."""
+    """Normalize a licence-feed address to match DineSafe's keying scheme.
+    Standard addresses ('1871 O'Connor Dr, Toronto, ON M4A 1X1') get keyed by
+    the leading 'streetnum streetword'. Mall / food-court / plaza entries
+    ('Eplace RU-04, 6 Eglinton Ave E, Toronto, ON M4P 1A6') don't start with
+    the street number - their internal unit prefix sits in front. Fallback:
+    find the LAST 'digits + alpha-word' pair before the postal code, which
+    naturally picks out the real street number even when the unit code came
+    first."""
     s = (addr_str or '').upper()
     s = _re.sub(r'\s+(NONE|UNIT.*|SUITE.*)\s+', ' ', s)
     s = _re.sub(r"[^A-Z0-9 ]+", ' ', s)
     s = _re.sub(r'\s+', ' ', s).strip()
-    m = _re.match(r'^(\d+) (\w+).*?([A-Z]\d[A-Z] ?\d[A-Z]\d)', s)
-    if not m: return None
-    return f"{m.group(1)} {m.group(2)} {m.group(3).replace(' ','')}"
+    postal_m = _re.search(r'([A-Z]\d[A-Z] ?\d[A-Z]\d)', s)
+    if not postal_m: return None
+    postal = postal_m.group(1).replace(' ', '')
+    pre = s[:postal_m.start()].strip()
+    m = _re.match(r'^(\d+) (\w+)', pre)
+    if m:
+        return f"{m.group(1)} {m.group(2)} {postal}"
+    # Fallback: pick the last 'streetnum + alphabetic-streetword' pair.
+    # \w+ requirement on the second token starting with [A-Z] avoids
+    # matching internal codes like '04 6' where 6 is the actual street num.
+    pairs = _re.findall(r'(\d+)\s+([A-Z]\w*)', pre)
+    if not pairs: return None
+    num, word = pairs[-1]
+    return f"{num} {word} {postal}"
 
 
 def _name_tokens_for_match(n):
@@ -732,31 +750,57 @@ with open(CSV_PATH, encoding='utf-8', errors='replace') as f:
             if iss.isoformat() < existing['issuedDate']:
                 seen_entries[dedup_key] = entry  # this row is earlier - keep it
 
-# Date-source swap (2026-06-01): when DineSafe's earliest inspection at
-# this address+name is LATER than the licence-issued date, surface
-# DineSafe-earliest as the displayed "registered" date. The licence
-# event answers "when did paperwork happen"; the DineSafe inspection
-# answers "when was the place definitely operating." For surviving
-# entries (the >180d pre-existing case is already dropped), DineSafe-
-# earliest is a tighter operating-since signal than the licence date.
+# Date-source swap (2026-06-01): when a stronger operating-since signal
+# exists than the licence-issued date, surface it as the displayed
+# "registered" date. The licence event answers "when did paperwork
+# happen"; the swap targets answer "when was the place definitely
+# operating." Priority order:
+#   1. DineSafe earliest inspection at this (address, name).
+#      Authoritative gov data; if Toronto Public Health inspected on
+#      date X, the place was serving food on date X.
+#   2. Oldest Places-returned review timestamp.
+#      Fallback for entries DineSafe can't match (mall/food-court
+#      addresses, no inspections yet, etc.). The pre-existing gate
+#      already drops any entry whose oldest review predates the
+#      licence by >180d, so any review we'd swap to here is known
+#      to post-date the licence event (real operating-since signal,
+#      not a re-licensing of a long-running place).
 # Original licence date preserved as `licenceIssuedDate` for audit.
 _n_date_swapped = 0
+_n_swap_dinesafe = 0
+_n_swap_review = 0
 for _e in seen_entries.values():
     _name = _e.get('operatingName') or ''
     _addr = _e.get('address') or ''
-    _, _, _ds_earliest, _ = _pre_existing_dinesafe(_name, _addr, _e['issuedDate'])
-    if not _ds_earliest: continue
-    if _ds_earliest <= _e['issuedDate']: continue
+    _licence_iso = _e['issuedDate']
+    # Collect every operating-evidence date that post-dates the licence.
+    # Each one is a hard "definitely operating by this date" lower bound.
+    # Take the EARLIEST - it's the tightest known floor on when the place
+    # actually opened. (DineSafe and Places reviews can disagree by months
+    # at mall/food-court entries where customers review before TPH inspects.)
+    _candidates = []
+    _, _, _ds_earliest, _ = _pre_existing_dinesafe(_name, _addr, _licence_iso)
+    if _ds_earliest and _ds_earliest > _licence_iso:
+        _candidates.append((_ds_earliest, 'dinesafe'))
+    _, _, _rev_earliest = _pre_existing_evidence(_e.get('_cacheKey') or '', _licence_iso)
+    if _rev_earliest and _rev_earliest > _licence_iso:
+        _candidates.append((_rev_earliest, 'review'))
+    if not _candidates: continue
+    _candidates.sort()
+    _swap_date, _swap_src = _candidates[0]
     try:
-        _ds_dt = datetime.strptime(_ds_earliest, '%Y-%m-%d').date()
+        _swap_dt = datetime.strptime(_swap_date, '%Y-%m-%d').date()
     except Exception:
         continue
-    if _ds_dt > REFERENCE_DATE: continue  # future-dated, skip
-    _e['licenceIssuedDate'] = _e['issuedDate']
-    _e['issuedDate'] = _ds_earliest
-    _e['daysOpen'] = max(0, (REFERENCE_DATE - _ds_dt).days)
+    if _swap_dt > REFERENCE_DATE: continue  # future-dated, skip
+    _e['licenceIssuedDate'] = _licence_iso
+    _e['issuedDate'] = _swap_date
+    _e['daysOpen'] = max(0, (REFERENCE_DATE - _swap_dt).days)
     _n_date_swapped += 1
-print(f"  date swap: {_n_date_swapped} entries reassigned 'registered' date from licence to DineSafe-earliest (operating-since signal)")
+    if _swap_src == 'dinesafe': _n_swap_dinesafe += 1
+    else: _n_swap_review += 1
+print(f"  date swap: {_n_date_swapped} entries reassigned 'registered' date "
+      f"({_n_swap_dinesafe} via DineSafe, {_n_swap_review} via oldest Places review)")
 
 # Now bucket the deduped entries by cuisine and compute counts.
 # Multi-cuisine entries (e.g., "Afghan + Pakistani + Indian") appear in EACH

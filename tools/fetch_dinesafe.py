@@ -47,14 +47,27 @@ def norm_addr(s):
     """Normalize an address to a canonical key: 'STREETNUM STREETFIRSTWORD POSTAL'.
     DineSafe addresses look like '1871 O'Connor Dr None M4A 1X1'; ours look
     like '1871 O'Connor Dr, Toronto, ON M4A 1X1'. Both share street-num +
-    street-word + postal as the unique location signal."""
+    street-word + postal as the unique location signal.
+
+    Fallback handles mall/food-court entries ('Eplace RU-04, 6 Eglinton Ave E
+    ...') where the unit code precedes the actual street number - picks the
+    last 'digits + alpha-word' pair before the postal code. Kept in sync
+    with inject_openings._dinesafe_key()."""
     s = (s or '').upper()
     s = re.sub(r'\s+(NONE|UNIT.*|SUITE.*)\s+', ' ', s)
     s = re.sub(r"[^A-Z0-9 ]+", ' ', s)
     s = re.sub(r'\s+', ' ', s).strip()
-    m = re.match(r'^(\d+) (\w+).*?([A-Z]\d[A-Z] ?\d[A-Z]\d)', s)
-    if not m: return None
-    return f"{m.group(1)} {m.group(2)} {m.group(3).replace(' ','')}"
+    postal_m = re.search(r'([A-Z]\d[A-Z] ?\d[A-Z]\d)', s)
+    if not postal_m: return None
+    postal = postal_m.group(1).replace(' ', '')
+    pre = s[:postal_m.start()].strip()
+    m = re.match(r'^(\d+) (\w+)', pre)
+    if m:
+        return f"{m.group(1)} {m.group(2)} {postal}"
+    pairs = re.findall(r'(\d+)\s+([A-Z]\w*)', pre)
+    if not pairs: return None
+    num, word = pairs[-1]
+    return f"{num} {word} {postal}"
 
 
 def main():
