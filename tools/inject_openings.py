@@ -2389,7 +2389,9 @@ def _build_owner_cta(entry):
     mailto link with subject + body pre-populated so an owner can reply
     in under a minute. Lives on every /r/<slug> page - both for owners
     who find their own listing via search (passive discovery) and as
-    the landing surface for cold-outreach campaigns."""
+    the landing surface for cold-outreach campaigns. Right-side slot
+    carries a compact inline cuisine-alert subscribe form so the bottom
+    of the page collapses two CTAs into one row."""
     name = entry.get('operatingName') or 'your restaurant'
     slug = entry.get('slug') or ''
     listing_url = f'https://nowservingto.com/r/{slug}' if slug else 'https://nowservingto.com/'
@@ -2408,12 +2410,39 @@ def _build_owner_cta(entry):
         f'Thanks!\n'
     )
     mailto = 'mailto:hello@nowservingto.com?subject=' + quote_plus(subject) + '&body=' + quote_plus(body)
+
+    # Compact inline cuisine-alert form (replaces the bottom-of-page
+    # standalone newsletter section on /r/<slug> pages). Uses primary
+    # cuisine; falls back gracefully if absent. Same .alert-form hooks
+    # as the standalone form so the existing submit JS catches it.
+    cuisines = entry.get('cuisines') or ([entry['cuisine']] if entry.get('cuisine') else [])
+    pkey = cuisines[0] if cuisines else None
+    plbl = CUISINE_LABEL.get(pkey, pkey.replace('_',' ').title() if pkey else 'restaurant')
+    if pkey:
+        sub_html = (
+            '<form class="lx-owner-cta-sub alert-form" '
+            f'data-kind="cuisine" data-value="{_esc(pkey)}" data-label="{_esc(plbl)}" '
+            f'data-base-kind="cuisine" data-base-value="{_esc(pkey)}" data-base-label="{_esc(plbl)}" '
+            'novalidate>'
+            f'<label class="lx-sub-label">New {_esc(plbl)} openings:</label>'
+            '<input type="email" required autocomplete="email" placeholder="you@email" aria-label="Email">'
+            '<button type="submit">Subscribe</button>'
+            '<div class="alert-status" role="status" aria-live="polite"></div>'
+            '<div class="alert-hp" aria-hidden="true">'
+            '<label>Website (leave blank): <input type="text" name="website" tabindex="-1" autocomplete="off"></label>'
+            '</div>'
+            '</form>'
+        )
+    else:
+        sub_html = ''
+
     return (
         '<div class="lx-card lx-owner-cta">'
         '<p class="lx-owner-cta-line">Is this your restaurant? '
         f'<a class="lx-owner-cta-btn" href="{_esc(mailto)}">'
         'Send a photo, story, or correction <span aria-hidden="true">→</span></a>'
         '</p>'
+        f'{sub_html}'
         '</div>'
     )
 
@@ -2799,14 +2828,11 @@ for entry in seen_entries.values():
     # / cuisine / district pages, not here.
     page = page.replace('<body>', '<body class="page-listing">', 1)
 
-    # Default the newsletter form to per-cuisine alerts: someone reading
-    # about a Vietnamese restaurant is, by definition, interested in
-    # Vietnamese restaurants. The cohort line above already cross-links
-    # to /district/<slug> for visitors who care about the neighborhood.
-    # Fall back to all-Toronto digest if we somehow have no primary key.
-    if primary_key:
-        page = swap_newsletter_cta(page,
-            build_alert_section('cuisine', primary_key, primary_lbl))
+    # 2026-06-01: standalone bottom-of-page newsletter section removed on
+    # /r/<slug> pages - the compact cuisine-alert form now lives inline
+    # next to the owner CTA inside the listing-extra block. Less wall-of-
+    # copy at page bottom; single horizontal row carries both CTAs.
+    page = swap_newsletter_cta(page, '')
 
     (LISTING_DIR / f'{slug}.html').write_text(page)
     n_listing_html += 1

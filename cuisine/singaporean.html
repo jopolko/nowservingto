@@ -632,14 +632,25 @@
   .listing-extra .lx-owner-content-h { font: 700 11px/1.2 var(--sans); text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin: 0 0 8px; }
   .listing-extra .lx-owner-text { font: 500 16px/1.55 var(--serif); color: var(--ink); margin: 0 0 8px; font-style: italic; }
   .listing-extra .lx-owner-facts { font: 500 13px/1.45 var(--sans); color: var(--ink2); margin: 0; }
-  /* Owner CTA: single-line 'Is this your restaurant?' invitation slotted
-     between the editorial blurb and the nearby-grid. Quiet dashed border
-     + compact inline layout - reads as a small footnote-style invite
-     rather than a wall-of-text pitch. */
-  .listing-extra .lx-owner-cta { border: 1px dashed var(--line); background: transparent; box-shadow: none; padding: 12px 16px; }
-  .listing-extra .lx-owner-cta-line { font: 500 13.5px/1.4 var(--sans); color: var(--ink2); margin: 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  /* Owner CTA: dual-CTA card slotted between the editorial blurb and
+     the nearby-grid. Left side: 'Is this your restaurant?' mailto.
+     Right side: compact cuisine-alert subscribe form (replaces the
+     bigger bottom-of-page newsletter section that previously stacked
+     below the nearby-grid). Single horizontal row on desktop, stacks
+     on mobile. Quiet dashed border throughout. */
+  .listing-extra .lx-owner-cta { border: 1px dashed var(--line); background: transparent; box-shadow: none; padding: 12px 16px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+  .listing-extra .lx-owner-cta-line { font: 500 13.5px/1.4 var(--sans); color: var(--ink2); margin: 0; display: flex; align-items: center; gap: 10px; flex: 1 1 320px; flex-wrap: wrap; }
   .listing-extra .lx-owner-cta-btn { display: inline-block; padding: 6px 12px; background: var(--ink); color: #fff; text-decoration: none; border-radius: 999px; font: 600 12.5px/1 var(--sans); transition: background 0.12s; white-space: nowrap; }
   .listing-extra .lx-owner-cta-btn:hover { background: var(--accent); }
+  /* Compact subscribe form: label + email input + button on one line. */
+  .listing-extra .lx-owner-cta-sub { display: flex; gap: 6px; align-items: center; flex: 1 1 320px; flex-wrap: wrap; }
+  .listing-extra .lx-owner-cta-sub .lx-sub-label { font: 500 12.5px/1.2 var(--sans); color: var(--ink2); margin-right: 4px; }
+  .listing-extra .lx-owner-cta-sub input[type="email"] { flex: 1; min-width: 140px; padding: 7px 10px; font: 400 13px/1 var(--sans); color: var(--ink); background: var(--paper); border: 1px solid var(--line); border-radius: 4px; outline: none; }
+  .listing-extra .lx-owner-cta-sub input[type="email"]:focus { border-color: var(--ink); }
+  .listing-extra .lx-owner-cta-sub button { padding: 7px 12px; background: var(--accent); color: #fff; border: 0; border-radius: 4px; font: 600 12.5px/1 var(--sans); cursor: pointer; transition: background 0.12s; white-space: nowrap; }
+  .listing-extra .lx-owner-cta-sub button:hover { background: var(--ink); }
+  .listing-extra .lx-owner-cta-sub .alert-status { font: 500 12px/1.3 var(--sans); color: var(--muted); flex-basis: 100%; }
+  .listing-extra .lx-owner-cta-sub .alert-hp { position: absolute; left: -9999px; }
   .listing-extra .lx-near-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
   /* Hybrid nearby card: container with separately-hoverable photo + name
      (→ /r/<slug>) plus compact Website/Maps CTAs that punch through to

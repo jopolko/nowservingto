@@ -631,14 +631,25 @@
   .listing-extra .lx-owner-content-h { font: 700 11px/1.2 var(--sans); text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin: 0 0 8px; }
   .listing-extra .lx-owner-text { font: 500 16px/1.55 var(--serif); color: var(--ink); margin: 0 0 8px; font-style: italic; }
   .listing-extra .lx-owner-facts { font: 500 13px/1.45 var(--sans); color: var(--ink2); margin: 0; }
-  /* Owner CTA: single-line 'Is this your restaurant?' invitation slotted
-     between the editorial blurb and the nearby-grid. Quiet dashed border
-     + compact inline layout - reads as a small footnote-style invite
-     rather than a wall-of-text pitch. */
-  .listing-extra .lx-owner-cta { border: 1px dashed var(--line); background: transparent; box-shadow: none; padding: 12px 16px; }
-  .listing-extra .lx-owner-cta-line { font: 500 13.5px/1.4 var(--sans); color: var(--ink2); margin: 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  /* Owner CTA: dual-CTA card slotted between the editorial blurb and
+     the nearby-grid. Left side: 'Is this your restaurant?' mailto.
+     Right side: compact cuisine-alert subscribe form (replaces the
+     bigger bottom-of-page newsletter section that previously stacked
+     below the nearby-grid). Single horizontal row on desktop, stacks
+     on mobile. Quiet dashed border throughout. */
+  .listing-extra .lx-owner-cta { border: 1px dashed var(--line); background: transparent; box-shadow: none; padding: 12px 16px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+  .listing-extra .lx-owner-cta-line { font: 500 13.5px/1.4 var(--sans); color: var(--ink2); margin: 0; display: flex; align-items: center; gap: 10px; flex: 1 1 320px; flex-wrap: wrap; }
   .listing-extra .lx-owner-cta-btn { display: inline-block; padding: 6px 12px; background: var(--ink); color: #fff; text-decoration: none; border-radius: 999px; font: 600 12.5px/1 var(--sans); transition: background 0.12s; white-space: nowrap; }
   .listing-extra .lx-owner-cta-btn:hover { background: var(--accent); }
+  /* Compact subscribe form: label + email input + button on one line. */
+  .listing-extra .lx-owner-cta-sub { display: flex; gap: 6px; align-items: center; flex: 1 1 320px; flex-wrap: wrap; }
+  .listing-extra .lx-owner-cta-sub .lx-sub-label { font: 500 12.5px/1.2 var(--sans); color: var(--ink2); margin-right: 4px; }
+  .listing-extra .lx-owner-cta-sub input[type="email"] { flex: 1; min-width: 140px; padding: 7px 10px; font: 400 13px/1 var(--sans); color: var(--ink); background: var(--paper); border: 1px solid var(--line); border-radius: 4px; outline: none; }
+  .listing-extra .lx-owner-cta-sub input[type="email"]:focus { border-color: var(--ink); }
+  .listing-extra .lx-owner-cta-sub button { padding: 7px 12px; background: var(--accent); color: #fff; border: 0; border-radius: 4px; font: 600 12.5px/1 var(--sans); cursor: pointer; transition: background 0.12s; white-space: nowrap; }
+  .listing-extra .lx-owner-cta-sub button:hover { background: var(--ink); }
+  .listing-extra .lx-owner-cta-sub .alert-status { font: 500 12px/1.3 var(--sans); color: var(--muted); flex-basis: 100%; }
+  .listing-extra .lx-owner-cta-sub .alert-hp { position: absolute; left: -9999px; }
   .listing-extra .lx-near-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
   /* Hybrid nearby card: container with separately-hoverable photo + name
      (→ /r/<slug>) plus compact Website/Maps CTAs that punch through to
@@ -748,7 +759,7 @@
     <!-- STATIC-FEED-END -->
   </div>
 
-  <!-- LISTING-EXTRA-START --><section class="listing-extra" aria-label="Listing detail"><div class="lx-card"><p class="lx-evidence">This spot serves up Singaporean favourites like laksa and chicken rice, drawing steady praise from diners who keep tabs on their active social presence. the kitchen delivers the warming spice and rich broths that define the cuisine recent customer posts showing the food landing consistently.</p></div><div class="lx-card lx-owner-cta"><p class="lx-owner-cta-line">Is this your restaurant? <a class="lx-owner-cta-btn" href="mailto:hello@nowservingto.com?subject=Enhance+my+listing+%E2%80%94+AGAK+AGAK&amp;body=Hi+Josh%2C%0A%0ARe%3A+AGAK+AGAK%0AListing%3A+https%3A%2F%2Fnowservingto.com%2Fr%2Fagak-agak-253%0A%0AI%27d+like+to+enhance+my+listing+with%3A%0A%0A%E2%80%A2+Photo+%28attach+to+this+email%29%3A%0A%E2%80%A2+What+makes+us+special+%28one+sentence%29%3A%0A%E2%80%A2+Owner%2Fchef+story+%281-2+sentences%29%3A%0A%E2%80%A2+When+we+actually+opened+%28date%29%3A%0A%E2%80%A2+Signature+dishes%3A%0A%E2%80%A2+Anything+incorrect+that+needs+fixing%3A%0A%0AThanks%21%0A">Send a photo, story, or correction <span aria-hidden="true">→</span></a></p></div></section><!-- LISTING-EXTRA-END -->
+  <!-- LISTING-EXTRA-START --><section class="listing-extra" aria-label="Listing detail"><div class="lx-card"><p class="lx-evidence">This spot serves up Singaporean favourites like laksa and chicken rice, drawing steady praise from diners who keep tabs on their active social presence. the kitchen delivers the warming spice and rich broths that define the cuisine recent customer posts showing the food landing consistently.</p></div><div class="lx-card lx-owner-cta"><p class="lx-owner-cta-line">Is this your restaurant? <a class="lx-owner-cta-btn" href="mailto:hello@nowservingto.com?subject=Enhance+my+listing+%E2%80%94+AGAK+AGAK&amp;body=Hi+Josh%2C%0A%0ARe%3A+AGAK+AGAK%0AListing%3A+https%3A%2F%2Fnowservingto.com%2Fr%2Fagak-agak-253%0A%0AI%27d+like+to+enhance+my+listing+with%3A%0A%0A%E2%80%A2+Photo+%28attach+to+this+email%29%3A%0A%E2%80%A2+What+makes+us+special+%28one+sentence%29%3A%0A%E2%80%A2+Owner%2Fchef+story+%281-2+sentences%29%3A%0A%E2%80%A2+When+we+actually+opened+%28date%29%3A%0A%E2%80%A2+Signature+dishes%3A%0A%E2%80%A2+Anything+incorrect+that+needs+fixing%3A%0A%0AThanks%21%0A">Send a photo, story, or correction <span aria-hidden="true">→</span></a></p><form class="lx-owner-cta-sub alert-form" data-kind="cuisine" data-value="singaporean" data-label="Singaporean" data-base-kind="cuisine" data-base-value="singaporean" data-base-label="Singaporean" novalidate><label class="lx-sub-label">New Singaporean openings:</label><input type="email" required autocomplete="email" placeholder="you@email" aria-label="Email"><button type="submit">Subscribe</button><div class="alert-status" role="status" aria-live="polite"></div><div class="alert-hp" aria-hidden="true"><label>Website (leave blank): <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div></form></div></section><!-- LISTING-EXTRA-END -->
 
   <div class="map-view" id="map-view" hidden>
     <div class="map-toolbar">
@@ -758,7 +769,7 @@
   </div>
 
   <!-- RELATED-CUISINES-START --><!-- RELATED-CUISINES-END -->
-  <section class="newsletter-cta" aria-label="Email alert signup"><div class="nl-pitch"><h2 id="alert-title">Get an email when a new Singaporean restaurant opens</h2><p id="alert-blurb">You&#39;ll get one email the moment a new Singaporean restaurant is registered with the City of Toronto - typically a handful of times per year. No weekly digest, no spam, one-click unsub.</p></div><form class="alert-form" data-kind="cuisine" data-value="singaporean" data-label="Singaporean" data-base-kind="cuisine" data-base-value="singaporean" data-base-label="Singaporean" novalidate><input type="email" required autocomplete="email" placeholder="you@example.com" aria-label="Email address"><button type="submit">Subscribe</button><div class="alert-status" role="status" aria-live="polite"></div><div class="alert-hp" aria-hidden="true"><label>Website (leave blank): <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div></form></section>
+  
 
   <footer class="site-foot">
     <a href="https://x.com/nowservingto" target="_blank" rel="noopener">Follow @nowservingto on X</a>
