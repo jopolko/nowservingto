@@ -1065,25 +1065,22 @@ def _ago(days):
 
 
 def _tier_label(days, iso_date=None):
-    """Three-tier freshness label for the row pill (2026-06-01).
-      0-30d   -> 'New'        (★ added by CSS via data-fresh="hot")
-      31-90d  -> 'Recent'     (muted, no star)
-      91-365d -> 'Mar 2026'   (month + year of the displayed registered-date,
-                               muted; supplies a quiet temporal anchor so
-                               older-in-window rows don't look orphaned)
-    The 365d inclusion rule still anchors the directory; the per-row claim
-    just shrinks to where the news-value lives, and the month name tells
-    the reader 'this was registered in X' instead of leaving them to
-    wonder why the row appears at all."""
+    """Three-tier freshness label for the row pill.
+      0-30d   -> 'New'                  (★ via data-fresh="hot")
+      31-90d  -> 'Recent'               (muted)
+      91-365d -> 'Registered Nmo ago'   (muted; the 'Registered' anchor
+                                         reframes the date as a since-we-
+                                         logged-it duration, not an implied
+                                         opening month. Defensible: that
+                                         IS what we recorded.)
+    The 365d inclusion rule still anchors the directory; only the per-row
+    claim's editorial tone shifts by tier."""
     if days is None: return ''
     if days <= 30:  return 'New'
     if days <= 90:  return 'Recent'
-    if iso_date:
-        try:
-            _dt = datetime.strptime(iso_date, '%Y-%m-%d')
-            return _dt.strftime('%b %Y')  # 'Oct 2025', 'Mar 2026'
-        except Exception:
-            pass
+    if days <= 365:
+        months = max(3, round(days / 30))
+        return f'Registered {months}mo ago'
     return ''
 
 # ---------------------------------------------------------------------------
@@ -1487,8 +1484,9 @@ def build_static_rows(entries, link_to_listing=False):
         _d = r.get('daysOpen')
         fresh_attr = ''
         if isinstance(_d, int):
-            if _d <= 30:   fresh_attr = ' data-fresh="hot"'
-            elif _d <= 90: fresh_attr = ' data-fresh="recent"'
+            if _d <= 30:    fresh_attr = ' data-fresh="hot"'
+            elif _d <= 90:  fresh_attr = ' data-fresh="recent"'
+            elif _d <= 365: fresh_attr = ' data-fresh="aged"'
         ago_html = ((f'<a class="ago" href="/r/{_esc(slug)}">{ago}</a>'
                      if link_to_listing and slug
                      else f'<span class="ago">{ago}</span>')
