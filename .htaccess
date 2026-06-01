@@ -105,6 +105,9 @@ RewriteRule ^contribute/?$ /contribute.html [L]
 # /press → press.html (media kit: stats, embed widget, citation format)
 RewriteRule ^press/?$ /press.html [L]
 
+# /trends → trends.html (monthly cuisine-velocity chart, screenshot-shareable)
+RewriteRule ^trends/?$ /trends.html [L]
+
 # /wire/{cuisine} → wire/{cuisine}.html. Diaspora media pitch pages -
 # self-contained editorial briefs (inline SVG charts, no JS) generated
 # by tools/build_wire_pages.py from corridors.json. Same no-fallback

@@ -2854,17 +2854,24 @@ print(f"  wrote {n_listing_png} per-listing OG cards → og/<slug>.png")
 DISPATCH_DIR = Path(ROOT) / 'dispatch'
 DISPATCH_DIR.mkdir(exist_ok=True)
 _dispatch_today = REFERENCE_DATE
-_dispatch_month = f'{_dispatch_today.year}-{_dispatch_today.month:02d}'
-_dispatch_label = _dispatch_today.strftime('%B %Y')
-# 30-day rolling window, not strict calendar-month - the calendar approach
-# leaves the file empty for the first week of each month. Rolling window
-# keeps the page useful continuously; the URL key still reflects the
-# month it was published in so each month becomes its own archive entry
-# as it rolls into history.
-from datetime import timedelta as _td
-_window_start_iso = (_dispatch_today - _td(days=30)).isoformat()
+# Dispatch covers the most-recently-COMPLETED calendar month, not the
+# current one. Editorial-magazine model: the June issue is published in
+# June but is about May. Avoids the "URL says June, content is May"
+# semantic mismatch. Each month-start rolls the dispatch URL forward
+# and the previous month's file becomes a permanent archive.
+import calendar as _cal
+if _dispatch_today.month == 1:
+    _dm_year, _dm_month = _dispatch_today.year - 1, 12
+else:
+    _dm_year, _dm_month = _dispatch_today.year, _dispatch_today.month - 1
+_dispatch_month = f'{_dm_year}-{_dm_month:02d}'
+_dispatch_label = f'{_cal.month_name[_dm_month]} {_dm_year}'
+_dm_start = f'{_dm_year}-{_dm_month:02d}-01'
+_dm_end_day = _cal.monthrange(_dm_year, _dm_month)[1]
+_dm_end = f'{_dm_year}-{_dm_month:02d}-{_dm_end_day:02d}'
 _this_month_picks = sorted(
-    [e for e in seen_entries.values() if e.get('issuedDate', '') >= _window_start_iso],
+    [e for e in seen_entries.values()
+     if _dm_start <= e.get('issuedDate', '') <= _dm_end],
     key=lambda r: r['issuedDate'], reverse=True
 )
 _dispatch_rows = build_static_rows(_this_month_picks[:30], link_to_listing=True)
@@ -2876,7 +2883,7 @@ _dispatch_desc = (f"The {len(_this_month_picks)} restaurants newly registered wi
                   f"verified open. Monthly archive from nowservingto.com.")
 _dispatch_h1 = (f'<h1 class="sub">NowServingTO Dispatch <span class="hl">{_esc(_dispatch_label)}</span></h1>'
                 f'<div class="listing-lede">{len(_this_month_picks)} restaurants newly registered with '
-                f'the City of Toronto this month, sorted by freshness.</div>')
+                f'the City of Toronto in {_esc(_dispatch_label)}, sorted by freshness.</div>')
 _dispatch_page = inject_into_html(
     _dispatch_template, static_block=_dispatch_rows, ld_payloads=[],
 )
@@ -2906,6 +2913,154 @@ _dispatch_page = _dispatch_page.replace('<body>', '<body class="page-dispatch">'
 (DISPATCH_DIR / 'latest.html').write_text(_dispatch_page)
 print(f"  wrote /dispatch/{_dispatch_month}.html + /dispatch/latest.html ({len(_this_month_picks)} entries)")
 
+# ─────────────────────────────────────────────────────────────────────
+# /trends page (2026-06-01): cuisine-velocity chart, monthly. Built as
+# a screenshot-shareable artifact for personal-X distribution. Shows
+# this-month-vs-prior-12-month-avg per cuisine, plus drought-broken
+# and spike callouts. Comes with a "Tweet this" button using Twitter's
+# intent URL so the page itself drives one-click sharing.
+# ─────────────────────────────────────────────────────────────────────
+from collections import defaultdict as _dd
+from datetime import date as _date
+# Bucket every entry's issuedDate into (cuisine, yyyymm). Walk 12 months
+# back from the most-recently-completed month (May 2026 today).
+def _ym_back(dt, n):
+    y, m = dt.year, dt.month - n
+    while m <= 0:
+        m += 12; y -= 1
+    return f'{y}-{m:02d}'
+_trend_months = [_ym_back(_dispatch_today, i) for i in range(12, 0, -1)]
+_trend_current_ym = _ym_back(_dispatch_today, 1)  # most recently completed month
+_cuisine_month_count = _dd(lambda: _dd(int))
+for _e in seen_entries.values():
+    _iso = _e.get('issuedDate') or ''
+    if len(_iso) < 7: continue
+    _ym = _iso[:7]
+    if _ym not in _trend_months: continue
+    for _c in (_e.get('cuisines') or ([_e.get('cuisine')] if _e.get('cuisine') else [])):
+        if not _c: continue
+        _cuisine_month_count[_c][_ym] += 1
+
+# Compute current-month count + 12-month average for ranking
+_trend_rows = []
+for _c, _by_m in _cuisine_month_count.items():
+    _curr = _by_m.get(_trend_current_ym, 0)
+    _avg = sum(_by_m.values()) / 12.0
+    _trend_rows.append({
+        'key': _c,
+        'label': CUISINE_LABEL.get(_c, _c.replace('_', ' ').title()),
+        'curr': _curr, 'avg': _avg,
+        'delta_pct': ((_curr - _avg) / _avg * 100) if _avg > 0 else None,
+        'by_m': dict(_by_m),
+    })
+# Sort: this-month-count desc, then avg desc as tiebreaker
+_trend_rows.sort(key=lambda r: (-r['curr'], -r['avg']))
+_trend_top = _trend_rows[:12]
+
+# Drought-broken: cuisines with curr>=1 AND no openings in prior 3 months
+_drought_broken = []
+_recent_3 = [_ym_back(_dispatch_today, i) for i in range(2, 5)]
+for r in _trend_rows:
+    if r['curr'] >= 1 and all(r['by_m'].get(m, 0) == 0 for m in _recent_3):
+        # Find most recent month before drought that had an opening
+        gap_months = 0
+        for i in range(2, 12):
+            m = _ym_back(_dispatch_today, i)
+            if r['by_m'].get(m, 0) > 0:
+                gap_months = i - 1
+                break
+            gap_months = i
+        _drought_broken.append((r['label'], gap_months))
+# Spikes: 2x+ vs 12-month avg, with curr >= 2
+_spikes = [(r['label'], r['curr'], round(r['avg'], 1))
+           for r in _trend_rows if r['curr'] >= 2 and r['avg'] > 0 and r['curr'] >= r['avg'] * 2]
+
+# Build SVG bar chart - horizontal bars, top 12 cuisines this month
+_chart_w = 720; _bar_h = 22; _gap = 6; _label_w = 130; _bar_max_w = _chart_w - _label_w - 60
+_max_count = max((r['curr'] for r in _trend_top), default=1) or 1
+_chart_h = len(_trend_top) * (_bar_h + _gap) + 10
+_svg_bars = []
+for i, r in enumerate(_trend_top):
+    y = i * (_bar_h + _gap) + 5
+    bw_curr = (r['curr'] / _max_count) * _bar_max_w if r['curr'] else 0
+    bw_avg  = (r['avg']  / _max_count) * _bar_max_w if r['avg']  else 0
+    _svg_bars.append(
+        f'<text x="{_label_w - 10}" y="{y + _bar_h*0.7}" text-anchor="end" font="600 13px sans-serif" fill="#1a1a1a" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="12.5" font-weight="600">{_esc(r["label"])}</text>'
+        f'<rect x="{_label_w}" y="{y + 4}" width="{bw_avg:.1f}" height="{_bar_h - 8}" fill="#ebe9e4" rx="2"/>'
+        f'<rect x="{_label_w}" y="{y}" width="{bw_curr:.1f}" height="{_bar_h}" fill="#e84e3a" rx="3"/>'
+        f'<text x="{_label_w + max(bw_curr, bw_avg) + 8}" y="{y + _bar_h*0.7}" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="11.5" font-weight="700" fill="#1a1a1a">{r["curr"]}</text>'
+    )
+_trends_chart_svg = (
+    f'<svg viewBox="0 0 {_chart_w} {_chart_h}" xmlns="http://www.w3.org/2000/svg" '
+    'role="img" aria-label="Toronto restaurant openings by cuisine, this month vs 12-month average" '
+    f'style="width:100%;max-width:{_chart_w}px;height:auto;display:block">'
+    + ''.join(_svg_bars)
+    + '</svg>'
+)
+
+# Build the callout blocks (drought-broken + spikes)
+_callout_lines = []
+if _drought_broken:
+    _callout_lines.append('<li><b>Drought broken:</b> ' + ', '.join(
+        f'{_esc(lbl)} ({n}+ months silent)' for lbl, n in _drought_broken[:5]) + '.</li>')
+if _spikes:
+    _callout_lines.append('<li><b>Spiked:</b> ' + ', '.join(
+        f'{_esc(lbl)} hit {n} this month (avg {a}/mo)' for lbl, n, a in _spikes[:5]) + '.</li>')
+_callouts_html = ('<ul class="trends-callouts">' + ''.join(_callout_lines) + '</ul>') if _callout_lines else ''
+
+# Compose the trends page
+_trends_label = _cal.month_name[_dm_month] + f' {_dm_year}'
+_trends_canonical = f'{SITE_BASE}/trends'
+_trends_title = f'Toronto restaurant openings by cuisine — {_trends_label} | NowServingTO'
+_trends_desc = (f'Cuisine-velocity chart for newly-registered Toronto restaurants in '
+                f'{_trends_label} vs the 12-month average. Live data from City of Toronto open data.')
+# Twitter intent: prefilled tweet with summary + URL
+_tweet_summary_parts = [f"Toronto's diaspora food month, by cuisine ({_trends_label}):"]
+for r in _trend_top[:5]:
+    _tweet_summary_parts.append(f"• {r['label']}: {r['curr']}")
+_tweet_summary_parts.append(f"\nFull chart + sources: {SITE_BASE}/trends")
+_tweet_text = '\n'.join(_tweet_summary_parts)
+_tweet_intent = 'https://twitter.com/intent/tweet?text=' + quote_plus(_tweet_text)
+_trends_h1 = (f'<h1 class="sub">Toronto food openings by cuisine, <span class="hl">{_esc(_trends_label)}</span></h1>'
+              f'<div class="listing-lede">Coral bar = {_esc(_trends_label)} count. Grey bar = 12-month average. '
+              f'Drawn from City of Toronto licence data + verification gates.</div>')
+_trends_body = (
+    '<section class="trends-section">'
+    f'<div class="trends-chart-wrap">{_trends_chart_svg}</div>'
+    f'{_callouts_html}'
+    '<p class="trends-share">'
+    f'<a class="trends-tweet-btn" href="{_esc(_tweet_intent)}" target="_blank" rel="noopener">'
+    'Share this chart on X &rsaquo;</a> '
+    '<span class="trends-note">Auto-refreshes daily from City open data + DineSafe.</span>'
+    '</p>'
+    '</section>'
+)
+_trends_page = inject_into_html(_dispatch_template, static_block='', ld_payloads=[])
+for _sel, _val in [
+    (r'<title>[^<]*</title>', f'<title>{_esc(_trends_title)}</title>'),
+    (r'(<meta name="description" content=")[^"]*(")', _esc(_trends_desc)),
+    (r'(<meta property="og:title" content=")[^"]*(")', _esc(_trends_title)),
+    (r'(<meta property="og:description" content=")[^"]*(")', _esc(_trends_desc)),
+    (r'(<meta property="og:url" content=")[^"]*(")', _esc(_trends_canonical)),
+    (r'(<meta name="twitter:title" content=")[^"]*(")', _esc(_trends_title)),
+    (r'(<meta name="twitter:description" content=")[^"]*(")', _esc(_trends_desc)),
+    (r'(<link rel="canonical" href=")[^"]*(")', _esc(_trends_canonical)),
+]:
+    if _val.startswith('<title'):
+        _trends_page = re.sub(_sel, _val, _trends_page, count=1)
+    else:
+        _trends_page = re.sub(_sel, lambda m, v=_val: m.group(1) + v + m.group(2),
+                              _trends_page, count=1)
+_trends_page = re.sub(r'<h1 class="sub">[\s\S]*?</h1>(?:<div class="listing-lede">[\s\S]*?</div>)?',
+                      lambda m: _trends_h1, _trends_page, count=1)
+_trends_page = _trends_page.replace('<body>', '<body class="page-trends">', 1)
+# Replace the open-feed div with the trends body
+_trends_page = re.sub(
+    r'<div class="open-feed"[^>]*>[\s\S]*?</div>\s*(?=<section)',
+    _trends_body + '\n', _trends_page, count=1)
+(Path(ROOT) / 'trends.html').write_text(_trends_page)
+print(f"  wrote /trends.html ({len(_trend_top)} cuisines, {len(_drought_broken)} drought-broken, {len(_spikes)} spikes)")
+
 # Persist any photoRef values we backfilled into PLACES_CACHE so the next
 # inject doesn't have to re-call place_details for the same entries.
 try:
@@ -2919,6 +3074,7 @@ except Exception as ex:
 url_blocks = [
     f'  <url>\n    <loc>{SITE_BASE}/</loc>\n    <lastmod>{REFERENCE_DATE.isoformat()}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>1.0</priority>\n  </url>',
     f'  <url>\n    <loc>{SITE_BASE}/press</loc>\n    <lastmod>{REFERENCE_DATE.isoformat()}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.6</priority>\n  </url>',
+    f'  <url>\n    <loc>{SITE_BASE}/trends</loc>\n    <lastmod>{REFERENCE_DATE.isoformat()}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>0.7</priority>\n  </url>',
 ]
 # Monthly dispatch archive pages - one per month, indexed for SEO
 # ("newest toronto restaurants June 2026" type queries). Also surface

@@ -13,7 +13,13 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://nowservingto.com/dispatch/2026-06</loc>
+    <loc>https://nowservingto.com/trends</loc>
+    <lastmod>2026-06-01</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://nowservingto.com/dispatch/2026-05</loc>
     <lastmod>2026-06-01</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
