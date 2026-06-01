@@ -472,11 +472,23 @@
   body.page-trends .trends-pie-name { font: 700 13px/1.2 var(--sans); margin-top: 8px; color: var(--ink); letter-spacing: -0.005em; }
   body.page-trends .trends-pies-note { font: 400 13px/1.4 var(--serif); color: var(--muted); font-style: italic; text-align: center; margin: 4px 0 22px; }
   body.page-trends .trends-h3 { font: 700 12px/1.2 var(--sans); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 16px 0 10px; }
-  /* Contrast bridge between the short-term and long-term pie rows.
-     This is the editorial moment - the "wait, look what changed" line
-     that turns two static charts into a story. */
-  body.page-trends .trends-contrast { background: var(--paper); border-top: 3px solid var(--accent); border-bottom: 3px solid var(--accent); padding: 20px 22px; margin: 30px 0; font: 500 16px/1.55 var(--serif); color: var(--ink); text-align: center; letter-spacing: -0.005em; }
-  body.page-trends .trends-contrast b { font-weight: 800; color: var(--accent); letter-spacing: -0.012em; }
+  /* Contrast VS card - graphic showdown between the 36-month leader
+     and the 90-day challenger. Two columns + "VS" spine. When same
+     cuisine leads both, single celebratory card instead. */
+  body.page-trends .trends-vs { display: flex; align-items: center; justify-content: center; gap: 24px; padding: 24px 22px; margin: 30px 0; background: var(--paper); border-top: 3px solid var(--accent); border-bottom: 3px solid var(--accent); }
+  body.page-trends .trends-vs-side { text-align: center; flex: 1 1 0; min-width: 0; }
+  body.page-trends .trends-vs-label { font: 700 10.5px/1 var(--sans); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 8px; }
+  body.page-trends .trends-vs-cuisine { font: 900 28px/1.1 var(--sans); letter-spacing: -0.02em; margin-bottom: 6px; }
+  body.page-trends .trends-vs-pct { font: 700 20px/1 var(--sans); color: var(--ink); font-variant-numeric: tabular-nums; }
+  body.page-trends .trends-vs-divider { font: 900 22px/1 var(--sans); color: var(--muted); letter-spacing: 0.1em; flex: 0 0 auto; }
+  body.page-trends .trends-vs-same { gap: 0; }
+  body.page-trends .trends-vs-same .trends-vs-pct { font-size: 14.5px; color: var(--ink2); font-weight: 500; font-family: var(--serif); font-style: italic; margin-top: 4px; }
+  @media (max-width: 480px) {
+    body.page-trends .trends-vs { gap: 12px; padding: 18px 14px; }
+    body.page-trends .trends-vs-cuisine { font-size: 22px; }
+    body.page-trends .trends-vs-pct { font-size: 17px; }
+    body.page-trends .trends-vs-divider { font-size: 18px; }
+  }
   @media (max-width: 500px) {
     body.page-trends .trends-pies-row { gap: 10px; }
     body.page-trends .trends-pie-card svg { width: 88px; height: 88px; }

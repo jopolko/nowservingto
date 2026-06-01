@@ -3308,29 +3308,39 @@ if _events_filtered:
         + '</ul></div>'
     )
 
-# Contrast callout - the editorial bridge between short and long views.
-# Auto-computes the "drama" line based on whether leaders match.
+# Contrast bridge - graphic VS card showing the long-view leader vs
+# short-view leader. When they match, single celebratory card instead.
 _short_leader = _short_rows[0] if _short_rows else None
 _long_leader = _long_top_6[0] if _long_top_6 else None
 if _short_leader and _long_leader and _y3_total > 0:
+    _long_color = PALETTE_HEX.get(_long_leader['key']) or cuisine_color(_long_leader['key'])
+    _short_color = PALETTE_HEX.get(_short_leader['key']) or cuisine_color(_short_leader['key'])
     if _short_leader['key'] == _long_leader['key']:
-        _contrast = (
-            f"<b>{_esc(_short_leader['label'])}</b> leads on both timeframes — "
-            f"{_short_leader['pct']}% of the last 90 days, {round(_long_leader['pct'])}% over 3 years. "
-            "Toronto's most consistent cuisine."
+        _contrast_html = (
+            '<div class="trends-vs trends-vs-same">'
+            '<div class="trends-vs-side">'
+            '<div class="trends-vs-label">Reigning champion</div>'
+            f'<div class="trends-vs-cuisine" style="color:{_long_color}">{_esc(_long_leader["label"])}</div>'
+            f'<div class="trends-vs-pct">{round(_long_leader["pct"])}% over 36 months, {_short_leader["pct"]}% in the last 90 days</div>'
+            '</div></div>'
         )
     else:
-        _contrast = (
-            f"<b>{_esc(_long_leader['label'])}</b> has led Toronto food openings for the past 3 years "
-            f"({round(_long_leader['pct'])}% of all openings), "
-            f"but <b>{_esc(_short_leader['label'])}</b> just took {_short_leader['pct']}% of the last 90 days. "
-            "Whether that holds is anyone's guess."
+        _contrast_html = (
+            '<div class="trends-vs">'
+            '<div class="trends-vs-side">'
+            '<div class="trends-vs-label">36-month king</div>'
+            f'<div class="trends-vs-cuisine" style="color:{_long_color}">{_esc(_long_leader["label"])}</div>'
+            f'<div class="trends-vs-pct">{round(_long_leader["pct"])}%</div>'
+            '</div>'
+            '<div class="trends-vs-divider">VS</div>'
+            '<div class="trends-vs-side">'
+            '<div class="trends-vs-label">90-day challenger</div>'
+            f'<div class="trends-vs-cuisine" style="color:{_short_color}">{_esc(_short_leader["label"])}</div>'
+            f'<div class="trends-vs-pct">{_short_leader["pct"]}%</div>'
+            '</div></div>'
         )
 else:
-    _contrast = ''
-_contrast_html = (
-    f'<div class="trends-contrast">{_contrast}</div>' if _contrast else ''
-)
+    _contrast_html = ''
 
 _short_note = (
     f'<p class="trends-pies-note">Share of {_short_total} new restaurants verified open in the last 90 days. '
@@ -3344,7 +3354,7 @@ _long_note = (
 _trends_body = (
     # Short-term section (the dramatic, current view)
     '<section class="trends-section">'
-    '<h2 class="trends-h2">Right now — last 90 days</h2>'
+    '<h2 class="trends-h2">Last 90 days</h2>'
     f'<div class="trends-pies-row">{_short_pies}</div>'
     f'{_short_note}'
     '</section>'
@@ -3352,7 +3362,7 @@ _trends_body = (
     + _contrast_html +
     # Long-term section (the authoritative, structural view)
     '<section class="trends-section">'
-    '<h2 class="trends-h2">The long view — last 3 years</h2>'
+    '<h2 class="trends-h2">Last 36 months</h2>'
     f'<div class="trends-pies-row">{_long_pies}</div>'
     f'{_long_note}'
     f'{_callouts_html}'
