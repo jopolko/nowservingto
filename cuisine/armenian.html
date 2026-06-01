@@ -311,19 +311,24 @@
   .open-row[data-fresh="aged"] .od .ago { font-size: 9px; letter-spacing: 0.02em; line-height: 1.3; }
   .open-row[data-fresh="recent"] .od .ago { color: var(--ink2); }
   .open-row[data-fresh="aged"] .od .ago { color: var(--muted); }
-  /* Collapsed info hint above the feed - explains what "Registered" actually
-     means without filling the page with caveat copy. Click expands a short
-     definition + link to /press for the full methodology. */
-  .data-note-tip { margin: 4px 2px 14px; font: 400 12.5px/1.5 var(--sans); color: var(--muted); }
-  .data-note-tip summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 2px 0; user-select: none; }
+  /* "About Registered dates" info-tip - sits inline with the filter buttons.
+     Closed: ⓘ + label styled like a quiet button-row chip. Open: paragraph
+     pops down as an absolutely-positioned tooltip below the summary so the
+     button row doesn't reflow. */
+  .data-note-tip { position: relative; display: inline-flex; align-items: center; margin: 0; }
+  .data-note-tip summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; padding: 9px 12px; font: 600 12px/1 var(--sans); color: var(--muted); background: transparent; border: 1px dashed var(--line); border-radius: 999px; user-select: none; transition: color 0.12s, border-color 0.12s; }
   .data-note-tip summary::-webkit-details-marker { display: none; }
-  .data-note-tip summary:hover { color: var(--ink2); }
-  .data-note-tip .dnt-icon { font-size: 14px; line-height: 1; }
-  .data-note-tip .dnt-label { font-size: 12px; text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; }
-  .data-note-tip summary:hover .dnt-label { text-decoration-color: var(--muted); }
-  .data-note-tip[open] .dnt-label { text-decoration: none; }
-  .data-note-tip p { margin: 6px 0 0; font: 400 12.5px/1.55 var(--serif); color: var(--muted); font-style: italic; }
-  .data-note-tip p a { color: inherit; }
+  .data-note-tip summary:hover { color: var(--ink2); border-color: var(--muted); }
+  .data-note-tip[open] summary { color: var(--ink); border-color: var(--ink2); border-style: solid; }
+  .data-note-tip .dnt-icon { font-size: 13px; line-height: 1; }
+  .data-note-tip .dnt-label { font-size: 12px; }
+  .data-note-tip p { position: absolute; top: calc(100% + 6px); left: 0; z-index: 30; margin: 0; padding: 12px 14px; font: 400 13px/1.5 var(--serif); color: var(--ink2); font-style: italic; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 6px 18px rgba(0,0,0,0.08); width: max-content; max-width: min(60ch, calc(100vw - 32px)); }
+  .data-note-tip p a { color: var(--ink); }
+  @media (max-width: 500px) {
+    .data-note-tip summary { padding: 7px 10px; }
+    .data-note-tip .dnt-label { display: none; }
+    .data-note-tip p { left: auto; right: 0; }
+  }
   .open-row .on { font: 700 16px/1.3 var(--sans); color: var(--ink); letter-spacing: -0.01em; }
   /* Quiet dotted underline says "this is a link" without committing to a heavy
      solid underline. Solid red underline on hover/active for the affordance. */
@@ -724,11 +729,11 @@
       <button class="vt-btn vt-active" data-view="list" role="tab" aria-selected="true">List</button>
       <button class="vt-btn" data-view="map" role="tab" aria-selected="false">Map</button>
     </div>
+    <details class="data-note-tip">
+      <summary aria-label="About &quot;Registered&quot; dates"><span class="dnt-icon" aria-hidden="true">ⓘ</span><span class="dnt-label">About &ldquo;Registered&rdquo; dates</span></summary>
+      <p>&quot;Registered&quot; dates reflect when each restaurant first surfaced in our City permit, public-health inspection, and Google Places evidence — usually within a few weeks of opening, but a permit can lead actual opening by months. <a href="/press">How we verify &rsaquo;</a></p>
+    </details>
   </div>
-  <details class="data-note-tip">
-    <summary aria-label="About &quot;Registered&quot; dates"><span class="dnt-icon" aria-hidden="true">ⓘ</span><span class="dnt-label">About &ldquo;Registered&rdquo; dates</span></summary>
-    <p>&quot;Registered&quot; dates reflect when each restaurant first surfaced in our City permit, public-health inspection, and Google Places evidence — usually within a few weeks of opening, but a permit can lead actual opening by months. <a href="/press">How we verify &rsaquo;</a></p>
-  </details>
   <div class="open-feed" id="open-feed">
     <!-- STATIC-FEED-START - pre-rendered daily by tools/inject_openings.py for crawlers + no-JS visitors. Replaced by interactive JS render on page load. -->
     <div class="open-row has-pic" data-slug="giragi-486" data-fresh="aged" style="--row-accent: #37a92c"><a class="row-pic-link" href="https://maps.google.com/?cid=9396255723296583135" target="_blank" rel="noopener" aria-label="View GIRAGI"><img class="row-pic" src="/og/thumb/giragi-486.webp" alt="GIRAGI" loading="eager" fetchpriority="high" decoding="async"></a><div class="od"><a class="ago" href="/r/giragi-486">Registered 10mo ago</a></div><div class="on"><a href="http://www.giragito.ca/" target="_blank" rel="noopener">GIRAGI<span class="ext-arrow" aria-hidden="true">↗</span></a><span class="oad"><a href="https://maps.google.com/?cid=9396255723296583135" target="_blank" rel="noopener">486 Front St W Lower Ground Level, Toronto, ON M5V 0V2</a><span class="oad-d"> · Downtown</span></span></div><div class="oc"><a class="pill" href="/cuisine/armenian" style="background:#37a92c" aria-label="See newest Armenian restaurants">Armenian</a></div></div>
