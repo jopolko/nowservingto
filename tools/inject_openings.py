@@ -3231,7 +3231,8 @@ def _build_pie_card(label, key, pct, aria_period):
         f'font-size="22" font-weight="800" fill="#1a1a1a">{pct}%</text>'
         '</svg>'
     )
-    return f'<div class="trends-pie-card">{svg}<div class="trends-pie-name">{_esc(label)}</div></div>'
+    name_html = f'<a href="/cuisine/{_esc(key)}" class="trends-pie-link">{_esc(label)}</a>'
+    return f'<div class="trends-pie-card">{svg}<div class="trends-pie-name">{name_html}</div></div>'
 
 # Short-term: last 90 days from verified seen_entries (currently-operating).
 # This is what's HAPPENING - the dramatic, recent shifts.
@@ -3266,35 +3267,53 @@ _long_pies = ''.join(
 )
 
 # Wrestling-style event callouts (now that _long_top_6 + _short_rows
-# + _y3_rows are all defined). Designed for "underdog moment" /
-# "comeback" / "drought broken" framing.
+# + _y3_rows are all defined). Each event carries (tag, cuisine_key,
+# cuisine_label, message_after_label) so the rendering can wrap the
+# cuisine name in an anchor link to its /cuisine/<key> page.
 _events = []
 _y3_keys_top6 = {r['key'] for r in _long_top_6}
 _y3_count_by_key = {y['key']: y['count'] for y in _y3_rows}
+_drought_by_key = {}
+for r in _trend_rows:
+    if r['last_month'] >= 1 and all(r['by_m'].get(m, 0) == 0 for m in _recent_3):
+        gap = 0
+        for i in range(2, 12):
+            m = _ym_back(_dispatch_today, i)
+            if r['by_m'].get(m, 0) > 0:
+                gap = i - 1
+                break
+            gap = i
+        _drought_by_key[r['key']] = (r['label'], gap)
+
 for r in _short_rows:
     if r['key'] not in _y3_keys_top6 and r['count'] >= 2:
-        _events.append(('UPSET', f"{r['label']} cracked the short-term top 6 with {r['count']} openings, despite missing the 3-year top 6"))
-for lbl, gap in _drought_broken[:5]:
-    _events.append(('DROUGHT BROKEN', f"first new {lbl} kitchen in {gap}+ months"))
-for lbl, n, avg in _spikes[:5]:
-    _events.append(('HOT STREAK', f"{lbl} hit {n} openings last month (vs {avg}/mo average)"))
+        _events.append(('UPSET', r['key'], r['label'],
+                        f"cracked the short-term top 6 with {r['count']} openings, despite missing the 3-year top 6"))
+for key, (lbl, gap) in _drought_by_key.items():
+    _events.append(('DROUGHT BROKEN', key, lbl, f"first new kitchen in {gap}+ months"))
+for r in _trend_rows:
+    if r['last_month'] >= 2 and r['avg'] > 0 and r['last_month'] >= r['avg'] * 2:
+        _events.append(('HOT STREAK', r['key'], r['label'],
+                        f"hit {r['last_month']} openings last month (vs {round(r['avg'], 1)}/mo average)"))
 for r in _short_rows:
     if r['count'] >= 2:
         y3_count = _y3_count_by_key.get(r['key'], 0)
         if 0 < y3_count < 30:
-            _events.append(('UNDERDOG MOVE', f"{r['label']} got {r['count']} openings in 90 days vs only {y3_count} total in the past 3 years"))
+            _events.append(('UNDERDOG MOVE', r['key'], r['label'],
+                            f"got {r['count']} openings in 90 days vs only {y3_count} total in the past 3 years"))
 for r in _short_rows:
     y3_count = _y3_count_by_key.get(r['key'], 0)
     if r['count'] >= 1 and y3_count <= 1:
-        _events.append(('FIRST IN 3 YEARS', f"{r['label']} just opened — vanishingly rare in Toronto's recent food history"))
+        _events.append(('FIRST IN 3 YEARS', r['key'], r['label'],
+                        f"just opened — vanishingly rare in Toronto's recent food history"))
 
-_seen_cuisines_in_events = set()
+# Dedup by cuisine key (one cuisine = one event max)
+_seen = set()
 _events_filtered = []
-for tag, msg in _events:
-    first_word = msg.split()[0]
-    if first_word in _seen_cuisines_in_events: continue
-    _seen_cuisines_in_events.add(first_word)
-    _events_filtered.append((tag, msg))
+for tag, key, lbl, msg in _events:
+    if key in _seen: continue
+    _seen.add(key)
+    _events_filtered.append((tag, key, lbl, msg))
 
 if _events_filtered:
     _callouts_html = (
@@ -3302,8 +3321,10 @@ if _events_filtered:
         '<h3 class="trends-events-h">This month in the food licence dojo</h3>'
         '<ul class="trends-events-list">'
         + ''.join(
-            f'<li><span class="trends-events-tag">{_esc(tag)}</span> {_esc(msg)}.</li>'
-            for tag, msg in _events_filtered[:6]
+            f'<li><span class="trends-events-tag">{_esc(tag)}</span> '
+            f'<a class="trends-events-cuisine" href="/cuisine/{_esc(key)}">{_esc(lbl)}</a> '
+            f'{_esc(msg)}.</li>'
+            for tag, key, lbl, msg in _events_filtered[:6]
         )
         + '</ul></div>'
     )
@@ -3315,12 +3336,14 @@ _long_leader = _long_top_6[0] if _long_top_6 else None
 if _short_leader and _long_leader and _y3_total > 0:
     _long_color = PALETTE_HEX.get(_long_leader['key']) or cuisine_color(_long_leader['key'])
     _short_color = PALETTE_HEX.get(_short_leader['key']) or cuisine_color(_short_leader['key'])
+    _long_link = f'/cuisine/{_esc(_long_leader["key"])}'
+    _short_link = f'/cuisine/{_esc(_short_leader["key"])}'
     if _short_leader['key'] == _long_leader['key']:
         _contrast_html = (
             '<div class="trends-vs trends-vs-same">'
             '<div class="trends-vs-side">'
             '<div class="trends-vs-label">Reigning champion</div>'
-            f'<div class="trends-vs-cuisine" style="color:{_long_color}">{_esc(_long_leader["label"])}</div>'
+            f'<a class="trends-vs-cuisine" href="{_long_link}" style="color:{_long_color}">{_esc(_long_leader["label"])}</a>'
             f'<div class="trends-vs-pct">{round(_long_leader["pct"])}% over 36 months, {_short_leader["pct"]}% in the last 90 days</div>'
             '</div></div>'
         )
@@ -3329,13 +3352,13 @@ if _short_leader and _long_leader and _y3_total > 0:
             '<div class="trends-vs">'
             '<div class="trends-vs-side">'
             '<div class="trends-vs-label">36-month king</div>'
-            f'<div class="trends-vs-cuisine" style="color:{_long_color}">{_esc(_long_leader["label"])}</div>'
+            f'<a class="trends-vs-cuisine" href="{_long_link}" style="color:{_long_color}">{_esc(_long_leader["label"])}</a>'
             f'<div class="trends-vs-pct">{round(_long_leader["pct"])}%</div>'
             '</div>'
             '<div class="trends-vs-divider">VS</div>'
             '<div class="trends-vs-side">'
             '<div class="trends-vs-label">90-day challenger</div>'
-            f'<div class="trends-vs-cuisine" style="color:{_short_color}">{_esc(_short_leader["label"])}</div>'
+            f'<a class="trends-vs-cuisine" href="{_short_link}" style="color:{_short_color}">{_esc(_short_leader["label"])}</a>'
             f'<div class="trends-vs-pct">{_short_leader["pct"]}%</div>'
             '</div></div>'
         )

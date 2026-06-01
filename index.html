@@ -470,6 +470,12 @@
   body.page-trends .trends-pie-card { text-align: center; flex: 0 0 auto; }
   body.page-trends .trends-pie-card svg { display: block; margin: 0 auto; }
   body.page-trends .trends-pie-name { font: 700 13px/1.2 var(--sans); margin-top: 8px; color: var(--ink); letter-spacing: -0.005em; }
+  body.page-trends .trends-pie-link { color: inherit; text-decoration: none; border-bottom: 1px dotted var(--line); padding-bottom: 1px; transition: color 0.12s, border-color 0.12s; }
+  body.page-trends .trends-pie-link:hover { color: var(--accent); border-bottom-color: var(--accent); }
+  body.page-trends .trends-vs-cuisine { text-decoration: none; transition: opacity 0.12s; }
+  body.page-trends .trends-vs-cuisine:hover { opacity: 0.75; }
+  body.page-trends .trends-events-cuisine { color: var(--ink); text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; font-weight: 700; transition: text-decoration-color 0.12s; }
+  body.page-trends .trends-events-cuisine:hover { text-decoration-color: var(--accent); color: var(--accent); }
   body.page-trends .trends-pies-note { font: 400 13px/1.4 var(--serif); color: var(--muted); font-style: italic; text-align: center; margin: 4px 0 22px; }
   body.page-trends .trends-h3 { font: 700 12px/1.2 var(--sans); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 16px 0 10px; }
   /* Contrast VS card - graphic showdown between the 36-month leader
