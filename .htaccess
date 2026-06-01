@@ -116,6 +116,13 @@ RewriteRule ^wire/([a-z_]+)/?$ /wire/$1.html [L]
 RewriteCond %{DOCUMENT_ROOT}/district/$1.html -f
 RewriteRule ^district/([a-z-]+)/?$ /district/$1.html [L]
 
+# Monthly dispatch archive: /dispatch/{yyyy-mm} → dispatch/{yyyy-mm}.html
+# Plus /dispatch/latest → dispatch/latest.html as the always-current alias.
+RewriteCond %{DOCUMENT_ROOT}/dispatch/$1.html -f
+RewriteRule ^dispatch/([a-z0-9-]+)/?$ /dispatch/$1.html [L]
+# Bare /dispatch redirects to latest
+RewriteRule ^dispatch/?$ /dispatch/latest [R=302,L]
+
 # Per-listing share links: /r/{slug} → r/{slug}.html when present
 # (pre-rendered with per-listing title/og:image so X / FB / iMessage
 # auto-card the personalized image and route the click to the listing

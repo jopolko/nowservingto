@@ -2840,6 +2840,72 @@ for entry in seen_entries.values():
 print(f"  wrote {n_listing_html} per-listing pages → r/<slug>.html")
 print(f"  wrote {n_listing_png} per-listing OG cards → og/<slug>.png")
 
+# ─────────────────────────────────────────────────────────────────────
+# Monthly dispatch page (2026-06-01): publish a curated archive page
+# per month showing the freshest entries. Lives at /dispatch/<yyyy-mm>.html
+# and /dispatch/latest.html. Updates throughout the current month as
+# new entries land; the previous month's file freezes after rollover.
+# Serves as:
+#   1. A forwardable monthly digest URL (email/X/Reddit distribution)
+#   2. A permanent SEO archive page ranking for "newest toronto restaurants
+#      [month]" queries
+#   3. The landing page our weekly digest email points to
+# ─────────────────────────────────────────────────────────────────────
+DISPATCH_DIR = Path(ROOT) / 'dispatch'
+DISPATCH_DIR.mkdir(exist_ok=True)
+_dispatch_today = REFERENCE_DATE
+_dispatch_month = f'{_dispatch_today.year}-{_dispatch_today.month:02d}'
+_dispatch_label = _dispatch_today.strftime('%B %Y')
+# 30-day rolling window, not strict calendar-month - the calendar approach
+# leaves the file empty for the first week of each month. Rolling window
+# keeps the page useful continuously; the URL key still reflects the
+# month it was published in so each month becomes its own archive entry
+# as it rolls into history.
+from datetime import timedelta as _td
+_window_start_iso = (_dispatch_today - _td(days=30)).isoformat()
+_this_month_picks = sorted(
+    [e for e in seen_entries.values() if e.get('issuedDate', '') >= _window_start_iso],
+    key=lambda r: r['issuedDate'], reverse=True
+)
+_dispatch_rows = build_static_rows(_this_month_picks[:30], link_to_listing=True)
+_dispatch_template = open(INDEX_PATH).read()
+_dispatch_canonical = f'{SITE_BASE}/dispatch/{_dispatch_month}'
+_dispatch_title = f"NowServingTO Dispatch — {_dispatch_label}: {len(_this_month_picks)} new Toronto restaurants"
+_dispatch_desc = (f"The {len(_this_month_picks)} restaurants newly registered with the City of "
+                  f"Toronto in {_dispatch_label} — sorted by freshness, classified by cuisine, "
+                  f"verified open. Monthly archive from nowservingto.com.")
+_dispatch_h1 = (f'<h1 class="sub">NowServingTO Dispatch <span class="hl">{_esc(_dispatch_label)}</span></h1>'
+                f'<div class="listing-lede">{len(_this_month_picks)} restaurants newly registered with '
+                f'the City of Toronto this month, sorted by freshness.</div>')
+_dispatch_page = inject_into_html(
+    _dispatch_template, static_block=_dispatch_rows, ld_payloads=[],
+)
+for _sel, _val in [
+    (r'<title>[^<]*</title>', f'<title>{_esc(_dispatch_title)}</title>'),
+    (r'(<meta name="description" content=")[^"]*(")', _esc(_dispatch_desc)),
+    (r'(<meta property="og:title" content=")[^"]*(")', _esc(_dispatch_title)),
+    (r'(<meta property="og:description" content=")[^"]*(")', _esc(_dispatch_desc)),
+    (r'(<meta property="og:url" content=")[^"]*(")', _esc(_dispatch_canonical)),
+    (r'(<meta name="twitter:title" content=")[^"]*(")', _esc(_dispatch_title)),
+    (r'(<meta name="twitter:description" content=")[^"]*(")', _esc(_dispatch_desc)),
+    (r'(<link rel="canonical" href=")[^"]*(")', _esc(_dispatch_canonical)),
+]:
+    if _val.startswith('<title'):
+        _dispatch_page = re.sub(_sel, _val, _dispatch_page, count=1)
+    else:
+        _dispatch_page = re.sub(_sel, lambda m, v=_val: m.group(1) + v + m.group(2),
+                                _dispatch_page, count=1)
+_dispatch_page = re.sub(r'<h1 class="sub">[\s\S]*?</h1>(?:<div class="listing-lede">[\s\S]*?</div>)?',
+                        lambda m: _dispatch_h1, _dispatch_page, count=1)
+_dispatch_page = _dispatch_page.replace('<body>', '<body class="page-dispatch">', 1)
+# Drop the chrome that doesn't belong on a dispatch archive page:
+# filter dropdowns, cuisine picker, map toggle, fresh-since badge.
+# Body class .page-dispatch hides them via CSS (reusing the existing
+# .page-listing hide rules works since both want clean single-purpose layout).
+(DISPATCH_DIR / f'{_dispatch_month}.html').write_text(_dispatch_page)
+(DISPATCH_DIR / 'latest.html').write_text(_dispatch_page)
+print(f"  wrote /dispatch/{_dispatch_month}.html + /dispatch/latest.html ({len(_this_month_picks)} entries)")
+
 # Persist any photoRef values we backfilled into PLACES_CACHE so the next
 # inject doesn't have to re-call place_details for the same entries.
 try:
@@ -2854,6 +2920,17 @@ url_blocks = [
     f'  <url>\n    <loc>{SITE_BASE}/</loc>\n    <lastmod>{REFERENCE_DATE.isoformat()}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>1.0</priority>\n  </url>',
     f'  <url>\n    <loc>{SITE_BASE}/press</loc>\n    <lastmod>{REFERENCE_DATE.isoformat()}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.6</priority>\n  </url>',
 ]
+# Monthly dispatch archive pages - one per month, indexed for SEO
+# ("newest toronto restaurants June 2026" type queries). Also surface
+# /dispatch/latest as the canonical "current month" URL.
+DISPATCH_DIR_PATH = Path(ROOT) / 'dispatch'
+if DISPATCH_DIR_PATH.exists():
+    for dfile in sorted(DISPATCH_DIR_PATH.glob('*.html')):
+        dkey = dfile.stem
+        url_blocks.append(
+            f'  <url>\n    <loc>{SITE_BASE}/dispatch/{dkey}</loc>\n    <lastmod>{REFERENCE_DATE.isoformat()}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.7</priority>\n  </url>'
+        )
+
 # Diaspora-pitch wire pages - whatever build_wire_pages.py actually wrote
 # is what we surface. Filesystem-driven so the two scripts can evolve
 # independently.
