@@ -518,26 +518,11 @@
     color: var(--ink);
     letter-spacing: -0.005em;
   }
-  /* Cuisine + district H1 keeps the bolder/larger inner-page treatment
-     (the cuisine/district name IS the page topic, deserves more weight
-     than the homepage's italic dek) but stacks below the brand on its
-     own line - same layout pattern as the homepage. */
-  body.page-cuisine .mast .sub,
-  body.page-district .mast .sub {
-    margin: 8px 0 0;
-    font-style: normal;
-    font-weight: 700;
-    font-size: 18px;
-    color: var(--ink);
-    letter-spacing: -0.005em;
-  }
-  /* Cuisine + district pages keep the "newest registered" accent span;
-     listing pages have plain restaurant name only. */
-  body.page-cuisine .mast .sub .hl,
-  body.page-district .mast .sub .hl {
-    font-weight: 800;
-    color: var(--accent);
-  }
+  /* Cuisine + district pages inherit the homepage .mast .sub treatment
+     (italic 14px serif dek) - keeps the masthead exactly the same height
+     across home / cuisine / district navigation so the layout doesn't
+     jump when filtering. The .hl accent span on each page-specific H1
+     also inherits the homepage rule. */
   body.page-listing .mast .listing-lede {
     margin: 0;
     font-size: 13.5px;
