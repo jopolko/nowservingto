@@ -3120,40 +3120,46 @@ def _pie_slice_path(pct, cx, cy, r):
     large_arc = 0 if pct <= 50 else 1
     return f'M{cx},{cy} L{cx},{cy - r} A{r},{r} 0 {large_arc},1 {end_x:.2f},{end_y:.2f} Z'
 
-if _biggest_mover:
-    _bm = _biggest_mover
-    _total_this_month = sum(r['curr'] for r in _trend_rows)
-    _bm_pct = round((_bm['curr'] / _total_this_month) * 100) if _total_this_month else 0
-    _bm_color = PALETTE_HEX.get(_bm['key']) or cuisine_color(_bm['key'])
-    _slice_path = _pie_slice_path(_bm_pct, 50, 50, 45)
-    _bm_pie = (
-        '<svg viewBox="0 0 100 100" width="100" height="100" '
+# Top 3 by share of this month's openings - each gets its own pie.
+# Separate pies (not a unified pie) so the eye does the comparison
+# and the screenshot-share unit is the row of 3. Cuisine name beneath
+# each; percentage in the slice's center. The visual ratio between
+# the three slices does all the editorial work.
+_total_this_month = sum(r['curr'] for r in _trend_rows) or 1
+_top_3 = sorted(_trend_rows, key=lambda r: -r['curr'])[:3]
+_pie_cards = []
+for r in _top_3:
+    pct = round((r['curr'] / _total_this_month) * 100)
+    color = PALETTE_HEX.get(r['key']) or cuisine_color(r['key'])
+    slice_path = _pie_slice_path(pct, 50, 50, 45)
+    pie_svg = (
+        '<svg viewBox="0 0 100 100" width="120" height="120" '
         'xmlns="http://www.w3.org/2000/svg" '
-        f'role="img" aria-label="{_esc(_bm["label"])} share of {_esc(_dispatch_label)} openings: {_bm_pct} percent">'
+        f'role="img" aria-label="{_esc(r["label"])}: {pct} percent of {_esc(_dispatch_label)} openings">'
         f'<circle cx="50" cy="50" r="45" fill="#ebe9e4"/>'
-        f'<path d="{_slice_path}" fill="{_bm_color}"/>'
-        f'<text x="50" y="56" text-anchor="middle" '
+        f'<path d="{slice_path}" fill="{color}"/>'
+        f'<text x="50" y="58" text-anchor="middle" '
         'font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" '
-        f'font-size="22" font-weight="800" fill="#1a1a1a">{_bm_pct}%</text>'
+        f'font-size="24" font-weight="800" fill="#1a1a1a">{pct}%</text>'
         '</svg>'
     )
-    _bm_hero = (
-        '<div class="trends-hero">'
-        f'<div class="trends-hero-pie">{_bm_pie}</div>'
-        '<div class="trends-hero-text">'
-        f'<span class="trends-hero-label">Biggest slice, {_esc(_dispatch_label)}</span>'
-        f'<span class="trends-hero-stat">{_esc(_bm["label"])}: {_bm_pct}% of new openings</span>'
-        f'<span class="trends-hero-note">{_bm["curr"]} of {_total_this_month} new restaurants this month.</span>'
-        '</div>'
+    _pie_cards.append(
+        '<div class="trends-pie-card">'
+        f'{pie_svg}'
+        f'<div class="trends-pie-name">{_esc(r["label"])}</div>'
         '</div>'
     )
-else:
-    _bm_hero = ''
+_bm_hero = (
+    '<div class="trends-pies-row">' + ''.join(_pie_cards) + '</div>'
+    f'<p class="trends-pies-note">Share of {_esc(_dispatch_label)}\'s {_total_this_month} new restaurants. '
+    'Updated daily as the City of Toronto publishes new licences.</p>'
+) if _top_3 else ''
 
 _trends_body = (
     '<section class="trends-section">'
-    '<h2 class="trends-h2">This month by cuisine</h2>'
+    f'<h2 class="trends-h2">Top cuisines, {_esc(_dispatch_label)}</h2>'
     f'{_bm_hero}'
+    '<h3 class="trends-h3">Full month, all cuisines</h3>'
     f'<div class="trends-chart-wrap">{_trends_chart_svg}</div>'
     f'{_callouts_html}'
     '</section>'
