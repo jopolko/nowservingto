@@ -773,21 +773,24 @@ for _e in seen_entries.values():
     _name = _e.get('operatingName') or ''
     _addr = _e.get('address') or ''
     _licence_iso = _e['issuedDate']
-    # Collect every operating-evidence date that post-dates the licence.
-    # Each one is a hard "definitely operating by this date" lower bound.
-    # Take the EARLIEST - it's the tightest known floor on when the place
-    # actually opened. (DineSafe and Places reviews can disagree by months
-    # at mall/food-court entries where customers review before TPH inspects.)
+    # Take the earliest operating-evidence date across DineSafe + Places
+    # reviews. Pre-existing entries (any signal predating licence by >180d)
+    # have already been dropped above, so the residue here is real
+    # operating evidence we can trust as a lower bound on opening.
+    # Licence is the fallback when neither operating signal exists - it
+    # doesn't compete with operating evidence here (paperwork can be issued
+    # before doors open OR after a place has been running for months).
     _candidates = []
     _, _, _ds_earliest, _ = _pre_existing_dinesafe(_name, _addr, _licence_iso)
-    if _ds_earliest and _ds_earliest > _licence_iso:
+    if _ds_earliest:
         _candidates.append((_ds_earliest, 'dinesafe'))
     _, _, _rev_earliest = _pre_existing_evidence(_e.get('_cacheKey') or '', _licence_iso)
-    if _rev_earliest and _rev_earliest > _licence_iso:
+    if _rev_earliest:
         _candidates.append((_rev_earliest, 'review'))
     if not _candidates: continue
     _candidates.sort()
     _swap_date, _swap_src = _candidates[0]
+    if _swap_date == _licence_iso: continue  # already matches, no-op swap
     try:
         _swap_dt = datetime.strptime(_swap_date, '%Y-%m-%d').date()
     except Exception:
@@ -1065,21 +1068,23 @@ def _ago(days):
 
 
 def _tier_label(days, iso_date=None):
-    """Three-tier freshness label for the row pill. Each tier carries a
-    concrete duration so the categorical label ('New' / 'Recent') doesn't
-    feel weaker than the aged-tier 'Registered Nmo ago' that follows.
-      0-1d    -> 'New · today'
-      2-30d   -> 'New · Nd ago'
-      31-90d  -> 'Recent · Nw ago'
+    """Three-tier 'Registered' label, consistent verb across the ladder.
+      0d      -> 'Registered today'
+      1d      -> 'Registered yesterday'
+      2-30d   -> 'Registered Nd ago'
+      31-90d  -> 'Registered Nw ago'
       91-365d -> 'Registered Nmo ago'
-    Unit per tier (days/weeks/months) signals freshness on its own:
-    if the row needs to count in months, that IS the editorial point."""
+    Visual tier (★ + accent / muted / muted-light) does the freshness
+    signaling; the text is honest about what the date actually means
+    (when the entry first surfaced in our permit + inspection + review
+    evidence pool, NOT necessarily the day the doors opened)."""
     if days is None: return ''
-    if days <= 1:    return 'New · today'
-    if days <= 30:   return f'New · {days}d ago'
+    if days <= 0:   return 'Registered today'
+    if days == 1:   return 'Registered yesterday'
+    if days <= 30:  return f'Registered {days}d ago'
     if days <= 90:
-        w = max(5, round(days / 7))  # 31d -> 4w would dip below "Recent" feel; floor at 5w
-        return f'Recent · {w}w ago'
+        w = max(5, round(days / 7))
+        return f'Registered {w}w ago'
     if days <= 365:
         m = max(3, round(days / 30))
         return f'Registered {m}mo ago'
