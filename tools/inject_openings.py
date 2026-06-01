@@ -3338,11 +3338,28 @@ if _short_leader and _long_leader and _y3_total > 0:
     _short_color = PALETTE_HEX.get(_short_leader['key']) or cuisine_color(_short_leader['key'])
     _long_link = f'/cuisine/{_esc(_long_leader["key"])}'
     _short_link = f'/cuisine/{_esc(_short_leader["key"])}'
+    # Crown SVG: gold 5-point crown above the 36-month winner
+    _crown_svg = (
+        '<svg class="trends-vs-medal trends-vs-crown" viewBox="0 0 48 38" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
+        '<path d="M4,32 L4,16 L13,22 L20,6 L24,20 L28,6 L35,22 L44,16 L44,32 Z" fill="#e6b800" stroke="#a8821f" stroke-width="1.5" stroke-linejoin="round"/>'
+        '<circle cx="20" cy="6" r="2.8" fill="#e6b800" stroke="#a8821f" stroke-width="1"/>'
+        '<circle cx="28" cy="6" r="2.8" fill="#e6b800" stroke="#a8821f" stroke-width="1"/>'
+        '<circle cx="24" cy="20" r="2.4" fill="#c8201f"/>'
+        '</svg>'
+    )
+    # Silver medal SVG: 2nd-place ribbon-medal for the 90-day challenger
+    _silver_svg = (
+        '<svg class="trends-vs-medal trends-vs-silver" viewBox="0 0 40 42" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
+        '<path d="M10,2 L16,18 L24,18 L30,2 L26,2 L20,14 L14,2 Z" fill="#c8201f"/>'
+        '<circle cx="20" cy="28" r="12" fill="#c0c0c0" stroke="#7a7a7a" stroke-width="1.5"/>'
+        '<text x="20" y="33" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="13" font-weight="800" fill="#4a4a4a">2</text>'
+        '</svg>'
+    )
     if _short_leader['key'] == _long_leader['key']:
         _contrast_html = (
             '<div class="trends-vs trends-vs-same">'
             '<div class="trends-vs-side">'
-            '<div class="trends-vs-label">Reigning champion</div>'
+            f'{_crown_svg}<div class="trends-vs-label trends-vs-winner-label">Reigning champion</div>'
             f'<a class="trends-vs-cuisine" href="{_long_link}" style="color:{_long_color}">{_esc(_long_leader["label"])}</a>'
             f'<div class="trends-vs-pct">{round(_long_leader["pct"])}% over 36 months, {_short_leader["pct"]}% in the last 90 days</div>'
             '</div></div>'
@@ -3350,14 +3367,16 @@ if _short_leader and _long_leader and _y3_total > 0:
     else:
         _contrast_html = (
             '<div class="trends-vs">'
-            '<div class="trends-vs-side">'
-            '<div class="trends-vs-label">36-month king</div>'
+            '<div class="trends-vs-side trends-vs-winner">'
+            f'{_crown_svg}'
+            '<div class="trends-vs-label trends-vs-winner-label">Winner · 36 months</div>'
             f'<a class="trends-vs-cuisine" href="{_long_link}" style="color:{_long_color}">{_esc(_long_leader["label"])}</a>'
             f'<div class="trends-vs-pct">{round(_long_leader["pct"])}%</div>'
             '</div>'
             '<div class="trends-vs-divider">VS</div>'
-            '<div class="trends-vs-side">'
-            '<div class="trends-vs-label">90-day challenger</div>'
+            '<div class="trends-vs-side trends-vs-runner-up">'
+            f'{_silver_svg}'
+            '<div class="trends-vs-label trends-vs-silver-label">Challenger · 90 days</div>'
             f'<a class="trends-vs-cuisine" href="{_short_link}" style="color:{_short_color}">{_esc(_short_leader["label"])}</a>'
             f'<div class="trends-vs-pct">{_short_leader["pct"]}%</div>'
             '</div></div>'
@@ -3385,7 +3404,7 @@ _trends_body = (
     + _contrast_html +
     # Long-term section (the authoritative, structural view)
     '<section class="trends-section">'
-    '<h2 class="trends-h2">Last 36 months</h2>'
+    '<h2 class="trends-h2">Toronto\'s reigning cuisines <span class="trends-h2-sub">· 36-month standings</span></h2>'
     f'<div class="trends-pies-row">{_long_pies}</div>'
     f'{_long_note}'
     f'{_callouts_html}'

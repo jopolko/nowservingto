@@ -487,6 +487,14 @@
   body.page-trends .trends-vs-cuisine { font: 900 28px/1.1 var(--sans); letter-spacing: -0.02em; margin-bottom: 6px; }
   body.page-trends .trends-vs-pct { font: 700 20px/1 var(--sans); color: var(--ink); font-variant-numeric: tabular-nums; }
   body.page-trends .trends-vs-divider { font: 900 22px/1 var(--sans); color: var(--muted); letter-spacing: 0.1em; flex: 0 0 auto; }
+  /* Winner/runner-up trophies above the VS sides. SVG crown for gold,
+     silver medal for runner-up. Gives the VS card a podium-graphic feel. */
+  body.page-trends .trends-vs-medal { display: block; margin: 0 auto 4px; width: 38px; height: auto; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.12)); }
+  body.page-trends .trends-vs-crown { width: 44px; }
+  body.page-trends .trends-vs-silver { width: 38px; }
+  body.page-trends .trends-vs-winner-label { color: #b8870a; font-weight: 800; }
+  body.page-trends .trends-vs-silver-label { color: #7a7a7a; font-weight: 800; }
+  body.page-trends .trends-h2-sub { font-weight: 500; color: var(--muted); letter-spacing: -0.005em; font-size: 14px; margin-left: 6px; }
   body.page-trends .trends-vs-same { gap: 0; }
   body.page-trends .trends-vs-same .trends-vs-pct { font-size: 14.5px; color: var(--ink2); font-weight: 500; font-family: var(--serif); font-style: italic; margin-top: 4px; }
   @media (max-width: 480px) {
