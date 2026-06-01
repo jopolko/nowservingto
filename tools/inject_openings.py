@@ -3034,15 +3034,9 @@ _trends_chart_svg = (
     + '</svg>'
 )
 
-# Build the callout blocks (drought-broken + spikes)
-_callout_lines = []
-if _drought_broken:
-    _callout_lines.append('<li><b>Drought broken:</b> ' + ', '.join(
-        f'{_esc(lbl)} ({n}+ months silent)' for lbl, n in _drought_broken[:5]) + '.</li>')
-if _spikes:
-    _callout_lines.append('<li><b>Spiked:</b> ' + ', '.join(
-        f'{_esc(lbl)} hit {n} this month (avg {a}/mo)' for lbl, n, a in _spikes[:5]) + '.</li>')
-_callouts_html = ('<ul class="trends-callouts">' + ''.join(_callout_lines) + '</ul>') if _callout_lines else ''
+# Placeholder - real event computation happens after _y3_rows and
+# _long_top_6 exist further down. _callouts_html is set below.
+_callouts_html = ''
 
 # Compose the trends page
 _trends_label = _cal.month_name[_dm_month] + f' {_dm_year}'
@@ -3057,9 +3051,7 @@ for r in _trend_top[:5]:
 _tweet_summary_parts.append(f"\nFull chart + sources: {SITE_BASE}/trends")
 _tweet_text = '\n'.join(_tweet_summary_parts)
 _tweet_intent = 'https://twitter.com/intent/tweet?text=' + quote_plus(_tweet_text)
-_trends_h1 = (f'<h1 class="sub">Toronto food openings by cuisine, <span class="hl">{_esc(_trends_label)}</span></h1>'
-              f'<div class="listing-lede">Coral bar = {_esc(_trends_label)} count. Grey bar = 12-month average. '
-              f'Drawn from City of Toronto licence data + verification gates.</div>')
+_trends_h1 = f'<h1 class="sub">Toronto food openings by cuisine, <span class="hl">{_esc(_trends_label)}</span></h1>'
 # 3-year cuisine leaderboard. Pulls from LLM cuisine cache (populated
 # by `python3 tools/llm_classify_batch.py --years=3`). Walks the FULL
 # CSV (no date filter on dispatch's seen_entries) and counts per-cuisine
@@ -3273,6 +3265,49 @@ _long_pies = ''.join(
     for r in _long_top_6
 )
 
+# Wrestling-style event callouts (now that _long_top_6 + _short_rows
+# + _y3_rows are all defined). Designed for "underdog moment" /
+# "comeback" / "drought broken" framing.
+_events = []
+_y3_keys_top6 = {r['key'] for r in _long_top_6}
+_y3_count_by_key = {y['key']: y['count'] for y in _y3_rows}
+for r in _short_rows:
+    if r['key'] not in _y3_keys_top6 and r['count'] >= 2:
+        _events.append(('UPSET', f"{r['label']} cracked the short-term top 6 with {r['count']} openings, despite missing the 3-year top 6"))
+for lbl, gap in _drought_broken[:5]:
+    _events.append(('DROUGHT BROKEN', f"first new {lbl} kitchen in {gap}+ months"))
+for lbl, n, avg in _spikes[:5]:
+    _events.append(('HOT STREAK', f"{lbl} hit {n} openings last month (vs {avg}/mo average)"))
+for r in _short_rows:
+    if r['count'] >= 2:
+        y3_count = _y3_count_by_key.get(r['key'], 0)
+        if 0 < y3_count < 30:
+            _events.append(('UNDERDOG MOVE', f"{r['label']} got {r['count']} openings in 90 days vs only {y3_count} total in the past 3 years"))
+for r in _short_rows:
+    y3_count = _y3_count_by_key.get(r['key'], 0)
+    if r['count'] >= 1 and y3_count <= 1:
+        _events.append(('FIRST IN 3 YEARS', f"{r['label']} just opened — vanishingly rare in Toronto's recent food history"))
+
+_seen_cuisines_in_events = set()
+_events_filtered = []
+for tag, msg in _events:
+    first_word = msg.split()[0]
+    if first_word in _seen_cuisines_in_events: continue
+    _seen_cuisines_in_events.add(first_word)
+    _events_filtered.append((tag, msg))
+
+if _events_filtered:
+    _callouts_html = (
+        '<div class="trends-events">'
+        '<h3 class="trends-events-h">This month in the food licence dojo</h3>'
+        '<ul class="trends-events-list">'
+        + ''.join(
+            f'<li><span class="trends-events-tag">{_esc(tag)}</span> {_esc(msg)}.</li>'
+            for tag, msg in _events_filtered[:6]
+        )
+        + '</ul></div>'
+    )
+
 # Contrast callout - the editorial bridge between short and long views.
 # Auto-computes the "drama" line based on whether leaders match.
 _short_leader = _short_rows[0] if _short_rows else None
@@ -3321,12 +3356,6 @@ _trends_body = (
     f'<div class="trends-pies-row">{_long_pies}</div>'
     f'{_long_note}'
     f'{_callouts_html}'
-    '</section>'
-    # 16-year volume backdrop
-    '<section class="trends-section">'
-    '<h2 class="trends-h2">The 16-year backdrop</h2>'
-    f'<div class="trends-chart-wrap">{_macro_chart_svg}</div>'
-    f'<p class="trends-macro-note">{_esc(_macro_context)}</p>'
     '</section>'
     # Share CTA
     '<p class="trends-share">'
