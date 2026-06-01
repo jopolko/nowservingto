@@ -114,8 +114,18 @@ def main():
     cache = json.loads(CACHE_PATH.read_text()) if CACHE_PATH.exists() else {}
     print(f"cache state: total={len(cache)}")
 
-    # 1. Walk the CSV for entries in the last 365 days that aren't cached as 'ok'
-    cutoff = date.today() - timedelta(days=365)
+    # Default window: 365 days. Pass --years=3 (or any int) to extend
+    # for historical-cuisine backfill (powers the /trends 3-year chart).
+    import sys as _sys
+    _years = 1
+    for _a in _sys.argv[1:]:
+        if _a.startswith('--years='):
+            try:
+                _years = max(1, int(_a.split('=', 1)[1]))
+            except ValueError:
+                pass
+    cutoff = date.today() - timedelta(days=365 * _years)
+    print(f"  window: {_years} year(s) -> cutoff {cutoff}")
     targets = []  # list of (cache_key, name, address)
     seen = set()
     if Path(CSV_PATH).exists():

@@ -2931,6 +2931,11 @@ def _ym_back(dt, n):
     return f'{y}-{m:02d}'
 _trend_months = [_ym_back(_dispatch_today, i) for i in range(12, 0, -1)]
 _trend_current_ym = _ym_back(_dispatch_today, 1)  # most recently completed month
+# 6-month rolling window: months -6 through -1 (most recent 6 completed)
+# Provides ~80 entries / cuisine sample size - enough that the top 3
+# cuisines have meaningful percentage differentiation, vs 1-month
+# which is noise (3 vs 2 means nothing).
+_recent_6_months = [_ym_back(_dispatch_today, i) for i in range(6, 0, -1)]
 _cuisine_month_count = _dd(lambda: _dd(int))
 for _e in seen_entries.values():
     _iso = _e.get('issuedDate') or ''
@@ -2941,22 +2946,26 @@ for _e in seen_entries.values():
         if not _c: continue
         _cuisine_month_count[_c][_ym] += 1
 
-# Compute current-month count + 12-month average for ranking
+# Compute 6-month rolling count + 12-month average for ranking
 _trend_rows = []
 for _c, _by_m in _cuisine_month_count.items():
-    _curr = _by_m.get(_trend_current_ym, 0)
-    _avg = sum(_by_m.values()) / 12.0
+    _curr = sum(_by_m.get(m, 0) for m in _recent_6_months)  # 6-month rolling sum
+    _avg = sum(_by_m.values()) / 12.0                        # 12-month monthly avg
     _trend_rows.append({
         'key': _c,
         'label': CUISINE_LABEL.get(_c, _c.replace('_', ' ').title()),
         'curr': _curr, 'avg': _avg,
-        'delta_pct': ((_curr - _avg) / _avg * 100) if _avg > 0 else None,
+        'delta_pct': ((_curr - _avg * 6) / (_avg * 6) * 100) if _avg > 0 else None,
         'by_m': dict(_by_m),
+        # Most-recently-completed-month count (for monthly callouts)
+        'last_month': _by_m.get(_trend_current_ym, 0),
     })
-# Add prior-month count for movement arrows
-_prior_ym = _ym_back(_dispatch_today, 2)  # month before the current dispatch month
+# Movement arrow compares this 6-month window vs the PRIOR 6-month
+# window (months -12 through -7). Captures multi-month momentum
+# rather than single-month noise.
+_prior_6_months = [_ym_back(_dispatch_today, i) for i in range(12, 6, -1)]
 for r in _trend_rows:
-    r['prior'] = _cuisine_month_count[r['key']].get(_prior_ym, 0)
+    r['prior'] = sum(_cuisine_month_count[r['key']].get(m, 0) for m in _prior_6_months)
     r['delta'] = r['curr'] - r['prior']
 # Sort: this-month-count desc, then avg desc as tiebreaker
 _trend_rows.sort(key=lambda r: (-r['curr'], -r['avg']))
@@ -2968,12 +2977,12 @@ _movers = sorted(_trend_rows, key=lambda r: -(r['curr'] - r['avg']))
 _biggest_mover = next((r for r in _movers
                        if r['curr'] >= 2 and (r['curr'] - r['avg']) > 0.5), None)
 
-# Drought-broken: cuisines with curr>=1 AND no openings in prior 3 months
+# Drought-broken (single-month signal): cuisines with last_month >= 1
+# AND no openings in the 3 months before that.
 _drought_broken = []
 _recent_3 = [_ym_back(_dispatch_today, i) for i in range(2, 5)]
 for r in _trend_rows:
-    if r['curr'] >= 1 and all(r['by_m'].get(m, 0) == 0 for m in _recent_3):
-        # Find most recent month before drought that had an opening
+    if r['last_month'] >= 1 and all(r['by_m'].get(m, 0) == 0 for m in _recent_3):
         gap_months = 0
         for i in range(2, 12):
             m = _ym_back(_dispatch_today, i)
@@ -2982,9 +2991,10 @@ for r in _trend_rows:
                 break
             gap_months = i
         _drought_broken.append((r['label'], gap_months))
-# Spikes: 2x+ vs 12-month avg, with curr >= 2
-_spikes = [(r['label'], r['curr'], round(r['avg'], 1))
-           for r in _trend_rows if r['curr'] >= 2 and r['avg'] > 0 and r['curr'] >= r['avg'] * 2]
+# Spikes (single-month signal): 2x+ vs 12-month avg, with last_month >= 2
+_spikes = [(r['label'], r['last_month'], round(r['avg'], 1))
+           for r in _trend_rows
+           if r['last_month'] >= 2 and r['avg'] > 0 and r['last_month'] >= r['avg'] * 2]
 
 # Build SVG bar chart - horizontal bars, top 12 cuisines this month.
 # Per-cuisine colors (from PALETTE_HEX/cuisine_color) so each cuisine
@@ -3050,6 +3060,95 @@ _tweet_intent = 'https://twitter.com/intent/tweet?text=' + quote_plus(_tweet_tex
 _trends_h1 = (f'<h1 class="sub">Toronto food openings by cuisine, <span class="hl">{_esc(_trends_label)}</span></h1>'
               f'<div class="listing-lede">Coral bar = {_esc(_trends_label)} count. Grey bar = 12-month average. '
               f'Drawn from City of Toronto licence data + verification gates.</div>')
+# 3-year cuisine leaderboard. Pulls from LLM cuisine cache (populated
+# by `python3 tools/llm_classify_batch.py --years=3`). Walks the FULL
+# CSV (no date filter on dispatch's seen_entries) and counts per-cuisine
+# per-month over the past 36 months. Requires the historical batch to
+# have been run; otherwise this section gracefully shows only the
+# months that have classifications.
+_y3_months_back = 36
+_y3_months = [_ym_back(_dispatch_today, i) for i in range(_y3_months_back, 0, -1)]
+from datetime import timedelta as _td3
+_y3_cutoff_date = _dispatch_today - _td3(days=365 * 3)
+_y3_cuisine_count = _dd(int)
+_y3_total = 0
+with open(CSV_PATH, encoding='utf-8', errors='replace') as _f:
+    for _row in csv.DictReader(_f):
+        if (_row.get('Category') or '').strip() not in FOOD_CATS: continue
+        if (_row.get('Cancel Date') or '').strip(): continue  # exclude cancelled
+        _iss_s = (_row.get('Issued') or '').split(' ')[0]
+        _iss_d = parse_d(_iss_s)
+        if not _iss_d or _iss_d < _y3_cutoff_date: continue
+        _name = (_row.get('Operating Name') or '').strip()
+        _addr1 = (_row.get('Licence Address Line 1') or '').strip()
+        _addr3 = (_row.get('Licence Address Line 3') or '').strip()
+        _addr = (_addr1 + ' ' + _addr3).strip() or '-'
+        _ck = cache_key(_name, _addr)
+        _llm = LLM_CACHE.get(_ck) or {}
+        if _llm.get('status') != 'ok': continue
+        _cs = _llm.get('cuisines') or ([_llm.get('cuisine')] if _llm.get('cuisine') else [])
+        # Skip 'unknown' (chain stubs + unclassifiable)
+        _cs = [c for c in _cs if c and c != 'unknown']
+        if not _cs: continue
+        _y3_total += 1
+        for _c in _cs:
+            _y3_cuisine_count[_c] += 1
+_y3_rows = sorted(
+    [{'key': _c, 'label': CUISINE_LABEL.get(_c, _c.replace('_', ' ').title()),
+      'count': _n, 'pct': round((_n / _y3_total) * 100, 1) if _y3_total else 0}
+     for _c, _n in _y3_cuisine_count.items()],
+    key=lambda r: -r['count']
+)[:10]
+
+# Render as horizontal bars (numbered ranks, cuisine-colored).
+_y3_chart_h = len(_y3_rows) * 30 + 12 if _y3_rows else 0
+_y3_label_w = 32  # rank number column
+_y3_cuisine_w = 140
+_y3_bar_max = _chart_w - _y3_label_w - _y3_cuisine_w - 70
+_y3_max_n = max((r['count'] for r in _y3_rows), default=1) or 1
+_y3_svg_parts = []
+for i, r in enumerate(_y3_rows):
+    y = i * 30 + 8
+    bw = (r['count'] / _y3_max_n) * _y3_bar_max
+    color = PALETTE_HEX.get(r['key']) or cuisine_color(r['key'])
+    _y3_svg_parts.append(
+        f'<text x="0" y="{y + 16}" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="13" font-weight="800" fill="#9a9a96">#{i+1}</text>'
+        f'<text x="{_y3_label_w}" y="{y + 16}" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="13" font-weight="700" fill="#1a1a1a">{_esc(r["label"])}</text>'
+        f'<rect x="{_y3_label_w + _y3_cuisine_w}" y="{y + 4}" width="{bw:.1f}" height="22" fill="{color}" rx="3"/>'
+        f'<text x="{_y3_label_w + _y3_cuisine_w + bw + 8}" y="{y + 19}" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="12" font-weight="700" fill="#1a1a1a">{r["count"]} <tspan fill="#6f6e6a" font-weight="500">({r["pct"]}%)</tspan></text>'
+    )
+_y3_chart_svg = (
+    f'<svg viewBox="0 0 {_chart_w} {_y3_chart_h}" xmlns="http://www.w3.org/2000/svg" '
+    'role="img" aria-label="Top 10 cuisines by openings, last 3 years" '
+    f'style="width:100%;max-width:{_chart_w}px;height:auto;display:block">'
+    + ''.join(_y3_svg_parts)
+    + '</svg>'
+) if _y3_rows else ''
+
+# Composability check - if no entries classified yet, surface a stub
+# explaining what's needed to populate this section
+if _y3_total > 0 and len(_y3_rows) >= 3:
+    _y3_section = (
+        '<section class="trends-section">'
+        '<h2 class="trends-h2">The 3-year picture</h2>'
+        f'<p class="trends-pies-note" style="text-align:left;margin-bottom:14px">'
+        f'{_y3_total:,} classified openings in the past 3 years. '
+        f'Top cuisine ({_esc(_y3_rows[0]["label"])}) at {_y3_rows[0]["pct"]}%. '
+        'Contrast with the 6-month view above to see who\'s currently moving against the longer baseline.</p>'
+        f'<div class="trends-chart-wrap">{_y3_chart_svg}</div>'
+        '</section>'
+    )
+else:
+    _y3_section = (
+        '<section class="trends-section">'
+        '<h2 class="trends-h2">The 3-year picture</h2>'
+        f'<p class="trends-pies-note" style="text-align:left">'
+        f'Currently classified: {_y3_total:,} openings in the past 3 years '
+        f'(of ~7,000+ total). Run <code>python3 tools/llm_classify_batch.py --years=3</code> '
+        'to backfill historical cuisine classification (~$1 Haiku spend, one-time).</p>'
+        '</section>'
+    )
+
 # 16-year macro chart: total food licences per year, 2010-present.
 # Pure CSV-driven (no LLM dependency), shows COVID crater + recovery.
 # Designed to fill out /trends with editorial backbone and visible
@@ -3149,20 +3248,23 @@ for r in _top_3:
         f'<div class="trends-pie-name">{_esc(r["label"])}</div>'
         '</div>'
     )
+_period_start_label = _cal.month_name[int(_recent_6_months[0][-2:])] + ' ' + _recent_6_months[0][:4]
 _bm_hero = (
     '<div class="trends-pies-row">' + ''.join(_pie_cards) + '</div>'
-    f'<p class="trends-pies-note">Share of {_esc(_dispatch_label)}\'s {_total_this_month} new restaurants. '
-    'Updated daily as the City of Toronto publishes new licences.</p>'
+    f'<p class="trends-pies-note">Share of the {_total_this_month} new restaurants registered in '
+    f'Toronto over the last 6 months ({_esc(_period_start_label)} – {_esc(_dispatch_label)}). '
+    'Updated daily.</p>'
 ) if _top_3 else ''
 
 _trends_body = (
     '<section class="trends-section">'
-    f'<h2 class="trends-h2">Top cuisines, {_esc(_dispatch_label)}</h2>'
+    f'<h2 class="trends-h2">Cuisine leaderboard, last 6 months</h2>'
     f'{_bm_hero}'
-    '<h3 class="trends-h3">Full month, all cuisines</h3>'
+    '<h3 class="trends-h3">All cuisines, last 6 months</h3>'
     f'<div class="trends-chart-wrap">{_trends_chart_svg}</div>'
     f'{_callouts_html}'
     '</section>'
+    + _y3_section +
     '<section class="trends-section">'
     '<h2 class="trends-h2">The 16-year backdrop</h2>'
     f'<div class="trends-chart-wrap">{_macro_chart_svg}</div>'
