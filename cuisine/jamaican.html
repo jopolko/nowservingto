@@ -498,22 +498,31 @@
      pages - all three are "inner" pages where the brand is reference info,
      not the headline. Homepage keeps the original stacked layout because
      the masthead IS the headline there. */
-  body.page-listing .mast .wrap,
-  body.page-cuisine .mast .wrap,
-  body.page-district .mast .wrap {
+  body.page-listing .mast .wrap {
     display: flex;
     align-items: baseline;
     flex-wrap: wrap;
     column-gap: 18px;
     row-gap: 4px;
   }
-  body.page-listing .mast .sub,
-  body.page-cuisine .mast .sub,
-  body.page-district .mast .sub {
+  body.page-listing .mast .sub {
     margin: 0;
     font-style: normal;
     font-weight: 700;
     font-size: 16px;
+    color: var(--ink);
+    letter-spacing: -0.005em;
+  }
+  /* Cuisine + district H1 keeps the bolder/larger inner-page treatment
+     (the cuisine/district name IS the page topic, deserves more weight
+     than the homepage's italic dek) but stacks below the brand on its
+     own line - same layout pattern as the homepage. */
+  body.page-cuisine .mast .sub,
+  body.page-district .mast .sub {
+    margin: 8px 0 0;
+    font-style: normal;
+    font-weight: 700;
+    font-size: 18px;
     color: var(--ink);
     letter-spacing: -0.005em;
   }
