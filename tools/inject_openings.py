@@ -3024,16 +3024,77 @@ _tweet_intent = 'https://twitter.com/intent/tweet?text=' + quote_plus(_tweet_tex
 _trends_h1 = (f'<h1 class="sub">Toronto food openings by cuisine, <span class="hl">{_esc(_trends_label)}</span></h1>'
               f'<div class="listing-lede">Coral bar = {_esc(_trends_label)} count. Grey bar = 12-month average. '
               f'Drawn from City of Toronto licence data + verification gates.</div>')
+# 16-year macro chart: total food licences per year, 2010-present.
+# Pure CSV-driven (no LLM dependency), shows COVID crater + recovery.
+# Designed to fill out /trends with editorial backbone and visible
+# historical context beneath the recent cuisine chart.
+_macro_years = list(range(2010, _dispatch_today.year + 1))
+_macro_counts = _dd(int)
+with open(CSV_PATH, encoding='utf-8', errors='replace') as f:
+    for _row in csv.DictReader(f):
+        if (_row.get('Category') or '').strip() not in FOOD_CATS: continue
+        _iss_s = (_row.get('Issued') or '').split(' ')[0]
+        if len(_iss_s) < 4: continue
+        try:
+            _y = int(_iss_s[:4])
+            if _y in _macro_years:
+                _macro_counts[_y] += 1
+        except (ValueError, TypeError):
+            continue
+_m_chart_w = 720; _m_bar_w = 32; _m_gap = 6; _m_chart_h = 210
+_m_max = max(_macro_counts.values()) if _macro_counts else 1
+_m_left_pad = 12; _m_bottom_pad = 28; _m_top_pad = 22
+_m_inner_h = _m_chart_h - _m_top_pad - _m_bottom_pad
+_m_bars = []
+for _i, _y in enumerate(_macro_years):
+    _cnt = _macro_counts.get(_y, 0)
+    _x = _m_left_pad + _i * (_m_bar_w + _m_gap)
+    _bh = (_cnt / _m_max) * _m_inner_h if _cnt else 0
+    _by = _m_top_pad + (_m_inner_h - _bh)
+    _is_covid = _y == 2020
+    _is_partial = _y == _dispatch_today.year and _dispatch_today.month < 12
+    _color = '#e84e3a' if _is_covid else ('#cfcfcf' if _is_partial else '#3a3a38')
+    _m_bars.append(
+        f'<rect x="{_x}" y="{_by:.1f}" width="{_m_bar_w}" height="{_bh:.1f}" fill="{_color}" rx="2"/>'
+        f'<text x="{_x + _m_bar_w/2}" y="{_by - 5:.1f}" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="9.5" font-weight="700" fill="#1a1a1a">{_cnt:,}</text>'
+        f'<text x="{_x + _m_bar_w/2}" y="{_m_chart_h - 10}" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="10" fill="#6f6e6a">{_y}</text>'
+    )
+_macro_chart_svg = (
+    f'<svg viewBox="0 0 {_m_chart_w} {_m_chart_h}" xmlns="http://www.w3.org/2000/svg" '
+    'role="img" aria-label="Toronto food licences issued per year, 2010 to present" '
+    f'style="width:100%;max-width:{_m_chart_w}px;height:auto;display:block">'
+    + ''.join(_m_bars)
+    + '</svg>'
+)
+# Editorial context with the COVID story numerically grounded.
+_pre_covid_avg = sum(_macro_counts.get(_y, 0) for _y in range(2015, 2020)) // 5
+_covid_2020 = _macro_counts.get(2020, 0)
+_covid_pct = round((1 - _covid_2020 / _pre_covid_avg) * 100) if _pre_covid_avg else 0
+_recovery_year = next((_y for _y in range(2021, _dispatch_today.year + 1)
+                       if _macro_counts.get(_y, 0) >= _pre_covid_avg * 0.95), None)
+_macro_context = (
+    f"Toronto issues ~{_pre_covid_avg:,} new restaurant licences per year on average "
+    f"(2015-19 baseline). COVID 2020 crashed it to {_covid_2020:,} ({_covid_pct}% drop). "
+    + (f"Volume recovered to baseline by {_recovery_year}. " if _recovery_year else "Volume has not yet returned to the baseline. ")
+    + f"Coral bar = 2020 COVID year. Grey bar = {_dispatch_today.year} (partial)."
+)
+
 _trends_body = (
     '<section class="trends-section">'
+    '<h2 class="trends-h2">This month by cuisine</h2>'
     f'<div class="trends-chart-wrap">{_trends_chart_svg}</div>'
     f'{_callouts_html}'
+    '</section>'
+    '<section class="trends-section">'
+    '<h2 class="trends-h2">The 16-year backdrop</h2>'
+    f'<div class="trends-chart-wrap">{_macro_chart_svg}</div>'
+    f'<p class="trends-macro-note">{_esc(_macro_context)}</p>'
+    '</section>'
     '<p class="trends-share">'
     f'<a class="trends-tweet-btn" href="{_esc(_tweet_intent)}" target="_blank" rel="noopener">'
-    'Share this chart on X &rsaquo;</a> '
+    'Share the cuisine chart on X &rsaquo;</a> '
     '<span class="trends-note">Auto-refreshes daily from City open data + DineSafe.</span>'
     '</p>'
-    '</section>'
 )
 _trends_page = inject_into_html(_dispatch_template, static_block='', ld_payloads=[])
 for _sel, _val in [
