@@ -2410,12 +2410,10 @@ def _build_owner_cta(entry):
     mailto = 'mailto:hello@nowservingto.com?subject=' + quote_plus(subject) + '&body=' + quote_plus(body)
     return (
         '<div class="lx-card lx-owner-cta">'
-        '<h2 class="lx-owner-cta-h">Is this your restaurant?</h2>'
-        '<p>We built this from public licence + Google Places data. '
-        "If you'd like to add a photo, your story, or correct anything, "
-        "we'd love to feature you better — no charge, no signup.</p>"
+        '<p class="lx-owner-cta-line">Is this your restaurant? '
         f'<a class="lx-owner-cta-btn" href="{_esc(mailto)}">'
-        'Reply with your details <span aria-hidden="true">→</span></a>'
+        'Send a photo, story, or correction <span aria-hidden="true">→</span></a>'
+        '</p>'
         '</div>'
     )
 
@@ -2637,17 +2635,20 @@ def build_listing_extra(entry, all_entries, cuisines_index):
                 f'{cta_html}'
                 f'</div></div>'
             )
+        # Owner CTA slots in BEFORE the nearby-grid: groups all
+        # "about this restaurant" content together (editorial blurb,
+        # cohort/menu, owner invite) and pushes the cross-discovery
+        # nearby cards to the end. Reads less cluttered at page bottom.
+        blocks.append(_build_owner_cta(entry))
         blocks.append(
             '<div class="lx-card">'
             f'<h2 class="lx-near-h">Other newly registered {_esc(label)} kitchens nearby</h2>'
             f'<div class="lx-near-grid">{"".join(cards)}</div>'
             '</div>'
         )
-
-    # Owner CTA goes last - 'Is this your restaurant?' invitation.
-    # Appears on EVERY listing (no conditional) so owners who land on
-    # their own page have a frictionless way to claim/enhance it.
-    blocks.append(_build_owner_cta(entry))
+    else:
+        # No nearby cards (rare cuisine, no neighbors) - CTA still appears.
+        blocks.append(_build_owner_cta(entry))
     return '<section class="listing-extra" aria-label="Listing detail">' + ''.join(blocks) + '</section>'
 
 
