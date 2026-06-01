@@ -240,11 +240,52 @@ LICENCED small-scale, independent, immigrant-owned ETHNIC-CUISINE restaurants?
           ownership)
         - Lena's Roti (Trinidadian, multiple Keele-area locations)
         - Han Tai Wan Cafe (Chinese, 2-3 north-Toronto locations)
+        - Pizzeria Badiali (Italian, 2 Toronto locations, family-owned)
+        - Mother India Roti (Indian-Caribbean, 2 Toronto locations,
+          family-owned)
+        - Deer Garden Signatures (Hong Kong-style, 4 GTA locations,
+          family expansion)
+        - Karahi Point (Pakistani, mid-size GTA, immigrant-owned)
+        - Szechuan Noodle Bowl (Chinese, 3 locations, indie)
 
-        The distinguishing test: is the brand a national/international
-        franchise where any operator can buy in? → drop. Or is it one
-        family running a few branches of one cuisine, all in the GTA?
-        → keep.
+        CRITICAL: ethnic-coded CUISINE LABEL alone does not protect a brand.
+        A "Chinese" or "Japanese" brand can still be a Westernized food-
+        court chain that doesn't fit the immigrant-discovery story.
+        Concrete drops even with ethnic cuisine labels:
+        - Manchu Wok (Chinese-labelled, ~100 mall locations, Anglo-branded,
+          corporate franchising — not the diaspora story)
+        - Spring Sushi (Japanese-labelled, multi-location, mall food-court
+          chain, English-only menus)
+        - New Generation Sushi (Japanese-labelled, suburban chain)
+        - Sushi Q / Sushi Stop (counter franchise chains)
+        - Wok Box (Asian-labelled, national counter chain)
+        - AFC Sushi (in-grocery sushi counters)
+        - Pho Anh Vu (15+ locations across multiple provinces - past
+          family-scale)
+        - Kinton Ramen (multi-province national franchise)
+        - Marugame Udon (international chain)
+        - Pokeworks (national poke franchise)
+        - Maki Mart (7+ GTA locations with explicit "Franchising
+          Opportunities" page — past family scale)
+
+        The distinguishing test (use BOTH halves):
+          1. Is the brand a national/international franchise where any
+             operator can buy in, OR a multi-province operation past
+             ~10 locations? → drop.
+          2. Is the operation Anglo-branded (English-only marketing,
+             corporate name, mall food-court tenants) rather than
+             operator-named with a single-country menu? → drop even at
+             low location counts.
+          3. Is it one family running 2-8 branches of one cuisine, all
+             in the GTA, ideally with operator name on the licence
+             (vs a numbered ON corp), standalone storefronts (vs mall
+             counters), and language/menu cues that anchor a specific
+             diaspora? → keep.
+
+        Mall food-court tenants (SHARED ADDRESS condition in licence
+        data) at 2+ locations are usually counter-franchise model;
+        weight that signal heavily toward "drop" unless the operator
+        name clearly identifies a single immigrant family.
       * PAN-CUISINE / NON-ETHNIC-ANCHORED joints. Concretely: places whose
         menu spans multiple unrelated cuisines without a single-country
         identity - wings + poutine + Nashville chicken (North American
