@@ -21,6 +21,7 @@ MENU_HIGHLIGHTS_CACHE_PATH = f'{ROOT}/tools/cache/menu_highlights_cache.json'
 EVIDENCE_REWRITE_CACHE_PATH = f'{ROOT}/tools/cache/evidence_rewrite_cache.json'
 FEATURED_IN_CACHE_PATH = f'{ROOT}/tools/cache/featured_in_cache.json'
 GEOCODE_CACHE_PATH = f'{ROOT}/tools/cache/geocode_cache.json'
+OWNER_CONTRIBUTIONS_PATH = f'{ROOT}/tools/cache/owner_contributions.json'
 DATA_PATH = f'{ROOT}/data/corridors.json'
 
 # Load LLM cache for cuisine override
@@ -44,6 +45,16 @@ try:
     EVIDENCE_REWRITE_CACHE = json.load(open(EVIDENCE_REWRITE_CACHE_PATH))
 except FileNotFoundError:
     EVIDENCE_REWRITE_CACHE = {}
+# Owner contributions: hand-curated overrides keyed by slug. When a
+# restaurant owner replies to the per-listing CTA with content, their
+# input lands here. Schema (minimal): {slug: {from_owner_text, photo?,
+# opened_date?, specialty_dishes?, owner_name?, contributed_at}}.
+# Empty by default; populated manually as replies come in.
+try:
+    OWNER_CONTRIBUTIONS = json.load(open(OWNER_CONTRIBUTIONS_PATH))
+    OWNER_CONTRIBUTIONS.pop('_doc', None)
+except FileNotFoundError:
+    OWNER_CONTRIBUTIONS = {}
 try:
     FEATURED_IN_CACHE = json.load(open(FEATURED_IN_CACHE_PATH))
     FEATURED_IN_CACHE.pop('_doc', None)
@@ -2373,12 +2384,80 @@ def _nearby_same_cuisine(entry, all_entries, *, radius_km=3.0, limit=4):
     return same_cuisine[:limit]
 
 
+def _build_owner_cta(entry):
+    """Per-listing 'Is this your restaurant?' invitation. Generates a
+    mailto link with subject + body pre-populated so an owner can reply
+    in under a minute. Lives on every /r/<slug> page - both for owners
+    who find their own listing via search (passive discovery) and as
+    the landing surface for cold-outreach campaigns."""
+    name = entry.get('operatingName') or 'your restaurant'
+    slug = entry.get('slug') or ''
+    listing_url = f'https://nowservingto.com/r/{slug}' if slug else 'https://nowservingto.com/'
+    subject = f'Enhance my listing — {name}'
+    body = (
+        f'Hi Josh,\n\n'
+        f'Re: {name}\n'
+        f'Listing: {listing_url}\n\n'
+        f"I'd like to enhance my listing with:\n\n"
+        f'• Photo (attach to this email):\n'
+        f'• What makes us special (one sentence):\n'
+        f'• Owner/chef story (1-2 sentences):\n'
+        f'• When we actually opened (date):\n'
+        f'• Signature dishes:\n'
+        f'• Anything incorrect that needs fixing:\n\n'
+        f'Thanks!\n'
+    )
+    mailto = 'mailto:hello@nowservingto.com?subject=' + quote_plus(subject) + '&body=' + quote_plus(body)
+    return (
+        '<div class="lx-card lx-owner-cta">'
+        '<h2 class="lx-owner-cta-h">Is this your restaurant?</h2>'
+        '<p>We built this from public licence + Google Places data. '
+        "If you'd like to add a photo, your story, or correct anything, "
+        "we'd love to feature you better — no charge, no signup.</p>"
+        f'<a class="lx-owner-cta-btn" href="{_esc(mailto)}">'
+        'Reply with your details <span aria-hidden="true">→</span></a>'
+        '</div>'
+    )
+
+
+def _build_owner_contributions(entry):
+    """If the owner has replied to the CTA with content (stored in
+    OWNER_CONTRIBUTIONS keyed by slug), render a prominent 'From the
+    owner' block at the top of the listing-extra. Empty string when
+    no contribution exists - most listings start without one."""
+    slug = entry.get('slug') or ''
+    oc = OWNER_CONTRIBUTIONS.get(slug) or {}
+    if not oc: return ''
+    parts = ['<div class="lx-card lx-owner-content">']
+    parts.append('<h2 class="lx-owner-content-h">From the owner</h2>')
+    text = (oc.get('from_owner_text') or '').strip()
+    if text:
+        parts.append(f'<p class="lx-owner-text">{_esc(text)}</p>')
+    facts = []
+    if oc.get('opened_date'):
+        facts.append(f'Opened {_esc(oc["opened_date"])}')
+    if oc.get('owner_name'):
+        facts.append(f'Run by {_esc(oc["owner_name"])}')
+    dishes = oc.get('specialty_dishes') or []
+    if dishes:
+        facts.append('Signature: ' + _esc(', '.join(dishes)))
+    if facts:
+        parts.append('<p class="lx-owner-facts">' + ' &middot; '.join(facts) + '</p>')
+    parts.append('</div>')
+    return ''.join(parts)
+
+
 def build_listing_extra(entry, all_entries, cuisines_index):
     """Render the differentiated-content block for /r/<slug>.html: verifier
     evidence + license/provenance line + cohort framing + nearby-same-cuisine
     grid. `cuisines_index` is {key: cuisines_out_row}; lets us pull
     count365d / count30d without rescanning."""
     blocks = []
+    # Owner contributions get the top slot when present - first-person
+    # content from the operator outranks machine-generated editorial.
+    _oc_html = _build_owner_contributions(entry)
+    if _oc_html:
+        blocks.append(_oc_html)
 
     # 1) What we know about this restaurant. Prefer the editorial
     # rewrite (evidence_rewrite_cache - reads like a human wrote it)
@@ -2565,8 +2644,10 @@ def build_listing_extra(entry, all_entries, cuisines_index):
             '</div>'
         )
 
-    if not blocks:
-        return ''
+    # Owner CTA goes last - 'Is this your restaurant?' invitation.
+    # Appears on EVERY listing (no conditional) so owners who land on
+    # their own page have a frictionless way to claim/enhance it.
+    blocks.append(_build_owner_cta(entry))
     return '<section class="listing-extra" aria-label="Listing detail">' + ''.join(blocks) + '</section>'
 
 
