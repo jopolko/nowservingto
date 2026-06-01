@@ -1065,22 +1065,24 @@ def _ago(days):
 
 
 def _tier_label(days, iso_date=None):
-    """Three-tier freshness label for the row pill.
-      0-30d   -> 'New'                  (★ via data-fresh="hot")
-      31-90d  -> 'Recent'               (muted)
-      91-365d -> 'Registered Nmo ago'   (muted; the 'Registered' anchor
-                                         reframes the date as a since-we-
-                                         logged-it duration, not an implied
-                                         opening month. Defensible: that
-                                         IS what we recorded.)
-    The 365d inclusion rule still anchors the directory; only the per-row
-    claim's editorial tone shifts by tier."""
+    """Three-tier freshness label for the row pill. Each tier carries a
+    concrete duration so the categorical label ('New' / 'Recent') doesn't
+    feel weaker than the aged-tier 'Registered Nmo ago' that follows.
+      0-1d    -> 'New · today'
+      2-30d   -> 'New · Nd ago'
+      31-90d  -> 'Recent · Nw ago'
+      91-365d -> 'Registered Nmo ago'
+    Unit per tier (days/weeks/months) signals freshness on its own:
+    if the row needs to count in months, that IS the editorial point."""
     if days is None: return ''
-    if days <= 30:  return 'New'
-    if days <= 90:  return 'Recent'
+    if days <= 1:    return 'New · today'
+    if days <= 30:   return f'New · {days}d ago'
+    if days <= 90:
+        w = max(5, round(days / 7))  # 31d -> 4w would dip below "Recent" feel; floor at 5w
+        return f'Recent · {w}w ago'
     if days <= 365:
-        months = max(3, round(days / 30))
-        return f'Registered {months}mo ago'
+        m = max(3, round(days / 30))
+        return f'Registered {m}mo ago'
     return ''
 
 # ---------------------------------------------------------------------------
