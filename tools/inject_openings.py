@@ -353,7 +353,7 @@ from urllib.parse import quote_plus
 # Issued date - that's when the kitchen actually opened, not just when a category was added.
 seen_entries = {}
 n_food_active = 0; n_food_active_365 = 0; n_tagged_365 = 0; n_tagged_30 = 0
-n_dropped_unverified = 0; n_dropped_closed = 0; n_deduped = 0; n_dropped_instore = 0; n_dropped_institutional = 0; n_dropped_weak_match = 0; n_dropped_brand_new_unverified = 0; n_dropped_validator = 0; n_dropped_chain_osm = 0; n_dropped_pre_existing = 0
+n_dropped_unverified = 0; n_dropped_closed = 0; n_deduped = 0; n_dropped_instore = 0; n_dropped_institutional = 0; n_dropped_weak_match = 0; n_dropped_brand_new_unverified = 0; n_dropped_validator = 0; n_dropped_chain_osm = 0; n_dropped_pre_existing = 0; n_dropped_multi_licence = 0; n_dropped_chain_cond = 0
 
 # Pre-existing-restaurant gate: drop entries where Google Places returned
 # at least one review whose timestamp is >180 days BEFORE the City licence-
@@ -480,6 +480,26 @@ KIOSK_BRAND_PATTERNS = (
 )
 KIOSK_CLIENTS = ('ADVANCED FRESH CONCEPTS',)
 
+# Renewal detection pre-pass (2026-06-01): scan the FULL CSV (ignoring
+# the 365d window) and count distinct Licence No. values per
+# (name, address). When >1, the business has demonstrably been licensed
+# more than once - the row in our window is a renewal / category change
+# / transfer, not a first-time licensing. We use this to drop those
+# rows in the main loop. Cheap (~0.5s walk, no API calls), data-driven,
+# uses the City's own structured signal rather than inferring from
+# downstream evidence.
+LICENCE_NO_COUNT_BY_KEY = {}
+with open(CSV_PATH, encoding='utf-8', errors='replace') as f:
+    for row in csv.DictReader(f):
+        if (row.get('Category') or '').strip() not in FOOD_CATS: continue
+        nm = (row.get('Operating Name') or '').strip().upper()
+        ad = (row.get('Licence Address Line 1') or '').strip().upper()
+        ln = (row.get('Licence No.') or '').strip()
+        if not (nm and ad and ln): continue
+        LICENCE_NO_COUNT_BY_KEY.setdefault(nm + '||' + ad, set()).add(ln)
+LICENCE_NO_COUNT_BY_KEY = {k: len(v) for k, v in LICENCE_NO_COUNT_BY_KEY.items()}
+print(f"  pre-pass: {sum(1 for v in LICENCE_NO_COUNT_BY_KEY.values() if v > 1):,} of {len(LICENCE_NO_COUNT_BY_KEY):,} name+address pairs have >1 distinct Licence No. (renewal/re-licence candidates)")
+
 with open(CSV_PATH, encoding='utf-8', errors='replace') as f:
     rdr = csv.DictReader(f)
     for row in rdr:
@@ -514,9 +534,26 @@ with open(CSV_PATH, encoding='utf-8', errors='replace') as f:
         if is_osm_chain(op_raw):
             n_dropped_chain_osm += 1
             continue
+        # CHAIN condition gate: the City's own Conditions field carries an
+        # explicit 'CHAIN' code on rows it considers chain locations. Doesn't
+        # subsume OSM/Wikidata (the City flags some chains those miss, vice-
+        # versa), so it's complementary. Cheap row-field check, runs before
+        # any verification spend.
+        if 'CHAIN' in (row.get('Conditions') or '').upper():
+            n_dropped_chain_cond += 1
+            continue
         addr1 = (row.get('Licence Address Line 1') or '').strip()
         addr3 = (row.get('Licence Address Line 3') or '').strip()
         address_full = (addr1 + ' ' + addr3).strip()
+        # Multi-licence-number gate: the CSV has >1 distinct Licence No. for
+        # this (name, address). Demonstrably not a first-time issuance -
+        # the place has been licensed before and this row is a renewal /
+        # category change / transfer. Drop. (Data-driven re-licensing
+        # detection: complements the operating-evidence gates above.)
+        _lk = op_raw.upper() + '||' + addr1.upper()
+        if LICENCE_NO_COUNT_BY_KEY.get(_lk, 0) > 1:
+            n_dropped_multi_licence += 1
+            continue
         cuisines, source = get_cuisine(op_raw, address_full)
         if not cuisines: continue
 
@@ -969,7 +1006,7 @@ for entry in seen_entries.values():
     for c in entry.get('cuisines') or [entry['cuisine']]:
         opens_365_by_cuisine[c].append(entry)
 
-print(f"  verification gate: kept {n_tagged_365}, dropped {n_dropped_chain_osm} OSM-known chains + {n_dropped_validator} validator (Haiku: chain/institutional/ghost) + {n_dropped_unverified} unverified (no Places, no web_verify yet) + {n_dropped_closed} closed/temp + {n_dropped_instore} in-store kiosks + {n_dropped_institutional} institutional-operator rows + {n_dropped_weak_match} weak-match (no Places / no site / name-guess only) + {n_dropped_brand_new_unverified} brand-new-unverified (<30d, no Places/website) + {n_dropped_pre_existing} pre-existing (evidence predates licence by >180d) + {_n_dropped_over_1yr} operating >1yr per evidence + {n_deduped} duplicate rows collapsed")
+print(f"  verification gate: kept {n_tagged_365}, dropped {n_dropped_chain_osm} OSM-known chains + {n_dropped_chain_cond} City-flagged CHAIN condition + {n_dropped_multi_licence} multi-licence-number (renewal/re-licensing) + {n_dropped_validator} validator (Haiku: chain/institutional/ghost) + {n_dropped_unverified} unverified (no Places, no web_verify yet) + {n_dropped_closed} closed/temp + {n_dropped_instore} in-store kiosks + {n_dropped_institutional} institutional-operator rows + {n_dropped_weak_match} weak-match (no Places / no site / name-guess only) + {n_dropped_brand_new_unverified} brand-new-unverified (<30d, no Places/website) + {n_dropped_pre_existing} pre-existing (evidence predates licence by >180d) + {_n_dropped_over_1yr} operating >1yr per evidence + {n_deduped} duplicate rows collapsed")
 
 # Sort each cuisine's list by issued date desc (newest first)
 for c in opens_365_by_cuisine:
