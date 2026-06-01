@@ -207,15 +207,34 @@ agreement, editorial, reviews, business status).
 If Places returned no match at all → "no_match" (distinct from "no"; means
 we have no data to compare, not that we have data and it's wrong).
 
-is_restaurant - does this entry belong on a directory of Toronto's NEWLY
-LICENCED small-scale, independent, immigrant-owned ETHNIC-CUISINE restaurants?
+is_restaurant - does this entry belong on a directory whose audience is a
+20-year-old Ethiopian immigrant in Toronto looking for the newest place
+that tastes like her grandmother's cooking? Mentally substitute "Ethiopian"
+with "Filipino / Tamil / Eritrean / Salvadoran / Tibetan / Persian /
+Vietnamese / Sichuan / Bangladeshi / Yemeni" — the audience is always
+the diaspora MEMBER seeking authentic taste-of-home, NOT the Toronto
+foodie scanning for novelty, NOT the curious tourist wanting "ethnic food."
+
+That audience filter is sharper than "is this restaurant ethnic-cuisine."
+Mr Greek serves Greek-coded food made by Greek-Canadian families and
+operates 16+ locations — but a Greek grandmother looking for a real
+spanakopita is NOT going to Mr Greek; she's going to the new single-
+location kafenio that opened on Pape. Mr Greek is for mainstream Canadian
+diners, not the diaspora reader. DROP.
+
   - "yes" - standalone restaurant, cafe, bar, bakery, food truck, hot-counter
     that ordinary people walk into to eat AND is recognizably anchored in a
-    specific ethnic / national / regional cuisine (Vietnamese pho counter,
+    specific ethnic / national / regional cuisine, AND would be a real
+    discovery to a member of that diaspora (Vietnamese pho counter,
     Salvadoran pupuseria, Eritrean injera kitchen, Sichuan dumpling shop,
     Lebanese shawarma, Trinidadian roti, Korean BBQ, Argentine empanada
-    window, etc.). Even a tiny ghost kitchen counts if humans can order
-    food AND there's a clear single-country / single-diaspora identity.
+    window, Yemeni mandi spot, Tibetan momo kitchen). Signals of
+    diaspora-authenticity: native-language menus or dish names in the
+    original script, traditional preparations not commonly found in
+    Canadianized versions of the cuisine, single-cuisine focus (not
+    "fusion"), operator-name on the licence (immigrant-family-named
+    business, not numbered ON corp). Even a tiny ghost kitchen counts
+    if those signals are present.
   - "no" - any of:
       * Institutional caterers (Aramark/Compass cafeterias in hospitals,
         offices, universities)
@@ -230,57 +249,71 @@ LICENCED small-scale, independent, immigrant-owned ETHNIC-CUISINE restaurants?
         Sushi Shop, BarBurrito, Z-Teca, FreshSlice, A&W, Wendy's, Bento
         Sushi, Sushi Q (Q's), Sushi Stop, Sushi Express franchise models.
 
-        Do NOT drop small TORONTO-ANCHORED family multi-location operators
-        (~2-8 GTA-only locations, all under one ownership, all the same
-        cuisine, no formal franchising). These are the "family expanded
-        and opened a second/third location" pattern - they're still the
-        immigrant-owned story this directory surfaces. Concrete keeps:
-        - Bamiyan Kabob (Afghan, ~5 GTA locations, one family)
-        - Tanghulu Tanghulu (Chinese, 8 Toronto-area mall counters, same
-          ownership)
-        - Lena's Roti (Trinidadian, multiple Keele-area locations)
-        - Han Tai Wan Cafe (Chinese, 2-3 north-Toronto locations)
-        - Pizzeria Badiali (Italian, 2 Toronto locations, family-owned)
-        - Mother India Roti (Indian-Caribbean, 2 Toronto locations,
-          family-owned)
-        - Deer Garden Signatures (Hong Kong-style, 4 GTA locations,
-          family expansion)
-        - Karahi Point (Pakistani, mid-size GTA, immigrant-owned)
-        - Szechuan Noodle Bowl (Chinese, 3 locations, indie)
+        Do NOT drop small immigrant-family operators with ≤5 GTA-only
+        locations where the cuisine is still served in a culturally-
+        authentic register (native dish names, traditional preparations,
+        community-anchored audience, no franchise pitch). The "family
+        expanded and opened a second location" pattern IS the immigrant
+        story the directory surfaces. Concrete keeps:
+        - Bamiyan Kabob (Afghan, ~5 GTA, one family, authentic Afghan
+          kebab/qabili palau — Afghan diaspora destination)
+        - Lena's Roti (Trinidadian, multiple Keele-area, classic doubles
+          and Trini roti — Caribbean diaspora destination)
+        - Han Tai Wan Cafe (Chinese, 2-3 north-Toronto, traditional
+          Taiwanese cafe menu)
+        - Deer Garden Signatures (Hong Kong-style fish-broth noodle,
+          family operation serving Cantonese community)
+        - Any single-location new opening with diaspora-cuisine focus
 
-        CRITICAL: ethnic-coded CUISINE LABEL alone does not protect a brand.
-        A "Chinese" or "Japanese" brand can still be a Westernized food-
-        court chain that doesn't fit the immigrant-discovery story.
-        Concrete drops even with ethnic cuisine labels:
-        - Manchu Wok (Chinese-labelled, ~100 mall locations, Anglo-branded,
-          corporate franchising — not the diaspora story)
-        - Spring Sushi (Japanese-labelled, multi-location, mall food-court
-          chain, English-only menus)
-        - New Generation Sushi (Japanese-labelled, suburban chain)
-        - Sushi Q / Sushi Stop (counter franchise chains)
-        - Wok Box (Asian-labelled, national counter chain)
-        - AFC Sushi (in-grocery sushi counters)
-        - Pho Anh Vu (15+ locations across multiple provinces - past
-          family-scale)
-        - Kinton Ramen (multi-province national franchise)
+        CRITICAL DROP CATEGORIES — even with ethnic cuisine labels:
+
+        (A) CANADIANIZED / FUSION CONCEPTS born in Toronto/Canada that
+        serve a mainstream Canadian audience rather than a diaspora
+        community. Cuisine label may be ethnic but the operation is
+        de-ethnicized for general dining. Concrete drops:
+        - Mr Greek (16+ Canadian-Greek franchise, mainstream audience,
+          not where Greek immigrants go for spanakopita)
+        - La Carnita (Toronto-born Mexican-Canadian fusion bar, hipster
+          aesthetic, English-only marketing — NOT where Mexican
+          immigrants go for tacos al pastor)
+        - Pizzaiolo (corporate Toronto-Italian franchise, 30+ locations)
+        - Pizzeria Badiali (Italian-Canadian indie pizza concept,
+          Toronto-born, mainstream audience — NOT diaspora-authentic)
+        - Sundays Pasta Lab (Toronto-born Italian-fusion concept)
+        - Big Smoke Burger / The Burger's Priest / similar local burger
+          chains (no diaspora bucket)
+        - Tahini's (Lebanese-coded but Canadianized counter franchise)
+        - Booster Juice / Freshii / similar Canadian-born franchises
+
+        (B) ANGLO-BRANDED MULTI-LOCATION COUNTER CHAINS even at modest
+        size. Mall-food-court tenants, English-only menus, corporate
+        naming. Concrete drops:
+        - Manchu Wok (~100 mall locations, corporate)
+        - Spring Sushi (multi-location mall food court)
+        - New Generation Sushi (suburban Anglo-branded chain)
+        - Sushi Q / Sushi Stop / Wok Box / AFC Sushi (in-grocery
+          counter franchises)
+
+        (C) MULTI-PROVINCE / 15+ LOCATION OPERATIONS past family scale,
+        regardless of cuisine authenticity:
+        - Pho Anh Vu (15+ locations multi-province)
+        - Kinton Ramen (national franchise)
         - Marugame Udon (international chain)
-        - Pokeworks (national poke franchise)
-        - Maki Mart (7+ GTA locations with explicit "Franchising
-          Opportunities" page — past family scale)
+        - Pokeworks (national franchise)
+        - Karahi Point (15+ GTA/ON/US locations)
+        - Maki Mart (7+ GTA + "Franchising Opportunities" page)
 
-        The distinguishing test (use BOTH halves):
-          1. Is the brand a national/international franchise where any
-             operator can buy in, OR a multi-province operation past
-             ~10 locations? → drop.
-          2. Is the operation Anglo-branded (English-only marketing,
-             corporate name, mall food-court tenants) rather than
-             operator-named with a single-country menu? → drop even at
-             low location counts.
-          3. Is it one family running 2-8 branches of one cuisine, all
-             in the GTA, ideally with operator name on the licence
-             (vs a numbered ON corp), standalone storefronts (vs mall
-             counters), and language/menu cues that anchor a specific
-             diaspora? → keep.
+        The audience-anchored test:
+          Picture the 20-year-old Ethiopian (or Tamil, or Filipino, or
+          Salvadoran, or Vietnamese) immigrant scrolling the directory
+          looking for the newest place that tastes like home. Would
+          THIS entry be a real discovery for her? Or is it a Canadian
+          mainstream business with an ethnic veneer that her parents
+          would walk past?
+          - Diaspora discovery candidate → keep
+          - Mainstream-Canadian dining concept (even if technically
+            "ethnic cuisine") → drop
+          - Corporate franchise at any scale → drop
 
         Mall food-court tenants (SHARED ADDRESS condition in licence
         data) at 2+ locations are usually counter-franchise model;
