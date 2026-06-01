@@ -461,13 +461,19 @@
      Screenshot-shareable artifact for social distribution. */
   body.page-trends .trends-section { margin: 28px 0; }
   body.page-trends .trends-h2 { font: 800 18px/1.2 var(--sans); margin: 0 0 14px; letter-spacing: -0.012em; color: var(--ink); }
-  /* Biggest-mover hero: single quotable sentence anchoring the chart's
-     narrative. Sits between the H2 and the chart. */
-  body.page-trends .trends-hero { background: var(--paper); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 8px; padding: 14px 18px; margin: 0 0 18px; }
-  body.page-trends .trends-hero-label { display: block; font: 700 10.5px/1 var(--sans); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 6px; }
-  body.page-trends .trends-hero-stat { font: 800 22px/1.2 var(--sans); color: var(--ink); letter-spacing: -0.015em; }
-  body.page-trends .trends-hero-num { font: 800 22px/1.2 var(--sans); color: var(--accent); letter-spacing: -0.015em; }
+  /* Biggest-mover hero: single-slice pie chart + editorial callout.
+     Pie shows the cuisine's share of total openings this month; text
+     beside it carries the headline + supporting count. */
+  body.page-trends .trends-hero { background: var(--paper); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 8px; padding: 16px 18px; margin: 0 0 18px; display: flex; gap: 18px; align-items: center; }
+  body.page-trends .trends-hero-pie { flex-shrink: 0; }
+  body.page-trends .trends-hero-text { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+  body.page-trends .trends-hero-label { font: 700 10.5px/1 var(--sans); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+  body.page-trends .trends-hero-stat { font: 800 20px/1.2 var(--sans); color: var(--ink); letter-spacing: -0.015em; }
   body.page-trends .trends-hero-note { font: 400 14px/1.4 var(--serif); color: var(--ink2); font-style: italic; }
+  @media (max-width: 500px) {
+    body.page-trends .trends-hero { flex-direction: column; align-items: flex-start; }
+    body.page-trends .trends-hero-stat { font-size: 18px; }
+  }
   body.page-trends .trends-chart-wrap { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 24px 20px; }
   body.page-trends .trends-callouts { margin: 20px 0; padding-left: 22px; font: 400 14.5px/1.6 var(--serif); color: var(--ink); }
   body.page-trends .trends-callouts li { margin-bottom: 8px; }

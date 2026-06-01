@@ -3105,19 +3105,47 @@ _macro_context = (
     + f"Coral bar = 2020 COVID year. Grey bar = {_dispatch_today.year} (partial)."
 )
 
-# Biggest-mover hero stat - the cuisine that "really had a month"
-# vs its 12-month average. Designed as a single quote-able sentence
-# that works as the chart's narrative anchor.
+# Biggest-mover hero stat - the cuisine that "really had a month".
+# Rendered as a single-slice pie chart showing that cuisine's share
+# of TOTAL new openings this month, beside the editorial callout.
+# The pie visual makes the "slice of the pie" framing literal and
+# screenshot-friendly.
+import math as _math
+def _pie_slice_path(pct, cx, cy, r):
+    """SVG path for a single pie slice starting at 12 o'clock,
+    extending clockwise by pct% of full circle."""
+    angle = (pct / 100.0) * 2 * _math.pi
+    end_x = cx + r * _math.sin(angle)
+    end_y = cy - r * _math.cos(angle)
+    large_arc = 0 if pct <= 50 else 1
+    return f'M{cx},{cy} L{cx},{cy - r} A{r},{r} 0 {large_arc},1 {end_x:.2f},{end_y:.2f} Z'
+
 if _biggest_mover:
     _bm = _biggest_mover
-    _bm_avg_int = round(_bm['avg'], 1)
+    _total_this_month = sum(r['curr'] for r in _trend_rows)
+    _bm_pct = round((_bm['curr'] / _total_this_month) * 100) if _total_this_month else 0
+    _bm_color = PALETTE_HEX.get(_bm['key']) or cuisine_color(_bm['key'])
+    _slice_path = _pie_slice_path(_bm_pct, 50, 50, 45)
+    _bm_pie = (
+        '<svg viewBox="0 0 100 100" width="100" height="100" '
+        'xmlns="http://www.w3.org/2000/svg" '
+        f'role="img" aria-label="{_esc(_bm["label"])} share of {_esc(_dispatch_label)} openings: {_bm_pct} percent">'
+        f'<circle cx="50" cy="50" r="45" fill="#ebe9e4"/>'
+        f'<path d="{_slice_path}" fill="{_bm_color}"/>'
+        f'<text x="50" y="56" text-anchor="middle" '
+        'font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" '
+        f'font-size="22" font-weight="800" fill="#1a1a1a">{_bm_pct}%</text>'
+        '</svg>'
+    )
     _bm_hero = (
-        f'<div class="trends-hero">'
-        f'<span class="trends-hero-label">Biggest mover, {_esc(_dispatch_label)}</span>'
-        f'<span class="trends-hero-stat">{_esc(_bm["label"])} </span>'
-        f'<span class="trends-hero-num">{_bm["curr"]}</span>'
-        f'<span class="trends-hero-note"> openings (12-month avg: {_bm_avg_int}/mo)</span>'
-        f'</div>'
+        '<div class="trends-hero">'
+        f'<div class="trends-hero-pie">{_bm_pie}</div>'
+        '<div class="trends-hero-text">'
+        f'<span class="trends-hero-label">Biggest slice, {_esc(_dispatch_label)}</span>'
+        f'<span class="trends-hero-stat">{_esc(_bm["label"])}: {_bm_pct}% of new openings</span>'
+        f'<span class="trends-hero-note">{_bm["curr"]} of {_total_this_month} new restaurants this month.</span>'
+        '</div>'
+        '</div>'
     )
 else:
     _bm_hero = ''
