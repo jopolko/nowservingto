@@ -63,6 +63,38 @@ except FileNotFoundError:
 # in, so it doesn't go stale between updates) and a `field_note_tmpl`
 # (HTML, formatted with {n_total}, {n_30d}, {label}, {s30} where
 # s30 = 's' if n_30d != 1 else '' - English plural-agreement helper).
+# GA4 + Microsoft Clarity lazy-load snippet — kept as a module constant
+# so the f-string wire template can splice it in without escaping every
+# JS brace as `{{` / `}}`. Same load-on-first-interaction pattern as
+# index.html to keep Lighthouse TBT clean.
+GA_SNIPPET = """<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  (function() {
+    var loaded = false;
+    var load = function() {
+      if (loaded) return; loaded = true;
+      ['scroll','pointerdown','keydown','touchstart','visibilitychange']
+        .forEach(function(ev){ window.removeEventListener(ev, load, true); });
+      var s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-CBQJHD3G7P';
+      document.head.appendChild(s);
+      gtag('js', new Date());
+      gtag('config', 'G-CBQJHD3G7P');
+      (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+      })(window, document, "clarity", "script", "x10kln08ch");
+    };
+    ['scroll','pointerdown','keydown','touchstart','visibilitychange']
+      .forEach(function(ev){ window.addEventListener(ev, load, {once: true, passive: true, capture: true}); });
+    setTimeout(load, 10000);
+  })();
+</script>"""
+
+
 # The field note is the editorial paragraph anchoring the data in
 # Toronto-diaspora-geography human context; each is hand-written in
 # the register of the cuisine's homeland press.
@@ -930,6 +962,7 @@ def build_wire_page(target, entries):
   .topbar .updated b {{ color: #fff; font-weight: 800; }}
   @media (max-width: 640px) {{ .topbar {{ padding: 14px 18px; }} .topbar .brand {{ font-size: 15px; }} }}
 </style>
+{GA_SNIPPET}
 </head>
 <body>
 

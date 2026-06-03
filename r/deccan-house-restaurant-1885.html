@@ -17,7 +17,7 @@
 <!-- LCP preload: inject_openings.py drops a <link rel="preload" as="image" ...>
      here pointing at the first row's thumbnail so the LCP image fetch
      starts before the browser even parses past <head>. -->
-<!-- LCP-PRELOAD-START --><link rel="preload" as="image" href="/og/thumb/deccan-house-restaurant-1885.webp" fetchpriority="high"><!-- LCP-PRELOAD-END -->
+<!-- LCP-PRELOAD-START --><!-- LCP-PRELOAD-END -->
 
 <!-- Google Analytics 4. Distinct page_view events fire automatically for /, /cuisine/X,
      and /r/X since gtag reads location.pathname on each route. Loaded on the
@@ -42,6 +42,13 @@
       document.head.appendChild(s);
       gtag('js', new Date());
       gtag('config', 'G-CBQJHD3G7P');
+      // Microsoft Clarity — session recordings + heatmaps. Same lazy-load
+      // window as GA so Lighthouse TBT is unaffected.
+      (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+      })(window, document, "clarity", "script", "x10kln08ch");
     };
     ['scroll','pointerdown','keydown','touchstart','visibilitychange']
       .forEach(function(ev){ window.addEventListener(ev, load, {once: true, passive: true, capture: true}); });
@@ -60,7 +67,7 @@
 <meta property="og:url" content="https://nowservingto.com/r/deccan-house-restaurant-1885">
 <meta property="og:title" content="DECCAN HOUSE RESTAURANT - dum biryani, 1885 Kennedy Rd · NowServingTO">
 <meta property="og:description" content="New Indian restaurant at 1885 Kennedy Rd. Menu: dum biryani, qubani ka meetha, chicken biryani, dosa. From the City of Toronto&#39;s licence registry.">
-<meta property="og:image" content="https://nowservingto.com/og/photo/deccan-house-restaurant-1885.jpg">
+<meta property="og:image" content="https://nowservingto.com/og/deccan-house-restaurant-1885.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="675">
 <meta property="og:locale" content="en_CA">
@@ -70,7 +77,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="DECCAN HOUSE RESTAURANT - dum biryani, 1885 Kennedy Rd · NowServingTO">
 <meta name="twitter:description" content="New Indian restaurant at 1885 Kennedy Rd. Menu: dum biryani, qubani ka meetha, chicken biryani, dosa. From the City of Toronto&#39;s licence registry.">
-<meta name="twitter:image" content="https://nowservingto.com/og/photo/deccan-house-restaurant-1885.jpg">
+<meta name="twitter:image" content="https://nowservingto.com/og/deccan-house-restaurant-1885.png">
 
 <!-- Structured data: WebSite for the directory itself. Restaurant ItemList is
      injected by tools/inject_openings.py between the LIST markers below. -->
@@ -96,7 +103,7 @@
 }
 </script>
 <!-- LD-ITEMLIST-START -->
-<script type="application/ld+json" id="ld-itemlist">{"@context":"https://schema.org","@type":"Restaurant","name":"DECCAN HOUSE RESTAURANT","address":{"@type":"PostalAddress","streetAddress":"1885 Kennedy Rd, Scarborough, ON M1P 2L9","addressLocality":"Toronto","addressRegion":"ON","addressCountry":"CA"},"servesCuisine":["Indian"],"url":"https://deccanhouse.ca/","image":["https://nowservingto.com/og/photo/deccan-house-restaurant-1885.jpg","https://nowservingto.com/og/thumb/deccan-house-restaurant-1885.webp"],"foundingDate":"2025-12-12","geo":{"@type":"GeoCoordinates","latitude":43.7665332,"longitude":-79.28054519999999},"hasMap":"https://maps.google.com/?cid=17354270606310464421","aggregateRating":{"@type":"AggregateRating","ratingValue":4.8,"reviewCount":2268}}</script>
+<script type="application/ld+json" id="ld-itemlist">{"@context":"https://schema.org","@type":"Restaurant","name":"DECCAN HOUSE RESTAURANT","address":{"@type":"PostalAddress","streetAddress":"1885 Kennedy Rd, Scarborough, ON M1P 2L9","addressLocality":"Toronto","addressRegion":"ON","addressCountry":"CA"},"servesCuisine":["Indian"],"url":"https://deccanhouse.ca/","image":"https://nowservingto.com/og/deccan-house-restaurant-1885.png","foundingDate":"2026-04-09","geo":{"@type":"GeoCoordinates","latitude":43.7665332,"longitude":-79.28054519999999},"hasMap":"https://maps.google.com/?cid=17354270606310464421","aggregateRating":{"@type":"AggregateRating","ratingValue":4.8,"reviewCount":2233}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://nowservingto.com/"},{"@type":"ListItem","position":2,"name":"Indian restaurants","item":"https://nowservingto.com/cuisine/indian"},{"@type":"ListItem","position":3,"name":"DECCAN HOUSE RESTAURANT","item":"https://nowservingto.com/r/deccan-house-restaurant-1885"}]}</script>
 <!-- LD-ITEMLIST-END -->
 <style>
@@ -158,6 +165,16 @@
   .mast .brand:hover { color: var(--accent); }
   .mast .brand sup { font: 600 10px/1 var(--sans); letter-spacing: 0.08em; color: var(--muted); margin-left: 6px; vertical-align: super; text-transform: uppercase; }
   .mast .sub { color: var(--ink2); font: 400 14px/1.4 var(--serif); margin: 6px 0 0; font-style: italic; }
+  /* Discrete methodology line under the homepage H1. Italic serif,
+     muted, narrow — sits as a quiet dek that builds credibility
+     without competing with the H1 for attention. Suppressed on
+     non-homepage routes (cuisine / district / listing / dispatch /
+     trends) since those pages get the same line elsewhere or in their
+     own framing. */
+  .mast .home-methodology { color: var(--muted); font: 400 12.5px/1.5 var(--serif); font-style: italic; margin: 8px 0 0; }
+  body.page-listing .mast .home-methodology,
+  body.page-dispatch .mast .home-methodology,
+  body.page-trends .mast .home-methodology { display: none; }
   .mast .sub .hl { font-weight: 800; font-style: normal; color: var(--accent); letter-spacing: -0.005em; }
   .mast .sub #last-update { font-style: normal; font-weight: 600; color: var(--ink2); font-variant-numeric: lining-nums tabular-nums; }
 
@@ -302,7 +319,7 @@
   .open-row[data-fresh="hot"] .od .ago { color: var(--fresh); font-size: 10.5px; }
   .open-row[data-fresh="hot"] .od .ago::before { content: '★ '; }
   /* "Recent" tier (31-90d) and "Aged" tier (91-365d) carry longer labels
-     ('Recent · 7w ago', 'Registered 4mo ago') than fits at the default 10px
+     ('Recent · 7w ago', 'First seen 4mo ago') than fits at the default 10px
      + 0.06em tracking. Shrink to 9px / 0.02em so the duration anchors fit
      the 110px column without wrapping. "New" tier stays at its accent
      treatment since 'New · 5d ago' fits comfortably. */
@@ -449,8 +466,324 @@
      cuisine/district pickers, near-me, saved, and view-toggle only make
      sense on the home / cuisine / district pages. */
   body.page-listing .filters,
-  body.page-listing .map-view { display: none !important; }
+  body.page-listing .map-view,
+  body.page-dispatch .filters,
+  body.page-dispatch .map-view,
+  body.page-dispatch .fresh-badge,
+  body.page-trends .filters,
+  body.page-trends .map-view,
+  body.page-trends .fresh-badge,
+  body.page-trends .open-feed,
+  body.page-trends .newsletter-cta { display: none !important; }
+  /* Trends page: cuisine-velocity chart + callouts + share button.
+     Screenshot-shareable artifact for social distribution. */
+  /* Lock all trends sections to a single 760px center column (magazine
+     spread). Fixes the "hourglass" zigzag where wide sections alternated
+     with narrow ones. Only `.trends-mag-hero` opts out by setting its
+     own max-width: 100% — that's the intentional full-bleed break. */
+  body.page-trends .trends-section,
+  body.page-trends .trends-vs-card,
+  body.page-trends .trends-hero-strip,
+  body.page-trends .trends-treemap-wrap,
+  body.page-trends .trends-sources,
+  body.page-trends .trends-take,
+  body.page-trends .trends-lede,
+  body.page-trends .trends-masthead,
+  body.page-trends .trends-share,
+  body.page-trends .trends-chips { max-width: 760px; margin-left: auto; margin-right: auto; }
+  body.page-trends .trends-share { text-align: center; padding: 16px 0; }
+  body.page-trends .trends-section { margin: 40px auto; }
+  body.page-trends .trends-h2 { font: 800 18px/1.2 var(--sans); margin: 0 0 14px; letter-spacing: -0.012em; color: var(--ink); }
+  /* Top-N pie row: top 6 cuisines side by side, each showing its share
+     of the period's openings. The visual ratio between the slices does
+     the editorial work - no per-pie text needed. Sized to fit 6 across
+     a max-720 desktop column; flex-wraps to 3+3 or 2+2+2 on narrower
+     viewports. */
+  body.page-trends .trends-pies-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 12px 0 8px; padding: 8px 0; }
+  body.page-trends .trends-pie-card { text-align: center; flex: 0 0 auto; }
+  body.page-trends .trends-pie-card svg { display: block; margin: 0 auto; }
+  body.page-trends .trends-treemap-wrap { margin: 28px auto 8px; max-width: 720px; }
+  body.page-trends .trends-treemap-eyebrow { font: 700 11px/1 var(--sans); color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; margin: 0 0 10px; text-align: center; }
+  body.page-trends .trends-treemap { border-radius: 10px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.08); background: #faf7ee; }
+  body.page-trends .trends-treemap svg { display: block; width: 100%; height: auto; }
+  body.page-trends .trends-treemap a { cursor: pointer; }
+  body.page-trends .trends-treemap a rect { transition: opacity 0.15s ease; }
+  body.page-trends .trends-treemap a:hover rect { opacity: 0.82; }
+  body.page-trends .trends-treemap-note { font: 400 13.5px/1.55 var(--serif); color: var(--ink2); text-align: center; max-width: 600px; margin: 12px auto 0; font-style: italic; }
+  body.page-trends .trends-sources { max-width: 720px; margin: 40px auto 24px; padding: 20px 24px; background: var(--paper); border-left: 3px solid var(--line); border-radius: 4px; }
+  body.page-trends .trends-sources-eyebrow { font: 700 11px/1 var(--sans); color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; margin: 0 0 12px; }
+  body.page-trends .trends-sources-list { list-style: none; margin: 0; padding: 0; font: 400 13.5px/1.6 var(--serif); }
+  body.page-trends .trends-sources-list li { padding: 4px 0; color: var(--ink2); }
+  body.page-trends .trends-sources-list a { color: var(--ink); text-decoration: none; border-bottom: 1px dotted var(--muted); }
+  body.page-trends .trends-sources-list a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+  body.page-trends .trends-pie-name { font: 700 13px/1.2 var(--sans); margin-top: 8px; color: var(--ink); letter-spacing: -0.005em; }
+  body.page-trends .trends-pie-flag { width: 32px; margin: 5px auto 0; opacity: 0.5; line-height: 0; }
+  body.page-trends .trends-pie-flag svg { width: 100%; height: auto; display: block; border-radius: 2px; border: 1px solid rgba(0,0,0,0.08); }
+  body.page-trends .trends-pie-link { color: inherit; text-decoration: none; border-bottom: 1px dotted var(--line); padding-bottom: 1px; transition: color 0.12s, border-color 0.12s; }
+  body.page-trends .trends-pie-link:hover { color: var(--accent); border-bottom-color: var(--accent); }
+  body.page-trends .trends-vs-cuisine { text-decoration: none; transition: opacity 0.12s; position: relative; display: inline-block; padding: 6px 14px; }
+  body.page-trends .trends-vs-cuisine:hover { opacity: 0.85; }
+  body.page-trends .trends-vs-cuisine .cuisine-flag-bg { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 110%; max-width: 130px; opacity: 0.45; z-index: 0; pointer-events: none; border-radius: 3px; overflow: hidden; line-height: 0; }
+  body.page-trends .trends-vs-cuisine .cuisine-flag-bg svg { width: 100%; height: auto; display: block; border-radius: 3px; }
+  body.page-trends .trends-vs-cuisine .cuisine-name { position: relative; z-index: 1; text-shadow: 0 1px 2px rgba(255,255,255,0.5); }
+  body.page-trends .trends-events-cuisine { color: var(--ink); text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; font-weight: 700; transition: text-decoration-color 0.12s; }
+  body.page-trends .trends-events-cuisine:hover { text-decoration-color: var(--accent); color: var(--accent); }
+  /* Representation index: per-cuisine row showing openings % bar
+     (colored) vs heritage population % bar (grey). Status indicator
+     on the right shows over/under/balanced. Designed to surface the
+     actionable insight: which cuisines are over- or under-served. */
+  body.page-trends .rep-chart { display: flex; flex-direction: column; gap: 14px; margin: 10px 0 16px; }
+  body.page-trends .rep-row { display: grid; grid-template-columns: 110px 1fr 110px; gap: 14px; align-items: center; }
+  body.page-trends .rep-cuisine { font: 700 13px/1.2 var(--sans); color: var(--ink); text-decoration: none; text-align: right; padding-right: 4px; border-bottom: 1px dotted transparent; transition: color 0.12s, border-color 0.12s; }
+  body.page-trends .rep-cuisine:hover { color: var(--accent); border-bottom-color: var(--accent); }
+  body.page-trends .rep-bars { display: flex; flex-direction: column; gap: 3px; }
+  body.page-trends .rep-bar { height: 18px; border-radius: 2px; position: relative; overflow: visible; min-width: 2px; transition: width 0.4s cubic-bezier(0.22,1,0.36,1); }
+  body.page-trends .rep-bar-open { background: var(--accent); }
+  body.page-trends .rep-bar-pop { background: #d9d7d2; }
+  body.page-trends .rep-bar-label { position: absolute; left: calc(100% + 6px); top: 50%; transform: translateY(-50%); font: 600 10.5px/1 var(--sans); color: var(--ink2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  body.page-trends .rep-ratio { font: 800 12px/1.2 var(--sans); text-align: right; letter-spacing: -0.005em; font-variant-numeric: tabular-nums; }
+  body.page-trends .rep-note { font: 400 12.5px/1.55 var(--serif); color: var(--muted); margin: 12px 0 0; font-style: italic; }
+  body.page-trends .rep-note b { color: var(--ink2); font-weight: 700; font-style: normal; }
+  body.page-trends .rep-note a { color: var(--ink2); }
+  @media (max-width: 500px) {
+    body.page-trends .rep-row { grid-template-columns: 80px 1fr 80px; gap: 10px; }
+    body.page-trends .rep-cuisine { font-size: 12px; }
+    body.page-trends .rep-bar-label { font-size: 10px; }
+    body.page-trends .rep-ratio { font-size: 11px; }
+  }
+  body.page-trends .trends-pies-note { font: 400 13px/1.4 var(--serif); color: var(--muted); font-style: italic; text-align: center; margin: 4px 0 22px; }
+  body.page-trends .trends-h3 { font: 700 12px/1.2 var(--sans); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 16px 0 10px; }
+  /* Section-card treatment — matches the VS card's accent-bordered
+     banner so the 3 Months and 3 Years pie sections feel like part
+     of the same editorial scoreboard. */
+  body.page-trends .trends-section-card { background: var(--paper); border-top: 3px solid var(--accent); border-bottom: 3px solid var(--accent); padding: 28px 28px 24px; }
+  body.page-trends .trends-section-card .trends-h2 { margin-top: 0; }
+  /* Magazine typography overrides for /trends - the page should read
+     like a New Yorker / GQ blog post on Toronto food, not like a
+     dashboard. Serif body, generous spacing, drop cap, pull-quote
+     eyebrows, editorial takes between charts. */
+  /* Trade-pub masthead stamp - tiny capped line at top, like an issue
+     number on a printed industry magazine. */
+  /* Magazine-style hero image — GQ-feature treatment. Full-width photo
+     at the top of /trends body with a centered caption overlay band.
+     Visual continuity: same featured spot the OG card uses, so a
+     tweet-click visitor sees the same photo on landing. */
+  body.page-trends .trends-mag-hero-link { display: block; text-decoration: none; color: inherit; transition: transform 0.2s, box-shadow 0.2s; }
+  body.page-trends .trends-mag-hero-link:hover .trends-mag-hero { box-shadow: 0 8px 32px rgba(0,0,0,0.16); }
+  body.page-trends .trends-mag-hero-link:hover .trends-mag-hero-name { color: #ffd9d0; }
+  body.page-trends .trends-mag-hero { margin: 8px 0 32px; padding: 0; max-width: 100%; position: relative; border-radius: 6px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.10); transition: box-shadow 0.2s; }
+  body.page-trends .trends-mag-hero img { width: 100%; height: auto; display: block; max-height: 520px; object-fit: cover; }
+  body.page-trends .trends-mag-hero-cap { position: absolute; left: 0; right: 0; bottom: 0; padding: 60px 32px 26px; background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.85) 100%); color: #fff; display: flex; flex-direction: column; gap: 4px; }
+  body.page-trends .trends-mag-hero-eyebrow { font: 700 11px/1 ui-monospace, "SF Mono", Menlo, monospace; color: #ff7a63; letter-spacing: 0.25em; text-transform: uppercase; margin-bottom: 8px; }
+  body.page-trends .trends-mag-hero-name { font: 700 36px/1.1 var(--serif); color: #fff; letter-spacing: -1.5px; }
+  body.page-trends .trends-mag-hero-meta { font: 400 18px/1.3 var(--serif); font-style: italic; color: rgba(255,255,255,0.85); margin-top: 4px; }
+  @media (max-width: 600px) {
+    body.page-trends .trends-mag-hero img { max-height: 380px; }
+    body.page-trends .trends-mag-hero-cap { padding: 48px 20px 20px; }
+    body.page-trends .trends-mag-hero-name { font-size: 26px; }
+    body.page-trends .trends-mag-hero-meta { font-size: 15px; }
+    body.page-trends .trends-mag-hero-eyebrow { font-size: 10px; letter-spacing: 0.18em; }
+  }
+
+  /* Masthead — kill the dark banner entirely. Replace with a thin
+     column-header rule: small-caps muted text on transparent bg with
+     a hairline underline. Reads as "magazine section divider" instead
+     of "TV news lower-third banner." */
+  body.page-trends .trends-masthead { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; padding: 10px 0 12px; margin: 22px auto 22px; background: transparent; color: var(--muted); font: 700 10.5px/1.4 ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: 0.18em; border-bottom: 1px solid var(--line); text-transform: uppercase; }
+  body.page-trends .trends-masthead .trends-mh-brand { color: var(--accent); text-decoration: none; }
+  body.page-trends .trends-masthead .trends-mh-brand:hover { color: var(--ink); }
+  body.page-trends .trends-masthead .trends-mh-sep { color: var(--line); }
+  body.page-trends .trends-masthead .trends-mh-tag { color: var(--ink2); }
+  body.page-trends .trends-masthead .trends-mh-issue { color: var(--muted); }
+  body.page-trends .trends-masthead .trends-mh-date { color: var(--muted); }
+  body.page-trends .trends-masthead .trends-mh-cta { margin-left: auto; color: var(--accent); background: transparent; padding: 0; text-decoration: none; font-weight: 700; letter-spacing: 0.18em; border: none; }
+  body.page-trends .trends-masthead .trends-mh-cta:hover { color: var(--ink); }
+  body.page-trends .trends-deck { font: 400 17px/1.5 var(--serif); color: var(--ink2); margin: 14px auto 0; max-width: 640px; font-style: italic; text-align: center; }
+  body.page-trends .trends-lede { margin: 28px auto 32px; max-width: 720px; }
+  body.page-trends .trends-lede-p { font: 400 18px/1.6 var(--serif); color: var(--ink); margin: 0; }
+  body.page-trends .trends-lede-cta { display: inline-block; margin-left: 4px; font: 700 15px/1 var(--sans); color: var(--accent); text-decoration: none; border-bottom: 2px solid var(--accent); padding-bottom: 1px; white-space: nowrap; }
+  body.page-trends .trends-lede-cta:hover { color: var(--ink); border-bottom-color: var(--ink); }
+  body.page-trends .trends-chips { max-width: 720px; margin: 8px auto 26px; }
+  body.page-trends .trends-chips-label { font: 700 11px/1 var(--sans); color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; margin: 0 0 10px; }
+  body.page-trends .trends-chips-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  body.page-trends .trends-chip { display: inline-block; padding: 8px 14px; font: 700 14px/1 var(--sans); color: #fff; background: var(--chip-color, var(--ink)); border-radius: 999px; text-decoration: none; transition: opacity 0.15s, transform 0.15s; }
+  body.page-trends .trends-chip:hover { opacity: 0.88; transform: translateY(-1px); }
+  body.page-trends .trends-hero-strip { max-width: 720px; margin: 0 auto 36px; }
+  body.page-trends .trends-hero-label { font: 700 11px/1 var(--sans); color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; margin: 0 0 10px; }
+  body.page-trends .trends-hero-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+  @media (max-width: 820px) { body.page-trends .trends-hero-row { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 480px) { body.page-trends .trends-hero-row { grid-template-columns: repeat(2, 1fr); } }
+
+  /* "20 newest spots" deliverable grid — honors the tweet promise.
+     5 columns × 4 rows desktop, 4 columns tablet, 2 columns mobile. */
+  body.page-trends .trends-twenty { background: transparent; border: none; padding: 0; }
+  body.page-trends .trends-twenty-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 14px; }
+  @media (max-width: 900px) { body.page-trends .trends-twenty-row { grid-template-columns: repeat(4, 1fr); gap: 10px; } }
+  @media (max-width: 680px) { body.page-trends .trends-twenty-row { grid-template-columns: repeat(3, 1fr); gap: 8px; } }
+  @media (max-width: 480px) { body.page-trends .trends-twenty-row { grid-template-columns: repeat(2, 1fr); gap: 8px; } }
+  body.page-trends .trends-twenty-card { display: block; background: var(--paper); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; text-decoration: none; color: var(--ink); transition: transform 0.15s, box-shadow 0.15s; }
+  body.page-trends .trends-twenty-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+  body.page-trends .trends-twenty-thumb { width: 100%; aspect-ratio: 1 / 1; background-size: cover; background-position: center; background-color: #ebe9e4; }
+  body.page-trends .trends-twenty-body { padding: 8px 9px 10px; }
+  body.page-trends .trends-twenty-age { font: 700 9.5px/1 var(--sans); color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 5px; }
+  body.page-trends .trends-twenty-name { font: 700 12px/1.2 var(--sans); color: var(--ink); margin: 0 0 3px; letter-spacing: -0.005em; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; min-height: 28.8px; }
+  body.page-trends .trends-twenty-meta { font: 500 10.5px/1.25 var(--sans); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  body.page-trends .trends-hero-card { display: block; background: var(--paper); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; text-decoration: none; color: var(--ink); transition: transform 0.15s, box-shadow 0.15s; }
+  body.page-trends .trends-hero-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+  body.page-trends .trends-hero-thumb { width: 100%; aspect-ratio: 1 / 1; background-size: cover; background-position: center; background-color: #ebe9e4; }
+  body.page-trends .trends-hero-body { padding: 7px 8px 9px; }
+  body.page-trends .trends-hero-age { font: 700 9px/1 var(--sans); color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+  body.page-trends .trends-hero-name { font: 700 11.5px/1.2 var(--sans); color: var(--ink); margin: 0 0 3px; letter-spacing: -0.005em; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  body.page-trends .trends-hero-meta { font: 500 10.5px/1.25 var(--sans); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  body.page-trends .trends-dropcap { float: left; font: 800 64px/0.85 var(--serif); color: var(--accent); margin: 4px 10px -2px 0; padding: 0; letter-spacing: -0.03em; }
+  body.page-trends .trends-eyebrow { font: 700 10.5px/1 var(--sans); text-transform: uppercase; letter-spacing: 0.14em; color: var(--accent); margin: 0 0 10px; }
+  body.page-trends .trends-take { max-width: 720px; margin: 22px auto 6px; }
+  body.page-trends .trends-take p { font: 400 16px/1.65 var(--serif); color: var(--ink2); margin: 0; }
+  body.page-trends .trends-take b { color: var(--ink); font-weight: 700; }
+  body.page-trends .trends-take a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; text-decoration-thickness: 1.5px; font-weight: 700; }
+  body.page-trends .trends-take a:hover { color: var(--accent); }
+  body.page-trends .trends-close { max-width: 640px; margin: 36px auto 24px; padding-top: 24px; border-top: 1px solid var(--line); }
+  body.page-trends .trends-close p { font: 400 15.5px/1.65 var(--serif); color: var(--ink2); margin: 0 0 14px; }
+  body.page-trends .trends-close-method { font: 400 12.5px/1.55 var(--sans) !important; color: var(--muted) !important; margin-top: 16px !important; font-style: italic; }
+  body.page-trends .trends-close-method b { color: var(--ink2); font-weight: 700; font-style: normal; }
+  body.page-trends .trends-close-method a { color: var(--ink2); }
+  body.page-trends .trends-section-headline { padding-top: 14px; }
+  /* Hero H1 — magazine headline treatment */
+  body.page-trends .mast .sub { font: 800 40px/1.1 var(--serif) !important; color: var(--ink) !important; font-style: normal !important; max-width: 800px; margin: 20px auto 4px !important; letter-spacing: -0.02em; text-align: center; }
+  body.page-trends .mast .sub .hl { color: var(--accent); font-weight: 700; font-style: italic; display: block; font-size: 0.55em; letter-spacing: 0.05em; margin-top: 8px; text-transform: uppercase; }
+  @media (max-width: 600px) {
+    body.page-trends .mast .sub { font-size: 30px !important; }
+    body.page-trends .mast .sub .hl { font-size: 0.5em; }
+  }
+  /* Contrast VS card - graphic showdown between the 36-month leader
+     and the 90-day challenger. Two columns + "VS" spine. When same
+     cuisine leads both, single celebratory card instead. */
+  body.page-trends .trends-vs { display: flex; align-items: center; justify-content: center; gap: 24px; padding: 24px 22px; margin: 30px 0; background: var(--paper); border-top: 3px solid var(--accent); border-bottom: 3px solid var(--accent); }
+  body.page-trends .trends-vs-side { text-align: center; flex: 1 1 0; min-width: 0; }
+  /* Tan-background news / supplemental section for the dojo events.
+     Visually distinct from the accent-bordered card sections above —
+     reads as commentary/recent moves, not core leaderboard data. */
+  body.page-trends .trends-section-news { background: #f0e6cf; border: 1px solid #d9c89e; border-radius: 8px; padding: 16px 20px; }
+  body.page-trends .trends-section-news .trends-events { padding: 0; background: transparent; border: none; }
+  body.page-trends .trends-vs-label { font: 700 10.5px/1 var(--sans); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 8px; }
+  body.page-trends .trends-vs-cuisine { font: 900 28px/1.1 var(--sans); letter-spacing: -0.02em; margin-bottom: 6px; }
+  body.page-trends .trends-vs-pct { font: 700 20px/1 var(--sans); color: var(--ink); font-variant-numeric: tabular-nums; }
+  body.page-trends .trends-vs-divider { font: 900 22px/1 var(--sans); color: var(--muted); letter-spacing: 0.1em; flex: 0 0 auto; }
+
+  /* VS card — Cosmopolitan/Vanity Fair glossy-magazine treatment.
+     Paper background, hairline rules instead of heavy bars, serif body
+     for nicknames + stats, generous whitespace. Lighter and more
+     elegant than the original UFC-poster dark-mode look; reads as
+     "editorial spread" on phone scroll. */
+  body.page-trends .trends-vs-card { background: var(--paper); color: var(--ink); padding: 0; margin: 36px 0; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
+  body.page-trends .trends-vs-banner { background: transparent; color: var(--accent); font: 700 10.5px/1 ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: 0.3em; text-align: center; padding: 18px 16px 14px; text-transform: uppercase; border-bottom: 1px solid var(--line); }
+  body.page-trends .trends-vs-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 0; padding: 40px 24px 36px; }
+  body.page-trends .trends-vs-fighter { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 0 16px; text-decoration: none; color: var(--ink); transition: transform 0.2s; }
+  body.page-trends .trends-vs-fighter:hover { transform: translateY(-2px); }
+  body.page-trends .trends-vs-belt { font: 700 9.5px/1 ui-monospace, "SF Mono", Menlo, monospace; color: #b8860b; letter-spacing: 0.3em; padding: 4px 10px; border: 1px solid rgba(184,134,11,0.4); border-radius: 1px; text-transform: uppercase; margin-bottom: 8px; }
+  body.page-trends .trends-vs-belt-contender { color: var(--muted); border-color: var(--line); }
+  body.page-trends .trends-vs-flag { width: 72px; height: 50px; display: flex; align-items: center; justify-content: center; margin: 6px 0; }
+  body.page-trends .trends-vs-flag svg { width: 100%; height: auto; box-shadow: 0 1px 4px rgba(0,0,0,0.12); border-radius: 1px; }
+  body.page-trends .trends-vs-nick { font: 700 38px/1.1 var(--serif); font-style: italic; color: var(--fighter-color, var(--ink)); letter-spacing: -0.5px; margin: 12px 0 6px; }
+  body.page-trends .trends-vs-realname { font: 700 11px/1 ui-monospace, "SF Mono", Menlo, monospace; color: var(--muted); letter-spacing: 0.25em; text-transform: uppercase; }
+  body.page-trends .trends-vs-stats { display: flex; gap: 28px; margin-top: 16px; }
+  body.page-trends .trends-vs-stat { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  body.page-trends .trends-vs-stat b { font: 700 36px/1 var(--serif); color: var(--ink); font-variant-numeric: tabular-nums; letter-spacing: -1px; }
+  body.page-trends .trends-vs-stat em { font: 700 9.5px/1 ui-monospace, "SF Mono", Menlo, monospace; color: var(--muted); text-transform: uppercase; letter-spacing: 0.25em; font-style: normal; }
+  body.page-trends .trends-vs-card .trends-vs-divider { font: 400 38px/1 var(--serif); font-style: italic; color: var(--accent); flex: 0 0 auto; padding: 0 10px; opacity: 0.7; }
+  body.page-trends .trends-vs-card .trends-vs-divider span { display: block; }
+  body.page-trends .trends-vs-tale { background: transparent; color: var(--muted); font: 700 10px/1.4 ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: 0.25em; text-align: center; padding: 14px 16px; text-transform: uppercase; border-top: 1px solid var(--line); }
+  @media (max-width: 600px) {
+    body.page-trends .trends-vs-row { grid-template-columns: 1fr; gap: 28px; padding: 32px 16px 28px; }
+    body.page-trends .trends-vs-card .trends-vs-divider { font-size: 28px; padding: 0; }
+    body.page-trends .trends-vs-nick { font-size: 24px; }
+    body.page-trends .trends-vs-stat b { font-size: 30px; }
+    body.page-trends .trends-vs-banner { letter-spacing: 0.2em; font-size: 10px; padding: 14px 12px 12px; }
+  }
+  /* Winner/runner-up trophies above the VS sides. SVG crown for gold,
+     silver medal for runner-up. Gives the VS card a podium-graphic feel. */
+  body.page-trends .trends-vs-medal { display: block; margin: 0 auto 4px; width: 38px; height: auto; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.12)); }
+  body.page-trends .trends-vs-crown { width: 44px; }
+  body.page-trends .trends-vs-silver { width: 38px; }
+  body.page-trends .trends-vs-winner-label { color: #b8870a; font-weight: 800; }
+  body.page-trends .trends-vs-bolt-label { color: #d97000; font-weight: 800; }
+  body.page-trends .trends-h2-sub { font-weight: 500; color: var(--muted); letter-spacing: -0.005em; font-size: 14px; margin-left: 6px; }
+  /* /press/data — press-grade data terminal. Monospaced, austere,
+     source-attributed. Designed to be embeddable by food editors and
+     cited by data journalists. Light-mode Bloomberg/Reuters aesthetic. */
+  body.page-data { background: #fafafa; color: #111; }
+  body.page-data .mast { background: #fff; border-bottom: 1px solid #d4d4d2; padding: 16px 0 14px; }
+  body.page-data .mast .brand { font: 800 18px/1 ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: -0.01em; }
+  body.page-data .pro-h1 { font: 800 22px/1.1 ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: -0.02em; margin: 0; color: #111; text-transform: uppercase; }
+  body.page-data .pro-header { background: #111; color: #fff; margin: 24px 0 18px; padding: 8px 14px; font: 600 11px/1.2 ui-monospace, "SF Mono", Menlo, monospace; }
+  body.page-data .pro-header-row { display: flex; gap: 18px; flex-wrap: wrap; align-items: baseline; }
+  body.page-data .pro-header-tag { background: #e84e3a; color: #fff; padding: 2px 8px; font-weight: 800; letter-spacing: 0.05em; }
+  body.page-data .pro-header-meta { color: #aaa; letter-spacing: 0.04em; }
+  body.page-data .pro-section { margin: 20px 0 26px; }
+  body.page-data .pro-h2 { font: 800 13px/1.2 ui-monospace, "SF Mono", Menlo, monospace; text-transform: uppercase; letter-spacing: 0.06em; color: #111; margin: 0 0 12px; padding-bottom: 8px; border-bottom: 2px solid #111; }
+  body.page-data .pro-chart { background: #fff; border: 1px solid #d4d4d2; padding: 16px; }
+  body.page-data .pro-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 10px 0 0; font: 500 11px/1.4 ui-monospace, "SF Mono", Menlo, monospace; }
+  body.page-data .pro-legend-item { display: inline-flex; align-items: center; gap: 5px; }
+  body.page-data .pro-legend-item a { color: #111; text-decoration: none; }
+  body.page-data .pro-legend-item a:hover { text-decoration: underline; }
+  body.page-data .pro-legend-swatch { display: inline-block; width: 10px; height: 10px; border-radius: 0; }
+  body.page-data .pro-table { width: 100%; border-collapse: collapse; font: 500 12.5px/1.5 ui-monospace, "SF Mono", Menlo, monospace; background: #fff; border: 1px solid #d4d4d2; }
+  body.page-data .pro-table th { background: #f0f0ee; padding: 8px 10px; text-align: left; font-weight: 800; letter-spacing: 0.04em; border-bottom: 2px solid #111; color: #111; }
+  body.page-data .pro-table td { padding: 8px 10px; border-bottom: 1px solid #ebebe9; color: #111; }
+  body.page-data .pro-table tbody tr:last-child td { border-bottom: 0; }
+  body.page-data .pro-table tbody tr:hover { background: #f8f8f6; }
+  body.page-data .pro-num { text-align: right; font-variant-numeric: tabular-nums; }
+  body.page-data .pro-muted { color: #888; }
+  body.page-data .pro-table a { color: #111; text-decoration: underline; text-decoration-color: #d4d4d2; text-underline-offset: 3px; }
+  body.page-data .pro-table a:hover { text-decoration-color: #e84e3a; color: #e84e3a; }
+  body.page-data .pro-swatch { display: inline-block; width: 8px; height: 8px; margin-right: 6px; vertical-align: 1px; }
+  body.page-data .pro-footer { margin: 30px 0 20px; padding: 18px 16px; background: #fff; border: 1px solid #d4d4d2; font: 400 13px/1.55 ui-monospace, "SF Mono", Menlo, monospace; }
+  body.page-data .pro-foot-h { font: 800 11px/1.2 ui-monospace, "SF Mono", Menlo, monospace; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin: 12px 0 4px; }
+  body.page-data .pro-foot-h:first-child { margin-top: 0; }
+  body.page-data .pro-footer p { margin: 0 0 6px; color: #333; }
+  body.page-data .pro-footer a { color: #111; text-decoration: underline; text-decoration-color: #d4d4d2; text-underline-offset: 3px; }
+  body.page-data .pro-footer a:hover { text-decoration-color: #e84e3a; color: #e84e3a; }
+  body.page-data .pro-embed { background: #f0f0ee; color: #111; padding: 10px 12px; font: 500 11.5px/1.5 ui-monospace, "SF Mono", Menlo, monospace; overflow-x: auto; border: 1px solid #d4d4d2; margin: 4px 0 0; word-break: break-all; }
+  body.page-data .filters, body.page-data .map-view, body.page-data .fresh-badge, body.page-data .open-feed, body.page-data .newsletter-cta { display: none !important; }
+  body.page-data .footer-nav, body.page-data footer { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 11px; }
+  body.page-trends .trends-vs-same { gap: 0; }
+  body.page-trends .trends-vs-same .trends-vs-pct { font-size: 14.5px; color: var(--ink2); font-weight: 500; font-family: var(--serif); font-style: italic; margin-top: 4px; }
+  @media (max-width: 480px) {
+    body.page-trends .trends-vs { gap: 12px; padding: 18px 14px; }
+    body.page-trends .trends-vs-cuisine { font-size: 22px; }
+    body.page-trends .trends-vs-pct { font-size: 17px; }
+    body.page-trends .trends-vs-divider { font-size: 18px; }
+  }
+  @media (max-width: 500px) {
+    body.page-trends .trends-pies-row { gap: 10px; }
+    body.page-trends .trends-pie-card svg { width: 88px; height: 88px; }
+    body.page-trends .trends-pie-name { font-size: 12px; }
+  }
+  body.page-trends .trends-chart-wrap { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 24px 20px; }
+  body.page-trends .trends-callouts { margin: 20px 0; padding-left: 22px; font: 400 14.5px/1.6 var(--serif); color: var(--ink); }
+  body.page-trends .trends-callouts li { margin-bottom: 8px; }
+  body.page-trends .trends-callouts b { font-weight: 700; color: var(--accent); }
+  /* "This month in the dojo" wrestling-style event callouts. Each
+     event has a colored tag prefix (UPSET, DROUGHT BROKEN, etc.). */
+  body.page-trends .trends-events { margin: 24px 0 8px; padding: 18px 20px; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; }
+  body.page-trends .trends-events-h { font: 800 13px/1.2 var(--sans); text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink); margin: 0 0 14px; }
+  body.page-trends .trends-events-list { list-style: none; padding: 0; margin: 0; }
+  body.page-trends .trends-events-list li { font: 400 14.5px/1.55 var(--serif); color: var(--ink); margin-bottom: 10px; padding-left: 0; }
+  body.page-trends .trends-events-list li:last-child { margin-bottom: 0; }
+  body.page-trends .trends-events-tag { display: inline-block; font: 800 10px/1 var(--sans); text-transform: uppercase; letter-spacing: 0.08em; color: #fff; background: var(--accent); padding: 4px 8px; border-radius: 3px; margin-right: 8px; vertical-align: 1px; }
+  body.page-trends .trends-macro-note { margin: 14px 0 0; font: 400 13.5px/1.55 var(--serif); color: var(--ink2); font-style: italic; }
+  body.page-trends .trends-share { margin: 32px 0 8px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  body.page-trends .trends-tweet-btn { display: inline-block; padding: 10px 18px; background: var(--ink); color: #fff; text-decoration: none; border-radius: 999px; font: 700 13.5px/1 var(--sans); transition: background 0.12s; }
+  body.page-trends .trends-tweet-btn:hover { background: var(--accent); }
+  body.page-trends .trends-note { font: 400 12.5px/1.4 var(--sans); color: var(--muted); font-style: italic; }
   body.page-listing .open-feed { margin-bottom: 8px; }
+  /* Primary listing row: gentle warm-sand tint so the page's headline
+     element doesn't read as flat paper-white. Matches the alternating
+     shade used on lx-cards and nearby cards for one consistent palette
+     rhythm. Independent of nth-child position. */
+  body.page-listing .open-row { background: #f3eedf; }
+  body.page-listing .open-row:nth-child(even) { background: #f3eedf; }
+  body.page-listing .open-row:hover { background: #ebe5d2; }
   /* Listing page hierarchy: the page's subject restaurant deserves a bigger
      thumb than the "Other nearby" cards below. Without this the 4-up
      grid of nearby cards visually dominated the smaller 80px primary
@@ -599,6 +932,78 @@
   body.page-listing .surprise-fab { display: none; }  /* hide on single-restaurant pages */
   .listing-extra { margin: 4px 0 32px; display: flex; flex-direction: column; gap: 22px; }
   .listing-extra .lx-card { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  /* Alternating neutral shades on the plain content cards so the column
+     doesn't read as one continuous slab of paper-white. Skips cards that
+     carry their own tint (owner-content, featured-press, owner-cta,
+     dishes) — those already break the rhythm with accent colors. */
+  .listing-extra .lx-card:nth-of-type(even):not(.lx-owner-content):not(.lx-featured):not(.lx-owner-cta):not(.lx-dishes) {
+    background: #f8f4ea;
+    border-color: #e6dfce;
+  }
+  /* "What to order" block: dish names get their own typographic card
+     with a warm accent edge so it reads as a recommendation tile rather
+     than another paragraph of editorial. Serif italic body, bold dish
+     names. Pairs the eyebrow with the accent color used elsewhere on the
+     site for editorial CTAs. */
+  .listing-extra .lx-dishes { background: #fffaf2; border-left: 4px solid var(--accent); }
+  .listing-extra .lx-dishes .lx-eyebrow { color: var(--accent); }
+  .listing-extra .lx-dishes-list { font: 400 17px/1.6 var(--serif); font-style: italic; color: var(--ink); margin: 0; letter-spacing: -0.005em; }
+  .listing-extra .lx-dishes-list b { font-style: normal; font-weight: 700; color: var(--ink); }
+  /* Categories variant — softer treatment so visitors can intuit the
+     difference between "we know specific dishes" and "we know menu
+     categories." Muted edge color, muted eyebrow, same warm-cream tile. */
+  .listing-extra .lx-dishes-cats { border-left-color: #c4b896; }
+  .listing-extra .lx-dishes-cats .lx-eyebrow { color: var(--muted); }
+  /* ─── Cuisine-color typographic graphic (replaces photos site-wide).
+     Three sizes: hero (per-listing top + OG), card (nearby/strip),
+     thumb (feed row). All share cuisine-colored gradient + native
+     script ornament + serif name typography. ─── */
+  /* Soft treatment: cream-paper background tinted ~12% with cuisine
+     color + thin cuisine-color accent bar on the left + dark text +
+     faded cuisine-color native script. Five Vietnam-reds on one page
+     felt fatiguing as full-saturation blocks; this reads as editorial
+     calm while keeping each cuisine visually distinct. */
+  .cg { position: relative; overflow: hidden; border-radius: 6px;
+        background: color-mix(in srgb, var(--cg-color, #7a746a) 11%, #faf7ee);
+        color: var(--ink);
+        border-left: 4px solid var(--cg-color, #7a746a); }
+  .cg::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, transparent 55%, color-mix(in srgb, var(--cg-color, #7a746a) 8%, transparent) 100%); pointer-events: none; }
+  .cg-script { position: absolute; bottom: -10%; right: -4%; font: 700 200% 'Noto Sans', 'Noto Sans Bengali', 'Noto Naskh Arabic', 'Noto Sans Tamil', 'Noto Sans CJK SC', 'Noto Sans Devanagari', 'Noto Sans Ethiopic', system-ui, serif; color: color-mix(in srgb, var(--cg-color, #7a746a) 22%, transparent); letter-spacing: -0.02em; pointer-events: none; white-space: nowrap; line-height: 1; }
+  .cg-script-rtl { right: auto; left: -4%; bottom: -10%; }
+  .cg-name, .cg-eyebrow, .cg-district { position: relative; z-index: 2; }
+  .cg-eyebrow { font: 700 10px/1 var(--mono); letter-spacing: 0.22em; color: color-mix(in srgb, var(--cg-color, #7a746a) 75%, #000); text-transform: uppercase; margin-bottom: 12px; }
+  .cg-name { font: 800 28px/1.15 var(--serif); letter-spacing: -0.6px; color: var(--ink); margin: 0; }
+  .cg-district { font: 400 14px/1.3 var(--serif); font-style: italic; color: var(--ink2); margin: 8px 0 0; }
+  /* Hero: full-bleed featured display (per-listing top, /trends magazine hero) */
+  .cg-hero { padding: 32px 36px 30px; min-height: 320px; display: flex; flex-direction: column; justify-content: flex-end; }
+  .cg-hero .cg-script { font-size: 320px; bottom: -60px; }
+  .cg-hero .cg-name { font-size: 44px; letter-spacing: -1.2px; }
+  .cg-hero .cg-district { font-size: 17px; }
+  /* Card: nearby + hero-strip slot */
+  .cg-card { padding: 18px 20px 18px; aspect-ratio: 4 / 3; display: flex; flex-direction: column; justify-content: flex-end; }
+  .cg-card .cg-script { font-size: 130px; bottom: -28px; }
+  .cg-card .cg-name { font-size: 18px; letter-spacing: -0.3px; color: var(--ink); }
+  /* Thumb: square row-slot replacement for the listing-page row-pic */
+  .cg-thumb { aspect-ratio: 1 / 1; padding: 10px 12px; display: flex; flex-direction: column; justify-content: flex-end; }
+  .cg-thumb .cg-script { font-size: 110px; bottom: -22px; }
+  .cg-thumb .cg-name { font-size: 13px; letter-spacing: -0.2px; font-weight: 700; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; color: var(--ink); }
+  @media (max-width: 600px) {
+    .cg-hero { min-height: 240px; padding: 24px 24px 22px; }
+    .cg-hero .cg-name { font-size: 32px; }
+    .cg-hero .cg-script { font-size: 220px; bottom: -40px; }
+  }
+
+  /* Photo credit line — discrete per Google Places ToS §5.3 attribution
+     requirement. Small, muted, sits at the foot of each listing page. */
+  .listing-extra .lx-photo-credit { font: 400 11px/1.4 var(--sans); color: var(--muted); margin: 18px 0 0; text-align: center; }
+  .listing-extra .lx-photo-credit a { color: var(--muted); text-decoration: underline; text-decoration-color: var(--line); }
+  .listing-extra .lx-photo-credit a:hover { color: var(--accent); }
+  /* Report-an-error link — universal correction channel for wrong cuisine,
+     wrong address, closed-and-missed, etc. Same footer treatment as the
+     photo credit so it stays out of the visual hierarchy of the page. */
+  .listing-extra .lx-report-error { font: 400 11px/1.4 var(--sans); color: var(--muted); margin: 6px 0 0; text-align: center; }
+  .listing-extra .lx-report-error a { color: var(--muted); text-decoration: underline; text-decoration-color: var(--line); }
+  .listing-extra .lx-report-error a:hover { color: var(--accent); }
   .listing-extra .lx-eyebrow { font: 700 10.5px/1 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
   /* Featured in: Toronto food-press citations - third-party validation
      block. Subtle mint left-border (--accent-2 territory) so it reads as
@@ -655,8 +1060,20 @@
      (→ /r/<slug>) plus compact Website/Maps CTAs that punch through to
      the actual business. Visitors who want context click photo or name;
      visitors in a hurry use the CTAs. */
-  .listing-extra .lx-near-card { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--paper); transition: border-color 0.14s, box-shadow 0.14s; }
+  .listing-extra .lx-near-card { position: relative; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--paper); transition: border-color 0.14s, box-shadow 0.14s; }
+  /* Alternating neutral shades on nearby cards — same warm-sand tone as
+     the alternating lx-card rule above so the page reads as one consistent
+     palette rhythm rather than two unrelated stripes of color. */
+  .listing-extra .lx-near-card:nth-child(even) { background: #f8f4ea; border-color: #e6dfce; }
   .listing-extra .lx-near-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.07); border-color: var(--rule); }
+  /* Card-wide click target: absolutely-positioned anchor covering the
+     whole card so any blank-area tap navigates to /r/<slug>. Inner
+     anchors (name, Website, Maps) are z-indexed above so direct clicks
+     still hit them. Cursor signals tappability across the whole tile. */
+  .listing-extra .lx-near-card .lx-near-cardlink { position: absolute; inset: 0; z-index: 1; text-indent: -9999px; overflow: hidden; }
+  .listing-extra .lx-near-card .lx-near-body { position: relative; z-index: 2; }
+  .listing-extra .lx-near-card .lx-near-body a { position: relative; z-index: 3; }
+  .listing-extra .lx-near-card { cursor: pointer; }
   .listing-extra .lx-near-card .lx-near-pic { display: block; aspect-ratio: 1 / 1; overflow: hidden; background: #e8e8e8; }
   .listing-extra .lx-near-card .lx-near-pic img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.22s; }
   .listing-extra .lx-near-card .lx-near-pic:hover img { transform: scale(1.04); }
@@ -722,7 +1139,8 @@
 <header class="mast">
   <div class="wrap">
     <a href="/" class="brand" id="brand-link">NowServingTO</a>
-    <h1 class="sub">DECCAN HOUSE RESTAURANT</h1><div class="listing-lede">Registered 6 months ago · dum biryani, qubani ka meetha, chicken biryani</div>
+    <h1 class="sub">DECCAN HOUSE RESTAURANT</h1><div class="listing-lede">First seen 55 days ago · dum biryani, qubani ka meetha, chicken biryani</div>
+    <p class="home-methodology">New permits sourced from City of Toronto open datasets, cross-referenced with DineSafe and social media signals to bring you the freshest, newest kitchens in the city.</p>
     <button type="button" id="fresh-badge" class="fresh-badge" aria-label="Jump to restaurants new since your last visit">
       <span class="fb-spark" aria-hidden="true">✨</span>
       <span id="fb-text">new since you last looked</span>
@@ -749,30 +1167,30 @@
       <button class="vt-btn" data-view="map" role="tab" aria-selected="false">Map</button>
     </div>
     <details class="data-note-tip">
-      <summary aria-label="About &quot;Registered&quot; dates"><span class="dnt-icon" aria-hidden="true">ⓘ</span><span class="dnt-label">About &ldquo;Registered&rdquo; dates</span></summary>
-      <p>&quot;Registered&quot; dates reflect when each restaurant first surfaced in our City permit, public-health inspection, and Google Places evidence — usually within a few weeks of opening, but a permit can lead actual opening by months. <a href="/press">How we verify &rsaquo;</a></p>
+      <summary aria-label="About &quot;First seen&quot; dates"><span class="dnt-icon" aria-hidden="true">ⓘ</span><span class="dnt-label">About "First seen" dates</span></summary>
+      <p>&quot;First seen&quot; reflects when each restaurant first surfaced in our City permit, public-health inspection, and Google Places evidence — usually within a few weeks of opening, but a permit can lead actual opening by months. <a href="/press">How we verify &rsaquo;</a></p>
     </details>
   </div>
   <div class="open-feed" id="open-feed">
     <!-- STATIC-FEED-START - pre-rendered daily by tools/inject_openings.py for crawlers + no-JS visitors. Replaced by interactive JS render on page load. -->
-    <div class="open-row has-pic" data-slug="deccan-house-restaurant-1885" data-fresh="aged" style="--row-accent: #e88e2c"><a class="row-pic-link" href="https://maps.google.com/?cid=17354270606310464421" target="_blank" rel="noopener" aria-label="View DECCAN HOUSE RESTAURANT"><img class="row-pic" src="/og/thumb/deccan-house-restaurant-1885.webp" alt="DECCAN HOUSE RESTAURANT" loading="eager" fetchpriority="high" decoding="async"></a><div class="od"><span class="ago">Registered 6mo ago</span></div><div class="on"><a href="https://deccanhouse.ca/" target="_blank" rel="noopener">DECCAN HOUSE RESTAURANT<span class="ext-arrow" aria-hidden="true">↗</span></a><span class="oad"><a href="https://maps.google.com/?cid=17354270606310464421" target="_blank" rel="noopener">1885 Kennedy Rd, Scarborough, ON M1P 2L9</a><span class="oad-d"> · Scarborough</span></span></div><div class="oc"><a class="pill" href="/cuisine/indian" style="background:#e88e2c" aria-label="See newest Indian restaurants">Indian</a></div></div>
+    <div class="open-row" data-slug="deccan-house-restaurant-1885" data-fresh="recent" style="--row-accent: #e88e2c"><div class="od"><span class="ago">First seen 8w ago</span></div><div class="on"><a href="https://deccanhouse.ca/" target="_blank" rel="noopener">DECCAN HOUSE RESTAURANT<span class="ext-arrow" aria-hidden="true">↗</span></a><span class="oad"><a href="https://maps.google.com/?cid=17354270606310464421" target="_blank" rel="noopener">1885 Kennedy Rd, Scarborough, ON M1P 2L9</a><span class="oad-d"> · Scarborough</span></span></div><div class="oc"><a class="pill" href="/cuisine/indian" style="background:#e88e2c" aria-label="See newest Indian restaurants">Indian</a></div></div>
     <!-- STATIC-FEED-END -->
   </div>
 
-  <!-- LISTING-EXTRA-START --><section class="listing-extra" aria-label="Listing detail"><div class="lx-card"><p class="lx-evidence">This hyderabadi kitchen specializes in slow-cooked dum biryani alongside southern indian classics like dosa and idli chicken 65 as a standout. diners consistently return for the authentic home-style flavors and the restaurant&#39;s commitment to recreating the warmth of hyderabadi dining.</p></div><div class="lx-card lx-owner-cta"><p class="lx-owner-cta-line">Is this your restaurant? <a class="lx-owner-cta-btn" href="mailto:hello@nowservingto.com?subject=Enhance+my+listing+%E2%80%94+DECCAN+HOUSE+RESTAURANT&amp;body=Hi+Josh%2C%0A%0ARe%3A+DECCAN+HOUSE+RESTAURANT%0AListing%3A+https%3A%2F%2Fnowservingto.com%2Fr%2Fdeccan-house-restaurant-1885%0A%0AI%27d+like+to+enhance+my+listing+with%3A%0A%0A%E2%80%A2+Photo+%28attach+to+this+email%29%3A%0A%E2%80%A2+What+makes+us+special+%28one+sentence%29%3A%0A%E2%80%A2+Owner%2Fchef+story+%281-2+sentences%29%3A%0A%E2%80%A2+When+we+actually+opened+%28date%29%3A%0A%E2%80%A2+Signature+dishes%3A%0A%E2%80%A2+Anything+incorrect+that+needs+fixing%3A%0A%0AThanks%21%0A">Send a photo, story, or correction <span aria-hidden="true">→</span></a></p><form class="lx-owner-cta-sub alert-form" data-kind="cuisine" data-value="indian" data-label="Indian" data-base-kind="cuisine" data-base-value="indian" data-base-label="Indian" novalidate><label class="lx-sub-label">New Indian openings:</label><input type="email" required autocomplete="email" placeholder="you@email" aria-label="Email"><button type="submit">Subscribe</button><div class="alert-status" role="status" aria-live="polite"></div><div class="alert-hp" aria-hidden="true"><label>Website (leave blank): <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div></form></div><div class="lx-card"><h2 class="lx-near-h">Other newly registered Indian kitchens nearby</h2><div class="lx-near-grid"><div class="lx-near-card"><a class="lx-near-pic" href="/r/khaas-bistro-bar-880" aria-label="KHAAS BISTRO BAR listing"><img src="/og/thumb/khaas-bistro-bar-880.webp" alt="KHAAS BISTRO BAR" loading="lazy" decoding="async"></a><div class="lx-near-body"><span class="lx-near-when">Registered 13d ago</span><a class="lx-near-name" href="/r/khaas-bistro-bar-880">KHAAS BISTRO BAR</a><span class="lx-near-where">Scarborough</span><div class="lx-near-ctas"><a class="lx-near-cta" href="https://maps.google.com/?cid=18341710527043378695" target="_blank" rel="noopener"><span class="lx-near-arrow">↗</span>Maps</a></div></div></div><div class="lx-near-card"><a class="lx-near-pic" href="/r/house-of-nizams-1163" aria-label="HOUSE OF NIZAMS listing"><img src="/og/thumb/house-of-nizams-1163.webp" alt="HOUSE OF NIZAMS" loading="lazy" decoding="async"></a><div class="lx-near-body"><span class="lx-near-when">Registered 10mo ago</span><a class="lx-near-name" href="/r/house-of-nizams-1163">HOUSE OF NIZAMS</a><span class="lx-near-where">Scarborough</span><div class="lx-near-ctas"><a class="lx-near-cta" href="https://houseofnizams.ca/" target="_blank" rel="noopener"><span class="lx-near-arrow">↗</span>Website</a><a class="lx-near-cta" href="https://maps.google.com/?cid=3272184233660595235" target="_blank" rel="noopener"><span class="lx-near-arrow">↗</span>Maps</a></div></div></div><div class="lx-near-card"><a class="lx-near-pic" href="/r/aadab-1176" aria-label="AADAB listing"><img src="/og/thumb/aadab-1176.webp" alt="AADAB" loading="lazy" decoding="async"></a><div class="lx-near-body"><span class="lx-near-when">Registered 4mo ago</span><a class="lx-near-name" href="/r/aadab-1176">AADAB</a><span class="lx-near-where">Scarborough</span><div class="lx-near-ctas"><a class="lx-near-cta" href="https://aadabtoronto.com/" target="_blank" rel="noopener"><span class="lx-near-arrow">↗</span>Website</a><a class="lx-near-cta" href="https://maps.google.com/?cid=15903929756149709125" target="_blank" rel="noopener"><span class="lx-near-arrow">↗</span>Maps</a></div></div></div><div class="lx-near-card"><a class="lx-near-pic" href="/r/piravi-indian-bistro-4053" aria-label="PIRAVI INDIAN BISTRO listing"><img src="/og/thumb/piravi-indian-bistro-4053.webp" alt="PIRAVI INDIAN BISTRO" loading="lazy" decoding="async"></a><div class="lx-near-body"><span class="lx-near-when">Registered 5w ago</span><a class="lx-near-name" href="/r/piravi-indian-bistro-4053">PIRAVI INDIAN BISTRO</a><span class="lx-near-where">Scarborough</span><div class="lx-near-ctas"><a class="lx-near-cta" href="https://maps.google.com/?cid=954990541471060097" target="_blank" rel="noopener"><span class="lx-near-arrow">↗</span>Maps</a></div></div></div></div></div></section><!-- LISTING-EXTRA-END -->
+  <!-- LISTING-EXTRA-START --><section class="listing-extra" aria-label="Listing detail"><div class="lx-card"><p class="lx-evidence">This hyderabadi kitchen specializes in slow-cooked dum biryani alongside southern indian classics like dosa and idli chicken 65 as a standout. diners consistently return for the authentic home-style flavors and the restaurant&#39;s commitment to recreating the warmth of hyderabadi dining.</p></div><div class="lx-card lx-dishes"><p class="lx-eyebrow">What to order</p><p class="lx-dishes-list">Try the <b>dum biryani</b>, <b>qubani ka meetha</b>, <b>chicken biryani</b>, <b>dosa</b>, <b>idli</b>.</p></div><div class="lx-card lx-owner-cta"><p class="lx-owner-cta-line">Is this your restaurant? <a class="lx-owner-cta-btn" href="mailto:hello@nowservingto.com?subject=Enhance+my+listing%3A+DECCAN+HOUSE+RESTAURANT&amp;body=Hi+Josh%2C%0A%0ARe%3A+DECCAN+HOUSE+RESTAURANT%0AListing%3A+https%3A%2F%2Fnowservingto.com%2Fr%2Fdeccan-house-restaurant-1885%0A%0AI%27d+like+to+enhance+my+listing+with%3A%0A%0A%E2%80%A2+Photo+%28attach+to+this+email%29%3A%0A%E2%80%A2+What+makes+us+special+%28one+sentence%29%3A%0A%E2%80%A2+Owner%2Fchef+story+%281-2+sentences%29%3A%0A%E2%80%A2+When+we+actually+opened+%28date%29%3A%0A%E2%80%A2+Signature+dishes%3A%0A%E2%80%A2+Anything+incorrect+that+needs+fixing%3A%0A%0AThanks%21%0A">Send a photo, story, or correction <span aria-hidden="true">→</span></a></p></div><div class="lx-card"><h2 class="lx-near-h">Other newly registered Indian kitchens nearby</h2><div class="lx-near-grid"><div class="lx-near-card"><a class="lx-near-cardlink" href="/r/khaas-bistro-bar-880" aria-label="View profile for KHAAS BISTRO BAR"></a><div class="lx-near-body"><span class="lx-near-when">First seen 12mo ago</span><a class="lx-near-name" href="/r/khaas-bistro-bar-880">KHAAS BISTRO BAR</a><span class="lx-near-where">Scarborough</span></div></div><div class="lx-near-card"><a class="lx-near-cardlink" href="/r/house-of-nizams-1163" aria-label="View profile for HOUSE OF NIZAMS"></a><div class="lx-near-body"><span class="lx-near-when">First seen 11mo ago</span><a class="lx-near-name" href="/r/house-of-nizams-1163">HOUSE OF NIZAMS</a><span class="lx-near-where">Scarborough</span></div></div><div class="lx-near-card"><a class="lx-near-cardlink" href="/r/aadab-1176" aria-label="View profile for AADAB"></a><div class="lx-near-body"><span class="lx-near-when">First seen 10w ago</span><a class="lx-near-name" href="/r/aadab-1176">AADAB</a><span class="lx-near-where">Scarborough</span></div></div><div class="lx-near-card"><a class="lx-near-cardlink" href="/r/piravi-indian-bistro-4053" aria-label="View profile for PIRAVI INDIAN BISTRO"></a><div class="lx-near-body"><span class="lx-near-when">First seen 11w ago</span><a class="lx-near-name" href="/r/piravi-indian-bistro-4053">PIRAVI INDIAN BISTRO</a><span class="lx-near-where">Scarborough</span></div></div></div></div><p class="lx-report-error">Spot something wrong? <a href="mailto:hello@nowservingto.com?subject=Listing+correction%3A+DECCAN+HOUSE+RESTAURANT&amp;body=Re%3A+DECCAN+HOUSE+RESTAURANT%0AListing%3A+https%3A%2F%2Fnowservingto.com%2Fr%2Fdeccan-house-restaurant-1885%0A%0AWhat+needs+fixing%3F+%28one+or+more%29%0A%0A%5B+%5D+Wrong+cuisine+%E2%80%94+should+be%3A+%0A%5B+%5D+Wrong+address%0A%5B+%5D+Wrong+photo%0A%5B+%5D+Restaurant+closed%0A%5B+%5D+Other%3A%0A%0ANotes+%28optional%29%3A%0A%0AThanks%21%0A">Report an error &rsaquo;</a></p></section><!-- LISTING-EXTRA-END -->
 
   <div class="map-view" id="map-view" hidden>
     <div class="map-toolbar">
       <span class="map-info" id="map-info"></span>
     </div>
-    <div id="map" role="region" aria-label="Map of new restaurant openings"></div>
+    <div id="map" role="region" aria-label="Map of new restaurant registrations"></div>
   </div>
 
   <!-- RELATED-CUISINES-START --><!-- RELATED-CUISINES-END -->
-  
+  <section class="newsletter-cta" aria-label="Email alert signup"><div class="nl-pitch"><h2 id="alert-title">Get an email when a new Indian restaurant opens</h2><p id="alert-blurb">You&#39;ll get one email the moment a new Indian restaurant is registered with the City of Toronto - typically a handful of times per year. No weekly digest, no spam, one-click unsub.</p></div><form class="alert-form" data-kind="cuisine" data-value="indian" data-label="Indian" data-base-kind="cuisine" data-base-value="indian" data-base-label="Indian" novalidate><input type="email" required autocomplete="email" placeholder="you@example.com" aria-label="Email address"><button type="submit">Subscribe</button><div class="alert-status" role="status" aria-live="polite"></div><div class="alert-hp" aria-hidden="true"><label>Website (leave blank): <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div></form></section>
 
   <footer class="site-foot">
-    <a href="https://x.com/nowservingto" target="_blank" rel="noopener">Follow @nowservingto on X</a>
+    <a href="/trends">Trends</a>
     <span class="dot">·</span>
     <a href="/contribute">Got a tip?</a>
     <span class="dot">·</span>
@@ -853,24 +1271,29 @@ function nameJaccard(a, b) {
 }
 
 function tierLabel(days) {
-  // Consistent 'Registered' verb across the ladder. Visual tier (★ + accent
-  // / muted / muted-light) does the freshness signaling; text stays honest
-  // about what the date represents (earliest evidence in our permit +
-  // inspection + review pool, not necessarily opening day).
+  // Single 'First seen' label across all entries — visitor doesn't care
+  // whether the underlying date is licence / DineSafe / review; two
+  // different verbs just confuses ("why does this place have a different
+  // freshness metric?"). Date is still the earliest-evidence swap, label
+  // just stops leaking provenance. Must match Python _tier_label().
   if (days == null) return '';
-  if (days <= 0)    return 'Registered today';
-  if (days === 1)   return 'Registered yesterday';
-  if (days <= 30)   return 'Registered ' + days + 'd ago';
-  if (days <= 90)   return 'Registered ' + Math.max(5, Math.round(days/7)) + 'w ago';
-  if (days <= 365)  return 'Registered ' + Math.max(3, Math.round(days/30)) + 'mo ago';
+  if (days <= 0)    return 'First seen today';
+  if (days === 1)   return 'First seen yesterday';
+  if (days <= 30)   return 'First seen ' + days + 'd ago';
+  if (days <= 90)   return 'First seen ' + Math.max(5, Math.round(days/7)) + 'w ago';
+  if (days <= 365)  return 'First seen ' + Math.max(3, Math.round(days/30)) + 'mo ago';
   return '';
 }
 
-// On single-restaurant /r/<slug> pages the body carries .page-listing.
-// Skip the directory-level fetch entirely - the static single-row feed
-// and the LISTING-EXTRA block already carry everything the page needs,
-// and the alert-form submit handler is wired separately below.
-if (!document.body.classList.contains('page-listing'))
+// On single-restaurant /r/<slug> pages (.page-listing), monthly
+// dispatch archive pages (.page-dispatch), and trends pages
+// (.page-trends), skip the directory-level fetch entirely. Those
+// pages are pre-rendered with curated/computed static content -
+// hydrating against /data/corridors.json would replace it with the
+// full 280-entry feed and break the editorial scope.
+if (!document.body.classList.contains('page-listing')
+    && !document.body.classList.contains('page-dispatch')
+    && !document.body.classList.contains('page-trends'))
 fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
   const no = data.newOpenings;
   // (Subtitle reads "updated daily" - no dynamic date to inject.)
@@ -1050,13 +1473,9 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
     // website because for entries whose thumb is a Street View image (the
     // photogenic fallback for no-Places entries), tapping the pic should
     // land the user at the exact same view.
-    const thumbTarget = r.mapsUrl || coordPin || r.website || internalUrl || '';
-    const thumbHtml = thumb && thumbTarget
-      ? `<a class="row-pic-link" href="${thumbTarget}"${tgt} rel="noopener" aria-label="View ${r.operatingName}"><img class="row-pic" src="${thumb}" alt="${r.operatingName}" loading="lazy" decoding="async"></a>`
-      : thumb
-      ? `<img class="row-pic" src="${thumb}" alt="${r.operatingName}" loading="lazy" decoding="async">`
-      : '';
-    if (thumb) row.classList.add('has-pic');
+    // No image slot — photos retired site-wide 2026-06-03. Row carries
+    // cuisine identity via the cuisine-color pill on the right side.
+    const thumbHtml = '';
     const agoText = tierLabel(r.daysOpen);
     const agoHtml = agoText
       ? (r.slug
@@ -1822,7 +2241,7 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
       ? ` at ${r.address} in ${districtPhrase}`
       : r.address ? ` at ${r.address}`
       : districtPhrase ? ` in ${districtPhrase}` : '';
-    const text = `${r.operatingName} - newly-registered ${cuisineLbl} kitchen${where}. Registered ${ago}.`;
+    const text = `${r.operatingName} - newly-registered ${cuisineLbl} kitchen${where}. First seen ${ago}.`;
     if (navigator.share) {
       try { await navigator.share({ title: r.operatingName, text, url }); }
       catch (e) { /* user dismissed */ }

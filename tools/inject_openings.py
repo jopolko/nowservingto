@@ -476,6 +476,45 @@ def _pre_existing_dinesafe(operating_name, addr_str, issued_date_str):
         return (False, None, None, None)
     return (gap > PRE_EXISTING_GAP_DAYS, gap, earliest, matching[0]['name'])
 
+
+def _prior_tenant_at_address(operating_name, addr_str):
+    """Returns (prior_name, earliest_date) when DineSafe shows
+    inspections at this address under a DIFFERENT business name from
+    the current operator. (None, None) when no prior-tenant evidence.
+
+    Mirror of _pre_existing_dinesafe but INVERTED: we want the address
+    matches whose names DON'T overlap with the current operator. That's
+    the "fresh tenant in an old kitchen" signal — high-confidence proof
+    that a real new restaurant just took over an existing space (think
+    Osteria Alba moving into the Vivoli room, or Wilbur Taco opening
+    inside a Petro Canada that already had a different food operator).
+    Editorially powerful as a "took over from X" badge."""
+    key = _dinesafe_key(addr_str)
+    if not key or not DINESAFE_LOOKUP: return (None, None)
+    entries = DINESAFE_LOOKUP.get(key) or []
+    if not entries: return (None, None)
+    different = [e for e in entries
+                 if _name_overlap(operating_name, e.get('name', '')) < 0.3
+                 and e.get('earliest')]
+    if not different: return (None, None)
+    different.sort(key=lambda e: e['earliest'])
+    return (different[0]['name'], different[0]['earliest'])
+
+
+# first_seen cache: maps cache_key → ISO date the cacheKey first
+# appeared in our daily inject. Backfilled on first run from the
+# swapped issuedDate (best evidence we had at the time of seed). From
+# then on, only NEW cacheKeys get today's date, so first_seen becomes
+# a monotonic, defensible "we first listed this on X" anchor — way
+# more honest than asserting an open date from a licence we can't
+# verify. Use cases: "First listed on NowServingTO on May 14" badge;
+# sort by first_seen for true "new on our directory" feed.
+FIRST_SEEN_PATH = f'{ROOT}/tools/cache/first_seen.json'
+try:
+    FIRST_SEEN_CACHE = json.load(open(FIRST_SEEN_PATH))
+except (FileNotFoundError, json.JSONDecodeError):
+    FIRST_SEEN_CACHE = {}
+
 # Grocery/retail chains whose in-store sushi/sandwich counters are NOT consumer-
 # destination restaurants. Three orthogonal signals catch them:
 #   1. City's "Free Form Conditions" - "LOCATED INSIDE FORTINO'S", "WITHIN SOBEYS"
@@ -531,7 +570,7 @@ with open(CSV_PATH, encoding='utf-8', errors='replace') as f:
         n_food_active_365 += 1
         # (REMOVED 2026-05-14: hardcoded in-store-kiosk filter via Conditions regex
         # and Client Name licence-count threshold. The validator sees Client Name +
-        # Conditions directly and flags `validator_drop: not-restaurant` for
+        # Conditions directly and flags `validator_drop: not-discovery` for
         # institutional caterers, in-grocery kiosks, packaged-food brands, etc.
         # The validator_drop honoring below handles all of these uniformly.)
         op_raw = (row.get('Operating Name') or '').strip()
@@ -863,20 +902,25 @@ for _e in seen_entries.values():
     _name = _e.get('operatingName') or ''
     _addr = _e.get('address') or ''
     _licence_iso = _e['issuedDate']
-    # Take the earliest operating-evidence date across DineSafe + Places
-    # reviews. Pre-existing entries (any signal predating licence by >180d)
-    # have already been dropped above, so the residue here is real
-    # operating evidence we can trust as a lower bound on opening.
-    # Licence is the fallback when neither operating signal exists - it
-    # doesn't compete with operating evidence here (paperwork can be issued
-    # before doors open OR after a place has been running for months).
+    # Evidence ranking (per user 2026-06-03): DineSafe is the trusted
+    # opening signal — TPH inspects at/near opening, no sampling bias.
+    # Places review timestamps are an airy heuristic — the API only
+    # returns up to 5 reviews per fetch, so for any popular spot the
+    # "earliest review we see" is the earliest of the SAMPLE, not the
+    # actual first review (could miss months/years of earlier reviews).
+    # New rule: use DineSafe unconditionally when present; fall back to
+    # review only when no DineSafe AND reviewCount ≤ 5 (full set, no
+    # sampling bias). Licence is the implicit default when no other
+    # evidence — no swap needed.
     _candidates = []
     _, _, _ds_earliest, _ = _pre_existing_dinesafe(_name, _addr, _licence_iso)
     if _ds_earliest:
         _candidates.append((_ds_earliest, 'dinesafe'))
-    _, _, _rev_earliest = _pre_existing_evidence(_e.get('_cacheKey') or '', _licence_iso)
-    if _rev_earliest:
-        _candidates.append((_rev_earliest, 'review'))
+    else:
+        _, _, _rev_earliest = _pre_existing_evidence(_e.get('_cacheKey') or '', _licence_iso)
+        _rev_count = _e.get('reviewCount') or 0
+        if _rev_earliest and _rev_count <= 5:
+            _candidates.append((_rev_earliest, 'review'))
     if not _candidates: continue
     _candidates.sort()
     _swap_date, _swap_src = _candidates[0]
@@ -889,6 +933,7 @@ for _e in seen_entries.values():
     _e['licenceIssuedDate'] = _licence_iso
     _e['issuedDate'] = _swap_date
     _e['daysOpen'] = max(0, (REFERENCE_DATE - _swap_dt).days)
+    _e['dateSource'] = _swap_src   # 'dinesafe' | 'review' — drives badge label
     _n_date_swapped += 1
     if _swap_src == 'dinesafe': _n_swap_dinesafe += 1
     else: _n_swap_review += 1
@@ -915,25 +960,54 @@ if _n_dropped_over_1yr:
     print(f"  >1yr drop: {_n_dropped_over_1yr} entries cut (operating evidence dates back >365d, "
           f"licence is recent but the place isn't actually new)")
 
+# Attach firstSeen + priorTenant signals to each surviving entry (runs
+# after all the drop gates so we don't bother computing for entries
+# that won't make the final feed).
+_today_iso_for_firstseen = REFERENCE_DATE.isoformat()
+_n_first_seen_new = 0
+_n_prior_tenant = 0
+for _k, _e in seen_entries.items():
+    # firstSeen cache is keyed by the canonical _cacheKey string (the
+    # same key shared with places_cache / web_verify_cache), NOT the
+    # in-memory tuple key seen_entries uses for dedup. Falls back to
+    # the entry name+addr if _cacheKey wasn't set.
+    _fs_key = _e.get('_cacheKey') or f'{(_e.get("operatingName") or "").upper()}||{(_e.get("address") or "").upper()}'
+    # firstSeen: seed = swapped issuedDate (best evidence we have at
+    # first run); never overwrite. Going forward, new keys → today.
+    if _fs_key not in FIRST_SEEN_CACHE:
+        _seed = _e.get('issuedDate') or _today_iso_for_firstseen
+        if _seed > _today_iso_for_firstseen: _seed = _today_iso_for_firstseen
+        FIRST_SEEN_CACHE[_fs_key] = _seed
+        _n_first_seen_new += 1
+    _e['firstSeen'] = FIRST_SEEN_CACHE[_fs_key]
+    # priorTenant: address has DineSafe history under different names →
+    # this is a fresh tenant in an old kitchen, editorial gold.
+    _pt_name, _pt_date = _prior_tenant_at_address(
+        _e.get('operatingName') or '', _e.get('address') or '')
+    if _pt_name:
+        _e['priorTenant'] = {'name': _pt_name, 'since': _pt_date}
+        _n_prior_tenant += 1
+if _n_first_seen_new:
+    import os as _os
+    _os.makedirs(_os.path.dirname(FIRST_SEEN_PATH), exist_ok=True)
+    with open(FIRST_SEEN_PATH, 'w') as _f:
+        json.dump(FIRST_SEEN_CACHE, _f, sort_keys=True, separators=(',', ':'))
+print(f"  signals: firstSeen={_n_first_seen_new} new entries cached "
+      f"({len(FIRST_SEEN_CACHE)} total), priorTenant flagged on {_n_prior_tenant} entries")
+
 # Now bucket the deduped entries by cuisine and compute counts.
 # Multi-cuisine entries (e.g., "Afghan + Pakistani + Indian") appear in EACH
 # of their cuisine buckets - totalTagged365d counts entries (not bucket-rows),
 # so a 3-cuisine place still counts as 1 toward the total.
-# Photo pre-pass - download Place/Street View photos NOW (before serializing
-# corridors.json and rendering static feeds) so each entry can carry a
-# `photo` field that the frontend renders as a row thumbnail. Same priority
-# order as the og:image: cached Places photoRef → Place Details re-fetch
-# (bot-eligible <=30d) → Street View → none.
+# Photo pre-pass REMOVED 2026-06-03. We no longer cache Place/Street View
+# photo bytes to disk — site went text-only across all surfaces (Google
+# Maps Platform ToS §5.3 caching restriction + curating 300+ owner uploads
+# is not the lift we want). The image-helper imports below are kept as a
+# stub for the (unused) _make_thumb function so other code paths that
+# happen to reference it don't break. download_place_photo / streetview_*
+# entry points still exist in enrich_places.py for one-off debugging.
 from pathlib import Path as _Path
 import subprocess as _sub
-_PHOTO_DIR = _Path(ROOT) / 'og' / 'photo'
-_THUMB_DIR = _Path(ROOT) / 'og' / 'thumb'
-_PHOTO_DIR.mkdir(parents=True, exist_ok=True)
-_THUMB_DIR.mkdir(parents=True, exist_ok=True)
-from enrich_places import (download_place_photo as _dl_photo,
-                            streetview_metadata as _sv_meta,
-                            streetview_image as _sv_img,
-                            place_details as _pd)
 
 def _make_thumb(src, dst, size=196):
     """Center-square-crop + resize to size×size, save as WebP q=80. ~3KB per
@@ -967,90 +1041,13 @@ def _make_thumb(src, dst, size=196):
     except Exception:
         return False
 
-# Photo denylist: slugs where Places returned a wrong-business photo
-# (hair salon attached to a restaurant's CID, gas station for a
-# coffee shop, etc.). Two sources:
-#   1) Manual denylist file (photo_denylist.json) - human escape hatch
-#   2) Haiku-vision classifier verdict (photo_classification.json) -
-#      automatic detection. Slug gets denied when the classifier
-#      returned is_restaurant_or_food=false.
-# For denied slugs we delete the cached image and skip the download
-# path entirely; the row renders as text-only.
-_PHOTO_DENY_PATH = _Path(ROOT) / 'tools' / 'cache' / 'photo_denylist.json'
-try:
-    _PHOTO_DENY = set((json.load(open(_PHOTO_DENY_PATH)).get('slugs') or []))
-except FileNotFoundError:
-    _PHOTO_DENY = set()
-_PHOTO_CLS_PATH = _Path(ROOT) / 'tools' / 'cache' / 'photo_classification.json'
-try:
-    _PHOTO_CLS = json.load(open(_PHOTO_CLS_PATH))
-except FileNotFoundError:
-    _PHOTO_CLS = {}
-for _slug, _v in _PHOTO_CLS.items():
-    if _v.get('status') == 'ok' and _v.get('is_restaurant_or_food') is False:
-        _PHOTO_DENY.add(_slug)
-n_photo_denylisted = 0
-
-n_photo_downloads = 0
-n_streetview_downloads = 0
-n_thumb_renders = 0
+# Photo download loop REMOVED 2026-06-03. Site is text-only; no entry
+# carries `photo`, `thumb`, or `photoCredit` anymore. Defensive strip of
+# any photo fields that survived in older cache snapshots — the data
+# layer should not leak fields the renderer no longer reads.
 for entry in seen_entries.values():
-    slug = entry.get('slug')
-    if not slug: continue
-    photo_path = _PHOTO_DIR / f'{slug}.jpg'
-    thumb_path = _THUMB_DIR / f'{slug}.webp'
-
-    # Denylist gate: skip download AND skip setting entry.photo/thumb.
-    # We leave the cached file on disk so the next cron doesn't re-spend
-    # Places API re-downloading the same wrong-business photo - the
-    # classifier verdict is sticky per slug, so the photo stays denied.
-    if slug in _PHOTO_DENY:
-        n_photo_denylisted += 1
-        continue
-
-    if not photo_path.exists():
-        pe = PLACES_CACHE.get(entry.get('_cacheKey', '')) or {}
-        photo_ref = pe.get('photoRef')
-        # Backfill photoRef from place_details when missing - every kept
-        # entry deserves a thumbnail, not just bot-eligible ones. Costs
-        # ~$0.025 per first-time fetch then cached forever.
-        if (pe.get('status') == 'ok' and pe.get('place_id') and not photo_ref):
-            try:
-                det = _pd(pe['place_id'])
-                photos = det.get('photos') or []
-                if photos:
-                    photo_ref = photos[0].get('photo_reference')
-                    pe['photoRef'] = photo_ref
-                    PLACES_CACHE[entry['_cacheKey']] = pe
-            except Exception: pass
-        # 1) Try Places photo
-        if photo_ref:
-            data, _ = _dl_photo(photo_ref, max_width=1600)
-            if data:
-                photo_path.write_bytes(data); n_photo_downloads += 1
-        # 2) Fall back to Street View (free metadata check first; only
-        # pay the ~$0.007 image fetch when imagery actually exists).
-        if (not photo_path.exists()
-                and entry.get('lat') is not None and entry.get('lng') is not None):
-            meta = _sv_meta(entry['lat'], entry['lng'])
-            if meta and meta.get('status') == 'OK':
-                data, _ = _sv_img(entry['lat'], entry['lng'], size='640x640', fov=80)
-                if data:
-                    photo_path.write_bytes(data); n_streetview_downloads += 1
-
-    if photo_path.exists():
-        # Make sure thumbnail exists too (regen when full photo is fresher)
-        if not thumb_path.exists() or thumb_path.stat().st_mtime < photo_path.stat().st_mtime:
-            if _make_thumb(photo_path, thumb_path, size=160):
-                n_thumb_renders += 1
-        entry['photo'] = f'/og/photo/{slug}.jpg'
-        if thumb_path.exists():
-            entry['thumb'] = f'/og/thumb/{slug}.webp'
-
-print(f"  photos: {n_photo_downloads} new Places + {n_streetview_downloads} new Street View "
-      f"(total entries with photos: {sum(1 for e in seen_entries.values() if e.get('photo'))}; "
-      f"{n_thumb_renders} thumbnails regenerated; "
-      f"{n_photo_denylisted} denylisted as wrong-business)")
+    for k in ('photo', 'thumb', 'photoCredit', 'photoRef', 'photoAttribs'):
+        entry.pop(k, None)
 
 opens_365_by_cuisine = defaultdict(list)
 for entry in seen_entries.values():
@@ -1152,19 +1149,19 @@ def _ordinal(n):
 
 def _ago_long(days):
     """Verbose version of _ago() for the listing lede - prose-friendly
-    ("Registered 7 days ago") rather than the compact row badge ("7d ago").
+    ("First seen 7 days ago") rather than the compact row badge ("7d ago").
 
-    Word choice is "registered", not "opened" or "licensed". "Opened"
-    overstates - the site only knows the City business-licence
-    registration date, not the actual opening. "Licensed" in Ontario
-    colloquially implies LLBO (alcohol) licensing, which most entries
-    don't carry."""
+    Unified verb 'First seen' across all entries (matches _tier_label).
+    Doesn't claim 'opened' or 'registered' or 'inspected' — just states
+    when the directory first encountered this restaurant, which is
+    always true regardless of which underlying evidence source won the
+    earliest-date swap."""
     if days is None: return ''
-    if days <= 0: return 'Registered today'
-    if days == 1: return 'Registered yesterday'
-    if days <= 60: return f'Registered {days} days ago'
-    if days <= 365: return f'Registered {round(days / 30)} months ago'
-    return 'Registered over a year ago'
+    if days <= 0: return 'First seen today'
+    if days == 1: return 'First seen yesterday'
+    if days <= 60: return f'First seen {days} days ago'
+    if days <= 365: return f'First seen {round(days / 30)} months ago'
+    return 'First seen over a year ago'
 
 
 def _ago(days):
@@ -1177,28 +1174,226 @@ def _ago(days):
     return f'{days/365:.1f}y ago'
 
 
-def _tier_label(days, iso_date=None):
-    """Three-tier 'Registered' label, consistent verb across the ladder.
-      0d      -> 'Registered today'
-      1d      -> 'Registered yesterday'
-      2-30d   -> 'Registered Nd ago'
-      31-90d  -> 'Registered Nw ago'
-      91-365d -> 'Registered Nmo ago'
-    Visual tier (★ + accent / muted / muted-light) does the freshness
-    signaling; the text is honest about what the date actually means
-    (when the entry first surfaced in our permit + inspection + review
-    evidence pool, NOT necessarily the day the doors opened)."""
+def _tier_label(days, iso_date=None, date_source=None):
+    """Single 'First seen' label across all entries — visitor doesn't
+    care whether the underlying date is licence / DineSafe / review;
+    two different verbs ('Registered' vs 'First inspected') just
+    confuses ("why does this place have a different freshness metric?").
+    The date itself is still the earliest-evidence swap result, so the
+    accuracy is preserved; the label just stops leaking provenance.
+
+    `date_source` arg kept in signature for back-compat but unused.
+
+    Tiers:
+      0d      -> 'First seen today'
+      1d      -> 'First seen yesterday'
+      2-30d   -> 'First seen Nd ago'
+      31-90d  -> 'First seen Nw ago'
+      91-365d -> 'First seen Nmo ago'
+    """
     if days is None: return ''
-    if days <= 0:   return 'Registered today'
-    if days == 1:   return 'Registered yesterday'
-    if days <= 30:  return f'Registered {days}d ago'
+    if days <= 0:   return 'First seen today'
+    if days == 1:   return 'First seen yesterday'
+    if days <= 30:  return f'First seen {days}d ago'
     if days <= 90:
         w = max(5, round(days / 7))
-        return f'Registered {w}w ago'
+        return f'First seen {w}w ago'
     if days <= 365:
         m = max(3, round(days / 30))
-        return f'Registered {m}mo ago'
+        return f'First seen {m}mo ago'
     return ''
+
+
+def _native_script(key):
+    """Cuisine → native-script word for the decorative-typography graphic
+    that replaces photos site-wide. Empty string when the cuisine uses
+    Latin script (Italian, French, Vietnamese, etc.) — those entries
+    rely on color + serif typography alone, no ornament.
+
+    Verified against Wikipedia language entries 2026-06-03. Single short
+    word in the community's primary writing system; RTL scripts (Arabic-
+    derived) carry the natural visual flow. Renders via system Noto
+    fonts (installed via `apt install fonts-noto fonts-noto-cjk` on the
+    rendering boxes)."""
+    S = {
+        'bangladeshi': 'বাংলা',         # Bengali (LTR)
+        'tamil':       'தமிழ்',           # Tamil script (LTR)
+        'sri_lankan':  'ලංකා',          # Sinhala (LTR)
+        'tibetan':     'བོད་',           # Tibetan (LTR)
+        'uyghur':      'ئۇيغۇر',         # Uyghur Arabic (RTL)
+        'kurdish':     'کوردی',         # Kurdish Sorani (RTL)
+        'pakistani':   'پاکستان',        # Urdu (RTL)
+        'persian':     'فارسی',          # Persian (RTL)
+        'iranian':     'فارسی',
+        'arab':        'عربي',           # Arabic (RTL)
+        'lebanese':    'لبنان',          # Arabic (RTL)
+        'syrian':      'سوريا',          # Arabic (RTL)
+        'turkish':     'türk',           # Turkish (Latin, but distinctive)
+        'middle_east': 'شرق',            # Arabic (RTL) — "east"
+        'chinese':     '中文',           # Simplified Chinese
+        'taiwanese':   '台灣',           # Traditional Chinese
+        'japanese':    '日本',           # Japanese kanji
+        'korean':      '한국',           # Hangul
+        'thai':        'ไทย',            # Thai
+        'cambodian':   'ខ្មែរ',          # Khmer
+        'burmese':     'မြန်မာ',          # Burmese
+        'indonesian':  'Nusantara',     # Indonesian (Latin)
+        'malaysian':   'Melayu',         # Malay (Latin)
+        'filipino':    'Pilipino',       # Filipino (Latin)
+        'vietnamese':  'Việt',           # Vietnamese (Latin w/ diacritics)
+        'indian':      'भारत',          # Devanagari (Hindi)
+        'nepalese':    'नेपाल',          # Devanagari
+        'ethiopian':   'ኢትዮጵያ',         # Amharic (Ge'ez)
+        'eritrean':    'ኤርትራ',          # Tigrinya (Ge'ez)
+        'somali':      'Soomaali',       # Somali (Latin)
+        'nigerian':    'Naijá',          # Nigerian Pidgin (Latin)
+        'ghanaian':    'Gaana',          # Akan-ish (Latin)
+        'african_west':'Naijá',
+        'african_horn':'Habesha',
+        'caribbean':   'Caribe',
+        'jamaican':    'Yard',           # Jamaican patois-ish
+        'trinidadian': 'Trini',
+        'guyanese':    'Guyana',
+        'haitian':     'Ayiti',          # Haitian Creole
+        'salvadoran':  'Cuscatlán',      # Nahuat/indigenous SV name
+        'mexican':     'México',
+        'colombian':   'Colombia',
+        'peruvian':    'Perú',
+        'brazilian':   'Brasil',
+        'argentinian': 'Argentina',
+        'venezuelan':  'Venezuela',
+        'cuban':       'Cuba',
+        'spanish':     'España',
+        'portuguese':  'Portugal',
+        # Cuisines using Latin alphabet without script differentiation:
+        # italian, french, greek, polish, german, etc. fall back to ''
+    }
+    return S.get(key, '')
+
+
+def _is_rtl_script(key):
+    """Whether the native script for this cuisine renders right-to-left
+    (Arabic-derived scripts). Affects text-anchor / positioning of the
+    ornament inside the graphic card."""
+    return key in {'uyghur', 'kurdish', 'pakistani', 'persian', 'iranian',
+                   'arab', 'lebanese', 'syrian', 'middle_east'}
+
+
+def _build_cuisine_graphic_html(entry, *, size='hero'):
+    """Renders the typographic graphic that replaces Google photos site-
+    wide. Cuisine-colored gradient block + native-script ornament +
+    typography. Three sizes:
+
+      'hero'   — big featured display (per-listing hero, OG card)
+                 ~640×360, full serif name, dishes preview line
+      'card'   — medium card (nearby-restaurants grid, hero strip)
+                 ~220×165, medium serif name, cuisine + district
+      'thumb'  — small row thumb (homepage feed, cuisine/district pages)
+                 ~96×96 or 160×160 square, short name only
+
+    All three share the same visual DNA so the brand reads as one
+    system at every zoom level."""
+    name = entry.get('operatingName') or ''
+    cuisine_key = (entry.get('cuisine') or '').lower()
+    cuisine_label = CUISINE_LABEL.get(cuisine_key, cuisine_key.replace('_', ' ').title())
+    district = entry.get('district') or ''
+    color = _flag_color(cuisine_key) or '#7a746a'
+    script = _native_script(cuisine_key)
+    rtl = _is_rtl_script(cuisine_key)
+
+    # Truncate name for small surfaces
+    if size == 'thumb' and len(name) > 22:
+        name_disp = name[:20] + '…'
+    elif size == 'card' and len(name) > 28:
+        name_disp = name[:26] + '…'
+    else:
+        name_disp = name
+
+    # Script positioning: anchored to opposite corner per LTR/RTL
+    script_class = 'cg-script' + (' cg-script-rtl' if rtl else '')
+
+    if size == 'hero':
+        return (
+            f'<div class="cg cg-hero" style="--cg-color:{color}">'
+            f'  <span class="{script_class}">{_esc(script)}</span>'
+            f'  <div class="cg-eyebrow">{_esc(cuisine_label.upper())}</div>'
+            f'  <div class="cg-name">{_esc(name_disp)}</div>'
+            f'  {f"<div class=\"cg-district\">{_esc(district)}</div>" if district else ""}'
+            f'</div>'
+        )
+    if size == 'card':
+        return (
+            f'<div class="cg cg-card" style="--cg-color:{color}">'
+            f'  <span class="{script_class}">{_esc(script)}</span>'
+            f'  <div class="cg-name">{_esc(name_disp)}</div>'
+            f'</div>'
+        )
+    # thumb
+    return (
+        f'<div class="cg cg-thumb" style="--cg-color:{color}">'
+        f'  <span class="{script_class}">{_esc(script)}</span>'
+        f'  <div class="cg-name">{_esc(name_disp)}</div>'
+        f'</div>'
+    )
+
+
+def _flag_color(key):
+    F = {
+        'italian':    '#009246',   # bright green
+        'mexican':    '#c41e3a',   # chili red (differentiate from Italian green)
+        'japanese':   '#bc002d',   # darker red (vs Chinese bright red)
+        'chinese':    '#de2910',   # vivid red
+        'korean':     '#003478',   # blue (differentiate from East Asian reds)
+        'vietnamese': '#da251d',   # red
+        'thai':       '#241d4f',   # navy blue (differentiate)
+        'indian':     '#ff9933',   # saffron
+        'french':     '#002395',   # blue
+        'greek':      '#0d5eaf',   # blue
+        'german':     '#1a1a1a',   # near-black
+        'polish':     '#dc143c',
+        'spanish':    '#aa151b',
+        'portuguese': '#006600',   # darker green (differentiate from Italian)
+        'russian':    '#0033a0',
+        'turkish':    '#e30a17',
+        'lebanese':   '#ed1c24',
+        'pakistani':  '#01411c',   # deep green
+        'bangladeshi':'#006a4e',
+        'persian':    '#da0000',
+        'iranian':    '#da0000',
+        'ethiopian':  '#fcdd09',   # yellow
+        'eritrean':   '#ea0437',
+        'filipino':   '#0038a8',   # blue
+        'ghanaian':   '#fcd116',   # yellow
+        'nigerian':   '#008751',
+        'jamaican':   '#009b3a',   # green
+        'trinidadian':'#ce1126',
+        'guyanese':   '#009e49',
+        'colombian':  '#fcd116',   # yellow
+        'venezuelan': '#00247d',   # blue (differentiate from Colombian yellow)
+        'peruvian':   '#d91023',
+        'argentinian':'#74acdf',   # light blue
+        'brazilian':  '#009c3b',
+        'afghan':     '#d32011',
+        'somali':     '#4189dd',
+        'indonesian': '#ce1126',
+        'sri_lankan': '#8d153a',   # maroon
+        'tamil':      '#ce1126',
+        'arab':       '#007a3d',
+        'middle_east':'#007a3d',
+        'caribbean':  '#009b3a',
+        'latin':      '#fcd116',
+        'south_asian':'#ff9933',
+        'jewish_deli':'#0038b8',   # blue
+        'ukrainian':  '#005bbb',
+    }
+    return F.get(key) or PALETTE_HEX.get(key) or cuisine_color(key)
+
+
+# Country-flag SVGs for the most common cuisines. Used as a subdued
+# (50% opacity) visual identifier next to cuisine names in the hero
+# VS card. Simplified geometric flags (no chakras/crests/coats of arms)
+# - just the recognizable color blocks. Returns '' for cuisines without
+# a known flag mapping (graceful fallback - no flag rendered).
 
 # ---------------------------------------------------------------------------
 # Static-feed + JSON-LD builders (shared between homepage and per-cuisine pages).
@@ -1544,7 +1739,7 @@ def build_static_rows(entries, link_to_listing=False):
         ext_tgt = ' target="_blank" rel="noopener"' if addr_url and not addr_url.startswith('/r/') else ' rel="noopener"'
         addr_inner = f'<a href="{_esc(addr_url)}"{ext_tgt}>{addr}</a>' if addr_url and addr else addr
         addr_html = f'{addr_inner}<span class="oad-d"> · {district}</span>' if district else addr_inner
-        ago = _esc(_tier_label(r['daysOpen'], r.get('issuedDate')))
+        ago = _esc(_tier_label(r['daysOpen'], r.get('issuedDate'), r.get('dateSource')))
         # Click-target precedence by intent:
         #   - Name click = "go to the business's own site" → website preferred
         #   - Photo click = "see more photos / business info" → Places card
@@ -1588,12 +1783,12 @@ def build_static_rows(entries, link_to_listing=False):
         # so we populate it with the name. The parent anchor's aria-label
         # ("View <name>") still carries the screen-reader hint.
         alt_text = _esc(r["operatingName"])
-        thumb_html = (f'<a class="row-pic-link" href="{_esc(thumb_target)}"{thumb_ext_tgt} aria-label="View {_esc(r["operatingName"])}">'
-                      f'<img class="row-pic" src="{_esc(thumb)}" alt="{alt_text}" {load_attrs} decoding="async">'
-                      f'</a>'
-                      if thumb and thumb_target else
-                      f'<img class="row-pic" src="{_esc(thumb)}" alt="{alt_text}" {load_attrs} decoding="async">'
-                      if thumb else '')
+        # No image slot — graphics were redundant with the restaurant
+        # name shown immediately next to them. Row carries cuisine
+        # identity via the cuisine-color pill on the right side; the
+        # image area is collapsed entirely. CSS handles the layout
+        # change (.open-row without .has-pic class).
+        thumb_html = ''
         slug_attr = f' data-slug="{_esc(slug)}"' if slug else ''
         # Tier attribute drives the pill styling (CSS reads data-fresh).
         # 0-30d gets the ★ accent treatment; 31-90d gets a quieter recent
@@ -1609,8 +1804,7 @@ def build_static_rows(entries, link_to_listing=False):
                      else f'<span class="ago">{ago}</span>')
                     if ago else '')
         out.append(
-            f'<div class="open-row{ " has-pic" if thumb else "" }"{slug_attr}{fresh_attr}{multi_attr}{accent_style}>'
-            f'{thumb_html}'
+            f'<div class="open-row"{slug_attr}{fresh_attr}{multi_attr}{accent_style}>'
             f'<div class="od">{ago_html}</div>'
             f'<div class="on">{name_html}<span class="oad">{addr_html}</span></div>'
             f'<div class="oc">{pills}</div>'
@@ -1938,8 +2132,8 @@ try:
     # not editorial curation). The hl span keeps the adjective trio in
     # accent red; "registered" sits outside it in regular ink so the
     # qualifier doesn't fight the energy.
-    masthead_sub = ('Toronto\'s <span class="hl">newest, freshest, independent</span> '
-                    'registered restaurants')
+    masthead_sub = ('Tracking Toronto\'s <span class="hl">newest, independent, registered</span> '
+                    'restaurants')
     home_html = re.sub(
         r'<h1 class="sub">[\s\S]*?</h1>',
         f'<h1 class="sub">{masthead_sub}</h1>',
@@ -2323,13 +2517,10 @@ if PRESS_PATH.exists():
 #                    show the personalized image when the URL is shared,
 #                    with the IMAGE itself being a click-target to the page.
 from og_card import render_card_png as _render_og_card
-from enrich_places import download_place_photo, streetview_metadata, streetview_image
 LISTING_DIR = Path(ROOT) / 'r'
 OG_DIR      = Path(ROOT) / 'og'
-PHOTO_DIR   = Path(ROOT) / 'og' / 'photo'
 LISTING_DIR.mkdir(exist_ok=True)
 OG_DIR.mkdir(exist_ok=True)
-PHOTO_DIR.mkdir(exist_ok=True)
 
 listing_template = open(INDEX_PATH).read()
 
@@ -2395,7 +2586,7 @@ def _build_owner_cta(entry):
     name = entry.get('operatingName') or 'your restaurant'
     slug = entry.get('slug') or ''
     listing_url = f'https://nowservingto.com/r/{slug}' if slug else 'https://nowservingto.com/'
-    subject = f'Enhance my listing — {name}'
+    subject = f'Enhance my listing: {name}'
     body = (
         f'Hi Josh,\n\n'
         f'Re: {name}\n'
@@ -2411,38 +2602,17 @@ def _build_owner_cta(entry):
     )
     mailto = 'mailto:hello@nowservingto.com?subject=' + quote_plus(subject) + '&body=' + quote_plus(body)
 
-    # Compact inline cuisine-alert form (replaces the bottom-of-page
-    # standalone newsletter section on /r/<slug> pages). Uses primary
-    # cuisine; falls back gracefully if absent. Same .alert-form hooks
-    # as the standalone form so the existing submit JS catches it.
-    cuisines = entry.get('cuisines') or ([entry['cuisine']] if entry.get('cuisine') else [])
-    pkey = cuisines[0] if cuisines else None
-    plbl = CUISINE_LABEL.get(pkey, pkey.replace('_',' ').title() if pkey else 'restaurant')
-    if pkey:
-        sub_html = (
-            '<form class="lx-owner-cta-sub alert-form" '
-            f'data-kind="cuisine" data-value="{_esc(pkey)}" data-label="{_esc(plbl)}" '
-            f'data-base-kind="cuisine" data-base-value="{_esc(pkey)}" data-base-label="{_esc(plbl)}" '
-            'novalidate>'
-            f'<label class="lx-sub-label">New {_esc(plbl)} openings:</label>'
-            '<input type="email" required autocomplete="email" placeholder="you@email" aria-label="Email">'
-            '<button type="submit">Subscribe</button>'
-            '<div class="alert-status" role="status" aria-live="polite"></div>'
-            '<div class="alert-hp" aria-hidden="true">'
-            '<label>Website (leave blank): <input type="text" name="website" tabindex="-1" autocomplete="off"></label>'
-            '</div>'
-            '</form>'
-        )
-    else:
-        sub_html = ''
-
+    # Compact inline cuisine-alert form REMOVED 2026-06-03 — user
+    # feedback called the inline mini-form "shitty little" vs the full
+    # alert-section on cuisine pages. The standalone alert-section now
+    # gets re-enabled at the bottom of /r/<slug> pages (see the listing
+    # page render flow); the owner-CTA stays compact, single-purpose.
     return (
         '<div class="lx-card lx-owner-cta">'
         '<p class="lx-owner-cta-line">Is this your restaurant? '
         f'<a class="lx-owner-cta-btn" href="{_esc(mailto)}">'
         'Send a photo, story, or correction <span aria-hidden="true">→</span></a>'
         '</p>'
-        f'{sub_html}'
         '</div>'
     )
 
@@ -2557,12 +2727,32 @@ def build_listing_extra(entry, all_entries, cuisines_index):
             '</div>'
         )
 
-    # 2b) Menu signals - REMOVED 2026-06-01. The verbatim dish list
-    # (moussaka, souvlakis, etc.) duplicated dishes already named in
-    # the editorial blurb above. Keeping both made the panel read as
-    # repeating itself. The MENU_HIGHLIGHTS_CACHE still feeds the
-    # /r/ page meta description (build_listing_meta_desc above) where
-    # dish names are still the best SERP-snippet keyword carrier.
+    # 2b) Menu signal — two-tier from MENU_HIGHLIGHTS_CACHE:
+    #   tier 1: specific dishes ("Try the mandi, shawarma, kibbeh.")
+    #   tier 2: menu categories ("Menu features biryanis, curries, kebabs.")
+    # Categories are the fallback when the restaurant's website only lists
+    # section headers — better than rendering nothing for the ~55% of entries
+    # that don't surface specific dish names. Cache schema includes both
+    # `dishes` and `categories` fields; tier 1 wins when present.
+    _mh = MENU_HIGHLIGHTS_CACHE.get(cache_key_val) or {}
+    _mh_dishes = [d.strip() for d in (_mh.get('dishes') or []) if d and d.strip()][:5]
+    _mh_cats   = [c.strip() for c in (_mh.get('categories') or []) if c and c.strip()][:5]
+    if _mh_dishes:
+        _dish_html = ', '.join(f'<b>{_esc(d)}</b>' for d in _mh_dishes)
+        blocks.append(
+            '<div class="lx-card lx-dishes">'
+            '<p class="lx-eyebrow">What to order</p>'
+            f'<p class="lx-dishes-list">Try the {_dish_html}.</p>'
+            '</div>'
+        )
+    elif _mh_cats:
+        _cat_html = ', '.join(f'<b>{_esc(c)}</b>' for c in _mh_cats)
+        blocks.append(
+            '<div class="lx-card lx-dishes lx-dishes-cats">'
+            '<p class="lx-eyebrow">On the menu</p>'
+            f'<p class="lx-dishes-list">Menu features {_cat_html}.</p>'
+            '</div>'
+        )
 
     # 3) Featured in: Toronto food-press citations (BlogTO, Toronto Life,
     # Eater, Toronto Guardian, etc.). Populated by a separate Haiku
@@ -2621,7 +2811,7 @@ def build_listing_extra(entry, all_entries, cuisines_index):
             n_slug = e.get('slug') or ''
             n_name = _esc(e.get('operatingName', ''))
             n_thumb = e.get('thumb') or ''
-            n_when = _esc(_tier_label(e.get('daysOpen', 0), e.get('issuedDate')))
+            n_when = _esc(_tier_label(e.get('daysOpen', 0), e.get('issuedDate'), e.get('dateSource')))
             n_where = _esc(e.get('district') or '')
             # Link ladder: owner website > Places card > coord-pin > internal /r/<slug>.
             # Matches the row name-link convention - "more info" should land
@@ -2634,28 +2824,28 @@ def build_listing_extra(entry, all_entries, cuisines_index):
             # applies - we don't surface ritual/ubereats/doordash as the
             # "website" CTA.
             internal_url = f'/r/{n_slug}' if n_slug else '#'
-            site = e.get('website')
-            if _is_aggregator_url(site): site = None
-            maps_url = e.get('mapsUrl') or _coord_pin_url(e)
-            pic_html = (f'<a class="lx-near-pic" href="{_esc(internal_url)}" aria-label="{n_name} listing">'
-                        f'<img src="{_esc(n_thumb)}" alt="{n_name}" loading="lazy" decoding="async"></a>'
-                        if n_thumb else f'<a class="lx-near-pic" href="{_esc(internal_url)}" aria-label="{n_name} listing"></a>')
-            cta_parts = []
-            if site:
-                cta_parts.append(
-                    f'<a class="lx-near-cta" href="{_esc(site)}" target="_blank" rel="noopener">'
-                    f'<span class="lx-near-arrow">↗</span>Website</a>'
-                )
-            if maps_url:
-                cta_parts.append(
-                    f'<a class="lx-near-cta" href="{_esc(maps_url)}" target="_blank" rel="noopener">'
-                    f'<span class="lx-near-arrow">↗</span>Maps</a>'
-                )
-            cta_html = (f'<div class="lx-near-ctas">{"".join(cta_parts)}</div>'
-                        if cta_parts else '')
+            # Website + Maps CTAs removed 2026-06-03 — cards are now name +
+            # district only. Visitors click into /r/<slug> for the editorial
+            # profile, where the name carries the outbound website link and
+            # the address is a Maps link. Tradeoff: +1 click for "just give
+            # me the website" hunters, traded for cleaner cards + better
+            # engagement signal (directory's job is to deliver context).
+            pic_html = ''
+            cta_html = ''
             when_html = f'<span class="lx-near-when">{n_when}</span>' if n_when else ''
+            # Card-wide click target: an absolutely-positioned <a> covering
+            # the whole card so any blank-area click navigates to the /r/<slug>
+            # profile. Sits at z-index 1 with the body content z-indexed above
+            # it, so inner anchors (name, Website, Maps) win on direct click
+            # while the rest of the card stays clickable. Restored 2026-06-03
+            # after photo retirement removed the lx-near-pic anchor that used
+            # to serve this role.
+            cardlink_html = (f'<a class="lx-near-cardlink" href="{_esc(internal_url)}" '
+                             f'aria-label="View profile for {n_name}"></a>'
+                             if n_slug else '')
             cards.append(
                 f'<div class="lx-near-card">'
+                f'{cardlink_html}'
                 f'{pic_html}'
                 f'<div class="lx-near-body">'
                 f'{when_html}'
@@ -2678,6 +2868,37 @@ def build_listing_extra(entry, all_entries, cuisines_index):
     else:
         # No nearby cards (rare cuisine, no neighbors) - CTA still appears.
         blocks.append(_build_owner_cta(entry))
+    # "Report an error" link — universal, footer-style, low visual
+    # weight. Folds wrong-cuisine, wrong-address, wrong-photo, closed-
+    # missed, and any other listing error into one correction channel.
+    # Pre-fills the email body with the listing URL + a structured
+    # checklist so anyone (community member, owner, journalist) can
+    # report in under 30 seconds.
+    _name_for_report = entry.get('operatingName') or 'this listing'
+    _slug_for_report = entry.get('slug') or ''
+    _url_for_report = (f'https://nowservingto.com/r/{_slug_for_report}'
+                       if _slug_for_report else 'https://nowservingto.com/')
+    _report_subject = f'Listing correction: {_name_for_report}'
+    _report_body = (
+        f'Re: {_name_for_report}\n'
+        f'Listing: {_url_for_report}\n\n'
+        f"What needs fixing? (one or more)\n\n"
+        f'[ ] Wrong cuisine — should be: \n'
+        f'[ ] Wrong address\n'
+        f'[ ] Wrong photo\n'
+        f'[ ] Restaurant closed\n'
+        f'[ ] Other:\n\n'
+        f'Notes (optional):\n\n'
+        f'Thanks!\n'
+    )
+    _report_mailto = ('mailto:hello@nowservingto.com?subject='
+                      + quote_plus(_report_subject) + '&body='
+                      + quote_plus(_report_body))
+    blocks.append(
+        f'<p class="lx-report-error">Spot something wrong? '
+        f'<a href="{_esc(_report_mailto)}">Report an error &rsaquo;</a></p>'
+    )
+
     return '<section class="listing-extra" aria-label="Listing detail">' + ''.join(blocks) + '</section>'
 
 
@@ -2700,9 +2921,6 @@ for entry in seen_entries.values():
         print(f"  WARN: og card failed for {slug}: {ex}")
         continue
 
-    # Photo file path (downloads happened in the pre-pass above).
-    photo_file = PHOTO_DIR / f'{slug}.jpg'
-
     # 2) HTML → r/<slug>.html
     name = entry.get('operatingName', '')
     keys = entry.get('cuisines') or ([entry['cuisine']] if entry.get('cuisine') else [])
@@ -2723,11 +2941,9 @@ for entry in seen_entries.values():
                      f"newest restaurants, by cuisine.")
     desc = _build_listing_meta_desc(entry, primary_lbl, name, desc_addr, fallback_desc)
     canonical = f"https://nowservingto.com/r/{slug}"
-    # Prefer the actual restaurant photo (Places) when we have one; falls
-    # back to the branded SVG card. Photo gives the X/FB/Slack card a real
-    # food/storefront image instead of generic typography.
-    og_image  = (f"https://nowservingto.com/og/photo/{slug}.jpg" if photo_file.exists()
-                 else f"https://nowservingto.com/og/{slug}.png")
+    # Branded typographic OG card — same image for every share surface
+    # (X/FB/iMessage). Photo route retired 2026-06-03.
+    og_image  = f"https://nowservingto.com/og/{slug}.png"
 
     page = listing_template
     page = re.sub(r'<title>[^<]*</title>',
@@ -2767,8 +2983,6 @@ for entry in seen_entries.values():
     # 196x196 thumb. AI crawlers ingest schema.org `image` as an entity-
     # photo signal; multiple resolutions raise citation confidence.
     image_list = [og_image] if og_image else []
-    if entry.get('thumb') and entry['thumb'] not in image_list:
-        image_list.append(f'https://nowservingto.com{entry["thumb"]}')
     listing_ld = {
         '@context': 'https://schema.org',
         '@type': 'Restaurant',
@@ -2828,11 +3042,23 @@ for entry in seen_entries.values():
     # / cuisine / district pages, not here.
     page = page.replace('<body>', '<body class="page-listing">', 1)
 
-    # 2026-06-01: standalone bottom-of-page newsletter section removed on
-    # /r/<slug> pages - the compact cuisine-alert form now lives inline
-    # next to the owner CTA inside the listing-extra block. Less wall-of-
-    # copy at page bottom; single horizontal row carries both CTAs.
-    page = swap_newsletter_cta(page, '')
+    # 2026-06-03: standalone bottom-of-page newsletter section RESTORED
+    # on /r/<slug> pages with the listing's primary cuisine, replacing
+    # the compact inline mini-form that lived next to the owner-CTA.
+    # User feedback: the inline form looked weak vs the full alert-
+    # section on cuisine pages. Visitors on a per-listing page are
+    # cuisine-relevant — they're already looking at e.g. an Italian
+    # spot, so the "get an email when a new Italian restaurant opens"
+    # pitch is a natural CTA.
+    _r_cuisines = entry.get('cuisines') or (
+        [entry['cuisine']] if entry.get('cuisine') else [])
+    _r_pkey = _r_cuisines[0] if _r_cuisines else None
+    if _r_pkey:
+        _r_plbl = CUISINE_LABEL.get(_r_pkey,
+                                    _r_pkey.replace('_', ' ').title())
+        page = swap_newsletter_cta(page, build_alert_section('cuisine', _r_pkey, _r_plbl))
+    else:
+        page = swap_newsletter_cta(page, '')
 
     (LISTING_DIR / f'{slug}.html').write_text(page)
     n_listing_html += 1
@@ -2877,13 +3103,97 @@ _this_month_picks = sorted(
 _dispatch_rows = build_static_rows(_this_month_picks[:30], link_to_listing=True)
 _dispatch_template = open(INDEX_PATH).read()
 _dispatch_canonical = f'{SITE_BASE}/dispatch/{_dispatch_month}'
-_dispatch_title = f"NowServingTO Dispatch — {_dispatch_label}: {len(_this_month_picks)} new Toronto restaurants"
+_dispatch_title = f"NowServingTO Dispatch, {_dispatch_label}: {len(_this_month_picks)} new Toronto restaurants"
 _dispatch_desc = (f"The {len(_this_month_picks)} restaurants newly registered with the City of "
-                  f"Toronto in {_dispatch_label} — sorted by freshness, classified by cuisine, "
+                  f"Toronto in {_dispatch_label}, sorted by freshness, classified by cuisine, "
                   f"verified open. Monthly archive from nowservingto.com.")
 _dispatch_h1 = (f'<h1 class="sub">NowServingTO Dispatch <span class="hl">{_esc(_dispatch_label)}</span></h1>'
                 f'<div class="listing-lede">{len(_this_month_picks)} restaurants newly registered with '
                 f'the City of Toronto in {_esc(_dispatch_label)}, sorted by freshness.</div>')
+
+# Monthly dispatch tweet template — pulls 3 long-tail diaspora spots
+# from the month's actual picks (skipping mainstream top-6) and
+# generates a tweet that promises exactly what the dispatch page
+# delivers. Cache-busted URL keyed on the dispatch month so X re-scrapes
+# when a new month's dispatch is published.
+_DISPATCH_TWEET_PHRASE = {
+    'uyghur':      'Uyghur kebabs',
+    'tamil':       'Tamil dosa',
+    'salvadoran':  'Salvadoran pupusas',
+    'vietnamese':  'Vietnamese banh mi',
+    'ethiopian':   'Ethiopian injera',
+    'tibetan':     'Tibetan momo',
+    'filipino':    'Filipino sisig',
+    'bangladeshi': 'Bangladeshi biryani',
+    'caribbean':   'Caribbean jerk',
+    'jamaican':    'Jamaican patties',
+    'nigerian':    'Nigerian jollof',
+    'ghanaian':    'Ghanaian waakye',
+    'afghan':      'Afghan kabob',
+    'pakistani':   'Pakistani karahi',
+    'persian':     'Persian kebab',
+    'korean':      'Korean BBQ',
+    'thai':        'Thai curry',
+    'nepalese':    'Nepalese momo',
+    'kurdish':     'Kurdish kebab',
+    'eritrean':    'Eritrean injera',
+    'guyanese':    'Guyanese curry',
+    'trinidadian': 'Trini doubles',
+    'turkish':     'Turkish kebab',
+    'lebanese':    'Lebanese shawarma',
+    'syrian':      'Syrian kibbeh',
+    'colombian':   'Colombian arepas',
+    'peruvian':    'Peruvian ceviche',
+    'brazilian':   'Brazilian feijoada',
+    'sri_lankan':  'Sri Lankan hoppers',
+    'indonesian':  'Indonesian nasi goreng',
+    'malaysian':   'Malaysian laksa',
+    'taiwanese':   'Taiwanese bubble tea',
+    'argentinian': 'Argentine empanadas',
+    'venezuelan':  'Venezuelan arepas',
+    'polish':      'Polish pierogi',
+    'greek':       'Greek souvlaki',
+    'portuguese':  'Portuguese custard tarts',
+}
+_DISPATCH_TWEET_MAINSTREAM = {'italian', 'japanese', 'chinese', 'indian', 'mexican', 'middle_east'}
+_dispatch_tweet_picks = []
+_dispatch_tweet_seen_cuisines = set()
+for _p in _this_month_picks:
+    _ck = _p.get('cuisine') or ''
+    if not _ck or _ck in _DISPATCH_TWEET_MAINSTREAM: continue
+    if _ck in _dispatch_tweet_seen_cuisines: continue
+    _phrase = _DISPATCH_TWEET_PHRASE.get(_ck)
+    _district = _p.get('district')
+    if not _phrase or not _district: continue
+    _dispatch_tweet_picks.append(f'{_phrase} in {_district}')
+    _dispatch_tweet_seen_cuisines.add(_ck)
+    if len(_dispatch_tweet_picks) >= 3: break
+
+# Build the tweet. Cache-bust the URL with epoch so each new monthly
+# inject pushes a fresh URL to X (avoids stale card preview).
+from time import time as _epoch2
+_dispatch_share_url = f'{SITE_BASE}/dispatch/{_dispatch_month}?v={int(_epoch2())}'
+if _dispatch_tweet_picks:
+    _dispatch_tweet_text = (
+        f"Toronto's {len(_this_month_picks)} new restaurant licences from "
+        f"{_dispatch_label}, by cuisine and neighbourhood. Including "
+        f"{', '.join(_dispatch_tweet_picks)}.\n\n"
+        f"{_dispatch_share_url}\n\n"
+        "#TorontoEats #TorontoFoodie"
+    )
+else:
+    _dispatch_tweet_text = (
+        f"Toronto's {len(_this_month_picks)} new restaurant licences from "
+        f"{_dispatch_label}, by cuisine and neighbourhood.\n\n"
+        f"{_dispatch_share_url}\n\n"
+        "#TorontoEats #TorontoFoodie"
+    )
+_dispatch_tweet_intent = 'https://twitter.com/intent/tweet?text=' + quote_plus(_dispatch_tweet_text)
+_dispatch_share_html = (
+    f'<p class="trends-share" style="margin: 32px auto 16px; text-align:center;">'
+    f'<a class="trends-tweet-btn" href="{_esc(_dispatch_tweet_intent)}" target="_blank" rel="noopener">'
+    f'Share this on X &rsaquo;</a></p>'
+)
 _dispatch_page = inject_into_html(
     _dispatch_template, static_block=_dispatch_rows, ld_payloads=[],
 )
@@ -2909,6 +3219,10 @@ _dispatch_page = _dispatch_page.replace('<body>', '<body class="page-dispatch">'
 # filter dropdowns, cuisine picker, map toggle, fresh-since badge.
 # Body class .page-dispatch hides them via CSS (reusing the existing
 # .page-listing hide rules works since both want clean single-purpose layout).
+# Inject Share-on-X button right before the </main> closer so it sits
+# at the bottom of the dispatch content, tweeting the dispatch URL with
+# the month's actual long-tail picks pre-filled.
+_dispatch_page = _dispatch_page.replace('</main>', _dispatch_share_html + '\n</main>', 1)
 (DISPATCH_DIR / f'{_dispatch_month}.html').write_text(_dispatch_page)
 (DISPATCH_DIR / 'latest.html').write_text(_dispatch_page)
 print(f"  wrote /dispatch/{_dispatch_month}.html + /dispatch/latest.html ({len(_this_month_picks)} entries)")
@@ -3028,7 +3342,7 @@ for i, r in enumerate(_trend_top):
     )
 _trends_chart_svg = (
     f'<svg viewBox="0 0 {_chart_w} {_chart_h}" xmlns="http://www.w3.org/2000/svg" '
-    'role="img" aria-label="Toronto restaurant openings by cuisine, this month vs 12-month average, with month-over-month movement" '
+    'role="img" aria-label="Toronto restaurant registrations by cuisine, this month vs 12-month average, with month-over-month movement" '
     f'style="width:100%;max-width:{_chart_w}px;height:auto;display:block">'
     + ''.join(_svg_bars)
     + '</svg>'
@@ -3040,18 +3354,24 @@ _callouts_html = ''
 
 # Compose the trends page
 _trends_label = _cal.month_name[_dm_month] + f' {_dm_year}'
+_today_label = _dispatch_today.strftime('%B %-d, %Y')  # e.g. "June 1, 2026"
 _trends_canonical = f'{SITE_BASE}/trends'
-_trends_title = f'Toronto restaurant openings by cuisine — {_trends_label} | NowServingTO'
-_trends_desc = (f'Cuisine-velocity chart for newly-registered Toronto restaurants in '
-                f'{_trends_label} vs the 12-month average. Live data from City of Toronto open data.')
-# Twitter intent: prefilled tweet with summary + URL
-_tweet_summary_parts = [f"Toronto's diaspora food month, by cuisine ({_trends_label}):"]
-for r in _trend_top[:5]:
-    _tweet_summary_parts.append(f"• {r['label']}: {r['curr']}")
-_tweet_summary_parts.append(f"\nFull chart + sources: {SITE_BASE}/trends")
-_tweet_text = '\n'.join(_tweet_summary_parts)
-_tweet_intent = 'https://twitter.com/intent/tweet?text=' + quote_plus(_tweet_text)
-_trends_h1 = f'<h1 class="sub">Toronto food openings by cuisine, <span class="hl">{_esc(_trends_label)}</span></h1>'
+_trends_title = f'Toronto\'s Freshest Restaurants, updated daily | NowServingTO ({_today_label})'
+_trends_desc = (f'The newest restaurants licensed in Toronto, by cuisine and neighbourhood, '
+                f'including the Uyghur, Tamil, and Salvadoran spots the mainstream food press never covers. '
+                f'Updated {_today_label} from City open data.')
+# Twitter intent: prefilled tweet with summary + URL. Numbers match the
+# Last-3-months treemap on the page so a user clicking Share doesn't get
+# a different leaderboard than the one they're looking at. Tweet text is
+# built later (after _short_rows exists); placeholder here.
+_tweet_intent = ''  # filled below after _short_rows is built
+_trends_h1 = (
+    '<h1 class="sub">Toronto\'s Freshest Restaurants'
+    '<span class="hl">updated daily from the City of Toronto Registry</span></h1>'
+    '<div class="trends-deck">New permits sourced from City of Toronto open datasets, '
+    'cross-referenced with DineSafe and social media signals to bring you the '
+    'freshest, newest kitchens in the city.</div>'
+)
 # 3-year cuisine leaderboard. Pulls from LLM cuisine cache (populated
 # by `python3 tools/llm_classify_batch.py --years=3`). Walks the FULL
 # CSV (no date filter on dispatch's seen_entries) and counts per-cuisine
@@ -3111,7 +3431,7 @@ for i, r in enumerate(_y3_rows):
     )
 _y3_chart_svg = (
     f'<svg viewBox="0 0 {_chart_w} {_y3_chart_h}" xmlns="http://www.w3.org/2000/svg" '
-    'role="img" aria-label="Top 10 cuisines by openings, last 3 years" '
+    'role="img" aria-label="Top 10 cuisines by new registrations, last 3 years" '
     f'style="width:100%;max-width:{_chart_w}px;height:auto;display:block">'
     + ''.join(_y3_svg_parts)
     + '</svg>'
@@ -3216,9 +3536,68 @@ def _pie_slice_path(pct, cx, cy, r):
 # and the screenshot-share unit is the row of 3. Cuisine name beneath
 # each; percentage in the slice's center. The visual ratio between
 # the three slices does all the editorial work.
-# DRY pie card builder - used for both short-term and long-term rows
+# Dominant flag color per cuisine. Replaces PALETTE_HEX in the trends
+# pies + VS card so each cuisine's pie slice reads as a flag-color
+# association. Where two flags share a dominant color (Italian/Mexican
+# both green/white/red, Chinese/Japanese both red, etc.), assignments
+# differentiate: Italian = bright green, Mexican = chili red, Chinese
+# = vivid red, Japanese = darker red, etc. Falls back to PALETTE_HEX /
+# cuisine_color for cuisines without a flag-color mapping.
+def _flag_svg(cuisine_key):
+    F = {
+        'italian':    '<svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="10" height="20" fill="#009246"/><rect x="10" width="10" height="20" fill="#fff"/><rect x="20" width="10" height="20" fill="#ce2b37"/></svg>',
+        'indian':     '<svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="6.67" fill="#ff9933"/><rect y="6.67" width="30" height="6.67" fill="#fff"/><rect y="13.33" width="30" height="6.67" fill="#138808"/><circle cx="15" cy="10" r="2" fill="none" stroke="#000088" stroke-width="0.4"/></svg>',
+        'mexican':    '<svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="10" height="20" fill="#003f1f"/><rect x="10" width="10" height="20" fill="#fff"/><rect x="20" width="10" height="20" fill="#a91b0d"/><ellipse cx="15" cy="10" rx="2.4" ry="1.8" fill="#5a3a1a" opacity="0.85"/></svg>',
+        'french':     '<svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="10" height="20" fill="#002395"/><rect x="10" width="10" height="20" fill="#fff"/><rect x="20" width="10" height="20" fill="#ed2939"/></svg>',
+        'chinese':    '<svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#de2910"/><polygon points="6,4 7,7 10,7 7.5,9 8.5,12 6,10 3.5,12 4.5,9 2,7 5,7" fill="#ffde00"/></svg>',
+        'japanese':   '<svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#fff"/><circle cx="15" cy="10" r="6" fill="#bc002d"/></svg>',
+        'korean':     '<svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#fff"/><circle cx="15" cy="10" r="5" fill="#003478"/><path d="M10,10 A5,5 0 0 1 20,10 A2.5,2.5 0 0 0 15,10 A2.5,2.5 0 0 1 10,10" fill="#cd2e3a"/></svg>',
+        'vietnamese': '<svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#da251d"/><polygon points="15,5 16.5,9.5 21,9.5 17.3,12.3 18.7,17 15,14 11.3,17 12.7,12.3 9,9.5 13.5,9.5" fill="#ffff00"/></svg>',
+        'thai':       '<svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="4" fill="#ed1c24"/><rect y="4" width="30" height="3" fill="#fff"/><rect y="7" width="30" height="6" fill="#241d4f"/><rect y="13" width="30" height="3" fill="#fff"/><rect y="16" width="30" height="4" fill="#ed1c24"/></svg>',
+        'german':     '<svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="6.67" fill="#000"/><rect y="6.67" width="30" height="6.67" fill="#dd0000"/><rect y="13.33" width="30" height="6.67" fill="#ffce00"/></svg>',
+        'polish':     '<svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="10" fill="#fff"/><rect y="10" width="30" height="10" fill="#dc143c"/></svg>',
+        'ukrainian':  '<svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="10" fill="#005bbb"/><rect y="10" width="30" height="10" fill="#ffd500"/></svg>',
+        'russian':    '<svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="6.67" fill="#fff"/><rect y="6.67" width="30" height="6.67" fill="#0033a0"/><rect y="13.33" width="30" height="6.67" fill="#da291c"/></svg>',
+        'spanish':    '<svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="5" fill="#aa151b"/><rect y="5" width="30" height="10" fill="#f1bf00"/><rect y="15" width="30" height="5" fill="#aa151b"/></svg>',
+        'portuguese': '<svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="12" height="20" fill="#006600"/><rect x="12" width="18" height="20" fill="#ff0000"/></svg>',
+        'greek':      '<svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#fff"/><rect y="2.2" width="30" height="2.2" fill="#0d5eaf"/><rect y="6.6" width="30" height="2.2" fill="#0d5eaf"/><rect y="11" width="30" height="2.2" fill="#0d5eaf"/><rect y="15.4" width="30" height="2.2" fill="#0d5eaf"/><rect width="12" height="11" fill="#0d5eaf"/><rect x="4.8" width="2.4" height="11" fill="#fff"/><rect y="4.4" width="12" height="2.2" fill="#fff"/></svg>',
+        'turkish':    '<svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#e30a17"/><circle cx="11" cy="10" r="4" fill="#fff"/><circle cx="12.4" cy="10" r="3.4" fill="#e30a17"/></svg>',
+        'pakistani':  '<svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#01411c"/><rect width="8" height="20" fill="#fff"/></svg>',
+        'bangladeshi':'<svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#006a4e"/><circle cx="13.5" cy="10" r="5" fill="#f42a41"/></svg>',
+        'persian':    '<svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="6.67" fill="#239f40"/><rect y="6.67" width="30" height="6.67" fill="#fff"/><rect y="13.33" width="30" height="6.67" fill="#da0000"/></svg>',
+        'lebanese':   '<svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="5" fill="#ed1c24"/><rect y="5" width="30" height="10" fill="#fff"/><rect y="15" width="30" height="5" fill="#ed1c24"/></svg>',
+        'ethiopian':  '<svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="6.67" fill="#078930"/><rect y="6.67" width="30" height="6.67" fill="#fcdd09"/><rect y="13.33" width="30" height="6.67" fill="#da121a"/></svg>',
+        'eritrean':   '<svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><polygon points="0,0 30,10 0,20" fill="#ea0437"/><polygon points="0,0 30,0 30,10" fill="#12ad2b"/><polygon points="0,10 30,10 0,20" fill="#418fde"/></svg>',
+        'ghanaian':   '<svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="6.67" fill="#ce1126"/><rect y="6.67" width="30" height="6.67" fill="#fcd116"/><rect y="13.33" width="30" height="6.67" fill="#006b3f"/></svg>',
+        'nigerian':   '<svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="10" height="20" fill="#008751"/><rect x="10" width="10" height="20" fill="#fff"/><rect x="20" width="10" height="20" fill="#008751"/></svg>',
+        'jamaican':   '<svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#fed100"/><polygon points="0,0 15,10 0,20" fill="#009b3a"/><polygon points="30,0 15,10 30,20" fill="#009b3a"/><polygon points="0,0 15,10 30,0" fill="#000"/><polygon points="0,20 15,10 30,20" fill="#000"/></svg>',
+        'trinidadian':'<svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#ce1126"/><polygon points="0,3 27,20 30,20 30,17 3,0 0,0" fill="#fff"/><polygon points="0,6 24,20 27,20 27,18 3,2 0,2" fill="#000"/></svg>',
+        'guyanese':   '<svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#009e49"/><polygon points="0,0 30,10 0,20" fill="#fcd116"/><polygon points="0,0 22,10 0,20" fill="#ce1126"/></svg>',
+        'colombian':  '<svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="10" fill="#fcd116"/><rect y="10" width="30" height="5" fill="#003893"/><rect y="15" width="30" height="5" fill="#ce1126"/></svg>',
+        'venezuelan': '<svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="6.67" fill="#fcd116"/><rect y="6.67" width="30" height="6.67" fill="#00247d"/><rect y="13.33" width="30" height="6.67" fill="#ce1126"/></svg>',
+        'peruvian':   '<svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="10" height="20" fill="#d91023"/><rect x="10" width="10" height="20" fill="#fff"/><rect x="20" width="10" height="20" fill="#d91023"/></svg>',
+        'argentinian':'<svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="6.67" fill="#74acdf"/><rect y="6.67" width="30" height="6.67" fill="#fff"/><rect y="13.33" width="30" height="6.67" fill="#74acdf"/></svg>',
+        'brazilian':  '<svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#009c3b"/><polygon points="15,3 27,10 15,17 3,10" fill="#fedf00"/><circle cx="15" cy="10" r="3" fill="#002776"/></svg>',
+        'afghan':     '<svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="10" height="20" fill="#000"/><rect x="10" width="10" height="20" fill="#d32011"/><rect x="20" width="10" height="20" fill="#007a36"/></svg>',
+        'somali':     '<svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#4189dd"/><polygon points="15,6 16,9 19,9 16.5,11 17.5,14 15,12 12.5,14 13.5,11 11,9 14,9" fill="#fff"/></svg>',
+        'filipino':   '<svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="10" fill="#0038a8"/><rect y="10" width="30" height="10" fill="#ce1126"/><polygon points="0,0 0,20 17,10" fill="#fff"/></svg>',
+        'malaysian':  '<svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#cc0001"/><rect width="30" height="2.86" fill="#cc0001"/><rect y="2.86" width="30" height="2.86" fill="#fff"/><rect y="5.71" width="30" height="2.86" fill="#cc0001"/><rect y="8.57" width="30" height="2.86" fill="#fff"/><rect y="11.43" width="30" height="2.86" fill="#cc0001"/><rect y="14.29" width="30" height="2.86" fill="#fff"/><rect y="17.14" width="30" height="2.86" fill="#cc0001"/><rect width="15" height="11.43" fill="#000066"/></svg>',
+        'indonesian': '<svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="10" fill="#ce1126"/><rect y="10" width="30" height="10" fill="#fff"/></svg>',
+        'sri_lankan': '<svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#8d153a"/><rect width="6" height="20" fill="#00534e"/><rect x="6" width="3" height="20" fill="#ff8200"/></svg>',
+        'tamil':      '<svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#ce1126"/><polygon points="15,7 16,10 19,10 16.5,12 17.5,15 15,13 12.5,15 13.5,12 11,10 14,10" fill="#fcd116"/></svg>',
+        'caribbean':  '',  # umbrella, no single flag
+        'middle_east':'',  # umbrella
+        'latin':      '',  # umbrella
+        'south_asian':'',  # umbrella
+    }
+    return F.get(cuisine_key, '')
+
+
+# DRY pie card builder - used for both short-term and long-term rows.
+# Pie slice color = dominant flag color (so the visual reads as the
+# country/cuisine's flag color at a glance).
 def _build_pie_card(label, key, pct, aria_period):
-    color = PALETTE_HEX.get(key) or cuisine_color(key)
+    color = _flag_color(key)
     slice_path = _pie_slice_path(pct, 50, 50, 45)
     svg = (
         '<svg viewBox="0 0 100 100" width="105" height="105" '
@@ -3232,6 +3611,7 @@ def _build_pie_card(label, key, pct, aria_period):
         '</svg>'
     )
     name_html = f'<a href="/cuisine/{_esc(key)}" class="trends-pie-link">{_esc(label)}</a>'
+    # No flag SVG beneath the name - the pie slice color IS the flag now.
     return f'<div class="trends-pie-card">{svg}<div class="trends-pie-name">{name_html}</div></div>'
 
 # Short-term: last 90 days from verified seen_entries (currently-operating).
@@ -3266,6 +3646,206 @@ _long_pies = ''.join(
     for r in _long_top_6
 )
 
+# --- Squarified treemap for the full 3-year cuisine landscape ---------
+# Shows every cuisine sized by count, coloured by flag dominant, so the
+# long tail is visible alongside the giants. Squarified layout (Bruls et
+# al. 2000) — keeps rectangles close to square so labels remain readable.
+def _treemap_worst_ratio(row, side):
+    s = sum(v for v, _ in row)
+    if s <= 0: return float('inf')
+    mn = min(v for v, _ in row)
+    mx = max(v for v, _ in row)
+    return max((side*side*mx)/(s*s), (s*s)/(side*side*mn))
+
+def _treemap_squarify(values, x, y, w, h, out):
+    if not values: return
+    if len(values) == 1:
+        v, p = values[0]
+        out.append(((x, y, w, h), p))
+        return
+    side = min(w, h) if min(w, h) > 0 else 1
+    row = [values[0]]
+    rest = values[1:]
+    best = _treemap_worst_ratio(row, side)
+    while rest:
+        cand = row + [rest[0]]
+        cw = _treemap_worst_ratio(cand, side)
+        if cw <= best:
+            row, rest, best = cand, rest[1:], cw
+        else:
+            break
+    row_sum = sum(v for v, _ in row)
+    if row_sum <= 0: return
+    if w >= h:
+        col_w = row_sum / h
+        cy = y
+        for v, p in row:
+            ch = v / col_w if col_w > 0 else 0
+            out.append(((x, cy, col_w, ch), p))
+            cy += ch
+        _treemap_squarify(rest, x + col_w, y, w - col_w, h, out)
+    else:
+        row_h = row_sum / w
+        cx = x
+        for v, p in row:
+            cw = v / row_h if row_h > 0 else 0
+            out.append(((cx, y, cw, row_h), p))
+            cx += cw
+        _treemap_squarify(rest, x, y + row_h, w, h - row_h, out)
+
+def _build_cuisine_treemap_svg(cuisine_counts, width=720, height=420):
+    # Filter to keys that have a real /cuisine/<key> page (CUISINE_LABEL is
+    # the source of truth — banned slugs like 'cajun'/'american' linger in
+    # legacy LLM cache rows but redirect to / via .htaccess, so they'd be
+    # dead tiles).
+    items = [(n, k) for k, n in cuisine_counts.items()
+             if n > 0 and k in CUISINE_LABEL]
+    items.sort(key=lambda x: -x[0])
+    total = sum(n for n, _ in items)
+    if not total: return ''
+    scale = (width * height) / total
+    scaled = [(n * scale, k) for n, k in items]
+    rects = []
+    _treemap_squarify(scaled, 0, 0, width, height, rects)
+    parts = []
+    for (rx, ry, rw, rh), key in rects:
+        count = cuisine_counts.get(key, 0)
+        label = CUISINE_LABEL.get(key, key.replace('_', ' ').title())
+        pct = round(count / total * 100, 1)
+        color = _flag_color(key) or '#7a746a'
+        link = f'/cuisine/{_esc(key)}'
+        # Format pct for display: show 1 decimal if <10%, integer otherwise
+        pct_disp = f'{pct:.1f}%' if pct < 10 else f'{round(pct)}%'
+        parts.append(
+            f'<a href="{link}"><title>{_esc(label)}: {pct_disp}</title>'
+            f'<rect x="{rx:.2f}" y="{ry:.2f}" width="{rw:.2f}" height="{rh:.2f}" '
+            f'fill="{color}" stroke="#faf7ee" stroke-width="1.5"/>'
+        )
+        # Label inside box if it fits. Heuristic: name shows if box >= 60x22,
+        # count shows if also >= 40 tall.
+        if rw >= 55 and rh >= 22:
+            fs = max(10, min(16, int(min(rh, rw / max(1, len(label) * 0.55)) * 0.45)))
+            max_chars = max(3, int(rw / (fs * 0.55)))
+            disp = label if len(label) <= max_chars else label[:max_chars - 1] + '…'
+            parts.append(
+                f'<text x="{rx + 7:.2f}" y="{ry + fs + 5:.2f}" '
+                f'font-family="-apple-system,Helvetica,Arial,sans-serif" '
+                f'font-size="{fs}" font-weight="800" fill="#fff" '
+                f'pointer-events="none" letter-spacing="-0.3">{_esc(disp)}</text>'
+            )
+            if rh >= 42:
+                parts.append(
+                    f'<text x="{rx + 7:.2f}" y="{ry + fs * 2 + 8:.2f}" '
+                    f'font-family="ui-monospace,Menlo,Consolas,monospace" '
+                    f'font-size="{max(9, fs - 3)}" font-weight="600" '
+                    f'fill="rgba(255,255,255,0.88)" pointer-events="none">'
+                    f'{pct_disp}</text>'
+                )
+        parts.append('</a>')
+    return (
+        f'<svg viewBox="0 0 {width} {height}" width="100%" '
+        f'preserveAspectRatio="xMidYMid meet" '
+        f'xmlns="http://www.w3.org/2000/svg" role="img" '
+        f'aria-label="Toronto cuisine landscape — all cuisines sized by 3-year licence count">'
+        + ''.join(parts) + '</svg>'
+    )
+
+_long_treemap_svg = _build_cuisine_treemap_svg(_y3_cuisine_count)
+_short_treemap_svg = _build_cuisine_treemap_svg(_short_cuisine_count)
+
+# Build the tweet text now that _short_rows + _short_total exist. Uses
+# the same 90-day window the on-page Last-3-months treemap renders, so
+# the share copy mirrors what the visitor is looking at. Label is the
+# explicit date range, not a single month, so the numbers don't read
+# like one-month totals (the prior version said "May 2026: Indian 33"
+# while 33 was actually a 6-month rolling sum — confusing).
+# Tweet copy: placeholder; rebuilt later in the file after _lm_total +
+# _y3_start_year are computed, so the swagger-voice version can use the
+# same dynamic numbers as the lede without ordering errors.
+_tweet_lines = ["Toronto's hottest new cuisines this quarter:"]
+for _r in _short_rows[:5]:
+    _tweet_lines.append(f"• {_r['label']}: {_r['count']} ({_r['pct']}%)")
+_tweet_lines.append(f"\n→ Browse every new spot by cuisine + 'hood:\n{SITE_BASE}/trends/{_dispatch_today.year}-{_dispatch_today.month:02d}")
+_tweet_lines.append("\n#TorontoEats #TorontoFoodie")
+_tweet_intent = 'https://twitter.com/intent/tweet?text=' + quote_plus('\n'.join(_tweet_lines))
+
+# Toronto CMA heritage population percentages (2021 Census, ethnic
+# origin / visible minority — multiple-origin responses included, so
+# sums > 100%). Used to compute a representation index per cuisine:
+# openings % / population % = whether the cuisine is over- or
+# under-served relative to its heritage community in Toronto.
+# Source: Statistics Canada 2021 Census of Population, Toronto CMA
+# (Code: 535). Cuisines without a clear heritage-pop bucket are
+# omitted; methodology imperfections noted in the page footer.
+CUISINE_POPULATION_PCT_TO_CMA = {
+    'italian': 7.0, 'chinese': 11.6, 'indian': 7.5, 'pakistani': 1.8,
+    'bangladeshi': 0.7, 'tamil': 2.4, 'sri_lankan': 2.4, 'filipino': 5.3,
+    'vietnamese': 1.5, 'korean': 1.7, 'japanese': 0.5, 'jamaican': 2.8,
+    'trinidadian': 1.2, 'guyanese': 1.5, 'caribbean': 3.0,
+    'portuguese': 3.5, 'greek': 1.8, 'spanish': 0.8, 'mexican': 0.6,
+    'colombian': 0.5, 'venezuelan': 0.4, 'peruvian': 0.3,
+    'argentinian': 0.2, 'persian': 1.4, 'arab': 2.5, 'lebanese': 0.7,
+    'turkish': 0.4, 'afghan': 0.5, 'middle_east': 3.0, 'ethiopian': 0.5,
+    'eritrean': 0.4, 'somali': 0.5, 'nigerian': 0.8, 'ghanaian': 0.4,
+    'french': 0.5, 'german': 1.2, 'polish': 2.8, 'ukrainian': 2.0,
+    'russian': 1.2, 'jewish_deli': 3.0, 'thai': 0.3, 'tibetan': 0.2,
+    'nepalese': 0.4, 'south_asian': 14.0, 'latin': 3.0,
+}
+
+# Compute representation rows for top cuisines that have a population estimate
+_rep_rows = []
+for r in _y3_rows:
+    pop_pct = CUISINE_POPULATION_PCT_TO_CMA.get(r['key'])
+    if pop_pct is None or pop_pct == 0: continue
+    open_pct = r['pct']
+    ratio = open_pct / pop_pct
+    _rep_rows.append({
+        'key': r['key'], 'label': r['label'],
+        'open_pct': open_pct, 'pop_pct': pop_pct, 'ratio': ratio,
+    })
+_rep_top = sorted(_rep_rows, key=lambda r: -r['open_pct'])[:10]
+
+# Build the representation chart HTML (flexbox rows, no SVG complexity)
+def _rep_status_label(ratio):
+    if ratio >= 1.5:  return ('OVER', '#3fb37f', f'{ratio:.1f}× over')
+    if ratio >= 1.15: return ('OVER', '#3fb37f', f'{ratio:.1f}× over')
+    if ratio <= 0.65: return ('UNDER', '#e84e3a', f'{ratio:.1f}× under')
+    if ratio <= 0.85: return ('UNDER', '#e84e3a', f'{ratio:.2f}× under')
+    return ('BALANCED', '#888', f'{ratio:.1f}× balanced')
+
+_rep_max = max((max(r['open_pct'], r['pop_pct']) for r in _rep_top), default=1) or 1
+_rep_html_rows = []
+for r in _rep_top:
+    color = PALETTE_HEX.get(r['key']) or cuisine_color(r['key'])
+    bw_open = (r['open_pct'] / _rep_max) * 100
+    bw_pop = (r['pop_pct'] / _rep_max) * 100
+    _status, _status_color, _status_label = _rep_status_label(r['ratio'])
+    _rep_html_rows.append(
+        f'<div class="rep-row">'
+        f'<a class="rep-cuisine" href="/cuisine/{_esc(r["key"])}">{_esc(r["label"])}</a>'
+        f'<div class="rep-bars">'
+        f'<div class="rep-bar rep-bar-open" style="width:{bw_open:.1f}%;background:{color}">'
+        f'<span class="rep-bar-label">{r["open_pct"]:.1f}% openings</span></div>'
+        f'<div class="rep-bar rep-bar-pop" style="width:{bw_pop:.1f}%">'
+        f'<span class="rep-bar-label">{r["pop_pct"]:.1f}% Toronto pop</span></div>'
+        f'</div>'
+        f'<div class="rep-ratio" style="color:{_status_color}">{_status_label}</div>'
+        f'</div>'
+    )
+
+_rep_section = (
+    '<section class="trends-section trends-section-rep">'
+    '<h2 class="trends-h2">Representation index <span class="trends-h2-sub">· openings vs heritage population</span></h2>'
+    + '<div class="rep-chart">' + ''.join(_rep_html_rows) + '</div>'
+    + '<p class="rep-note">For each cuisine: <b>colored bar</b> = share of Toronto restaurant openings (36 months). '
+      '<b>Grey bar</b> = share of Toronto CMA heritage population (2021 Census). '
+      'Ratio = openings% ÷ population%. <b>Over</b> = more restaurants per capita than the city average. '
+      '<b>Under</b> = less. Cuisine ≠ ethnicity, generations matter, supply ≠ demand directly. '
+      'Use as observation, not judgment. '
+      '<a href="https://www12.statcan.gc.ca/census-recensement/2021/dp-pd/prof/details/page.cfm?Lang=E&DGUIDList=2021S0503535">StatsCan source</a>.</p>'
+    + '</section>'
+) if _rep_top else ''
+
 # Wrestling-style event callouts (now that _long_top_6 + _short_rows
 # + _y3_rows are all defined). Each event carries (tag, cuisine_key,
 # cuisine_label, message_after_label) so the rendering can wrap the
@@ -3288,24 +3868,24 @@ for r in _trend_rows:
 for r in _short_rows:
     if r['key'] not in _y3_keys_top6 and r['count'] >= 2:
         _events.append(('UPSET', r['key'], r['label'],
-                        f"cracked the short-term top 6 with {r['count']} openings, despite missing the 3-year top 6"))
+                        f"cracked the short-term top 6 with {r['count']} new registrations, despite missing the 3-year top 6"))
 for key, (lbl, gap) in _drought_by_key.items():
     _events.append(('DROUGHT BROKEN', key, lbl, f"first new kitchen in {gap}+ months"))
 for r in _trend_rows:
     if r['last_month'] >= 2 and r['avg'] > 0 and r['last_month'] >= r['avg'] * 2:
         _events.append(('HOT STREAK', r['key'], r['label'],
-                        f"hit {r['last_month']} openings last month (vs {round(r['avg'], 1)}/mo average)"))
+                        f"hit {r['last_month']} new registrations last month (vs {round(r['avg'], 1)}/mo average)"))
 for r in _short_rows:
     if r['count'] >= 2:
         y3_count = _y3_count_by_key.get(r['key'], 0)
         if 0 < y3_count < 30:
             _events.append(('UNDERDOG MOVE', r['key'], r['label'],
-                            f"got {r['count']} openings in 90 days vs only {y3_count} total in the past 3 years"))
+                            f"got {r['count']} new registrations in 90 days vs only {y3_count} total in the past 3 years"))
 for r in _short_rows:
     y3_count = _y3_count_by_key.get(r['key'], 0)
     if r['count'] >= 1 and y3_count <= 1:
         _events.append(('FIRST IN 3 YEARS', r['key'], r['label'],
-                        f"just opened — vanishingly rare in Toronto's recent food history"))
+                        f"just registered, vanishingly rare in Toronto's recent food history"))
 
 # Dedup by cuisine key (one cuisine = one event max)
 _seen = set()
@@ -3317,8 +3897,9 @@ for tag, key, lbl, msg in _events:
 
 if _events_filtered:
     _callouts_html = (
+        '<section class="trends-section trends-section-news">'
         '<div class="trends-events">'
-        '<h3 class="trends-events-h">This month in the food licence dojo</h3>'
+        f'<h3 class="trends-events-h">{_esc(_cal.month_name[_dispatch_today.month])} {_dispatch_today.year}</h3>'
         '<ul class="trends-events-list">'
         + ''.join(
             f'<li><span class="trends-events-tag">{_esc(tag)}</span> '
@@ -3327,97 +3908,608 @@ if _events_filtered:
             for tag, key, lbl, msg in _events_filtered[:6]
         )
         + '</ul></div>'
+        '</section>'
     )
 
-# Contrast bridge - graphic VS card showing the long-view leader vs
-# short-view leader. When they match, single celebratory card instead.
-_short_leader = _short_rows[0] if _short_rows else None
-_long_leader = _long_top_6[0] if _long_top_6 else None
-if _short_leader and _long_leader and _y3_total > 0:
-    _long_color = PALETTE_HEX.get(_long_leader['key']) or cuisine_color(_long_leader['key'])
-    _short_color = PALETTE_HEX.get(_short_leader['key']) or cuisine_color(_short_leader['key'])
-    _long_link = f'/cuisine/{_esc(_long_leader["key"])}'
-    _short_link = f'/cuisine/{_esc(_short_leader["key"])}'
-    # Crown SVG: gold 5-point crown above the 36-month winner
-    _crown_svg = (
-        '<svg class="trends-vs-medal trends-vs-crown" viewBox="0 0 48 38" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
-        '<path d="M4,32 L4,16 L13,22 L20,6 L24,20 L28,6 L35,22 L44,16 L44,32 Z" fill="#e6b800" stroke="#a8821f" stroke-width="1.5" stroke-linejoin="round"/>'
-        '<circle cx="20" cy="6" r="2.8" fill="#e6b800" stroke="#a8821f" stroke-width="1"/>'
-        '<circle cx="28" cy="6" r="2.8" fill="#e6b800" stroke="#a8821f" stroke-width="1"/>'
-        '<circle cx="24" cy="20" r="2.4" fill="#c8201f"/>'
-        '</svg>'
+# Crown SVG: gold 5-point crown, used above both #1 and #2 in the
+# hero VS card. Same crown both sides = equal footing.
+_crown_svg = (
+    '<svg class="trends-vs-medal trends-vs-crown" viewBox="0 0 48 38" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
+    '<path d="M4,32 L4,16 L13,22 L20,6 L24,20 L28,6 L35,22 L44,16 L44,32 Z" fill="#e6b800" stroke="#a8821f" stroke-width="1.5" stroke-linejoin="round"/>'
+    '<circle cx="20" cy="6" r="2.8" fill="#e6b800" stroke="#a8821f" stroke-width="1"/>'
+    '<circle cx="28" cy="6" r="2.8" fill="#e6b800" stroke="#a8821f" stroke-width="1"/>'
+    '<circle cx="24" cy="20" r="2.4" fill="#c8201f"/>'
+    '</svg>'
+)
+
+# Hero VS card: LAST MONTH's #1 vs #2 (the most-recent-completed-month
+# headline). Same metric / same window for equal footing. Flags behind
+# cuisine names at ~45% opacity. Single-month sample is noisy but the
+# editorial purpose is "who's hot RIGHT NOW" — the noise IS the news.
+_lm_ym = _ym_back(_dispatch_today, 1)  # most recently completed month
+_lm_label = f'{_cal.month_name[int(_lm_ym[-2:])]} {_lm_ym[:4]}'
+_lm_cuisine_count = _dd(int)
+_lm_total = 0
+for _e in seen_entries.values():
+    _iso = _e.get('issuedDate') or ''
+    if not _iso.startswith(_lm_ym): continue
+    _cs = [c for c in (_e.get('cuisines') or ([_e.get('cuisine')] if _e.get('cuisine') else []))
+           if c and c != 'unknown']
+    if not _cs: continue
+    _lm_total += 1
+    for _c in _cs:
+        _lm_cuisine_count[_c] += 1
+_lm_top = sorted(
+    [{'key': c, 'label': CUISINE_LABEL.get(c, c.replace('_', ' ').title()),
+      'count': n, 'pct': round((n / _lm_total) * 100) if _lm_total else 0}
+     for c, n in _lm_cuisine_count.items()],
+    key=lambda r: -r['count']
+)[:2]
+# Single-month sample (_lm_top) was too volatile for the hero - flips
+# on a 3-vs-2 swing. Use 3-year cumulative for the stable "who actually
+# leads Toronto" answer. Last-month data still appears in dojo events.
+_long_first = _long_top_6[0] if _long_top_6 and len(_long_top_6) >= 1 else None
+_long_second = _long_top_6[1] if _long_top_6 and len(_long_top_6) >= 2 else None
+if _long_first and _long_second:
+    _first_color = _flag_color(_long_first['key'])
+    _second_color = _flag_color(_long_second['key'])
+    _first_flag = _flag_svg(_long_first['key'])
+    _second_flag = _flag_svg(_long_second['key'])
+    _first_link = f'/cuisine/{_esc(_long_first["key"])}'
+    _second_link = f'/cuisine/{_esc(_long_second["key"])}'
+    _flag_bg_first = (f'<span class="cuisine-flag-bg">{_first_flag}</span>'
+                      if _first_flag else '')
+    _flag_bg_second = (f'<span class="cuisine-flag-bg">{_second_flag}</span>'
+                       if _second_flag else '')
+    # Country-name table for the VS card — drops the nickname embellishments
+    # (user feedback: "i just want Italy vs Japan"). Falls back to the cuisine
+    # label for cuisines that don't map to a single country (Caribbean,
+    # Middle Eastern, etc.).
+    _vs_countries = {
+        'italian':     'Italy',
+        'japanese':    'Japan',
+        'chinese':     'China',
+        'indian':      'India',
+        'mexican':     'Mexico',
+        'middle_east': 'Middle East',
+        'vietnamese':  'Vietnam',
+        'korean':      'Korea',
+        'thai':        'Thailand',
+        'filipino':    'Philippines',
+        'greek':       'Greece',
+        'turkish':     'Türkiye',
+        'lebanese':    'Lebanon',
+        'persian':     'Iran',
+        'french':      'France',
+        'portuguese':  'Portugal',
+        'polish':      'Poland',
+        'spanish':     'Spain',
+        'german':      'Germany',
+        'brazilian':   'Brazil',
+        'peruvian':    'Peru',
+        'colombian':   'Colombia',
+        'argentinian': 'Argentina',
+        'venezuelan':  'Venezuela',
+        'salvadoran':  'El Salvador',
+        'ethiopian':   'Ethiopia',
+        'eritrean':    'Eritrea',
+        'nigerian':    'Nigeria',
+        'ghanaian':    'Ghana',
+        'jamaican':    'Jamaica',
+        'afghan':      'Afghanistan',
+        'pakistani':   'Pakistan',
+        'bangladeshi': 'Bangladesh',
+        'sri_lankan':  'Sri Lanka',
+        'nepalese':    'Nepal',
+        'indonesian':  'Indonesia',
+    }
+    # Per user feedback 2026-06-02: drop the country-name + ALL-CAPS
+    # cuisine subtitle stack; just use the cuisine label as the big
+    # colored fighter name. Cleaner — one bold word per fighter.
+    _nick_first = _long_first['label']
+    _nick_second = _long_second['label']
+    _first_count = _long_first.get('count', 0)
+    _second_count = _long_second.get('count', 0)
+    _first_label_safe = _esc(_long_first['label'])
+    _second_label_safe = _esc(_long_second['label'])
+    _contrast_html = (
+        '<div class="trends-vs-card">'
+        '<div class="trends-vs-banner">MAIN EVENT · TORONTO CUISINE CHAMPIONSHIP</div>'
+        '<div class="trends-vs-row">'
+        # Fighter 1 (champion)
+        f'<a class="trends-vs-fighter trends-vs-fighter-left" href="{_first_link}" '
+        f'style="--fighter-color:{_first_color}">'
+        f'<div class="trends-vs-belt">CHAMPION</div>'
+        f'<div class="trends-vs-flag">{_first_flag or ""}</div>'
+        f'<div class="trends-vs-nick">{_esc(_nick_first)}</div>'
+        f'<div class="trends-vs-stats">'
+        f'<span class="trends-vs-stat"><b>{round(_long_first["pct"])}%</b><em>share</em></span>'
+        f'</div>'
+        '</a>'
+        # VS divider
+        '<div class="trends-vs-divider"><span>VS</span></div>'
+        # Fighter 2 (contender)
+        f'<a class="trends-vs-fighter trends-vs-fighter-right" href="{_second_link}" '
+        f'style="--fighter-color:{_second_color}">'
+        f'<div class="trends-vs-belt trends-vs-belt-contender">CONTENDER</div>'
+        f'<div class="trends-vs-flag">{_second_flag or ""}</div>'
+        f'<div class="trends-vs-nick">{_esc(_nick_second)}</div>'
+        f'<div class="trends-vs-stats">'
+        f'<span class="trends-vs-stat"><b>{round(_long_second["pct"])}%</b><em>share</em></span>'
+        f'</div>'
+        '</a>'
+        '</div>'
+        f'<div class="trends-vs-tale">TALE OF THE TAPE · '
+        f'{round(_long_first["pct"]) - round(_long_second["pct"])}-POINT LEAD '
+        f'· SINCE {_dispatch_today.year - 3}</div>'
+        '</div>'
     )
-    # Silver medal SVG: 2nd-place ribbon-medal for the 90-day challenger
-    _silver_svg = (
-        '<svg class="trends-vs-medal trends-vs-silver" viewBox="0 0 40 42" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
-        '<path d="M10,2 L16,18 L24,18 L30,2 L26,2 L20,14 L14,2 Z" fill="#c8201f"/>'
-        '<circle cx="20" cy="28" r="12" fill="#c0c0c0" stroke="#7a7a7a" stroke-width="1.5"/>'
-        '<text x="20" y="33" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="13" font-weight="800" fill="#4a4a4a">2</text>'
-        '</svg>'
-    )
-    if _short_leader['key'] == _long_leader['key']:
-        _contrast_html = (
-            '<div class="trends-vs trends-vs-same">'
-            '<div class="trends-vs-side">'
-            f'{_crown_svg}<div class="trends-vs-label trends-vs-winner-label">Reigning champion</div>'
-            f'<a class="trends-vs-cuisine" href="{_long_link}" style="color:{_long_color}">{_esc(_long_leader["label"])}</a>'
-            f'<div class="trends-vs-pct">{round(_long_leader["pct"])}% over 36 months, {_short_leader["pct"]}% in the last 90 days</div>'
-            '</div></div>'
-        )
-    else:
-        _contrast_html = (
-            '<div class="trends-vs">'
-            '<div class="trends-vs-side trends-vs-winner">'
-            f'{_crown_svg}'
-            '<div class="trends-vs-label trends-vs-winner-label">Winner · 36 months</div>'
-            f'<a class="trends-vs-cuisine" href="{_long_link}" style="color:{_long_color}">{_esc(_long_leader["label"])}</a>'
-            f'<div class="trends-vs-pct">{round(_long_leader["pct"])}%</div>'
-            '</div>'
-            '<div class="trends-vs-divider">VS</div>'
-            '<div class="trends-vs-side trends-vs-runner-up">'
-            f'{_silver_svg}'
-            '<div class="trends-vs-label trends-vs-silver-label">Challenger · 90 days</div>'
-            f'<a class="trends-vs-cuisine" href="{_short_link}" style="color:{_short_color}">{_esc(_short_leader["label"])}</a>'
-            f'<div class="trends-vs-pct">{_short_leader["pct"]}%</div>'
-            '</div></div>'
-        )
 else:
     _contrast_html = ''
+# Legacy variables - keep for tweet text below
+_short_leader = _short_rows[0] if _short_rows else None
+_long_leader = _long_first
 
-_short_note = (
-    f'<p class="trends-pies-note">Share of {_short_total} new restaurants verified open in the last 90 days. '
-    'Highly volatile — small sample means standings can flip on a single opening.</p>'
-) if _short_total else ''
-_long_note = (
-    f'<p class="trends-pies-note">Share of {_y3_total:,} classified restaurant openings registered '
-    f'in Toronto over the past 3 years. The structural picture: who actually opens the most kitchens.</p>'
-) if _y3_total else ''
+_short_note = ''  # user feedback 2026-06-01: let the charts speak
+_long_note = ''
+
+# Editorial text takes - interpolate live data so the prose stays
+# accurate as the leaderboard shifts month over month.
+_take_first_label = _long_first['label'] if _long_first else 'Italian'
+_take_second_label = _long_second['label'] if _long_second else 'Japanese'
+_take_first_key = _long_first['key'] if _long_first else 'italian'
+_take_second_key = _long_second['key'] if _long_second else 'japanese'
+_take_first_pct = round(_long_first['pct']) if _long_first else 13
+_take_second_pct = round(_long_second['pct']) if _long_second else 10
+_short_top_label = _short_rows[0]['label'] if _short_rows else 'Vietnamese'
+_short_top_key = _short_rows[0]['key'] if _short_rows else 'vietnamese'
+_short_top_pct = _short_rows[0]['pct'] if _short_rows else 21
+_y3_start_year = _dispatch_today.year - 3
+
+# Tweet copy override: ported from the /trends lede swagger. Names blogTO +
+# the durable long-tail diaspora cuisines so the tweet's editorial register
+# matches what the visitor lands on. Replaces the earlier placeholder built
+# at line ~3500 — placed here because _lm_total + _y3_start_year are
+# computed above and weren't in scope at the original tweet-builder site.
+_lm_prior_total_tweet = max(_y3_total - _lm_total, 0)
+# Cache-bust the share URL with today's date so X (and other crawlers)
+# treat it as a fresh URL on each daily inject, dodging stale-card-cache
+# pain. Apache ignores the query string and serves the same /trends/2026-06
+# page, so visitors see the right content; X's cardsbot re-scrapes
+# because it sees a new URL.
+from time import time as _epoch
+_tweet_url = (f'{SITE_BASE}/trends/{_dispatch_today.year}-{_dispatch_today.month:02d}'
+              f'?v={int(_epoch())}')
+_tweet_lines = [
+    f"Toronto's {_lm_total} newest restaurants this month: Uyghur kebabs in "
+    f"Scarborough, Tamil dosa on Bloor, Salvadoran pupusas in Etobicoke.",
+    f"\n{_tweet_url}",
+    "\n#TorontoEats #TorontoFoodie",
+]
+_tweet_intent = 'https://twitter.com/intent/tweet?text=' + quote_plus('\n'.join(_tweet_lines))
+
+_short_diff_phrase = ('outpacing the 3-year leader on momentum'
+                      if _short_top_label != _take_first_label
+                      else 'doubling down on its long-haul position')
+
+# Trade-publication masthead stamp + industry-rag editorial voice.
+# Targeting restaurant operators / industry analysts: less consumer-
+# narrative, more market-intelligence register.
+_issue_num = (_dispatch_today.year - 2025) * 12 + _dispatch_today.month
+_masthead_html = (
+    '<div class="trends-masthead">'
+    '<a class="trends-mh-brand" href="/">NOWSERVING</a>'
+    '<span class="trends-mh-sep">·</span>'
+    '<span class="trends-mh-tag">TORONTO RESTAURANT INDUSTRY DATA</span>'
+    '<span class="trends-mh-sep">·</span>'
+    f'<span class="trends-mh-issue">VOL.1 NO.{_issue_num}</span>'
+    '<span class="trends-mh-sep">·</span>'
+    f'<span class="trends-mh-date">{_today_label.upper()}</span>'
+    '<a class="trends-mh-cta" href="/">Browse the directory &rsaquo;</a>'
+    '</div>'
+)
+
+# Lede - playful Toronto register, no diss. User feedback 2026-06-02:
+# punching at blogTO from a 21-day-old domain reads wrong; switched to
+# celebration of the spots themselves + neighborhood-coded specificity
+# (Scarborough, Bloor, Etobicoke). Music-release verb ("dropped") +
+# "new wave" framing for the youth register.
+_lm_prior_total = max(_y3_total - _lm_total, 0)
+_lede_html = (
+    '<div class="trends-lede">'
+    '<p class="trends-lede-p">'
+    '<span class="trends-dropcap">T</span>'
+    f'oronto dropped {_lm_total} new restaurants on the registry last month, plus '
+    f'{_lm_prior_total:,} more since {_y3_start_year}. Uyghur kebabs in Scarborough, Tamil '
+    'dosa on Bloor, Salvadoran pupusas in Etobicoke. The whole new wave, by cuisine and '
+    '\'hood, updated daily. '
+    '<a class="trends-lede-cta" href="/">Browse the full directory &rsaquo;</a>'
+    '</p>'
+    '</div>'
+)
+
+# Cuisine quick-chip row — diaspora-discovery shortcuts. Curated 8-cuisine
+# set mixes current quarter leaders (Indian, Vietnamese, Filipino) with
+# long-tail diaspora picks (Eritrean, Tamil, Salvadoran, Tibetan, Afghan).
+# Lets a tweet-clicker test the "newest by cuisine" promise in one click,
+# without scrolling past the data essay to find a cuisine they care about.
+_chip_cuisines = [
+    ('indian', 'Indian'),
+    ('vietnamese', 'Vietnamese'),
+    ('filipino', 'Filipino'),
+    ('ethiopian', 'Ethiopian'),
+    ('eritrean', 'Eritrean'),
+    ('tamil', 'Tamil'),
+    ('salvadoran', 'Salvadoran'),
+    ('tibetan', 'Tibetan'),
+]
+_chip_html_parts = [
+    '<div class="trends-chips">',
+    '<div class="trends-chips-label">Jump to a cuisine &rsaquo;</div>',
+    '<div class="trends-chips-row">',
+]
+for _ckey, _clabel in _chip_cuisines:
+    _ccolor = _flag_color(_ckey) or '#7a746a'
+    _chip_html_parts.append(
+        f'<a class="trends-chip" href="/cuisine/{_esc(_ckey)}" '
+        f'style="--chip-color:{_ccolor}">{_esc(_clabel)}</a>'
+    )
+_chip_html_parts.append('</div></div>')
+_chips_html = ''.join(_chip_html_parts)
+
+# Hero strip — the 4 newest registrations by issuedDate (post-swap, so
+# date reflects "first known operating evidence" not just paperwork).
+# Photo + name + cuisine + neighbourhood + days-since-registered badge.
+# This is the literal "newest spots by cuisine" payoff promised in the
+# tweet — visible above the fold, immediately clickable.
+# Hero selection: diaspora-discovery weighted. Two-layer filter:
+#   HARD_EXCLUDE — mainstream-Canadian cuisines that don't fit the
+#     diaspora-discovery framing no matter how recent. Italian + French
+#     consistently displace genuinely-novel entries; users have flagged
+#     both as off-mission for the hero strip.
+#   DISCOVERY_PENALTY — borderline-mainstream cuisines that get a 30-day
+#     sort penalty (surface only if no fresher long-tail exists). Keeps
+#     these visible when the diaspora pipeline is quiet, hides them when
+#     it isn't.
+# Indian / Tamil / Filipino / Vietnamese / Caribbean / etc. ride the
+# normal recency sort — they're the discovery story we're trying to
+# surface. 1-per-cuisine uniqueness cap ensures variety across the 6.
+_HERO_HARD_EXCLUDE = {'italian', 'french'}
+# Taiwanese / Korean kept OUT of penalty per user 2026-06-02: the live
+# tweet using Star Glow Boba (Taiwanese) is getting clicks; don't
+# disrupt a working post by demoting that cuisine right now.
+_HERO_DISCOVERY_PENALTY = {'japanese', 'chinese', 'mexican', 'middle_east'}
+_HERO_DISCOVERY_PENALTY_DAYS = 30
+def _hero_rank(e):
+    iso = e.get('issuedDate') or ''
+    if not iso: return ''
+    cuisine_keys = e.get('cuisines') or ([e.get('cuisine')] if e.get('cuisine') else [])
+    if any(k in _HERO_DISCOVERY_PENALTY for k in cuisine_keys):
+        try:
+            from datetime import date as _hd, timedelta as _ht
+            return (_hd.fromisoformat(iso) - _ht(days=_HERO_DISCOVERY_PENALTY_DAYS)).isoformat()
+        except Exception:
+            return iso
+    return iso
+
+def _hero_eligible(e):
+    cuisine_keys = e.get('cuisines') or ([e.get('cuisine')] if e.get('cuisine') else [])
+    return (e.get('slug')
+            and (e.get('photo') or e.get('thumb'))
+            and not any(k in _HERO_HARD_EXCLUDE for k in cuisine_keys))
+
+_hero_pool = sorted(
+    [_e for _e in (data.get('newOpenings') or {}).get('recent', []) if _hero_eligible(_e)],
+    key=_hero_rank, reverse=True,
+)
+_seen_hero_cuisines = set()
+_hero_recent = []
+# Pull 7 instead of 6: index 0 becomes the magazine hero (big photo at
+# top of page + OG card), and 1..6 fill the "Just registered" strip
+# below. Without this we'd duplicate the featured spot in both places.
+for _e in _hero_pool:
+    _ck = _e.get('cuisine') or ''
+    if _ck in _seen_hero_cuisines: continue
+    _seen_hero_cuisines.add(_ck)
+    _hero_recent.append(_e)
+    if len(_hero_recent) >= 7: break
+_hero_parts = ['<div class="trends-hero-strip">',
+               '<div class="trends-hero-label">Just registered &rsaquo;</div>',
+               '<div class="trends-hero-row">']
+# Skip the featured magazine hero entry so it doesn't appear in the
+# strip below its own big photo.
+for _e in _hero_recent[1:]:
+    _h_slug = _e.get('slug')
+    _h_name = _esc(_e.get('operatingName') or '')
+    _h_cuisine_key = _e.get('cuisine') or ''
+    _h_cuisine_label = CUISINE_LABEL.get(_h_cuisine_key, _h_cuisine_key.replace('_',' ').title())
+    _h_district = _esc(_e.get('district') or '')
+    _h_thumb = _e.get('thumb') or _e.get('photo') or ''
+    _h_days = _e.get('daysOpen') or 0
+    if _h_days <= 1:
+        _h_age = 'just registered'
+    elif _h_days <= 30:
+        _h_age = f'{_h_days}d ago'
+    elif _h_days <= 60:
+        _h_age = f'{_h_days // 7}w ago'
+    else:
+        _h_age = f'{_h_days // 30}mo ago'
+    _hero_parts.append(
+        f'<a class="trends-hero-card" href="/r/{_esc(_h_slug)}">'
+        f'<div class="trends-hero-thumb" style="background-image:url(\'{_esc(_h_thumb)}\')"></div>'
+        f'<div class="trends-hero-body">'
+        f'<div class="trends-hero-age">{_esc(_h_age)}</div>'
+        f'<div class="trends-hero-name">{_h_name}</div>'
+        f'<div class="trends-hero-meta">{_esc(_h_cuisine_label)} &middot; {_h_district}</div>'
+        f'</div></a>'
+    )
+_hero_parts.append('</div></div>')
+_hero_html = ''.join(_hero_parts) if _hero_recent else ''
+
+# Long-view editorial take - analyst voice with current-issue news anchors
+_take_long = (
+    '<div class="trends-take">'
+    f'<p><b><a href="/cuisine/{_esc(_take_first_key)}">{_esc(_take_first_label)}</a></b> '
+    f'still leads at {_take_first_pct}% of independent licences (chains excluded), but only '
+    '7% of those land in Little Italy itself. Fusaro\'s shuttered after '
+    '28 years on Spadina; Vivoli\'s 20-year run on College ended last year (Osteria Alba took '
+    'the room). Mature operators still convert demand into storefronts — just rarely in the '
+    'neighbourhood named for them.</p>'
+    '</div>'
+)
+
+# --- Surger detection (3-month rank vs 3-year rank) ---
+# Surfaces cuisines whose recent quarter-share clearly exceeds their
+# 3-year share — a directional signal that something has changed on
+# the operator-entry side (community capital, retail vacancy, owner
+# diaspora cohort hitting opening age, etc.). Cosmetic only — small
+# samples, so we phrase as "outpacing" not "overtaking".
+# Full 3-year share-by-key (not just top 6) so surger comparison is honest
+_long_pct_by_key = {
+    _c: round((_n / _y3_total) * 100, 1) if _y3_total else 0
+    for _c, _n in _y3_cuisine_count.items()
+}
+_surger = None
+for _r in _short_rows[:5]:
+    if _r['key'] == _short_top_key:
+        continue  # don't re-name the cuisine we just called out as the leader
+    _lp = _long_pct_by_key.get(_r['key'], 0)
+    if _r['pct'] >= _lp + 3 and _r['count'] >= 3:
+        _surger = (_r, _lp)
+        break
+_slipper = None
+for _r in _long_top_6[:4]:
+    _sp = next((s['pct'] for s in _short_rows if s['key'] == _r['key']), 0)
+    if _r['pct'] >= _sp + 3:
+        _slipper = (_r, _sp)
+        break
+
+if _surger:
+    _surger_row, _surger_long_pct = _surger
+    _surger_phrase = (
+        f' <b><a href="/cuisine/{_esc(_surger_row["key"])}">{_esc(_surger_row["label"])}</a></b> '
+        f'is outperforming — {_surger_row["pct"]}% vs a {round(_surger_long_pct)}% 3-year baseline.'
+    )
+else:
+    _surger_phrase = ''
+
+_slip_phrase = ''  # trimmed for length
+
+# Short-view editorial take — below the pies. Velocity + current news anchors.
+# Anchors verified against the Toronto City licence stream — only operators
+# whose licence is in the 90-day window get named. Brampton/Mississauga
+# expansions exist but live in those municipalities' separate streams.
+_take_short = (
+    '<div class="trends-take"><p>'
+    f'<b><a href="/cuisine/{_esc(_short_top_key)}">{_esc(_short_top_label)}</a></b> '
+    f'took the quarter at {_short_top_pct}% — heavily Scarborough-led, with new entries on '
+    'Markham Rd, Pharmacy Ave, Kennedy Rd, and Sheppard E, plus downtown spots like '
+    '<a href="/r/dakshin-flavours-indian-kitchen-bar-5">Dakshin Flavours</a> on Baldwin and '
+    '<a href="/r/zafraan-indian-cuisine-downtown-671">Zafraan</a> on Queen W.'
+    f'{_surger_phrase} Six of nine new Vietnamese licences in the quarter are dedicated '
+    'banh mi shops — including <a href="/r/and-banh-mi-13">And Banh Mi</a> on Elm (selling out '
+    'daily since its May open) and <a href="/r/coco-banh-mi-222">Coco Banh Mi</a> on Spadina. '
+    'blogTO has called it Toronto\'s "summer of Saigon."'
+    '</p></div>'
+)
+
+# Long-view editorial take — below the 3-year pies. Concentration + tail.
+_long_top6_pct = sum(round(r['pct']) for r in _long_top_6[:6])
+_long_top6_count = sum(r['count'] for r in _long_top_6[:6])
+_long_tail_count = max(_y3_total - _long_top6_count, 0)
+_long_tail_pct = round(100 - _long_top6_pct)
+_long_sixth = _long_top_6[5] if len(_long_top_6) >= 6 else None
+_long_sixth_phrase = (
+    f'By position #6, the share has dropped to {round(_long_sixth["pct"])}% '
+    f'(<a href="/cuisine/{_esc(_long_sixth["key"])}">{_esc(_long_sixth["label"])}</a>) — '
+    if _long_sixth else ''
+)
+_take_3yr = (
+    '<div class="trends-take">'
+    f'<p>Six cuisines = {_long_top6_pct}% of {_y3_total:,} licences since {_y3_start_year}; '
+    f'the remaining {_long_tail_pct}% spreads across ~60 smaller buckets — '
+    '<a href="/cuisine/eritrean">Eritrean</a>, <a href="/cuisine/salvadoran">Salvadoran</a>, '
+    '<a href="/cuisine/tibetan">Tibetan</a>, <a href="/cuisine/uyghur">Uyghur</a> kitchens '
+    'opening one or two storefronts a year. Ottawa\'s '
+    '2026 plan cuts new study permits roughly in half and caps PR at 380,000/yr through 2028, '
+    'throttling the diaspora pipeline that feeds that tail. Dalhousie\'s Agri-Food Analytics '
+    'Lab is forecasting 4,000 net Canadian restaurant closures in 2026 — the licence stream '
+    'is one of the few places the new is still winning against what\'s being killed.</p>'
+    '</div>'
+)
+
+# Closing column - analyst tone
+_closing_html = (
+    '<div class="trends-close">'
+    f'<p>For operators tracking the competitive landscape, the consolidated dataset above '
+    f'represents {_y3_total:,} restaurant licences issued over the trailing 36 months. The '
+    f'live directory of currently-operating new entrants (verified open within the past 365 '
+    f'days) is at <a href="/">nowservingto.com</a>. The cuisine-classified machine-readable '
+    f'feed is at <a href="/data/corridors.json">/data/corridors.json</a>.</p>'
+    '<p class="trends-close-method"><b>Sources:</b> City of Toronto Open Data (business licences '
+    'via CKAN); Toronto Public Health DineSafe inspection records; Google Places API for '
+    'operating-status verification; cuisine classification via Claude Haiku. Methodology and '
+    f'verification gates documented at <a href="/press">/press</a>. Refresh cycle: daily, '
+    f'~05:17 UTC. Last refresh: {_today_label}.</p>'
+    '</div>'
+)
+
+# Magazine-style hero image — full-bleed photo of the featured spot
+# above the masthead, GQ-feature style. Same featured pick the OG card
+# uses, so visitor arriving from a tweet sees a continuous visual:
+# tweet card photo → page hero photo.
+def _mag_hero_age(days):
+    if days is None or days <= 1: return 'TODAY'
+    if days <= 30: return f'{days}D AGO'
+    if days <= 60: return f'{days // 7}W AGO'
+    return f'{days // 30}MO AGO'
+
+_magazine_hero_html = ''
+if _hero_recent:
+    _feat = _hero_recent[0]
+    _feat_slug = _feat.get('slug', '')
+    # Branded typographic OG card replaces the Places photo (photos
+    # retired site-wide 2026-06-03).
+    _feat_photo = f'/og/{_feat_slug}.png' if _feat_slug else ''
+    _feat_name = _feat.get('operatingName', '')
+    _feat_cuisine_key = _feat.get('cuisine') or ''
+    _feat_cuisine_label = CUISINE_LABEL.get(_feat_cuisine_key,
+                                            _feat_cuisine_key.replace('_', ' ').title())
+    _feat_district = _feat.get('district') or ''
+    _feat_age = _mag_hero_age(_feat.get('daysOpen'))
+    # Wrap the whole hero in an <a> so a click on the photo OR caption
+    # takes the visitor to the actual listing — otherwise it reads as
+    # bait-and-switch (big photo of a real spot, no way to act on it).
+    _feat_link = f'/r/{_esc(_feat_slug)}' if _feat_slug else '/'
+    _magazine_hero_html = (
+        f'<a class="trends-mag-hero-link" href="{_feat_link}">'
+        '<figure class="trends-mag-hero">'
+        f'<img src="{_esc(_feat_photo)}" alt="{_esc(_feat_name)}" loading="lazy" />'
+        '<figcaption class="trends-mag-hero-cap">'
+        f'<span class="trends-mag-hero-eyebrow">JUST REGISTERED · {_esc(_feat_age)}</span>'
+        f'<span class="trends-mag-hero-name">{_esc(_feat_name)}</span>'
+        f'<span class="trends-mag-hero-meta">{_esc(_feat_cuisine_label)}'
+        f'{" · " + _esc(_feat_district) if _feat_district else ""}</span>'
+        '</figcaption></figure>'
+        '</a>'
+    )
 
 _trends_body = (
-    # Short-term section (the dramatic, current view)
-    '<section class="trends-section">'
-    '<h2 class="trends-h2">Last 90 days</h2>'
-    f'<div class="trends-pies-row">{_short_pies}</div>'
-    f'{_short_note}'
-    '</section>'
-    # Contrast bridge
-    + _contrast_html +
-    # Long-term section (the authoritative, structural view)
-    '<section class="trends-section">'
-    '<h2 class="trends-h2">Toronto\'s reigning cuisines <span class="trends-h2-sub">· 36-month standings</span></h2>'
-    f'<div class="trends-pies-row">{_long_pies}</div>'
-    f'{_long_note}'
-    f'{_callouts_html}'
-    '</section>'
+    _magazine_hero_html
+    + _masthead_html
+    + _lede_html
+    + _hero_html
+    # The reigning crowns - hero
+    + '<section class="trends-section trends-section-headline">'
+    '<div class="trends-eyebrow">Industry pulse · top of the count</div>'
+    f'<h2 class="trends-h2">By the numbers <span class="trends-h2-sub">· since {_dispatch_today.year - 3}</span></h2>'
+    + _contrast_html
+    + _take_long
+    + '</section>'
+    # Short-term section (current movement)
+    + '<section class="trends-section trends-section-card">'
+    '<div class="trends-eyebrow">Operator shifts · last quarter</div>'
+    f'<h2 class="trends-h2">Last 3 months <span class="trends-h2-sub">· {_esc(_cal.month_name[int(_ym_back(_dispatch_today, 3)[-2:])][:3])}–{_esc(_cal.month_name[int(_lm_ym[-2:])][:3])} {_lm_ym[:4]}</span></h2>'
+    + '<div class="trends-treemap-wrap">'
+      '<div class="trends-treemap-eyebrow">All cuisines · sized by 90-day licence count</div>'
+      f'<div class="trends-treemap">{_short_treemap_svg}</div>'
+      '</div>'
+    + _take_short
+    + '</section>'
+    # Long-term section (full leaderboard)
+    + '<section class="trends-section trends-section-card">'
+    '<div class="trends-eyebrow">Full landscape · 36-month cumulative</div>'
+    f'<h2 class="trends-h2">Last 3 years <span class="trends-h2-sub">· since {_dispatch_today.year - 3}</span></h2>'
+    + '<div class="trends-treemap-wrap">'
+      '<div class="trends-treemap-eyebrow">All cuisines · sized by 3-year licence count</div>'
+      f'<div class="trends-treemap">{_long_treemap_svg}</div>'
+      '</div>'
+    + _take_3yr
+    + '</section>'
+    # Supplemental news (dojo events) - tan background
+    + f'{_callouts_html}'
+    # Sources block — outbound citations for every external claim made in
+    # the editorial takes above. Internal data (licence counts, treemap
+    # percentages) draws on /press methodology; only third-party sources
+    # need listing here. Keeps citations grouped instead of inline so the
+    # takes stay readable.
+    + '<div class="trends-sources">'
+      '<div class="trends-sources-eyebrow">Sources</div>'
+      '<ul class="trends-sources-list">'
+      '<li><a href="https://www.blogto.com/eat_drink/2026/05/fusaros-toronto-closed/" '
+      'target="_blank" rel="noopener">Fusaro\'s closes after 28 years on Spadina — blogTO</a></li>'
+      '<li><a href="https://www.blogto.com/eat_drink/2025/07/vivoli-toronto-closed/" '
+      'target="_blank" rel="noopener">Vivoli\'s 20-year run ends on College — blogTO</a></li>'
+      '<li><a href="https://www.blogto.com/eat_drink/2025/07/toronto-chef-taking-over-italian-restaurant/" '
+      'target="_blank" rel="noopener">Adam Pereira\'s Osteria Alba takes the Vivoli room — blogTO</a></li>'
+      '<li><a href="https://www.blogto.com/eat_drink/2026/05/banh-mi-taking-over-toronto/" '
+      'target="_blank" rel="noopener">"Banh mi is taking over Toronto" (And Banh Mi, Viet Bites, "summer of Saigon") — blogTO</a></li>'
+      '<li><a href="https://www.canada.ca/en/immigration-refugees-citizenship/news/notices/2026-provincial-territorial-allocations-under-international-student-cap.html" '
+      'target="_blank" rel="noopener">2026 international student cap allocations — IRCC (Canada.ca)</a></li>'
+      '<li><a href="https://www.canada.ca/en/immigration-refugees-citizenship/corporate/mandate/corporate-initiatives/levels/supplementary-immigration-levels-2026-2028.html" '
+      'target="_blank" rel="noopener">2026–2028 Immigration Levels Plan: PR capped at 380K through 2028 — IRCC (Canada.ca)</a></li>'
+      '<li><a href="https://agrifoodanalyticslab.substack.com/p/canada-is-poised-to-lose-4000-restaurants" '
+      'target="_blank" rel="noopener">"Canada Is Poised to Lose 4,000 Restaurants in 2026" — Dalhousie Agri-Food Analytics Lab</a></li>'
+      '</ul>'
+      '</div>'
     # Share CTA
-    '<p class="trends-share">'
+    + '<p class="trends-share">'
     f'<a class="trends-tweet-btn" href="{_esc(_tweet_intent)}" target="_blank" rel="noopener">'
     'Share this on X &rsaquo;</a> '
     '<span class="trends-note">Auto-refreshes daily from City open data + DineSafe.</span>'
     '</p>'
 )
+# Render the standalone share card PNG (1200x675) so X / FB / iMessage
+# show a rich card preview when the /trends URL is shared. Cached at
+# /og/trends-<yyyy-mm>.png and pinned via og:image below. Card now uses
+# the actual hero-strip photos (real restaurant thumbnails) instead of
+# flag-coloured cuisine chips — user feedback: "fisher-price colours"
+# on the chips read juvenile for a tweet preview.
+_trends_card_dispatch_label = f"{_cal.month_name[_dispatch_today.month]} {_dispatch_today.year}"
+_trends_card_filename = f"trends-{_dispatch_today.year}-{_dispatch_today.month:02d}.png"
+_trends_card_path = Path(ROOT) / 'og' / _trends_card_filename
+# Build hero-entry payload for the card (same 6 entries the page shows
+# in the "Just registered" strip). Pull thumb paths from og/thumb/<slug>.webp.
+def _hero_age(days):
+    if days is None or days <= 1: return 'NEW'
+    if days <= 30: return f'{days}D AGO'
+    if days <= 60: return f'{days // 7}W AGO'
+    return f'{days // 30}MO AGO'
+
+_trends_card_hero = []
+for _he in _hero_recent[:5]:  # 1 featured + 4 supporting
+    _slug = _he.get('slug') or ''
+    # Photo paths retired 2026-06-03 — card renderer falls back to
+    # typographic treatment when these are empty.
+    _ck = _he.get('cuisine') or ''
+    _mh = MENU_HIGHLIGHTS_CACHE.get(_he.get('_cacheKey') or '') or {}
+    _dishes = [d for d in (_mh.get('dishes') or []) if d][:3]
+    _trends_card_hero.append({
+        'thumb_path': '',
+        'photo_path': '',
+        'name': _he.get('operatingName') or '',
+        'cuisine_label': CUISINE_LABEL.get(_ck, _ck.replace('_', ' ').title()),
+        'district': _he.get('district') or '',
+        'age_label': _hero_age(_he.get('daysOpen')),
+        'dishes': _dishes,
+    })
+try:
+    from og_card import render_trends_card_png
+    render_trends_card_png(
+        _trends_card_dispatch_label, _y3_total, _trends_card_hero,
+        _trends_card_path,
+    )
+    # Cache-bust query string keyed on file mtime so X / FB / iMessage
+    # re-scrape when the card content changes (otherwise their card cache
+    # holds for ~7 days and shows the stale preview).
+    _trends_card_mtime = int(_trends_card_path.stat().st_mtime)
+    _trends_og_image = f'{SITE_BASE}/og/{_trends_card_filename}?v={_trends_card_mtime}'
+except Exception as _e:
+    print(f"  (trends card render skipped: {_e})")
+    _trends_og_image = None
+
 _trends_page = inject_into_html(_dispatch_template, static_block='', ld_payloads=[])
-for _sel, _val in [
+_trends_meta_subs = [
     (r'<title>[^<]*</title>', f'<title>{_esc(_trends_title)}</title>'),
     (r'(<meta name="description" content=")[^"]*(")', _esc(_trends_desc)),
     (r'(<meta property="og:title" content=")[^"]*(")', _esc(_trends_title)),
@@ -3426,7 +4518,14 @@ for _sel, _val in [
     (r'(<meta name="twitter:title" content=")[^"]*(")', _esc(_trends_title)),
     (r'(<meta name="twitter:description" content=")[^"]*(")', _esc(_trends_desc)),
     (r'(<link rel="canonical" href=")[^"]*(")', _esc(_trends_canonical)),
-]:
+]
+if _trends_og_image:
+    _trends_meta_subs += [
+        (r'(<meta property="og:image" content=")[^"]*(")', _esc(_trends_og_image)),
+        (r'(<meta name="twitter:image" content=")[^"]*(")', _esc(_trends_og_image)),
+        (r'(<meta name="twitter:card" content=")[^"]*(")', 'summary_large_image'),
+    ]
+for _sel, _val in _trends_meta_subs:
     if _val.startswith('<title'):
         _trends_page = re.sub(_sel, _val, _trends_page, count=1)
     else:
@@ -3444,7 +4543,216 @@ _trends_page = re.sub(
     r'(<div class="open-feed")',
     _trends_body + '\n  \\1', _trends_page, count=1)
 (Path(ROOT) / 'trends.html').write_text(_trends_page)
-print(f"  wrote /trends.html ({len(_trend_top)} cuisines, {len(_drought_broken)} drought-broken, {len(_spikes)} spikes)")
+# Monthly snapshot at /trends/<yyyy-mm>.html. Overwrites within the
+# current month (so visitors browsing /trends/2026-06 mid-June see
+# data through whatever day inject last ran), then becomes effectively
+# immutable on month rollover since the next cron writes a new
+# yyyy-mm key. Mirrors the /dispatch/<yyyy-mm>.html pattern.
+_trends_month_key = f'{_dispatch_today.year}-{_dispatch_today.month:02d}'
+_trends_archive_dir = Path(ROOT) / 'trends'
+_trends_archive_dir.mkdir(exist_ok=True)
+# Rewrite canonical + share URLs inside the archived copy so a visitor
+# arriving via the dated permalink doesn't get a canonical pointing at
+# the rolling /trends (which would dilute SEO and make the X share
+# button on the archive page link back to the rolling view).
+_dated_canonical = f'{SITE_BASE}/trends/{_trends_month_key}'
+_trends_archive_page = re.sub(
+    r'(<link rel="canonical" href=")[^"]*(")',
+    lambda m: m.group(1) + _esc(_dated_canonical) + m.group(2),
+    _trends_page, count=1,
+)
+_trends_archive_page = re.sub(
+    r'(<meta property="og:url" content=")[^"]*(")',
+    lambda m: m.group(1) + _esc(_dated_canonical) + m.group(2),
+    _trends_archive_page, count=1,
+)
+(_trends_archive_dir / f'{_trends_month_key}.html').write_text(_trends_archive_page)
+print(f"  wrote /trends.html + /trends/{_trends_month_key}.html ({len(_trend_top)} cuisines, {len(_drought_broken)} drought-broken, {len(_spikes)} spikes)")
+
+# ─────────────────────────────────────────────────────────────────────
+# /press/data — press-grade data terminal (Reuters/Bloomberg aesthetic)
+# Monospaced, source-attributed, embeddable. Designed for food editors,
+# data journalists, and citation-grade artifact. Same data as /trends,
+# different register: stark + dense + cite-friendly.
+# ─────────────────────────────────────────────────────────────────────
+_pro_top_n = 10
+_pro_per_month = _dd(lambda: _dd(int))  # cuisine -> {ym: count}
+with open(CSV_PATH, encoding='utf-8', errors='replace') as _f:
+    for _row in csv.DictReader(_f):
+        if (_row.get('Category') or '').strip() not in FOOD_CATS: continue
+        if (_row.get('Cancel Date') or '').strip(): continue
+        _iss = (_row.get('Issued') or '').split(' ')[0]
+        _d = parse_d(_iss)
+        if not _d or _d < _y3_cutoff_date: continue
+        _ym = f'{_d.year}-{_d.month:02d}'
+        _name = (_row.get('Operating Name') or '').strip()
+        _addr1 = (_row.get('Licence Address Line 1') or '').strip()
+        _addr3 = (_row.get('Licence Address Line 3') or '').strip()
+        _addr = (_addr1 + ' ' + _addr3).strip() or '-'
+        _ck = cache_key(_name, _addr)
+        _llm = LLM_CACHE.get(_ck) or {}
+        if _llm.get('status') != 'ok': continue
+        _cs = [c for c in (_llm.get('cuisines') or [_llm.get('cuisine')]) if c and c != 'unknown']
+        for _c in _cs:
+            _pro_per_month[_c][_ym] += 1
+
+_pro_top = [r['key'] for r in _y3_rows[:_pro_top_n]]
+_pro_months_seq = [_ym_back(_dispatch_today, i) for i in range(36, 0, -1)]
+
+# Multi-line SVG: 36 months on x, monthly count on y, one line per top cuisine
+_pro_w, _pro_h = 720, 320
+_pro_pl, _pro_pr, _pro_pt, _pro_pb = 40, 12, 16, 28
+_pro_iw = _pro_w - _pro_pl - _pro_pr
+_pro_ih = _pro_h - _pro_pt - _pro_pb
+_pro_max = max((_pro_per_month[c].get(m, 0) for c in _pro_top for m in _pro_months_seq), default=1) or 1
+_pro_x_step = _pro_iw / max(len(_pro_months_seq) - 1, 1)
+
+_pro_lines_svg = []
+for _c in _pro_top:
+    _color = PALETTE_HEX.get(_c) or cuisine_color(_c)
+    _pts = []
+    for _i, _m in enumerate(_pro_months_seq):
+        _v = _pro_per_month[_c].get(_m, 0)
+        _x = _pro_pl + _i * _pro_x_step
+        _y = _pro_pt + _pro_ih - (_v / _pro_max) * _pro_ih
+        _pts.append(f'{_x:.1f},{_y:.1f}')
+    _path_d = 'M' + ' L'.join(_pts)
+    _pro_lines_svg.append(f'<path d="{_path_d}" stroke="{_color}" stroke-width="1.5" fill="none" opacity="0.85"/>')
+
+_pro_y_ticks = []
+_y_step = max(1, _pro_max // 4)
+for _tv in range(0, _pro_max + 1, _y_step):
+    _y = _pro_pt + _pro_ih - (_tv / _pro_max) * _pro_ih
+    _pro_y_ticks.append(
+        f'<line x1="{_pro_pl}" y1="{_y:.1f}" x2="{_pro_pl + _pro_iw}" y2="{_y:.1f}" stroke="#e8e8e6" stroke-width="0.5"/>'
+        f'<text x="{_pro_pl - 6}" y="{_y + 3:.1f}" text-anchor="end" font-family="ui-monospace,SF Mono,Menlo,monospace" font-size="9.5" fill="#7a7a78">{_tv}</text>'
+    )
+_pro_x_labels = []
+for _i, _m in enumerate(_pro_months_seq):
+    if _m.endswith('-01') or _i == 0 or _i == len(_pro_months_seq) - 1:
+        _x = _pro_pl + _i * _pro_x_step
+        _pro_x_labels.append(
+            f'<text x="{_x:.1f}" y="{_pro_h - 8}" text-anchor="middle" font-family="ui-monospace,SF Mono,Menlo,monospace" font-size="9.5" fill="#7a7a78">{_m}</text>'
+        )
+_pro_chart_svg = (
+    f'<svg viewBox="0 0 {_pro_w} {_pro_h}" xmlns="http://www.w3.org/2000/svg" '
+    'role="img" aria-label="Toronto restaurant registrations by cuisine, 36-month time series" '
+    f'style="width:100%;max-width:{_pro_w}px;height:auto;display:block;background:#fff">'
+    + ''.join(_pro_y_ticks) + ''.join(_pro_lines_svg) + ''.join(_pro_x_labels)
+    + '</svg>'
+)
+
+# Legend strip
+_pro_legend = '<div class="pro-legend">' + ''.join(
+    f'<span class="pro-legend-item"><span class="pro-legend-swatch" style="background:{PALETTE_HEX.get(_c) or cuisine_color(_c)}"></span>'
+    f'<a href="/cuisine/{_esc(_c)}">{_esc(CUISINE_LABEL.get(_c, _c.replace("_"," ").title()))}</a></span>'
+    for _c in _pro_top
+) + '</div>'
+
+# Dense data table
+_pro_ranks_90 = {r['key']: i+1 for i, r in enumerate(_short_rows)}
+_pro_ranks_36 = {r['key']: i+1 for i, r in enumerate(_y3_rows)}
+_pro_table_rows = []
+for _c in _pro_top:
+    _label = CUISINE_LABEL.get(_c, _c.replace('_',' ').title())
+    _scnt = next((r['count'] for r in _short_rows if r['key'] == _c), 0)
+    _srnk = _pro_ranks_90.get(_c, '—')
+    _lcnt = next((r['count'] for r in _y3_rows if r['key'] == _c), 0)
+    _lrnk = _pro_ranks_36.get(_c, '—')
+    _lpct = next((r['pct'] for r in _y3_rows if r['key'] == _c), 0)
+    _color = PALETTE_HEX.get(_c) or cuisine_color(_c)
+    _pro_table_rows.append(
+        f'<tr><td><span class="pro-swatch" style="background:{_color}"></span>'
+        f'<a href="/cuisine/{_esc(_c)}">{_esc(_label)}</a></td>'
+        f'<td class="pro-num">{_scnt}</td>'
+        f'<td class="pro-num pro-muted">#{_srnk}</td>'
+        f'<td class="pro-num">{_lcnt}</td>'
+        f'<td class="pro-num pro-muted">#{_lrnk}</td>'
+        f'<td class="pro-num pro-muted">{_lpct}%</td></tr>'
+    )
+_pro_table = (
+    '<table class="pro-table"><thead><tr>'
+    '<th>CUISINE</th>'
+    '<th class="pro-num">90D</th><th class="pro-num">RANK</th>'
+    '<th class="pro-num">36MO</th><th class="pro-num">RANK</th>'
+    '<th class="pro-num">SHARE</th>'
+    '</tr></thead>'
+    f'<tbody>{"".join(_pro_table_rows)}</tbody></table>'
+)
+
+# CSV export for press download
+_csv_lines = ['cuisine,90d_count,90d_rank,36mo_count,36mo_rank,36mo_share_pct']
+for _c in _pro_top:
+    _label = CUISINE_LABEL.get(_c, _c.replace('_',' ').title())
+    _scnt = next((r['count'] for r in _short_rows if r['key'] == _c), 0)
+    _srnk = _pro_ranks_90.get(_c, '')
+    _lcnt = next((r['count'] for r in _y3_rows if r['key'] == _c), 0)
+    _lrnk = _pro_ranks_36.get(_c, '')
+    _lpct = next((r['pct'] for r in _y3_rows if r['key'] == _c), 0)
+    _csv_lines.append(f'"{_label}",{_scnt},{_srnk},{_lcnt},{_lrnk},{_lpct}')
+(Path(ROOT) / 'data' / 'cuisines.csv').write_text('\n'.join(_csv_lines) + '\n')
+
+# Header masthead + footer (methodology, citation, CSV, embed)
+_iso_now = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%MZ')
+_pro_header = (
+    '<div class="pro-header"><div class="pro-header-row">'
+    '<span class="pro-header-tag">CUISINE.VELOCITY</span>'
+    f'<span class="pro-header-meta">UPD {_iso_now}</span>'
+    '<span class="pro-header-meta">SRC: TORONTO MLS + DINESAFE</span>'
+    f'<span class="pro-header-meta">N={_y3_total:,}</span>'
+    '</div></div>'
+)
+_pro_embed = '<iframe src="https://nowservingto.com/press/data" width="720" height="800" frameborder="0" loading="lazy" title="NowServingTO Cuisine Velocity"></iframe>'
+_pro_footer = (
+    '<div class="pro-footer">'
+    '<h3 class="pro-foot-h">METHODOLOGY</h3>'
+    f'<p>Source: City of Toronto Open Data business licence registry (CKAN); Toronto Public Health DineSafe inspection records; Google Places API for verification. {_y3_total:,} restaurant licences issued in the past 36 months, classified by cuisine via Claude Haiku, gated against multi-licence renewals, pre-existing operators, OSM and Wikidata chain registries, and Toronto-Canadianized franchise concepts. Full methodology: <a href="/press">nowservingto.com/press</a>.</p>'
+    '<h3 class="pro-foot-h">CITATION</h3>'
+    f'<p>Source: NowServingTO, <a href="/press/data">nowservingto.com/press/data</a>, accessed {_dispatch_today.isoformat()}.</p>'
+    '<h3 class="pro-foot-h">DOWNLOAD</h3>'
+    '<p><a href="/data/cuisines.csv">/data/cuisines.csv</a> &middot; <a href="/data/corridors.json">/data/corridors.json</a> (full directory)</p>'
+    '<h3 class="pro-foot-h">EMBED</h3>'
+    f'<pre class="pro-embed">{_esc(_pro_embed)}</pre>'
+    '</div>'
+)
+_pro_body = (
+    _pro_header
+    + '<section class="pro-section">'
+    + '<h2 class="pro-h2">CUISINE VELOCITY &middot; 36-MONTH TIME SERIES</h2>'
+    + f'<div class="pro-chart">{_pro_chart_svg}</div>'
+    + _pro_legend
+    + '</section>'
+    + '<section class="pro-section">'
+    + '<h2 class="pro-h2">STANDINGS &middot; 90D vs 36MO</h2>'
+    + _pro_table
+    + '</section>'
+    + _pro_footer
+)
+
+_pro_title = 'Toronto Cuisine Velocity — Data Terminal | NowServingTO'
+_pro_desc = f'Press-grade data terminal: Toronto restaurant registrations by cuisine, 36-month time series ({_y3_total:,} verified registrations). Methodology + CSV download + embed code.'
+_pro_canonical = f'{SITE_BASE}/press/data'
+_pro_page = inject_into_html(_dispatch_template, static_block='', ld_payloads=[])
+for _sel, _val in [
+    (r'<title>[^<]*</title>', f'<title>{_esc(_pro_title)}</title>'),
+    (r'(<meta name="description" content=")[^"]*(")', _esc(_pro_desc)),
+    (r'(<meta property="og:title" content=")[^"]*(")', _esc(_pro_title)),
+    (r'(<meta property="og:description" content=")[^"]*(")', _esc(_pro_desc)),
+    (r'(<meta property="og:url" content=")[^"]*(")', _esc(_pro_canonical)),
+    (r'(<link rel="canonical" href=")[^"]*(")', _esc(_pro_canonical)),
+]:
+    if _val.startswith('<title'):
+        _pro_page = re.sub(_sel, _val, _pro_page, count=1)
+    else:
+        _pro_page = re.sub(_sel, lambda m, v=_val: m.group(1) + v + m.group(2), _pro_page, count=1)
+_pro_page = re.sub(r'<h1 class="sub">[\s\S]*?</h1>(?:<div class="listing-lede">[\s\S]*?</div>)?',
+                   lambda m: '<h1 class="pro-h1">CUISINE.VELOCITY</h1>', _pro_page, count=1)
+_pro_page = _pro_page.replace('<body>', '<body class="page-data">', 1)
+_pro_page = re.sub(r'(<div class="open-feed")', _pro_body + '\n  \\1', _pro_page, count=1)
+
+(Path(ROOT) / 'press').mkdir(exist_ok=True)
+(Path(ROOT) / 'press' / 'data.html').write_text(_pro_page)
+print(f"  wrote /press/data.html ({_y3_total:,} entries over 36 months, top {len(_pro_top)} cuisines, CSV exported)")
 
 # Persist any photoRef values we backfilled into PLACES_CACHE so the next
 # inject doesn't have to re-call place_details for the same entries.
@@ -3470,6 +4778,16 @@ if DISPATCH_DIR_PATH.exists():
         dkey = dfile.stem
         url_blocks.append(
             f'  <url>\n    <loc>{SITE_BASE}/dispatch/{dkey}</loc>\n    <lastmod>{REFERENCE_DATE.isoformat()}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.7</priority>\n  </url>'
+        )
+
+# Monthly trends archive — same pattern. Past months are immutable
+# snapshots, current month updates daily.
+TRENDS_DIR_PATH = Path(ROOT) / 'trends'
+if TRENDS_DIR_PATH.exists():
+    for tfile in sorted(TRENDS_DIR_PATH.glob('*.html')):
+        tkey = tfile.stem
+        url_blocks.append(
+            f'  <url>\n    <loc>{SITE_BASE}/trends/{tkey}</loc>\n    <lastmod>{REFERENCE_DATE.isoformat()}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.6</priority>\n  </url>'
         )
 
 # Diaspora-pitch wire pages - whatever build_wire_pages.py actually wrote
@@ -3542,11 +4860,18 @@ live_cuisines  = {c['key'] for c in cuisines_out}
 live_districts = {_district_slug(d) for d in by_district if by_district[d]}
 live_slugs     = {e.get('slug') for e in seen_entries.values() if e.get('slug')}
 
+# Reserved og/ filename prefixes — page-level OG cards (trends, dispatch,
+# press, etc.) that are NOT per-listing and must survive the listing-slug
+# sweep below.
+_OG_RESERVED_PREFIXES = ('trends-', 'dispatch-', 'press-')
+
 def _cleanup(directory, live_keys, suffix='.html'):
     if not directory.exists(): return 0
     removed = 0
     for f in directory.iterdir():
         if not f.is_file() or not f.name.endswith(suffix): continue
+        if suffix == '.png' and f.name.startswith(_OG_RESERVED_PREFIXES):
+            continue
         key = f.name[:-len(suffix)]
         if key not in live_keys:
             try:

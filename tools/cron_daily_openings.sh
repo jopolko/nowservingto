@@ -136,38 +136,29 @@ if [[ "${SKIP_WEBSITES:-0}" != "1" ]]; then
     fi
 fi
 
-# Step 4b: menu-signal extraction. Strict verbatim-only Haiku pass over
-# every entry with a website + cached page text; populates the "Menu
-# signals" line on /r/<slug> pages. Cached forever per cache_key, so
-# steady-state daily cost is ~$0.001 (only new openings). Safe to skip
-# (non-fatal) — listing pages just render without the menu line.
-log "→ llm_menu_highlights_batch.py (verbatim dish-name extraction)"
-if ! "$PYTHON" -u tools/llm_menu_highlights_batch.py >> "$LOG_FILE" 2>&1; then
-    log "WARN: menu-highlights batch failed (non-fatal — Menu signals will skip)"
+# Step 4b: menu-signal extraction. Two-tier Haiku pass over every entry
+# with a website + cached page text — extracts specific dish names
+# (tier 1, "Try the mandi, shawarma, kibbeh") AND falls back to verbatim
+# menu categories (tier 2, "Menu features biryanis, curries, kebabs")
+# when no dishes can be pulled. Cached per cache_key, refreshed every 90
+# days so the cache picks up new dishes/sections as restaurants update
+# their websites. Steady-state daily cost: ~$0.001 (only new openings);
+# quarterly refresh: ~$0.30 (~287 entries) once every 90 days.
+# Safe to skip (non-fatal) — listing pages just render without the tile.
+log "→ llm_menu_highlights_batch.py (dish + category extraction, 90-day refresh)"
+if ! "$PYTHON" -u tools/llm_menu_highlights_batch.py --max-age-days 90 >> "$LOG_FILE" 2>&1; then
+    log "WARN: menu-highlights batch failed (non-fatal — menu tile will skip)"
 fi
 
-# Step 4c: Haiku-vision classifier - decide whether each cached Places
-# photo actually shows a restaurant (or whether it's a hair-salon / gas-
-# station / paint-section attached by Places to the wrong CID). Cached
-# forever per slug; only new openings get classified each day. inject
-# honors the verdict and hides the photo on rows flagged as not-food.
-log "→ llm_photo_classify_batch.py (Haiku vision: is this photo a restaurant?)"
-if ! "$PYTHON" -u tools/llm_photo_classify_batch.py >> "$LOG_FILE" 2>&1; then
-    log "WARN: photo-classifier batch failed (non-fatal — rows render as before)"
-fi
-
-# Step 4c+: for any photo the classifier just rejected, try fallbacks.
-# Each script honors photo_attempts.json so we never re-spend on dead ends.
-#   - retry_denied_photos.py: Street View at the geocoded lat/lng
-#   - retry_places_photos.py: refetch Place Details, walk photos[1..N]
-log "→ retry_denied_photos.py (Street View fallback for wrong-business photos)"
-if ! "$PYTHON" -u tools/retry_denied_photos.py >> "$LOG_FILE" 2>&1; then
-    log "WARN: retry_denied_photos failed (non-fatal — denied photos stay denied)"
-fi
-log "→ retry_places_photos.py (Places multi-photo fallback)"
-if ! "$PYTHON" -u tools/retry_places_photos.py >> "$LOG_FILE" 2>&1; then
-    log "WARN: retry_places_photos failed (non-fatal — denied photos stay denied)"
-fi
+# Step 4c / 4c+ DISABLED 2026-06-03 — photos retired site-wide. The
+# Haiku-vision classifier, Street View fallback, and Places multi-photo
+# walker were all in service of getting a *correct* photo on each row.
+# With no photos rendered anywhere, there is nothing to classify or
+# recover. Scripts kept in the repo for one-off historical debugging
+# but no longer fire on cron.
+log "  step 4c (llm_photo_classify_batch)  DISABLED — site is text-only"
+log "  step 4c+ (retry_denied_photos)      DISABLED — site is text-only"
+log "  step 4c+ (retry_places_photos)      DISABLED — site is text-only"
 
 # Step 4d: rewrite validator_evidence into editorial prose. The raw
 # evidence from the verifier reads as a verification log ("Website

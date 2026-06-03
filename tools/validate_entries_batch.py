@@ -19,7 +19,11 @@ context. Cost: ~600 entries × ~$0.001 batch = ~$0.60 total.
 
 Auto-fix loop after results:
   - is_same_business=no → clear places_cache entry (refetched on next cron)
-  - is_restaurant=no    → tag with `_validator_drop: not-restaurant`, dropped at inject time
+  - is_restaurant=no    → tag with `_validator_drop: not-discovery`, dropped at inject time
+                          (the field "is_restaurant" is the prompt's audience-anchored
+                          test — "would this be a real diaspora discovery?" — so the
+                          drop reason covers genuine non-restaurants AND mainstream-Canadian
+                          chains AND multi-location franchises, all of which fail the test)
   - cuisines updated    → web_verify_cache.cuisine + .cuisines
   - best_website=null   → url_health_cache marks URL ok=False
   - best_website=new    → update web_verify_cache.website
@@ -401,12 +405,80 @@ cuisines - list of 1 to 3 SPECIFIC country / diaspora cuisine labels.
 
   COUNTRY-LEVEL distinctions ARE granular enough - keep these separate:
     Tamil (Sri Lankan Tamil diaspora, distinct cuisine)
-    Sri Lankan (broader, hoppers / kottu)
+    Sri Lankan (Sinhalese-leaning - lamprais, pol sambol, fish ambul thiyal)
     Bangladeshi (vs Indian - separate national cuisine)
     Pakistani (vs Indian - separate national cuisine)
     Taiwanese (politically + culturally distinct from mainland Chinese)
     Tibetan (distinct from Chinese)
     Uyghur (distinct from Chinese - Central Asian Turkic Muslim)
+
+  ════════════════════════════════════════════════════════════════
+  POLITICALLY SENSITIVE CUISINE PAIRS — read this section carefully.
+  ════════════════════════════════════════════════════════════════
+  Wrong attribution on these pairs causes community-level harm in
+  Toronto specifically (largest Tamil diaspora outside South Asia,
+  active Tibetan / Uyghur / Taiwanese diasporas, etc.). Default to the
+  COMMUNITY-PREFERRED identifier, not the imperial-power-preferred one.
+
+  ── Tamil vs Sri Lankan ──
+  Tamil diaspora in Toronto (~150k+, mostly Scarborough) is largely
+  Eelam Tamil refugee-descended from the Sri Lankan civil war
+  (1983-2009). Calling a Tamil-owned spot "Sri Lankan" identifies
+  the operator with the Sinhalese-majority regime that committed
+  alleged atrocities — deeply offensive.
+
+  - "Sri Lankan" is the RIGHT label ONLY when evidence indicates
+    Sinhalese identity: lamprais, fish ambul thiyal, pol sambol as
+    signature dishes; Buddhist iconography; explicit "Sinhalese" in
+    name or copy; "Lankan Filling Station"-style branding.
+  - "Tamil" is the right label when: Tamil name (e.g., "Saravana",
+    "Selvam", "Nallur", "Eelam", "Annapoorna" or any Tamil first/
+    last name in the operator name), Scarborough/Markham location
+    with parippu / sothi / varai / string hoppers as menu emphasis,
+    explicit "Tamil" in name or copy.
+  - "Hoppers" and "kottu" are made BOTH by Tamil and Sinhalese — do
+    not use these alone to pick Sri Lankan over Tamil.
+  - WHEN UNCERTAIN between Tamil and Sri Lankan, prefer "Tamil" —
+    the asymmetry of harm runs that direction. (A Sinhalese spot
+    mistakenly tagged Tamil is a milder error than the inverse.)
+  - "Tamil" can ALSO mean South Indian Tamil (from Tamil Nadu, not
+    Sri Lanka) — dosa/idli/sambar/uttapam/Chettinad. When evidence
+    clearly points to South Indian Tamil (e.g., "Saravanaa Bhavan"
+    chain, "Madras", "Chennai", Chettinad), use "Tamil" — the umbrella
+    works for both communities at the taxonomy level even though the
+    cuisines differ.
+
+  ── Tibetan vs Chinese ──
+  Tibetan diaspora considers Tibet politically + culturally distinct
+  from China. Momo, thukpa, butter tea, tingmo = Tibetan. Never tag
+  a Tibetan-owned spot as "Chinese" even if PRC government would.
+
+  ── Uyghur vs Chinese ──
+  Same logic. Uyghurs are a Turkic Muslim group from Xinjiang;
+  diaspora generally rejects "Chinese" identification given the
+  ongoing repression. Polov, leghmen, big-plate chicken, dapanji,
+  laghman = Uyghur. Never auto-tag as "Chinese".
+
+  ── Taiwanese vs Chinese ──
+  Politically contested. Default to "Taiwanese" when the operator
+  or name signals Taiwanese identity (bubble tea is fine as Taiwanese;
+  beef noodle soup with explicit Taiwan framing is Taiwanese).
+
+  ── Palestinian / Israeli (likely future encounter) ──
+  When the day comes: use "Palestinian" or "Levantine" for spots
+  with Arab/Muslim community ownership. Use "Israeli" only with
+  explicit Israeli-Jewish framing. Default to "Middle Eastern" or
+  "Levantine" if uncertain — both communities accept the umbrella.
+
+  ── Korean (North vs South) ──
+  In practice all Korean diaspora restaurants in Toronto are South
+  Korean / ROK-aligned. "Korean" is fine.
+
+  GENERAL RULE for sensitive pairs: when the LLM is uncertain
+  between a community-preferred label and a state-level label,
+  prefer the community-preferred one. The asymmetry of harm always
+  favors community identification.
+  ════════════════════════════════════════════════════════════════
 
   WHEN TO MULTI-LIST: two specific countries blended at the same shop
     (Korean+Japanese izakaya → ["Korean", "Japanese"], not "Asian Fusion").
@@ -907,12 +979,19 @@ def main():
             if key in pc:
                 pc.pop(key)
 
-        # 2. Not a restaurant → mark for drop at inject time
+        # 2. Fails the audience-anchored test → mark for drop at inject time.
+        # `is_restaurant=no` is the prompt's umbrella verdict for "this won't
+        # surface usefully to a diaspora-discovery reader" — covers genuine
+        # non-restaurants (caterers, packaged-food, grocery counters) AND
+        # mainstream-Canadian chains AND major franchises. The drop label
+        # `not-discovery` reflects the actual reason: it IS a restaurant in
+        # most cases, just not one the directory's audience would consider
+        # a discovery. Use `validator_evidence` for the specific reason.
         if parsed['is_restaurant'] == 'no':
             n_isr_no += 1
             if len(examples['isr_no']) < 6:
                 examples['isr_no'].append(f"{name[:35]:<35}  | {parsed['evidence'][:60]}")
-            wv[key]['validator_drop'] = 'not-restaurant'
+            wv[key]['validator_drop'] = 'not-discovery'
             wv[key]['validator_evidence'] = parsed['evidence']
             # Aged-out unverifiable: schedule a monthly recheck instead of
             # the default daily re-validation, since this verdict won't

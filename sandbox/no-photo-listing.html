@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BHAAT N BYTES — no-photo mockup · NowServingTO</title>
+<style>
+  :root {
+    --ink: #15110d; --ink2: #2d2d2b; --muted: #7a746a; --line: #e2dccf;
+    --paper: #faf7ee; --paper-2: #f0e8d4; --accent: #e84e3a;
+    --serif: 'Iowan Old Style', Charter, Georgia, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --cuisine-color: #b88820;  /* Bangladeshi accent — Haiku-derived flag-color */
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 0; background: var(--paper); color: var(--ink); font: 400 16px/1.5 var(--sans); }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 24px; }
+
+  /* ─── Top nav (existing site nav, unchanged) ─── */
+  .mast { padding: 22px 0 16px; border-bottom: 1px solid var(--line); margin-bottom: 32px; }
+  .brand { font: 800 22px/1 var(--serif); letter-spacing: -0.02em; color: var(--ink); text-decoration: none; }
+  .crumb { font: 500 13px/1 var(--sans); color: var(--muted); margin-top: 8px; }
+  .crumb a { color: var(--muted); text-decoration: none; }
+  .crumb a:hover { color: var(--accent); }
+
+  /* ─── HERO: color block + typography, no photo ─── */
+  .hero { background: var(--cuisine-color); color: #fff; padding: 48px 32px 40px; border-radius: 6px; margin-bottom: 28px; position: relative; overflow: hidden; }
+  .hero::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: rgba(0,0,0,0.18); }
+  .hero-eyebrow { font: 700 11px/1 var(--mono); letter-spacing: 0.25em; opacity: 0.85; text-transform: uppercase; margin-bottom: 14px; }
+  .hero-name { font: 800 44px/1.05 var(--serif); letter-spacing: -1.5px; margin: 0 0 14px; }
+  .hero-meta { font: 400 18px/1.4 var(--serif); font-style: italic; opacity: 0.95; margin-bottom: 18px; }
+  .hero-cta { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; background: rgba(0,0,0,0.22); color: #fff; text-decoration: none; border-radius: 4px; font: 700 13px/1 var(--sans); letter-spacing: 0.04em; transition: background 0.15s; }
+  .hero-cta:hover { background: rgba(0,0,0,0.38); }
+  .hero-cta .arrow { font-size: 14px; }
+
+  /* ─── Dishes block: editorial spotlight, replaces photo ─── */
+  .dishes { background: var(--paper); border: 1px solid var(--line); border-radius: 6px; padding: 24px 28px; margin-bottom: 24px; }
+  .dishes-eyebrow { font: 700 11px/1 var(--mono); letter-spacing: 0.2em; color: var(--accent); text-transform: uppercase; margin-bottom: 12px; }
+  .dishes-list { font: 400 22px/1.5 var(--serif); color: var(--ink); margin: 0; }
+  .dishes-list b { font-style: italic; font-weight: 400; }
+
+  /* ─── Story block: the editorial hook (priorTenant, oddities, why notable) ─── */
+  .story { font: 400 17px/1.65 var(--serif); color: var(--ink2); margin: 0 0 28px; }
+  .story strong { color: var(--ink); font-weight: 700; }
+
+  /* ─── Static map (Mapbox / OpenStreetMap, NOT Google Maps imagery) ─── */
+  .static-map { width: 100%; height: 240px; background: linear-gradient(135deg, #d4cdc0 0%, #c5c8cd 100%); border-radius: 6px; margin-bottom: 24px; position: relative; overflow: hidden; }
+  .static-map::after { content: 'STATIC MAP PLACEHOLDER (Mapbox/OSM, ToS-clean alternative to Google imagery)'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font: 600 11px/1.4 var(--mono); color: rgba(0,0,0,0.4); letter-spacing: 0.1em; text-align: center; padding: 0 20px; }
+
+  /* ─── Owner CTA + alert (same as live) ─── */
+  .cta-row { background: var(--paper); border: 1px solid var(--line); border-radius: 6px; padding: 18px 22px; margin-bottom: 14px; font: 500 14px/1.4 var(--sans); }
+  .cta-row a { color: var(--ink); font-weight: 700; }
+
+  .note { font: 400 11px/1.4 var(--sans); color: var(--muted); text-align: center; padding: 18px 0; border-top: 1px solid var(--line); margin-top: 28px; }
+</style>
+</head>
+<body>
+<header class="mast"><div class="wrap">
+  <a href="/" class="brand">NowServingTO</a>
+  <div class="crumb"><a href="/">Home</a> › <a href="/cuisine/bangladeshi">Bangladeshi</a> › BHAAT N BYTES</div>
+</div></header>
+
+<main><div class="wrap">
+
+  <!-- Big color-block hero: no photo, but typography + brand color carries the visual weight -->
+  <div class="hero">
+    <div class="hero-eyebrow">First seen 10mo ago · Bangladeshi · Scarborough</div>
+    <h1 class="hero-name">Bhaat N Bytes</h1>
+    <div class="hero-meta">A Bangladeshi rice-and-curry counter inside a Petro Canada gas station on Kennedy Rd.</div>
+    <a class="hero-cta" href="https://maps.google.com/?cid=459471234698224316" target="_blank" rel="noopener">
+      <span>View on Google Maps</span><span class="arrow">→</span>
+    </a>
+  </div>
+
+  <!-- Dishes block — the menu highlights now become the editorial spotlight that photos used to occupy -->
+  <div class="dishes">
+    <div class="dishes-eyebrow">What to order</div>
+    <p class="dishes-list">
+      <b>Dhaka chaap kebab</b>, <b>beef hari kebab</b>, <b>butter chicken</b>,
+      <b>beef bhuna</b>, <b>dhaka beef tehari</b>.
+    </p>
+  </div>
+
+  <!-- Editorial story — the "took over from" / unique-circumstance / why-it-matters paragraph -->
+  <p class="story">
+    Inside the convenience store of a Petro Canada at <strong>427 Kennedy Rd</strong>, the kitchen
+    that until last summer served Tim Hortons sandwiches now turns out Bengali rice plates and
+    halal kebabs. Owner-operated, no chain affiliation, no review press. The kind of opening
+    the licence stream catches before the food critics do — and the kind the diaspora reader
+    in Scarborough is actually looking for.
+  </p>
+
+  <!-- Static map: Mapbox/OSM avoids the Google imagery ToS question entirely -->
+  <div class="static-map"></div>
+
+  <!-- Owner CTA (same as current) -->
+  <div class="cta-row">Is this your restaurant? <a href="mailto:hello@nowservingto.com">Send a photo, story, or correction →</a></div>
+
+  <p class="note">No images cached from Google. Color, typography, and editorial content do the visual work.</p>
+
+</div></main>
+</body></html>

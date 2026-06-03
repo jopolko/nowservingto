@@ -20,6 +20,7 @@ catches it. IndexNow returns 200 when URLs were accepted for indexing,
 import json
 import re
 import sys
+from datetime import date
 from pathlib import Path
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError, URLError
@@ -53,6 +54,34 @@ def read_sitemap_urls():
     # Belt-and-suspenders: only submit URLs on our host. IndexNow rejects
     # the whole batch if any URL is off-host.
     return [u for u in urls if u.startswith(f'https://{HOST}/')]
+
+
+# Per-month archive URLs are frozen content after their month ends.
+# Re-pinging them daily wastes IndexNow quota AND signals "churn" to
+# Bing/Yandex, which lowers crawl-priority confidence. The priority/new
+# pass picks them up exactly once when first created; after that the
+# full-batch pass should skip them. Current-month archives DO mutate
+# daily (inject overwrites them within the active month) and stay in
+# the batch.
+_ARCHIVE_PATTERN = re.compile(
+    rf'^https://{re.escape(HOST)}/(?:dispatch|trends)/(\d{{4}}-\d{{2}})$'
+)
+
+def _is_frozen_archive(url, current_ym):
+    """True if this is a /dispatch/<yyyy-mm> or /trends/<yyyy-mm> URL
+    for a past month. Past-month archives are immutable and shouldn't
+    be re-pinged daily."""
+    m = _ARCHIVE_PATTERN.match(url)
+    if not m: return False
+    return m.group(1) < current_ym
+
+def filter_mutable(urls):
+    """Drop frozen archive URLs from the full-batch list. Keeps the
+    rolling /dispatch/latest, /dispatch (bare), /trends (bare), and
+    the current month's dated archives — all of which still drift."""
+    today = date.today()
+    current_ym = f'{today.year}-{today.month:02d}'
+    return [u for u in urls if not _is_frozen_archive(u, current_ym)]
 
 
 def _submit(urls, label, dry_run=False):
@@ -135,11 +164,18 @@ def main():
     else:
         print('IndexNow [priority/new]: no new URLs since last run')
 
-    # 2) Full batch ping for everything in the current sitemap. This is
-    # the unchanged-behavior catch-all that keeps stale-content signals
-    # flowing (counts, prices, dates that drift even when the URL set
-    # doesn't change).
-    batch_ok = _submit(urls, 'full batch', dry_run=dry_run)
+    # 2) Full batch ping for everything that's still mutable. Frozen
+    # archive snapshots (/dispatch/<past-yyyy-mm>, /trends/<past-yyyy-mm>)
+    # are filtered out — they were already pinged once via priority/new
+    # when first created, and re-pinging unchanged content burns quota
+    # AND tells Bing/Yandex this content is volatile, which lowers crawl-
+    # priority confidence on the things that actually do change.
+    batch_urls = filter_mutable(urls)
+    _n_frozen = len(urls) - len(batch_urls)
+    if _n_frozen:
+        print(f'IndexNow [full batch]: skipping {_n_frozen} frozen archive URL(s) '
+              f'(past-month /dispatch and /trends snapshots)')
+    batch_ok = _submit(batch_urls, 'full batch', dry_run=dry_run)
 
     # 3) Persist current URL set for next run's diff. Only writes when
     # at least one submission succeeded, so a network blip doesn't

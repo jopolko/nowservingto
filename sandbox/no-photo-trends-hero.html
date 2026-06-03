@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>No-photo /trends hero + OG card mock · NowServingTO</title>
+<style>
+  :root {
+    --ink: #15110d; --ink2: #2d2d2b; --muted: #7a746a; --line: #e2dccf;
+    --paper: #faf7ee; --accent: #e84e3a;
+    --serif: 'Iowan Old Style', Charter, Georgia, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 0; background: var(--paper); color: var(--ink); font: 400 16px/1.5 var(--sans); }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 24px; }
+  .section-title { font: 700 11px/1 var(--mono); letter-spacing: 0.25em; color: var(--muted); text-transform: uppercase; margin: 48px 0 20px; }
+
+  /* ─── Typographic /trends hero: color-block, no photo ─── */
+  .mag-hero {
+    margin: 0 0 36px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #006a4e;  /* cuisine color — Bangladeshi green */
+    color: #fff;
+    padding: 64px 48px 56px;
+    position: relative;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+  }
+  .mag-hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.35) 100%);
+    pointer-events: none;
+  }
+  .mag-hero > * { position: relative; }
+  .mag-hero-eyebrow {
+    font: 700 11px/1 var(--mono); letter-spacing: 0.25em;
+    color: #ff7a63; text-transform: uppercase; margin-bottom: 18px;
+  }
+  .mag-hero-name {
+    font: 800 56px/1.05 var(--serif); letter-spacing: -2px; color: #fff;
+    margin: 0 0 12px;
+  }
+  .mag-hero-meta {
+    font: 400 22px/1.4 var(--serif); font-style: italic;
+    color: rgba(255,255,255,0.88);
+    margin-bottom: 24px;
+  }
+  .mag-hero-hook {
+    font: 400 18px/1.55 var(--serif); color: rgba(255,255,255,0.92);
+    max-width: 620px; margin-bottom: 32px;
+  }
+  .mag-hero-dishes-eyebrow {
+    font: 700 10.5px/1 var(--mono); letter-spacing: 0.25em;
+    color: rgba(255,255,255,0.7); text-transform: uppercase;
+    margin: 28px 0 10px; padding-top: 22px;
+    border-top: 1px solid rgba(255,255,255,0.18);
+  }
+  .mag-hero-dishes {
+    font: 400 19px/1.5 var(--serif); font-style: italic;
+    color: rgba(255,255,255,0.94); margin: 0;
+  }
+
+  /* OG card preview */
+  .og-card-frame { max-width: 600px; margin: 0 auto 32px; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+  .og-card-frame img { display: block; width: 100%; height: auto; }
+
+  /* Comparison block */
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 24px 0; }
+  .compare-cell { background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 16px; }
+  .compare-cell h3 { font: 700 11px/1 var(--mono); letter-spacing: 0.18em; color: var(--muted); text-transform: uppercase; margin: 0 0 10px; }
+  .compare-cell p { font: 400 13.5px/1.5 var(--sans); color: var(--ink2); margin: 0; }
+
+  .notes { background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 22px 26px; margin: 32px 0; font: 400 14.5px/1.6 var(--serif); color: var(--ink2); }
+  .notes h2 { font: 700 13px/1 var(--mono); letter-spacing: 0.18em; color: var(--ink); text-transform: uppercase; margin: 0 0 14px; }
+  .notes ul { margin: 0; padding-left: 20px; }
+  .notes li { margin-bottom: 8px; }
+
+  @media (max-width: 600px) {
+    .compare { grid-template-columns: 1fr; }
+    .mag-hero { padding: 40px 28px 36px; }
+    .mag-hero-name { font-size: 38px; }
+    .mag-hero-meta { font-size: 17px; }
+    .mag-hero-hook { font-size: 15.5px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="section-title">/trends magazine hero — no-photo variant</div>
+
+  <!-- The hero -->
+  <figure class="mag-hero">
+    <div class="mag-hero-eyebrow">FIRST SEEN 10 MO AGO · EDITOR'S PICK</div>
+    <h1 class="mag-hero-name">Bhaat N Bytes</h1>
+    <div class="mag-hero-meta">Bangladeshi · Scarborough</div>
+    <p class="mag-hero-hook">
+      A Bangladeshi rice-and-curry counter inside a Petro Canada gas station on Kennedy Rd.
+      The kind of opening the licence stream catches before any food critic does — owner-
+      operated, no chain affiliation, no review press.
+    </p>
+    <div class="mag-hero-dishes-eyebrow">WHAT TO ORDER</div>
+    <p class="mag-hero-dishes">dhaka chaap kebab, beef hari kebab, butter chicken, dhaka beef tehari.</p>
+  </figure>
+
+  <div class="compare">
+    <div class="compare-cell">
+      <h3>What it KEEPS</h3>
+      <p>Editorial weight, story-led framing, cuisine identity via color, "What to order" as the visual hook, click-through CTA pattern. Mobile-stacks cleanly.</p>
+    </div>
+    <div class="compare-cell">
+      <h3>What it LOSES</h3>
+      <p>The emotional "ooh look at the storefront" first impression. For spots where the actual photo isn't compelling (Petro Canada exterior, Star Glow Boba strip mall), losing it is almost an improvement.</p>
+    </div>
+  </div>
+
+  <div class="section-title">OG card — no-photo variant (what X / Slack / iMessage would show)</div>
+
+  <div class="og-card-frame">
+    <img src="/sandbox/no-photo-og-card.png" alt="No-photo OG card mock for Bhaat N Bytes" />
+  </div>
+
+  <div class="notes">
+    <h2>Honest read</h2>
+    <ul>
+      <li><b>For story-driven spots</b> (Bhaat N Bytes, the gas-station Bangladeshi joint), the
+        typographic hero is arguably <em>more</em> compelling than a wide Google street-view shot
+        of the parking lot.</li>
+      <li><b>For visually-strong spots</b> (a beautiful restaurant interior, a striking
+        storefront), the photo version still wins. Trade-off is real.</li>
+      <li><b>The OG card</b> survives the photo loss particularly well — at the size X actually
+        shows cards in feed (~500×260), big typography + cuisine color reads better than a
+        small low-detail photo.</li>
+      <li><b>Where it weakens most</b>: hero strips of 6 cuisines/restaurants. Without photos
+        those become boxed text blocks — could work with strong color blocks, but the
+        information density drops.</li>
+      <li><b>Compounds with strong recommendations:</b> if a no-photo build paired the
+        typographic hero with rich "next listing" surfaces ("other gas-station kitchens,"
+        "other Bangladeshi this month"), the page becomes a discovery engine rather than a
+        portrait. Different aesthetic, similar engagement.</li>
+    </ul>
+  </div>
+
+  <p style="font: 400 11px/1.4 var(--sans); color: var(--muted); text-align: center; margin: 32px 0;">
+    Mockup at /sandbox/no-photo-trends-hero.html · not linked anywhere on the live site
+  </p>
+
+</div>
+</body></html>

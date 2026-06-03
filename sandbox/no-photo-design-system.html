@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>No-photo design system mock · NowServingTO</title>
+<style>
+  :root {
+    --ink: #15110d; --ink2: #2d2d2b; --muted: #7a746a; --line: #e2dccf;
+    --paper: #faf7ee; --accent: #e84e3a;
+    --serif: 'Iowan Old Style', Charter, Georgia, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 0; background: var(--paper); color: var(--ink); font: 400 16px/1.5 var(--sans); }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 40px 24px; }
+  .section-title { font: 700 11px/1 var(--mono); letter-spacing: 0.25em; color: var(--muted); text-transform: uppercase; margin: 48px 0 18px; }
+
+  /* ─── Card preview (OG card image embedded in a frame) ─── */
+  .og-frame { margin: 0 auto 18px; max-width: 720px; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+  .og-frame img { display: block; width: 100%; height: auto; }
+  .og-caption { font: 400 12.5px/1.4 var(--sans); color: var(--muted); text-align: center; margin: 0 0 36px; font-style: italic; }
+
+  /* ─── HTML /trends hero — same design system as the OG card, rendered as live HTML ─── */
+  .mag-hero {
+    position: relative;
+    margin: 0 0 16px;
+    border-radius: 6px;
+    overflow: hidden;
+    padding: 56px 48px 48px;
+    color: #fff;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+  }
+  .mag-hero.bn  { background: linear-gradient(160deg, #006a4e 0%, #00432f 100%); }
+  .mag-hero.ug  { background: linear-gradient(160deg, #1c4b9d 0%, #0f2e63 100%); }
+  .mag-hero.kr  { background: linear-gradient(160deg, #a92c92 0%, #6e1c5f 100%); }
+  .mag-hero::after { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 50% 50%, transparent 30%, rgba(0,0,0,0.25) 100%); pointer-events: none; }
+
+  /* The native-script ornament: large faded watermark right-anchored */
+  .mag-hero-script {
+    position: absolute;
+    right: -10px; bottom: -50px;
+    font: 700 280px/1 'Noto Sans', 'Noto Sans Bengali', 'Noto Naskh Arabic', system-ui, serif;
+    color: rgba(255,255,255,0.09);
+    letter-spacing: -2px;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  .mag-hero > * { position: relative; z-index: 2; }
+  .mag-hero-eyebrow { font: 700 10.5px/1 var(--mono); letter-spacing: 0.25em; color: #ff9b85; text-transform: uppercase; margin-bottom: 16px; }
+  .mag-hero.ug .mag-hero-eyebrow { color: #f5d518; }
+  .mag-hero.kr .mag-hero-eyebrow { color: #ffd700; }
+  .mag-hero-name { font: 800 52px/1.05 var(--serif); letter-spacing: -2px; margin: 0 0 10px; color: #fff; }
+  .mag-hero-meta { font: 400 21px/1.4 var(--serif); font-style: italic; color: rgba(255,255,255,0.85); margin-bottom: 22px; }
+  .mag-hero-hook { font: 400 17px/1.55 var(--serif); color: rgba(255,255,255,0.92); max-width: 580px; margin-bottom: 28px; }
+  .mag-hero-divider { border-top: 1px solid rgba(255,255,255,0.18); margin: 22px 0 16px; }
+  .mag-hero-dishes-eyebrow { font: 700 10px/1 var(--mono); letter-spacing: 0.25em; color: rgba(255,255,255,0.68); text-transform: uppercase; margin: 0 0 10px; }
+  .mag-hero-dishes { font: 400 18px/1.5 var(--serif); font-style: italic; color: rgba(255,255,255,0.94); margin: 0; }
+
+  .hero-caption { font: 400 12.5px/1.4 var(--sans); color: var(--muted); text-align: center; margin: 0 0 36px; font-style: italic; }
+
+  .notes { background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 22px 26px; margin: 32px 0; font: 400 14.5px/1.6 var(--serif); color: var(--ink2); }
+  .notes h2 { font: 700 12.5px/1 var(--mono); letter-spacing: 0.18em; color: var(--ink); text-transform: uppercase; margin: 0 0 14px; }
+  .notes ul { margin: 0; padding-left: 20px; }
+  .notes li { margin-bottom: 8px; }
+
+  @media (max-width: 600px) {
+    .mag-hero { padding: 36px 24px 28px; }
+    .mag-hero-name { font-size: 34px; }
+    .mag-hero-meta { font-size: 17px; }
+    .mag-hero-hook { font-size: 15px; }
+    .mag-hero-script { font-size: 160px; bottom: -28px; right: -14px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <h1 style="font: 800 36px/1.1 var(--serif); margin: 0 0 12px; color: var(--ink); letter-spacing: -1px;">No-photo design system</h1>
+  <p style="font: 400 16px/1.5 var(--serif); color: var(--ink2); margin: 0 0 32px;">
+    Cuisine-color gradient + faded native-script ornament + clean typography hierarchy +
+    "What to order" dishes block. Zero borrowed imagery. Each card uses the cuisine's actual
+    flag-derived palette so a Bangladeshi spot reads green, an Uyghur spot reads blue, a Kurdish
+    spot reads purple — visual identity comes from culturally-rooted color, not stock photos.
+  </p>
+
+  <!-- ─── OG card variants (1200×675, what X / Slack / iMessage render) ─── -->
+  <div class="section-title">OG cards — what shows on X / Slack / iMessage</div>
+
+  <div class="og-frame"><img src="/sandbox/mock-card-bhaat-n-bytes.png" alt="Bhaat N Bytes mock"></div>
+  <p class="og-caption">Bhaat N Bytes · Bangladeshi · Bangladesh green gradient · বাংলা watermark in Bengali script</p>
+
+  <div class="og-frame"><img src="/sandbox/mock-card-oguz-uyghur-polov.png" alt="Oguz Uyghur Polov mock"></div>
+  <p class="og-caption">Oguz Uyghur Polov · Uyghur · flag-blue gradient · ئۇيغۇر watermark in Arabic-derived Uyghur script</p>
+
+  <div class="og-frame"><img src="/sandbox/mock-card-mardin-restaurant.png" alt="Mardin Restaurant mock"></div>
+  <p class="og-caption">Mardin Restaurant · Kurdish · purple-magenta gradient · کوردی watermark in Sorani Kurdish script</p>
+
+  <!-- ─── Live HTML /trends hero (same design system, rendered as actual HTML for desktop + mobile) ─── -->
+  <div class="section-title">/trends magazine hero — live HTML, same design system</div>
+
+  <div class="mag-hero bn">
+    <div class="mag-hero-script">বাংলা</div>
+    <div class="mag-hero-eyebrow">FIRST SEEN 10 MO AGO · EDITOR'S PICK</div>
+    <h2 class="mag-hero-name">Bhaat N Bytes</h2>
+    <div class="mag-hero-meta">Bangladeshi · Scarborough</div>
+    <p class="mag-hero-hook">A Bangladeshi rice-and-curry counter inside a Petro Canada gas station on Kennedy Rd. The kind of opening the licence stream catches before any food critic does.</p>
+    <div class="mag-hero-divider"></div>
+    <div class="mag-hero-dishes-eyebrow">WHAT TO ORDER</div>
+    <p class="mag-hero-dishes">dhaka chaap kebab, beef hari kebab, butter chicken, dhaka beef tehari.</p>
+  </div>
+  <p class="hero-caption">Hero variant for /trends — cuisine-color gradient, faded ornament, typography-led</p>
+
+  <div class="mag-hero ug">
+    <div class="mag-hero-script">ئۇيغۇر</div>
+    <div class="mag-hero-eyebrow">FIRST SEEN 19 D AGO · EDITOR'S PICK</div>
+    <h2 class="mag-hero-name">Oguz Uyghur Polov</h2>
+    <div class="mag-hero-meta">Uyghur · Scarborough</div>
+    <p class="mag-hero-hook">Uyghur hand-pulled noodles and big-plate chicken on Finch Ave — one of the few Uyghur kitchens registered in Toronto in the last year.</p>
+    <div class="mag-hero-divider"></div>
+    <div class="mag-hero-dishes-eyebrow">WHAT TO ORDER</div>
+    <p class="mag-hero-dishes">oguz leghmen, big plate chicken, polov.</p>
+  </div>
+  <p class="hero-caption">Same template, different cuisine color → instant visual identity per spot</p>
+
+  <div class="mag-hero kr">
+    <div class="mag-hero-script">کوردی</div>
+    <div class="mag-hero-eyebrow">FIRST SEEN 29 D AGO · EDITOR'S PICK</div>
+    <h2 class="mag-hero-name">Mardin Restaurant</h2>
+    <div class="mag-hero-meta">Kurdish · North York</div>
+    <p class="mag-hero-hook">Kurdish kebabs, shepherd salad, and lentil soup on Finch Ave W — a community-rooted kitchen in the Jane-Finch corridor.</p>
+    <div class="mag-hero-divider"></div>
+    <div class="mag-hero-dishes-eyebrow">WHAT TO ORDER</div>
+    <p class="mag-hero-dishes">beef shish wrap, lentil soup, shepherd salad, kebab.</p>
+  </div>
+  <p class="hero-caption">Third cuisine, third color, same system — recognizable as "NowServingTO" instantly</p>
+
+  <div class="notes">
+    <h2>Honest read</h2>
+    <ul>
+      <li><b>The design system holds across cuisines.</b> Three different colors (green / blue / purple) with the same typographic + ornament structure — recognizable as one brand, distinctive per cuisine.</li>
+      <li><b>The native-script ornament does cultural work without depicting people.</b> Even with Latin fallbacks (BANGLA / UYGHUR / KURDÎ), the watermark creates richness. Swapped to actual scripts (বাংলা / ئۇيغۇر / کوردی) once Noto fonts are installed on the rendering box, it would feel even more culturally specific.</li>
+      <li><b>The "What to order" line is the workhorse.</b> "dhaka chaap kebab, beef hari kebab, butter chicken, dhaka beef tehari" sells the spot better than any storefront photo would. The dishes data we extract via Haiku turns out to be the visual replacement for photos.</li>
+      <li><b>Cost to build for real: ~1 day.</b> Modify build_trends_card_svg() in og_card.py to use this template, parameterize per-entry color + ornament + dishes. Sample cuisines done; the cuisine→color + cuisine→native-script tables exist or are short.</li>
+      <li><b>Hybrid possibility:</b> use photo OG card when photo is strong (Star Glow Boba storefront), use this typographic version when photo is weak (Petro Canada gas station). Best of both — let the visual win where it exists, never display embarrassing photos as your hero card.</li>
+    </ul>
+  </div>
+
+  <p style="font: 400 11px/1.4 var(--sans); color: var(--muted); text-align: center; margin: 32px 0;">
+    Mockup at /sandbox/no-photo-design-system.html · not linked anywhere on the live site
+  </p>
+
+</div>
+</body></html>

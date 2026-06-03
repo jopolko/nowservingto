@@ -26,6 +26,8 @@ COST_FINDPLACE = 0.017
 COST_DETAILS   = 0.025  # Basic + Contact + Atmosphere combined
 COST_PER_PAIR  = COST_FINDPLACE + COST_DETAILS
 COST_HARD_CAP  = 30.00  # USD safety abort
+LARGE_RUN_THRESHOLD = 500  # require --confirm above this many lookups
+SCRIPT = 'enrich_places'   # tag for usage_log so spikes attribute back here
 
 def load_api_key():
     if not SECRETS.exists():
@@ -52,7 +54,7 @@ def find_place(query):
     )
     try:
         from usage_log import log_usage
-        log_usage('places.find_place', meta={'q': query[:80]})
+        log_usage('places.find_place', meta={'script': SCRIPT, 'q': query[:80]})
     except Exception: pass
     if r.get('status') != 'OK': return None
     cands = r.get('candidates') or []
@@ -72,7 +74,7 @@ def place_details(place_id):
     )
     try:
         from usage_log import log_usage
-        log_usage('places.details', meta={'place_id': place_id})
+        log_usage('places.details', meta={'script': SCRIPT, 'place_id': place_id})
     except Exception: pass
     if r.get('status') != 'OK': return None
     return r.get('result')
@@ -95,7 +97,7 @@ def download_place_photo(photo_reference, max_width=1600):
             ct = r.headers.get('Content-Type', 'image/jpeg')
             try:
                 from usage_log import log_usage
-                log_usage('places.photo')
+                log_usage('places.photo', meta={'script': SCRIPT})
             except Exception: pass
             return data, ct
     except Exception:
@@ -118,7 +120,7 @@ def streetview_metadata(lat, lng):
             data = json.loads(r.read())
         try:
             from usage_log import log_usage
-            log_usage('streetview.metadata')   # free, logged for visibility
+            log_usage('streetview.metadata', meta={'script': SCRIPT})   # free, logged for visibility
         except Exception: pass
         return data
     except Exception:
@@ -149,7 +151,7 @@ def streetview_image(lat, lng, size='640x640', fov=80, heading=None, pitch=0):
             data = r.read()
             try:
                 from usage_log import log_usage
-                log_usage('streetview.image')
+                log_usage('streetview.image', meta={'script': SCRIPT})
             except Exception: pass
             return data, r.headers.get('Content-Type', 'image/jpeg')
     except Exception:
@@ -255,7 +257,7 @@ def _textsearch_fallback(operating_name, addr_first):
         {'query': q, 'type': 'restaurant', 'key': API_KEY})
     try:
         from usage_log import log_usage
-        log_usage('places.text_search', meta={'q': q[:80]})
+        log_usage('places.text_search', meta={'script': SCRIPT, 'q': q[:80]})
     except Exception: pass
     cands = r.get('results') or []
     if not cands: return None
@@ -360,6 +362,16 @@ def enrich_one(operating_name, address):
     # billable Places Photo SKU; we cache the ref here and download on demand.
     photos = details.get('photos') or []
     photo_ref = photos[0].get('photo_reference') if photos else None
+    # html_attributions per photo — Google's ToS requires displaying author
+    # attribution near every cached photo. Strip the wrapping <a> tags and
+    # keep the plain author name; we'll render with our own styling.
+    import re as _re_attrib
+    photo_attribs = []
+    if photos and photos[0].get('html_attributions'):
+        for raw in photos[0]['html_attributions']:
+            # Typical format: '<a href="https://maps.google.com/maps/contrib/...">Author Name</a>'
+            txt = _re_attrib.sub(r'<[^>]+>', '', raw).strip()
+            if txt: photo_attribs.append(txt)
     return {
         'status': 'ok',
         'place_id': cand['place_id'],
@@ -377,6 +389,7 @@ def enrich_one(operating_name, address):
         'reviewsDetail': reviews,            # list[dict] - {time, relative_time, rating, text} - date data for opening-gate logic
         'editorialSummary': editorial,       # str or None - Google's curated description (sometimes mentions "since YYYY")
         'photoRef': photo_ref,               # str or None - first photo_reference for og:image
+        'photoAttribs': photo_attribs,       # list[str] - per Places ToS, must display author near cached photo
         'query': query,
     }
 
@@ -446,6 +459,15 @@ def main():
     print(f"estimated API spend: ${est_cost:.2f}")
     if est_cost > COST_HARD_CAP:
         print(f"  (will abort at hard cap ${COST_HARD_CAP:.2f}; not all entries will be processed)")
+    # Large-run confirm gate. Requires --confirm to proceed past
+    # LARGE_RUN_THRESHOLD lookups. Added after a 2026-06-01 manual run
+    # silently burned $18 of Places in 6 minutes — visible only in
+    # post-hoc usage_log inspection. The cron daily run rarely exceeds
+    # ~50 fetches, so this only fires for deliberate backfills.
+    if len(to_fetch) > LARGE_RUN_THRESHOLD and '--confirm' not in sys.argv:
+        print(f"\n  ABORT: {len(to_fetch)} lookups exceeds LARGE_RUN_THRESHOLD={LARGE_RUN_THRESHOLD}")
+        print(f"  Estimated spend ${est_cost:.2f}. Re-run with --confirm to proceed.")
+        sys.exit(2)
 
     spent = 0.0
     ok = err = 0

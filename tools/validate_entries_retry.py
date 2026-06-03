@@ -66,7 +66,7 @@ def main():
             if key in pc: pc.pop(key)
         if parsed['is_restaurant'] == 'no':
             n_isr_no += 1
-            wv[key]['validator_drop'] = 'not-restaurant'
+            wv[key]['validator_drop'] = 'not-discovery'
             wv[key]['validator_evidence'] = parsed['evidence']
         else:
             wv[key].pop('validator_drop', None)

@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Toronto restaurant openings by cuisine — May 2026 | NowServingTO</title>
-<meta name="description" content="Cuisine-velocity chart for newly-registered Toronto restaurants in May 2026 vs the 12-month average. Live data from City of Toronto open data.">
+<title>Toronto&#39;s Freshest Restaurants, updated daily | NowServingTO (June 3, 2026)</title>
+<meta name="description" content="The newest restaurants licensed in Toronto, by cuisine and neighbourhood, including the Uyghur, Tamil, and Salvadoran spots the mainstream food press never covers. Updated June 3, 2026 from City open data.">
 <!-- meta keywords removed 2026-05-18: Google ignores the tag and a generic
      cuisine-stuffed list reused across every generated page reads as spam. -->
 <meta name="author" content="NowServingTO">
@@ -42,6 +42,13 @@
       document.head.appendChild(s);
       gtag('js', new Date());
       gtag('config', 'G-CBQJHD3G7P');
+      // Microsoft Clarity — session recordings + heatmaps. Same lazy-load
+      // window as GA so Lighthouse TBT is unaffected.
+      (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+      })(window, document, "clarity", "script", "x10kln08ch");
     };
     ['scroll','pointerdown','keydown','touchstart','visibilitychange']
       .forEach(function(ev){ window.addEventListener(ev, load, {once: true, passive: true, capture: true}); });
@@ -58,9 +65,9 @@
 <!-- Open Graph for sharing previews -->
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://nowservingto.com/trends">
-<meta property="og:title" content="Toronto restaurant openings by cuisine — May 2026 | NowServingTO">
-<meta property="og:description" content="Cuisine-velocity chart for newly-registered Toronto restaurants in May 2026 vs the 12-month average. Live data from City of Toronto open data.">
-<meta property="og:image" content="https://nowservingto.com/og.svg">
+<meta property="og:title" content="Toronto&#39;s Freshest Restaurants, updated daily | NowServingTO (June 3, 2026)">
+<meta property="og:description" content="The newest restaurants licensed in Toronto, by cuisine and neighbourhood, including the Uyghur, Tamil, and Salvadoran spots the mainstream food press never covers. Updated June 3, 2026 from City open data.">
+<meta property="og:image" content="https://nowservingto.com/og/trends-2026-06.png?v=1780513741">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:locale" content="en_CA">
@@ -68,9 +75,9 @@
 
 <!-- Twitter / X cards -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Toronto restaurant openings by cuisine — May 2026 | NowServingTO">
-<meta name="twitter:description" content="Cuisine-velocity chart for newly-registered Toronto restaurants in May 2026 vs the 12-month average. Live data from City of Toronto open data.">
-<meta name="twitter:image" content="https://nowservingto.com/og.svg">
+<meta name="twitter:title" content="Toronto&#39;s Freshest Restaurants, updated daily | NowServingTO (June 3, 2026)">
+<meta name="twitter:description" content="The newest restaurants licensed in Toronto, by cuisine and neighbourhood, including the Uyghur, Tamil, and Salvadoran spots the mainstream food press never covers. Updated June 3, 2026 from City open data.">
+<meta name="twitter:image" content="https://nowservingto.com/og/trends-2026-06.png?v=1780513741">
 
 <!-- Structured data: WebSite for the directory itself. Restaurant ItemList is
      injected by tools/inject_openings.py between the LIST markers below. -->
@@ -157,6 +164,16 @@
   .mast .brand:hover { color: var(--accent); }
   .mast .brand sup { font: 600 10px/1 var(--sans); letter-spacing: 0.08em; color: var(--muted); margin-left: 6px; vertical-align: super; text-transform: uppercase; }
   .mast .sub { color: var(--ink2); font: 400 14px/1.4 var(--serif); margin: 6px 0 0; font-style: italic; }
+  /* Discrete methodology line under the homepage H1. Italic serif,
+     muted, narrow — sits as a quiet dek that builds credibility
+     without competing with the H1 for attention. Suppressed on
+     non-homepage routes (cuisine / district / listing / dispatch /
+     trends) since those pages get the same line elsewhere or in their
+     own framing. */
+  .mast .home-methodology { color: var(--muted); font: 400 12.5px/1.5 var(--serif); font-style: italic; margin: 8px 0 0; }
+  body.page-listing .mast .home-methodology,
+  body.page-dispatch .mast .home-methodology,
+  body.page-trends .mast .home-methodology { display: none; }
   .mast .sub .hl { font-weight: 800; font-style: normal; color: var(--accent); letter-spacing: -0.005em; }
   .mast .sub #last-update { font-style: normal; font-weight: 600; color: var(--ink2); font-variant-numeric: lining-nums tabular-nums; }
 
@@ -301,7 +318,7 @@
   .open-row[data-fresh="hot"] .od .ago { color: var(--fresh); font-size: 10.5px; }
   .open-row[data-fresh="hot"] .od .ago::before { content: '★ '; }
   /* "Recent" tier (31-90d) and "Aged" tier (91-365d) carry longer labels
-     ('Recent · 7w ago', 'Registered 4mo ago') than fits at the default 10px
+     ('Recent · 7w ago', 'First seen 4mo ago') than fits at the default 10px
      + 0.06em tracking. Shrink to 9px / 0.02em so the duration anchors fit
      the 110px column without wrapping. "New" tier stays at its accent
      treatment since 'New · 5d ago' fits comfortably. */
@@ -459,7 +476,22 @@
   body.page-trends .newsletter-cta { display: none !important; }
   /* Trends page: cuisine-velocity chart + callouts + share button.
      Screenshot-shareable artifact for social distribution. */
-  body.page-trends .trends-section { margin: 28px 0; }
+  /* Lock all trends sections to a single 760px center column (magazine
+     spread). Fixes the "hourglass" zigzag where wide sections alternated
+     with narrow ones. Only `.trends-mag-hero` opts out by setting its
+     own max-width: 100% — that's the intentional full-bleed break. */
+  body.page-trends .trends-section,
+  body.page-trends .trends-vs-card,
+  body.page-trends .trends-hero-strip,
+  body.page-trends .trends-treemap-wrap,
+  body.page-trends .trends-sources,
+  body.page-trends .trends-take,
+  body.page-trends .trends-lede,
+  body.page-trends .trends-masthead,
+  body.page-trends .trends-share,
+  body.page-trends .trends-chips { max-width: 760px; margin-left: auto; margin-right: auto; }
+  body.page-trends .trends-share { text-align: center; padding: 16px 0; }
+  body.page-trends .trends-section { margin: 40px auto; }
   body.page-trends .trends-h2 { font: 800 18px/1.2 var(--sans); margin: 0 0 14px; letter-spacing: -0.012em; color: var(--ink); }
   /* Top-N pie row: top 6 cuisines side by side, each showing its share
      of the period's openings. The visual ratio between the slices does
@@ -469,32 +501,250 @@
   body.page-trends .trends-pies-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin: 12px 0 8px; padding: 8px 0; }
   body.page-trends .trends-pie-card { text-align: center; flex: 0 0 auto; }
   body.page-trends .trends-pie-card svg { display: block; margin: 0 auto; }
+  body.page-trends .trends-treemap-wrap { margin: 28px auto 8px; max-width: 720px; }
+  body.page-trends .trends-treemap-eyebrow { font: 700 11px/1 var(--sans); color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; margin: 0 0 10px; text-align: center; }
+  body.page-trends .trends-treemap { border-radius: 10px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.08); background: #faf7ee; }
+  body.page-trends .trends-treemap svg { display: block; width: 100%; height: auto; }
+  body.page-trends .trends-treemap a { cursor: pointer; }
+  body.page-trends .trends-treemap a rect { transition: opacity 0.15s ease; }
+  body.page-trends .trends-treemap a:hover rect { opacity: 0.82; }
+  body.page-trends .trends-treemap-note { font: 400 13.5px/1.55 var(--serif); color: var(--ink2); text-align: center; max-width: 600px; margin: 12px auto 0; font-style: italic; }
+  body.page-trends .trends-sources { max-width: 720px; margin: 40px auto 24px; padding: 20px 24px; background: var(--paper); border-left: 3px solid var(--line); border-radius: 4px; }
+  body.page-trends .trends-sources-eyebrow { font: 700 11px/1 var(--sans); color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; margin: 0 0 12px; }
+  body.page-trends .trends-sources-list { list-style: none; margin: 0; padding: 0; font: 400 13.5px/1.6 var(--serif); }
+  body.page-trends .trends-sources-list li { padding: 4px 0; color: var(--ink2); }
+  body.page-trends .trends-sources-list a { color: var(--ink); text-decoration: none; border-bottom: 1px dotted var(--muted); }
+  body.page-trends .trends-sources-list a:hover { color: var(--accent); border-bottom-color: var(--accent); }
   body.page-trends .trends-pie-name { font: 700 13px/1.2 var(--sans); margin-top: 8px; color: var(--ink); letter-spacing: -0.005em; }
+  body.page-trends .trends-pie-flag { width: 32px; margin: 5px auto 0; opacity: 0.5; line-height: 0; }
+  body.page-trends .trends-pie-flag svg { width: 100%; height: auto; display: block; border-radius: 2px; border: 1px solid rgba(0,0,0,0.08); }
   body.page-trends .trends-pie-link { color: inherit; text-decoration: none; border-bottom: 1px dotted var(--line); padding-bottom: 1px; transition: color 0.12s, border-color 0.12s; }
   body.page-trends .trends-pie-link:hover { color: var(--accent); border-bottom-color: var(--accent); }
-  body.page-trends .trends-vs-cuisine { text-decoration: none; transition: opacity 0.12s; }
-  body.page-trends .trends-vs-cuisine:hover { opacity: 0.75; }
+  body.page-trends .trends-vs-cuisine { text-decoration: none; transition: opacity 0.12s; position: relative; display: inline-block; padding: 6px 14px; }
+  body.page-trends .trends-vs-cuisine:hover { opacity: 0.85; }
+  body.page-trends .trends-vs-cuisine .cuisine-flag-bg { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 110%; max-width: 130px; opacity: 0.45; z-index: 0; pointer-events: none; border-radius: 3px; overflow: hidden; line-height: 0; }
+  body.page-trends .trends-vs-cuisine .cuisine-flag-bg svg { width: 100%; height: auto; display: block; border-radius: 3px; }
+  body.page-trends .trends-vs-cuisine .cuisine-name { position: relative; z-index: 1; text-shadow: 0 1px 2px rgba(255,255,255,0.5); }
   body.page-trends .trends-events-cuisine { color: var(--ink); text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; font-weight: 700; transition: text-decoration-color 0.12s; }
   body.page-trends .trends-events-cuisine:hover { text-decoration-color: var(--accent); color: var(--accent); }
+  /* Representation index: per-cuisine row showing openings % bar
+     (colored) vs heritage population % bar (grey). Status indicator
+     on the right shows over/under/balanced. Designed to surface the
+     actionable insight: which cuisines are over- or under-served. */
+  body.page-trends .rep-chart { display: flex; flex-direction: column; gap: 14px; margin: 10px 0 16px; }
+  body.page-trends .rep-row { display: grid; grid-template-columns: 110px 1fr 110px; gap: 14px; align-items: center; }
+  body.page-trends .rep-cuisine { font: 700 13px/1.2 var(--sans); color: var(--ink); text-decoration: none; text-align: right; padding-right: 4px; border-bottom: 1px dotted transparent; transition: color 0.12s, border-color 0.12s; }
+  body.page-trends .rep-cuisine:hover { color: var(--accent); border-bottom-color: var(--accent); }
+  body.page-trends .rep-bars { display: flex; flex-direction: column; gap: 3px; }
+  body.page-trends .rep-bar { height: 18px; border-radius: 2px; position: relative; overflow: visible; min-width: 2px; transition: width 0.4s cubic-bezier(0.22,1,0.36,1); }
+  body.page-trends .rep-bar-open { background: var(--accent); }
+  body.page-trends .rep-bar-pop { background: #d9d7d2; }
+  body.page-trends .rep-bar-label { position: absolute; left: calc(100% + 6px); top: 50%; transform: translateY(-50%); font: 600 10.5px/1 var(--sans); color: var(--ink2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  body.page-trends .rep-ratio { font: 800 12px/1.2 var(--sans); text-align: right; letter-spacing: -0.005em; font-variant-numeric: tabular-nums; }
+  body.page-trends .rep-note { font: 400 12.5px/1.55 var(--serif); color: var(--muted); margin: 12px 0 0; font-style: italic; }
+  body.page-trends .rep-note b { color: var(--ink2); font-weight: 700; font-style: normal; }
+  body.page-trends .rep-note a { color: var(--ink2); }
+  @media (max-width: 500px) {
+    body.page-trends .rep-row { grid-template-columns: 80px 1fr 80px; gap: 10px; }
+    body.page-trends .rep-cuisine { font-size: 12px; }
+    body.page-trends .rep-bar-label { font-size: 10px; }
+    body.page-trends .rep-ratio { font-size: 11px; }
+  }
   body.page-trends .trends-pies-note { font: 400 13px/1.4 var(--serif); color: var(--muted); font-style: italic; text-align: center; margin: 4px 0 22px; }
   body.page-trends .trends-h3 { font: 700 12px/1.2 var(--sans); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 16px 0 10px; }
+  /* Section-card treatment — matches the VS card's accent-bordered
+     banner so the 3 Months and 3 Years pie sections feel like part
+     of the same editorial scoreboard. */
+  body.page-trends .trends-section-card { background: var(--paper); border-top: 3px solid var(--accent); border-bottom: 3px solid var(--accent); padding: 28px 28px 24px; }
+  body.page-trends .trends-section-card .trends-h2 { margin-top: 0; }
+  /* Magazine typography overrides for /trends - the page should read
+     like a New Yorker / GQ blog post on Toronto food, not like a
+     dashboard. Serif body, generous spacing, drop cap, pull-quote
+     eyebrows, editorial takes between charts. */
+  /* Trade-pub masthead stamp - tiny capped line at top, like an issue
+     number on a printed industry magazine. */
+  /* Magazine-style hero image — GQ-feature treatment. Full-width photo
+     at the top of /trends body with a centered caption overlay band.
+     Visual continuity: same featured spot the OG card uses, so a
+     tweet-click visitor sees the same photo on landing. */
+  body.page-trends .trends-mag-hero-link { display: block; text-decoration: none; color: inherit; transition: transform 0.2s, box-shadow 0.2s; }
+  body.page-trends .trends-mag-hero-link:hover .trends-mag-hero { box-shadow: 0 8px 32px rgba(0,0,0,0.16); }
+  body.page-trends .trends-mag-hero-link:hover .trends-mag-hero-name { color: #ffd9d0; }
+  body.page-trends .trends-mag-hero { margin: 8px 0 32px; padding: 0; max-width: 100%; position: relative; border-radius: 6px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.10); transition: box-shadow 0.2s; }
+  body.page-trends .trends-mag-hero img { width: 100%; height: auto; display: block; max-height: 520px; object-fit: cover; }
+  body.page-trends .trends-mag-hero-cap { position: absolute; left: 0; right: 0; bottom: 0; padding: 60px 32px 26px; background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.85) 100%); color: #fff; display: flex; flex-direction: column; gap: 4px; }
+  body.page-trends .trends-mag-hero-eyebrow { font: 700 11px/1 ui-monospace, "SF Mono", Menlo, monospace; color: #ff7a63; letter-spacing: 0.25em; text-transform: uppercase; margin-bottom: 8px; }
+  body.page-trends .trends-mag-hero-name { font: 700 36px/1.1 var(--serif); color: #fff; letter-spacing: -1.5px; }
+  body.page-trends .trends-mag-hero-meta { font: 400 18px/1.3 var(--serif); font-style: italic; color: rgba(255,255,255,0.85); margin-top: 4px; }
+  @media (max-width: 600px) {
+    body.page-trends .trends-mag-hero img { max-height: 380px; }
+    body.page-trends .trends-mag-hero-cap { padding: 48px 20px 20px; }
+    body.page-trends .trends-mag-hero-name { font-size: 26px; }
+    body.page-trends .trends-mag-hero-meta { font-size: 15px; }
+    body.page-trends .trends-mag-hero-eyebrow { font-size: 10px; letter-spacing: 0.18em; }
+  }
+
+  /* Masthead — kill the dark banner entirely. Replace with a thin
+     column-header rule: small-caps muted text on transparent bg with
+     a hairline underline. Reads as "magazine section divider" instead
+     of "TV news lower-third banner." */
+  body.page-trends .trends-masthead { display: flex; flex-wrap: wrap; gap: 8px; align-items: baseline; padding: 10px 0 12px; margin: 22px auto 22px; background: transparent; color: var(--muted); font: 700 10.5px/1.4 ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: 0.18em; border-bottom: 1px solid var(--line); text-transform: uppercase; }
+  body.page-trends .trends-masthead .trends-mh-brand { color: var(--accent); text-decoration: none; }
+  body.page-trends .trends-masthead .trends-mh-brand:hover { color: var(--ink); }
+  body.page-trends .trends-masthead .trends-mh-sep { color: var(--line); }
+  body.page-trends .trends-masthead .trends-mh-tag { color: var(--ink2); }
+  body.page-trends .trends-masthead .trends-mh-issue { color: var(--muted); }
+  body.page-trends .trends-masthead .trends-mh-date { color: var(--muted); }
+  body.page-trends .trends-masthead .trends-mh-cta { margin-left: auto; color: var(--accent); background: transparent; padding: 0; text-decoration: none; font-weight: 700; letter-spacing: 0.18em; border: none; }
+  body.page-trends .trends-masthead .trends-mh-cta:hover { color: var(--ink); }
+  body.page-trends .trends-deck { font: 400 17px/1.5 var(--serif); color: var(--ink2); margin: 14px auto 0; max-width: 640px; font-style: italic; text-align: center; }
+  body.page-trends .trends-lede { margin: 28px auto 32px; max-width: 720px; }
+  body.page-trends .trends-lede-p { font: 400 18px/1.6 var(--serif); color: var(--ink); margin: 0; }
+  body.page-trends .trends-lede-cta { display: inline-block; margin-left: 4px; font: 700 15px/1 var(--sans); color: var(--accent); text-decoration: none; border-bottom: 2px solid var(--accent); padding-bottom: 1px; white-space: nowrap; }
+  body.page-trends .trends-lede-cta:hover { color: var(--ink); border-bottom-color: var(--ink); }
+  body.page-trends .trends-chips { max-width: 720px; margin: 8px auto 26px; }
+  body.page-trends .trends-chips-label { font: 700 11px/1 var(--sans); color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; margin: 0 0 10px; }
+  body.page-trends .trends-chips-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  body.page-trends .trends-chip { display: inline-block; padding: 8px 14px; font: 700 14px/1 var(--sans); color: #fff; background: var(--chip-color, var(--ink)); border-radius: 999px; text-decoration: none; transition: opacity 0.15s, transform 0.15s; }
+  body.page-trends .trends-chip:hover { opacity: 0.88; transform: translateY(-1px); }
+  body.page-trends .trends-hero-strip { max-width: 720px; margin: 0 auto 36px; }
+  body.page-trends .trends-hero-label { font: 700 11px/1 var(--sans); color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; margin: 0 0 10px; }
+  body.page-trends .trends-hero-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+  @media (max-width: 820px) { body.page-trends .trends-hero-row { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 480px) { body.page-trends .trends-hero-row { grid-template-columns: repeat(2, 1fr); } }
+
+  /* "20 newest spots" deliverable grid — honors the tweet promise.
+     5 columns × 4 rows desktop, 4 columns tablet, 2 columns mobile. */
+  body.page-trends .trends-twenty { background: transparent; border: none; padding: 0; }
+  body.page-trends .trends-twenty-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 14px; }
+  @media (max-width: 900px) { body.page-trends .trends-twenty-row { grid-template-columns: repeat(4, 1fr); gap: 10px; } }
+  @media (max-width: 680px) { body.page-trends .trends-twenty-row { grid-template-columns: repeat(3, 1fr); gap: 8px; } }
+  @media (max-width: 480px) { body.page-trends .trends-twenty-row { grid-template-columns: repeat(2, 1fr); gap: 8px; } }
+  body.page-trends .trends-twenty-card { display: block; background: var(--paper); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; text-decoration: none; color: var(--ink); transition: transform 0.15s, box-shadow 0.15s; }
+  body.page-trends .trends-twenty-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+  body.page-trends .trends-twenty-thumb { width: 100%; aspect-ratio: 1 / 1; background-size: cover; background-position: center; background-color: #ebe9e4; }
+  body.page-trends .trends-twenty-body { padding: 8px 9px 10px; }
+  body.page-trends .trends-twenty-age { font: 700 9.5px/1 var(--sans); color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 5px; }
+  body.page-trends .trends-twenty-name { font: 700 12px/1.2 var(--sans); color: var(--ink); margin: 0 0 3px; letter-spacing: -0.005em; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; min-height: 28.8px; }
+  body.page-trends .trends-twenty-meta { font: 500 10.5px/1.25 var(--sans); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  body.page-trends .trends-hero-card { display: block; background: var(--paper); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; text-decoration: none; color: var(--ink); transition: transform 0.15s, box-shadow 0.15s; }
+  body.page-trends .trends-hero-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+  body.page-trends .trends-hero-thumb { width: 100%; aspect-ratio: 1 / 1; background-size: cover; background-position: center; background-color: #ebe9e4; }
+  body.page-trends .trends-hero-body { padding: 7px 8px 9px; }
+  body.page-trends .trends-hero-age { font: 700 9px/1 var(--sans); color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+  body.page-trends .trends-hero-name { font: 700 11.5px/1.2 var(--sans); color: var(--ink); margin: 0 0 3px; letter-spacing: -0.005em; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  body.page-trends .trends-hero-meta { font: 500 10.5px/1.25 var(--sans); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  body.page-trends .trends-dropcap { float: left; font: 800 64px/0.85 var(--serif); color: var(--accent); margin: 4px 10px -2px 0; padding: 0; letter-spacing: -0.03em; }
+  body.page-trends .trends-eyebrow { font: 700 10.5px/1 var(--sans); text-transform: uppercase; letter-spacing: 0.14em; color: var(--accent); margin: 0 0 10px; }
+  body.page-trends .trends-take { max-width: 720px; margin: 22px auto 6px; }
+  body.page-trends .trends-take p { font: 400 16px/1.65 var(--serif); color: var(--ink2); margin: 0; }
+  body.page-trends .trends-take b { color: var(--ink); font-weight: 700; }
+  body.page-trends .trends-take a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; text-decoration-thickness: 1.5px; font-weight: 700; }
+  body.page-trends .trends-take a:hover { color: var(--accent); }
+  body.page-trends .trends-close { max-width: 640px; margin: 36px auto 24px; padding-top: 24px; border-top: 1px solid var(--line); }
+  body.page-trends .trends-close p { font: 400 15.5px/1.65 var(--serif); color: var(--ink2); margin: 0 0 14px; }
+  body.page-trends .trends-close-method { font: 400 12.5px/1.55 var(--sans) !important; color: var(--muted) !important; margin-top: 16px !important; font-style: italic; }
+  body.page-trends .trends-close-method b { color: var(--ink2); font-weight: 700; font-style: normal; }
+  body.page-trends .trends-close-method a { color: var(--ink2); }
+  body.page-trends .trends-section-headline { padding-top: 14px; }
+  /* Hero H1 — magazine headline treatment */
+  body.page-trends .mast .sub { font: 800 40px/1.1 var(--serif) !important; color: var(--ink) !important; font-style: normal !important; max-width: 800px; margin: 20px auto 4px !important; letter-spacing: -0.02em; text-align: center; }
+  body.page-trends .mast .sub .hl { color: var(--accent); font-weight: 700; font-style: italic; display: block; font-size: 0.55em; letter-spacing: 0.05em; margin-top: 8px; text-transform: uppercase; }
+  @media (max-width: 600px) {
+    body.page-trends .mast .sub { font-size: 30px !important; }
+    body.page-trends .mast .sub .hl { font-size: 0.5em; }
+  }
   /* Contrast VS card - graphic showdown between the 36-month leader
      and the 90-day challenger. Two columns + "VS" spine. When same
      cuisine leads both, single celebratory card instead. */
   body.page-trends .trends-vs { display: flex; align-items: center; justify-content: center; gap: 24px; padding: 24px 22px; margin: 30px 0; background: var(--paper); border-top: 3px solid var(--accent); border-bottom: 3px solid var(--accent); }
   body.page-trends .trends-vs-side { text-align: center; flex: 1 1 0; min-width: 0; }
+  /* Tan-background news / supplemental section for the dojo events.
+     Visually distinct from the accent-bordered card sections above —
+     reads as commentary/recent moves, not core leaderboard data. */
+  body.page-trends .trends-section-news { background: #f0e6cf; border: 1px solid #d9c89e; border-radius: 8px; padding: 16px 20px; }
+  body.page-trends .trends-section-news .trends-events { padding: 0; background: transparent; border: none; }
   body.page-trends .trends-vs-label { font: 700 10.5px/1 var(--sans); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 8px; }
   body.page-trends .trends-vs-cuisine { font: 900 28px/1.1 var(--sans); letter-spacing: -0.02em; margin-bottom: 6px; }
   body.page-trends .trends-vs-pct { font: 700 20px/1 var(--sans); color: var(--ink); font-variant-numeric: tabular-nums; }
   body.page-trends .trends-vs-divider { font: 900 22px/1 var(--sans); color: var(--muted); letter-spacing: 0.1em; flex: 0 0 auto; }
+
+  /* VS card — Cosmopolitan/Vanity Fair glossy-magazine treatment.
+     Paper background, hairline rules instead of heavy bars, serif body
+     for nicknames + stats, generous whitespace. Lighter and more
+     elegant than the original UFC-poster dark-mode look; reads as
+     "editorial spread" on phone scroll. */
+  body.page-trends .trends-vs-card { background: var(--paper); color: var(--ink); padding: 0; margin: 36px 0; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
+  body.page-trends .trends-vs-banner { background: transparent; color: var(--accent); font: 700 10.5px/1 ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: 0.3em; text-align: center; padding: 18px 16px 14px; text-transform: uppercase; border-bottom: 1px solid var(--line); }
+  body.page-trends .trends-vs-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 0; padding: 40px 24px 36px; }
+  body.page-trends .trends-vs-fighter { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 0 16px; text-decoration: none; color: var(--ink); transition: transform 0.2s; }
+  body.page-trends .trends-vs-fighter:hover { transform: translateY(-2px); }
+  body.page-trends .trends-vs-belt { font: 700 9.5px/1 ui-monospace, "SF Mono", Menlo, monospace; color: #b8860b; letter-spacing: 0.3em; padding: 4px 10px; border: 1px solid rgba(184,134,11,0.4); border-radius: 1px; text-transform: uppercase; margin-bottom: 8px; }
+  body.page-trends .trends-vs-belt-contender { color: var(--muted); border-color: var(--line); }
+  body.page-trends .trends-vs-flag { width: 72px; height: 50px; display: flex; align-items: center; justify-content: center; margin: 6px 0; }
+  body.page-trends .trends-vs-flag svg { width: 100%; height: auto; box-shadow: 0 1px 4px rgba(0,0,0,0.12); border-radius: 1px; }
+  body.page-trends .trends-vs-nick { font: 700 38px/1.1 var(--serif); font-style: italic; color: var(--fighter-color, var(--ink)); letter-spacing: -0.5px; margin: 12px 0 6px; }
+  body.page-trends .trends-vs-realname { font: 700 11px/1 ui-monospace, "SF Mono", Menlo, monospace; color: var(--muted); letter-spacing: 0.25em; text-transform: uppercase; }
+  body.page-trends .trends-vs-stats { display: flex; gap: 28px; margin-top: 16px; }
+  body.page-trends .trends-vs-stat { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  body.page-trends .trends-vs-stat b { font: 700 36px/1 var(--serif); color: var(--ink); font-variant-numeric: tabular-nums; letter-spacing: -1px; }
+  body.page-trends .trends-vs-stat em { font: 700 9.5px/1 ui-monospace, "SF Mono", Menlo, monospace; color: var(--muted); text-transform: uppercase; letter-spacing: 0.25em; font-style: normal; }
+  body.page-trends .trends-vs-card .trends-vs-divider { font: 400 38px/1 var(--serif); font-style: italic; color: var(--accent); flex: 0 0 auto; padding: 0 10px; opacity: 0.7; }
+  body.page-trends .trends-vs-card .trends-vs-divider span { display: block; }
+  body.page-trends .trends-vs-tale { background: transparent; color: var(--muted); font: 700 10px/1.4 ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: 0.25em; text-align: center; padding: 14px 16px; text-transform: uppercase; border-top: 1px solid var(--line); }
+  @media (max-width: 600px) {
+    body.page-trends .trends-vs-row { grid-template-columns: 1fr; gap: 28px; padding: 32px 16px 28px; }
+    body.page-trends .trends-vs-card .trends-vs-divider { font-size: 28px; padding: 0; }
+    body.page-trends .trends-vs-nick { font-size: 24px; }
+    body.page-trends .trends-vs-stat b { font-size: 30px; }
+    body.page-trends .trends-vs-banner { letter-spacing: 0.2em; font-size: 10px; padding: 14px 12px 12px; }
+  }
   /* Winner/runner-up trophies above the VS sides. SVG crown for gold,
      silver medal for runner-up. Gives the VS card a podium-graphic feel. */
   body.page-trends .trends-vs-medal { display: block; margin: 0 auto 4px; width: 38px; height: auto; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.12)); }
   body.page-trends .trends-vs-crown { width: 44px; }
   body.page-trends .trends-vs-silver { width: 38px; }
   body.page-trends .trends-vs-winner-label { color: #b8870a; font-weight: 800; }
-  body.page-trends .trends-vs-silver-label { color: #7a7a7a; font-weight: 800; }
+  body.page-trends .trends-vs-bolt-label { color: #d97000; font-weight: 800; }
   body.page-trends .trends-h2-sub { font-weight: 500; color: var(--muted); letter-spacing: -0.005em; font-size: 14px; margin-left: 6px; }
+  /* /press/data — press-grade data terminal. Monospaced, austere,
+     source-attributed. Designed to be embeddable by food editors and
+     cited by data journalists. Light-mode Bloomberg/Reuters aesthetic. */
+  body.page-data { background: #fafafa; color: #111; }
+  body.page-data .mast { background: #fff; border-bottom: 1px solid #d4d4d2; padding: 16px 0 14px; }
+  body.page-data .mast .brand { font: 800 18px/1 ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: -0.01em; }
+  body.page-data .pro-h1 { font: 800 22px/1.1 ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: -0.02em; margin: 0; color: #111; text-transform: uppercase; }
+  body.page-data .pro-header { background: #111; color: #fff; margin: 24px 0 18px; padding: 8px 14px; font: 600 11px/1.2 ui-monospace, "SF Mono", Menlo, monospace; }
+  body.page-data .pro-header-row { display: flex; gap: 18px; flex-wrap: wrap; align-items: baseline; }
+  body.page-data .pro-header-tag { background: #e84e3a; color: #fff; padding: 2px 8px; font-weight: 800; letter-spacing: 0.05em; }
+  body.page-data .pro-header-meta { color: #aaa; letter-spacing: 0.04em; }
+  body.page-data .pro-section { margin: 20px 0 26px; }
+  body.page-data .pro-h2 { font: 800 13px/1.2 ui-monospace, "SF Mono", Menlo, monospace; text-transform: uppercase; letter-spacing: 0.06em; color: #111; margin: 0 0 12px; padding-bottom: 8px; border-bottom: 2px solid #111; }
+  body.page-data .pro-chart { background: #fff; border: 1px solid #d4d4d2; padding: 16px; }
+  body.page-data .pro-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 10px 0 0; font: 500 11px/1.4 ui-monospace, "SF Mono", Menlo, monospace; }
+  body.page-data .pro-legend-item { display: inline-flex; align-items: center; gap: 5px; }
+  body.page-data .pro-legend-item a { color: #111; text-decoration: none; }
+  body.page-data .pro-legend-item a:hover { text-decoration: underline; }
+  body.page-data .pro-legend-swatch { display: inline-block; width: 10px; height: 10px; border-radius: 0; }
+  body.page-data .pro-table { width: 100%; border-collapse: collapse; font: 500 12.5px/1.5 ui-monospace, "SF Mono", Menlo, monospace; background: #fff; border: 1px solid #d4d4d2; }
+  body.page-data .pro-table th { background: #f0f0ee; padding: 8px 10px; text-align: left; font-weight: 800; letter-spacing: 0.04em; border-bottom: 2px solid #111; color: #111; }
+  body.page-data .pro-table td { padding: 8px 10px; border-bottom: 1px solid #ebebe9; color: #111; }
+  body.page-data .pro-table tbody tr:last-child td { border-bottom: 0; }
+  body.page-data .pro-table tbody tr:hover { background: #f8f8f6; }
+  body.page-data .pro-num { text-align: right; font-variant-numeric: tabular-nums; }
+  body.page-data .pro-muted { color: #888; }
+  body.page-data .pro-table a { color: #111; text-decoration: underline; text-decoration-color: #d4d4d2; text-underline-offset: 3px; }
+  body.page-data .pro-table a:hover { text-decoration-color: #e84e3a; color: #e84e3a; }
+  body.page-data .pro-swatch { display: inline-block; width: 8px; height: 8px; margin-right: 6px; vertical-align: 1px; }
+  body.page-data .pro-footer { margin: 30px 0 20px; padding: 18px 16px; background: #fff; border: 1px solid #d4d4d2; font: 400 13px/1.55 ui-monospace, "SF Mono", Menlo, monospace; }
+  body.page-data .pro-foot-h { font: 800 11px/1.2 ui-monospace, "SF Mono", Menlo, monospace; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin: 12px 0 4px; }
+  body.page-data .pro-foot-h:first-child { margin-top: 0; }
+  body.page-data .pro-footer p { margin: 0 0 6px; color: #333; }
+  body.page-data .pro-footer a { color: #111; text-decoration: underline; text-decoration-color: #d4d4d2; text-underline-offset: 3px; }
+  body.page-data .pro-footer a:hover { text-decoration-color: #e84e3a; color: #e84e3a; }
+  body.page-data .pro-embed { background: #f0f0ee; color: #111; padding: 10px 12px; font: 500 11.5px/1.5 ui-monospace, "SF Mono", Menlo, monospace; overflow-x: auto; border: 1px solid #d4d4d2; margin: 4px 0 0; word-break: break-all; }
+  body.page-data .filters, body.page-data .map-view, body.page-data .fresh-badge, body.page-data .open-feed, body.page-data .newsletter-cta { display: none !important; }
+  body.page-data .footer-nav, body.page-data footer { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 11px; }
   body.page-trends .trends-vs-same { gap: 0; }
   body.page-trends .trends-vs-same .trends-vs-pct { font-size: 14.5px; color: var(--ink2); font-weight: 500; font-family: var(--serif); font-style: italic; margin-top: 4px; }
   @media (max-width: 480px) {
@@ -526,6 +776,13 @@
   body.page-trends .trends-tweet-btn:hover { background: var(--accent); }
   body.page-trends .trends-note { font: 400 12.5px/1.4 var(--sans); color: var(--muted); font-style: italic; }
   body.page-listing .open-feed { margin-bottom: 8px; }
+  /* Primary listing row: gentle warm-sand tint so the page's headline
+     element doesn't read as flat paper-white. Matches the alternating
+     shade used on lx-cards and nearby cards for one consistent palette
+     rhythm. Independent of nth-child position. */
+  body.page-listing .open-row { background: #f3eedf; }
+  body.page-listing .open-row:nth-child(even) { background: #f3eedf; }
+  body.page-listing .open-row:hover { background: #ebe5d2; }
   /* Listing page hierarchy: the page's subject restaurant deserves a bigger
      thumb than the "Other nearby" cards below. Without this the 4-up
      grid of nearby cards visually dominated the smaller 80px primary
@@ -674,6 +931,78 @@
   body.page-listing .surprise-fab { display: none; }  /* hide on single-restaurant pages */
   .listing-extra { margin: 4px 0 32px; display: flex; flex-direction: column; gap: 22px; }
   .listing-extra .lx-card { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  /* Alternating neutral shades on the plain content cards so the column
+     doesn't read as one continuous slab of paper-white. Skips cards that
+     carry their own tint (owner-content, featured-press, owner-cta,
+     dishes) — those already break the rhythm with accent colors. */
+  .listing-extra .lx-card:nth-of-type(even):not(.lx-owner-content):not(.lx-featured):not(.lx-owner-cta):not(.lx-dishes) {
+    background: #f8f4ea;
+    border-color: #e6dfce;
+  }
+  /* "What to order" block: dish names get their own typographic card
+     with a warm accent edge so it reads as a recommendation tile rather
+     than another paragraph of editorial. Serif italic body, bold dish
+     names. Pairs the eyebrow with the accent color used elsewhere on the
+     site for editorial CTAs. */
+  .listing-extra .lx-dishes { background: #fffaf2; border-left: 4px solid var(--accent); }
+  .listing-extra .lx-dishes .lx-eyebrow { color: var(--accent); }
+  .listing-extra .lx-dishes-list { font: 400 17px/1.6 var(--serif); font-style: italic; color: var(--ink); margin: 0; letter-spacing: -0.005em; }
+  .listing-extra .lx-dishes-list b { font-style: normal; font-weight: 700; color: var(--ink); }
+  /* Categories variant — softer treatment so visitors can intuit the
+     difference between "we know specific dishes" and "we know menu
+     categories." Muted edge color, muted eyebrow, same warm-cream tile. */
+  .listing-extra .lx-dishes-cats { border-left-color: #c4b896; }
+  .listing-extra .lx-dishes-cats .lx-eyebrow { color: var(--muted); }
+  /* ─── Cuisine-color typographic graphic (replaces photos site-wide).
+     Three sizes: hero (per-listing top + OG), card (nearby/strip),
+     thumb (feed row). All share cuisine-colored gradient + native
+     script ornament + serif name typography. ─── */
+  /* Soft treatment: cream-paper background tinted ~12% with cuisine
+     color + thin cuisine-color accent bar on the left + dark text +
+     faded cuisine-color native script. Five Vietnam-reds on one page
+     felt fatiguing as full-saturation blocks; this reads as editorial
+     calm while keeping each cuisine visually distinct. */
+  .cg { position: relative; overflow: hidden; border-radius: 6px;
+        background: color-mix(in srgb, var(--cg-color, #7a746a) 11%, #faf7ee);
+        color: var(--ink);
+        border-left: 4px solid var(--cg-color, #7a746a); }
+  .cg::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, transparent 55%, color-mix(in srgb, var(--cg-color, #7a746a) 8%, transparent) 100%); pointer-events: none; }
+  .cg-script { position: absolute; bottom: -10%; right: -4%; font: 700 200% 'Noto Sans', 'Noto Sans Bengali', 'Noto Naskh Arabic', 'Noto Sans Tamil', 'Noto Sans CJK SC', 'Noto Sans Devanagari', 'Noto Sans Ethiopic', system-ui, serif; color: color-mix(in srgb, var(--cg-color, #7a746a) 22%, transparent); letter-spacing: -0.02em; pointer-events: none; white-space: nowrap; line-height: 1; }
+  .cg-script-rtl { right: auto; left: -4%; bottom: -10%; }
+  .cg-name, .cg-eyebrow, .cg-district { position: relative; z-index: 2; }
+  .cg-eyebrow { font: 700 10px/1 var(--mono); letter-spacing: 0.22em; color: color-mix(in srgb, var(--cg-color, #7a746a) 75%, #000); text-transform: uppercase; margin-bottom: 12px; }
+  .cg-name { font: 800 28px/1.15 var(--serif); letter-spacing: -0.6px; color: var(--ink); margin: 0; }
+  .cg-district { font: 400 14px/1.3 var(--serif); font-style: italic; color: var(--ink2); margin: 8px 0 0; }
+  /* Hero: full-bleed featured display (per-listing top, /trends magazine hero) */
+  .cg-hero { padding: 32px 36px 30px; min-height: 320px; display: flex; flex-direction: column; justify-content: flex-end; }
+  .cg-hero .cg-script { font-size: 320px; bottom: -60px; }
+  .cg-hero .cg-name { font-size: 44px; letter-spacing: -1.2px; }
+  .cg-hero .cg-district { font-size: 17px; }
+  /* Card: nearby + hero-strip slot */
+  .cg-card { padding: 18px 20px 18px; aspect-ratio: 4 / 3; display: flex; flex-direction: column; justify-content: flex-end; }
+  .cg-card .cg-script { font-size: 130px; bottom: -28px; }
+  .cg-card .cg-name { font-size: 18px; letter-spacing: -0.3px; color: var(--ink); }
+  /* Thumb: square row-slot replacement for the listing-page row-pic */
+  .cg-thumb { aspect-ratio: 1 / 1; padding: 10px 12px; display: flex; flex-direction: column; justify-content: flex-end; }
+  .cg-thumb .cg-script { font-size: 110px; bottom: -22px; }
+  .cg-thumb .cg-name { font-size: 13px; letter-spacing: -0.2px; font-weight: 700; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; color: var(--ink); }
+  @media (max-width: 600px) {
+    .cg-hero { min-height: 240px; padding: 24px 24px 22px; }
+    .cg-hero .cg-name { font-size: 32px; }
+    .cg-hero .cg-script { font-size: 220px; bottom: -40px; }
+  }
+
+  /* Photo credit line — discrete per Google Places ToS §5.3 attribution
+     requirement. Small, muted, sits at the foot of each listing page. */
+  .listing-extra .lx-photo-credit { font: 400 11px/1.4 var(--sans); color: var(--muted); margin: 18px 0 0; text-align: center; }
+  .listing-extra .lx-photo-credit a { color: var(--muted); text-decoration: underline; text-decoration-color: var(--line); }
+  .listing-extra .lx-photo-credit a:hover { color: var(--accent); }
+  /* Report-an-error link — universal correction channel for wrong cuisine,
+     wrong address, closed-and-missed, etc. Same footer treatment as the
+     photo credit so it stays out of the visual hierarchy of the page. */
+  .listing-extra .lx-report-error { font: 400 11px/1.4 var(--sans); color: var(--muted); margin: 6px 0 0; text-align: center; }
+  .listing-extra .lx-report-error a { color: var(--muted); text-decoration: underline; text-decoration-color: var(--line); }
+  .listing-extra .lx-report-error a:hover { color: var(--accent); }
   .listing-extra .lx-eyebrow { font: 700 10.5px/1 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
   /* Featured in: Toronto food-press citations - third-party validation
      block. Subtle mint left-border (--accent-2 territory) so it reads as
@@ -730,8 +1059,20 @@
      (→ /r/<slug>) plus compact Website/Maps CTAs that punch through to
      the actual business. Visitors who want context click photo or name;
      visitors in a hurry use the CTAs. */
-  .listing-extra .lx-near-card { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--paper); transition: border-color 0.14s, box-shadow 0.14s; }
+  .listing-extra .lx-near-card { position: relative; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--paper); transition: border-color 0.14s, box-shadow 0.14s; }
+  /* Alternating neutral shades on nearby cards — same warm-sand tone as
+     the alternating lx-card rule above so the page reads as one consistent
+     palette rhythm rather than two unrelated stripes of color. */
+  .listing-extra .lx-near-card:nth-child(even) { background: #f8f4ea; border-color: #e6dfce; }
   .listing-extra .lx-near-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.07); border-color: var(--rule); }
+  /* Card-wide click target: absolutely-positioned anchor covering the
+     whole card so any blank-area tap navigates to /r/<slug>. Inner
+     anchors (name, Website, Maps) are z-indexed above so direct clicks
+     still hit them. Cursor signals tappability across the whole tile. */
+  .listing-extra .lx-near-card .lx-near-cardlink { position: absolute; inset: 0; z-index: 1; text-indent: -9999px; overflow: hidden; }
+  .listing-extra .lx-near-card .lx-near-body { position: relative; z-index: 2; }
+  .listing-extra .lx-near-card .lx-near-body a { position: relative; z-index: 3; }
+  .listing-extra .lx-near-card { cursor: pointer; }
   .listing-extra .lx-near-card .lx-near-pic { display: block; aspect-ratio: 1 / 1; overflow: hidden; background: #e8e8e8; }
   .listing-extra .lx-near-card .lx-near-pic img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.22s; }
   .listing-extra .lx-near-card .lx-near-pic:hover img { transform: scale(1.04); }
@@ -797,7 +1138,8 @@
 <header class="mast">
   <div class="wrap">
     <a href="/" class="brand" id="brand-link">NowServingTO</a>
-    <h1 class="sub">Toronto food openings by cuisine, <span class="hl">May 2026</span></h1>
+    <h1 class="sub">Toronto's Freshest Restaurants<span class="hl">updated daily from the City of Toronto Registry</span></h1><div class="trends-deck">New permits sourced from City of Toronto open datasets, cross-referenced with DineSafe and social media signals to bring you the freshest, newest kitchens in the city.</div>
+    <p class="home-methodology">New permits sourced from City of Toronto open datasets, cross-referenced with DineSafe and social media signals to bring you the freshest, newest kitchens in the city.</p>
     <button type="button" id="fresh-badge" class="fresh-badge" aria-label="Jump to restaurants new since your last visit">
       <span class="fb-spark" aria-hidden="true">✨</span>
       <span id="fb-text">new since you last looked</span>
@@ -824,11 +1166,11 @@
       <button class="vt-btn" data-view="map" role="tab" aria-selected="false">Map</button>
     </div>
     <details class="data-note-tip">
-      <summary aria-label="About &quot;Registered&quot; dates"><span class="dnt-icon" aria-hidden="true">ⓘ</span><span class="dnt-label">About &ldquo;Registered&rdquo; dates</span></summary>
-      <p>&quot;Registered&quot; dates reflect when each restaurant first surfaced in our City permit, public-health inspection, and Google Places evidence — usually within a few weeks of opening, but a permit can lead actual opening by months. <a href="/press">How we verify &rsaquo;</a></p>
+      <summary aria-label="About &quot;First seen&quot; dates"><span class="dnt-icon" aria-hidden="true">ⓘ</span><span class="dnt-label">About "First seen" dates</span></summary>
+      <p>&quot;First seen&quot; reflects when each restaurant first surfaced in our City permit, public-health inspection, and Google Places evidence — usually within a few weeks of opening, but a permit can lead actual opening by months. <a href="/press">How we verify &rsaquo;</a></p>
     </details>
   </div>
-  <section class="trends-section"><h2 class="trends-h2">Last 90 days</h2><div class="trends-pies-row"><div class="trends-pie-card"><svg viewBox="0 0 100 100" width="105" height="105" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Indian: 17 percent of last 90 days"><circle cx="50" cy="50" r="45" fill="#ebe9e4"/><path d="M50,50 L50,5 A45,45 0 0,1 89.43,28.32 Z" fill="#e88e2c"/><text x="50" y="58" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="22" font-weight="800" fill="#1a1a1a">17%</text></svg><div class="trends-pie-name"><a href="/cuisine/indian" class="trends-pie-link">Indian</a></div></div><div class="trends-pie-card"><svg viewBox="0 0 100 100" width="105" height="105" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mexican: 14 percent of last 90 days"><circle cx="50" cy="50" r="45" fill="#ebe9e4"/><path d="M50,50 L50,5 A45,45 0 0,1 84.67,21.32 Z" fill="#d63d2a"/><text x="50" y="58" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="22" font-weight="800" fill="#1a1a1a">14%</text></svg><div class="trends-pie-name"><a href="/cuisine/mexican" class="trends-pie-link">Mexican</a></div></div><div class="trends-pie-card"><svg viewBox="0 0 100 100" width="105" height="105" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Vietnamese: 14 percent of last 90 days"><circle cx="50" cy="50" r="45" fill="#ebe9e4"/><path d="M50,50 L50,5 A45,45 0 0,1 84.67,21.32 Z" fill="#4a8b8b"/><text x="50" y="58" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="22" font-weight="800" fill="#1a1a1a">14%</text></svg><div class="trends-pie-name"><a href="/cuisine/vietnamese" class="trends-pie-link">Vietnamese</a></div></div><div class="trends-pie-card"><svg viewBox="0 0 100 100" width="105" height="105" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Italian: 9 percent of last 90 days"><circle cx="50" cy="50" r="45" fill="#ebe9e4"/><path d="M50,50 L50,5 A45,45 0 0,1 74.11,12.01 Z" fill="#c83624"/><text x="50" y="58" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="22" font-weight="800" fill="#1a1a1a">9%</text></svg><div class="trends-pie-name"><a href="/cuisine/italian" class="trends-pie-link">Italian</a></div></div><div class="trends-pie-card"><svg viewBox="0 0 100 100" width="105" height="105" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Japanese: 8 percent of last 90 days"><circle cx="50" cy="50" r="45" fill="#ebe9e4"/><path d="M50,50 L50,5 A45,45 0 0,1 71.68,10.57 Z" fill="#2f3aa3"/><text x="50" y="58" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="22" font-weight="800" fill="#1a1a1a">8%</text></svg><div class="trends-pie-name"><a href="/cuisine/japanese" class="trends-pie-link">Japanese</a></div></div><div class="trends-pie-card"><svg viewBox="0 0 100 100" width="105" height="105" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Korean: 6 percent of last 90 days"><circle cx="50" cy="50" r="45" fill="#ebe9e4"/><path d="M50,50 L50,5 A45,45 0 0,1 66.57,8.16 Z" fill="#6b2456"/><text x="50" y="58" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="22" font-weight="800" fill="#1a1a1a">6%</text></svg><div class="trends-pie-name"><a href="/cuisine/korean" class="trends-pie-link">Korean</a></div></div></div><p class="trends-pies-note">Share of 64 new restaurants verified open in the last 90 days. Highly volatile — small sample means standings can flip on a single opening.</p></section><div class="trends-vs"><div class="trends-vs-side trends-vs-winner"><svg class="trends-vs-medal trends-vs-crown" viewBox="0 0 48 38" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M4,32 L4,16 L13,22 L20,6 L24,20 L28,6 L35,22 L44,16 L44,32 Z" fill="#e6b800" stroke="#a8821f" stroke-width="1.5" stroke-linejoin="round"/><circle cx="20" cy="6" r="2.8" fill="#e6b800" stroke="#a8821f" stroke-width="1"/><circle cx="28" cy="6" r="2.8" fill="#e6b800" stroke="#a8821f" stroke-width="1"/><circle cx="24" cy="20" r="2.4" fill="#c8201f"/></svg><div class="trends-vs-label trends-vs-winner-label">Winner · 36 months</div><a class="trends-vs-cuisine" href="/cuisine/italian" style="color:#c83624">Italian</a><div class="trends-vs-pct">13%</div></div><div class="trends-vs-divider">VS</div><div class="trends-vs-side trends-vs-runner-up"><svg class="trends-vs-medal trends-vs-silver" viewBox="0 0 40 42" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10,2 L16,18 L24,18 L30,2 L26,2 L20,14 L14,2 Z" fill="#c8201f"/><circle cx="20" cy="28" r="12" fill="#c0c0c0" stroke="#7a7a7a" stroke-width="1.5"/><text x="20" y="33" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="13" font-weight="800" fill="#4a4a4a">2</text></svg><div class="trends-vs-label trends-vs-silver-label">Challenger · 90 days</div><a class="trends-vs-cuisine" href="/cuisine/indian" style="color:#e88e2c">Indian</a><div class="trends-vs-pct">17%</div></div></div><section class="trends-section"><h2 class="trends-h2">Toronto's reigning cuisines <span class="trends-h2-sub">· 36-month standings</span></h2><div class="trends-pies-row"><div class="trends-pie-card"><svg viewBox="0 0 100 100" width="105" height="105" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Italian: 13 percent of last 3 years"><circle cx="50" cy="50" r="45" fill="#ebe9e4"/><path d="M50,50 L50,5 A45,45 0 0,1 82.80,19.20 Z" fill="#c83624"/><text x="50" y="58" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="22" font-weight="800" fill="#1a1a1a">13%</text></svg><div class="trends-pie-name"><a href="/cuisine/italian" class="trends-pie-link">Italian</a></div></div><div class="trends-pie-card"><svg viewBox="0 0 100 100" width="105" height="105" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Japanese: 10 percent of last 3 years"><circle cx="50" cy="50" r="45" fill="#ebe9e4"/><path d="M50,50 L50,5 A45,45 0 0,1 76.45,13.59 Z" fill="#2f3aa3"/><text x="50" y="58" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="22" font-weight="800" fill="#1a1a1a">10%</text></svg><div class="trends-pie-name"><a href="/cuisine/japanese" class="trends-pie-link">Japanese</a></div></div><div class="trends-pie-card"><svg viewBox="0 0 100 100" width="105" height="105" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Chinese: 9 percent of last 3 years"><circle cx="50" cy="50" r="45" fill="#ebe9e4"/><path d="M50,50 L50,5 A45,45 0 0,1 74.11,12.01 Z" fill="#b13e6a"/><text x="50" y="58" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="22" font-weight="800" fill="#1a1a1a">9%</text></svg><div class="trends-pie-name"><a href="/cuisine/chinese" class="trends-pie-link">Chinese</a></div></div><div class="trends-pie-card"><svg viewBox="0 0 100 100" width="105" height="105" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Indian: 8 percent of last 3 years"><circle cx="50" cy="50" r="45" fill="#ebe9e4"/><path d="M50,50 L50,5 A45,45 0 0,1 71.68,10.57 Z" fill="#e88e2c"/><text x="50" y="58" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="22" font-weight="800" fill="#1a1a1a">8%</text></svg><div class="trends-pie-name"><a href="/cuisine/indian" class="trends-pie-link">Indian</a></div></div><div class="trends-pie-card"><svg viewBox="0 0 100 100" width="105" height="105" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Mexican: 7 percent of last 3 years"><circle cx="50" cy="50" r="45" fill="#ebe9e4"/><path d="M50,50 L50,5 A45,45 0 0,1 69.16,9.28 Z" fill="#d63d2a"/><text x="50" y="58" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="22" font-weight="800" fill="#1a1a1a">7%</text></svg><div class="trends-pie-name"><a href="/cuisine/mexican" class="trends-pie-link">Mexican</a></div></div><div class="trends-pie-card"><svg viewBox="0 0 100 100" width="105" height="105" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Middle Eastern: 5 percent of last 3 years"><circle cx="50" cy="50" r="45" fill="#ebe9e4"/><path d="M50,50 L50,5 A45,45 0 0,1 63.91,7.20 Z" fill="#b87a25"/><text x="50" y="58" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="22" font-weight="800" fill="#1a1a1a">5%</text></svg><div class="trends-pie-name"><a href="/cuisine/middle_east" class="trends-pie-link">Middle Eastern</a></div></div></div><p class="trends-pies-note">Share of 2,424 classified restaurant openings registered in Toronto over the past 3 years. The structural picture: who actually opens the most kitchens.</p><div class="trends-events"><h3 class="trends-events-h">This month in the food licence dojo</h3><ul class="trends-events-list"><li><span class="trends-events-tag">UPSET</span> <a class="trends-events-cuisine" href="/cuisine/vietnamese">Vietnamese</a> cracked the short-term top 6 with 9 openings, despite missing the 3-year top 6.</li><li><span class="trends-events-tag">UPSET</span> <a class="trends-events-cuisine" href="/cuisine/korean">Korean</a> cracked the short-term top 6 with 4 openings, despite missing the 3-year top 6.</li><li><span class="trends-events-tag">DROUGHT BROKEN</span> <a class="trends-events-cuisine" href="/cuisine/bangladeshi">Bangladeshi</a> first new kitchen in 8+ months.</li></ul></div></section><p class="trends-share"><a class="trends-tweet-btn" href="https://twitter.com/intent/tweet?text=Toronto%27s+diaspora+food+month%2C+by+cuisine+%28May+2026%29%3A%0A%E2%80%A2+Indian%3A+29%0A%E2%80%A2+Chinese%3A+13%0A%E2%80%A2+Vietnamese%3A+13%0A%E2%80%A2+Mexican%3A+13%0A%E2%80%A2+Japanese%3A+13%0A%0AFull+chart+%2B+sources%3A+https%3A%2F%2Fnowservingto.com%2Ftrends" target="_blank" rel="noopener">Share this on X &rsaquo;</a> <span class="trends-note">Auto-refreshes daily from City open data + DineSafe.</span></p>
+  <div class="trends-masthead"><a class="trends-mh-brand" href="/">NOWSERVING</a><span class="trends-mh-sep">·</span><span class="trends-mh-tag">TORONTO RESTAURANT INDUSTRY DATA</span><span class="trends-mh-sep">·</span><span class="trends-mh-issue">VOL.1 NO.18</span><span class="trends-mh-sep">·</span><span class="trends-mh-date">JUNE 3, 2026</span><a class="trends-mh-cta" href="/">Browse the directory &rsaquo;</a></div><div class="trends-lede"><p class="trends-lede-p"><span class="trends-dropcap">T</span>oronto dropped 22 new restaurants on the registry last month, plus 2,382 more since 2023. Uyghur kebabs in Scarborough, Tamil dosa on Bloor, Salvadoran pupusas in Etobicoke. The whole new wave, by cuisine and 'hood, updated daily. <a class="trends-lede-cta" href="/">Browse the full directory &rsaquo;</a></p></div><section class="trends-section trends-section-headline"><div class="trends-eyebrow">Industry pulse · top of the count</div><h2 class="trends-h2">By the numbers <span class="trends-h2-sub">· since 2023</span></h2><div class="trends-vs-card"><div class="trends-vs-banner">MAIN EVENT · TORONTO CUISINE CHAMPIONSHIP</div><div class="trends-vs-row"><a class="trends-vs-fighter trends-vs-fighter-left" href="/cuisine/italian" style="--fighter-color:#009246"><div class="trends-vs-belt">CHAMPION</div><div class="trends-vs-flag"><svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="10" height="20" fill="#009246"/><rect x="10" width="10" height="20" fill="#fff"/><rect x="20" width="10" height="20" fill="#ce2b37"/></svg></div><div class="trends-vs-nick">Italian</div><div class="trends-vs-stats"><span class="trends-vs-stat"><b>13%</b><em>share</em></span></div></a><div class="trends-vs-divider"><span>VS</span></div><a class="trends-vs-fighter trends-vs-fighter-right" href="/cuisine/japanese" style="--fighter-color:#bc002d"><div class="trends-vs-belt trends-vs-belt-contender">CONTENDER</div><div class="trends-vs-flag"><svg class="cuisine-flag" viewBox="0 0 30 20" aria-hidden="true"><rect width="30" height="20" fill="#fff"/><circle cx="15" cy="10" r="6" fill="#bc002d"/></svg></div><div class="trends-vs-nick">Japanese</div><div class="trends-vs-stats"><span class="trends-vs-stat"><b>10%</b><em>share</em></span></div></a></div><div class="trends-vs-tale">TALE OF THE TAPE · 3-POINT LEAD · SINCE 2023</div></div><div class="trends-take"><p><b><a href="/cuisine/italian">Italian</a></b> still leads at 13% of independent licences (chains excluded), but only 7% of those land in Little Italy itself. Fusaro's shuttered after 28 years on Spadina; Vivoli's 20-year run on College ended last year (Osteria Alba took the room). Mature operators still convert demand into storefronts — just rarely in the neighbourhood named for them.</p></div></section><section class="trends-section trends-section-card"><div class="trends-eyebrow">Operator shifts · last quarter</div><h2 class="trends-h2">Last 3 months <span class="trends-h2-sub">· Mar–May 2026</span></h2><div class="trends-treemap-wrap"><div class="trends-treemap-eyebrow">All cuisines · sized by 90-day licence count</div><div class="trends-treemap"><svg viewBox="0 0 720 420" width="100%" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Toronto cuisine landscape — all cuisines sized by 3-year licence count"><a href="/cuisine/indian"><title>Indian: 16%</title><rect x="0.00" y="0.00" width="176.60" height="274.62" fill="#ff9933" stroke="#faf7ee" stroke-width="1.5"/><text x="7.00" y="21.00" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="16" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Indian</text><text x="7.00" y="40.00" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="13" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">16%</text></a><a href="/cuisine/mexican"><title>Mexican: 8.5%</title><rect x="0.00" y="274.62" width="176.60" height="145.38" fill="#c41e3a" stroke="#faf7ee" stroke-width="1.5"/><text x="7.00" y="295.62" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="16" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Mexican</text><text x="7.00" y="314.62" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="13" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">8.5%</text></a><a href="/cuisine/italian"><title>Italian: 8.5%</title><rect x="176.60" y="0.00" width="163.02" height="157.50" fill="#009246" stroke="#faf7ee" stroke-width="1.5"/><text x="183.60" y="21.00" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="16" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Italian</text><text x="183.60" y="40.00" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="13" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">8.5%</text></a><a href="/cuisine/chinese"><title>Chinese: 7.5%</title><rect x="176.60" y="157.50" width="163.02" height="140.00" fill="#de2910" stroke="#faf7ee" stroke-width="1.5"/><text x="183.60" y="178.50" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="16" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Chinese</text><text x="183.60" y="197.50" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="13" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">7.5%</text></a><a href="/cuisine/vietnamese"><title>Vietnamese: 6.6%</title><rect x="176.60" y="297.50" width="163.02" height="122.50" fill="#da251d" stroke="#faf7ee" stroke-width="1.5"/><text x="183.60" y="315.50" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="13" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Vietnamese</text><text x="183.60" y="331.50" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="10" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">6.6%</text></a><a href="/cuisine/korean"><title>Korean: 6.6%</title><rect x="339.62" y="0.00" width="156.63" height="127.50" fill="#003478" stroke="#faf7ee" stroke-width="1.5"/><text x="346.62" y="21.00" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="16" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Korean</text><text x="346.62" y="40.00" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="13" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">6.6%</text></a><a href="/cuisine/japanese"><title>Japanese: 5.7%</title><rect x="496.25" y="0.00" width="134.25" height="127.50" fill="#bc002d" stroke="#faf7ee" stroke-width="1.5"/><text x="503.25" y="18.00" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="13" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Japanese</text><text x="503.25" y="34.00" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="10" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">5.7%</text></a><a href="/cuisine/pakistani"><title>Pakistani: 3.8%</title><rect x="630.50" y="0.00" width="89.50" height="127.50" fill="#01411c" stroke="#faf7ee" stroke-width="1.5"/><text x="637.50" y="15.00" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Pakistani</text><text x="637.50" y="28.00" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">3.8%</text></a><a href="/cuisine/middle_east"><title>Middle Eastern: 3.8%</title><rect x="339.62" y="127.50" width="107.29" height="106.36" fill="#007a3d" stroke="#faf7ee" stroke-width="1.5"/><text x="346.62" y="142.50" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Middle Eastern</text><text x="346.62" y="155.50" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">3.8%</text></a><a href="/cuisine/thai"><title>Thai: 3.8%</title><rect x="339.62" y="233.86" width="107.29" height="106.36" fill="#241d4f" stroke="#faf7ee" stroke-width="1.5"/><text x="346.62" y="254.86" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="16" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Thai</text><text x="346.62" y="273.86" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="13" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">3.8%</text></a><a href="/cuisine/turkish"><title>Turkish: 2.8%</title><rect x="339.62" y="340.23" width="107.29" height="79.77" fill="#e30a17" stroke="#faf7ee" stroke-width="1.5"/><text x="346.62" y="357.23" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="12" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Turkish</text><text x="346.62" y="372.23" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">2.8%</text></a><a href="/cuisine/ethiopian"><title>Ethiopian: 2.8%</title><rect x="446.91" y="127.50" width="91.03" height="94.02" fill="#fcdd09" stroke="#faf7ee" stroke-width="1.5"/><text x="453.91" y="142.50" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Ethiopian</text><text x="453.91" y="155.50" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">2.8%</text></a><a href="/cuisine/french"><title>French: 1.9%</title><rect x="537.94" y="127.50" width="60.69" height="94.02" fill="#002395" stroke="#faf7ee" stroke-width="1.5"/><text x="544.94" y="142.50" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">French</text><text x="544.94" y="155.50" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">1.9%</text></a><a href="/cuisine/sri_lankan"><title>Sri Lankan: 1.9%</title><rect x="598.63" y="127.50" width="60.69" height="94.02" fill="#8d153a" stroke="#faf7ee" stroke-width="1.5"/><text x="605.63" y="142.50" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Sri Lankan</text><text x="605.63" y="155.50" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">1.9%</text></a><a href="/cuisine/bangladeshi"><title>Bangladeshi: 1.9%</title><rect x="659.31" y="127.50" width="60.69" height="94.02" fill="#006a4e" stroke="#faf7ee" stroke-width="1.5"/><text x="666.31" y="142.50" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Bangladeshi</text><text x="666.31" y="155.50" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">1.9%</text></a><a href="/cuisine/persian"><title>Persian: 1.9%</title><rect x="446.91" y="221.52" width="57.49" height="99.24" fill="#da0000" stroke="#faf7ee" stroke-width="1.5"/><text x="453.91" y="236.52" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Persian</text><text x="453.91" y="249.52" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">1.9%</text></a><a href="/cuisine/tamil"><title>Tamil: 0.9%</title><rect x="446.91" y="320.76" width="57.49" height="49.62" fill="#ce1126" stroke="#faf7ee" stroke-width="1.5"/><text x="453.91" y="335.76" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Tamil</text><text x="453.91" y="348.76" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">0.9%</text></a><a href="/cuisine/belgian"><title>Belgian: 0.9%</title><rect x="446.91" y="370.38" width="57.49" height="49.62" fill="#a92c6d" stroke="#faf7ee" stroke-width="1.5"/><text x="453.91" y="385.38" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Belgian</text><text x="453.91" y="398.38" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">0.9%</text></a><a href="/cuisine/ghanaian"><title>Ghanaian: 0.9%</title><rect x="504.40" y="221.52" width="57.49" height="49.62" fill="#fcd116" stroke="#faf7ee" stroke-width="1.5"/><text x="511.40" y="236.52" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Ghanaian</text><text x="511.40" y="249.52" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">0.9%</text></a><a href="/cuisine/south_asian"><title>South Asian: 0.9%</title><rect x="504.40" y="271.14" width="57.49" height="49.62" fill="#ff9933" stroke="#faf7ee" stroke-width="1.5"/><text x="511.40" y="286.14" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">South Asi…</text><text x="511.40" y="299.14" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">0.9%</text></a><a href="/cuisine/argentinian"><title>Argentinian: 0.9%</title><rect x="504.40" y="320.76" width="57.49" height="49.62" fill="#74acdf" stroke="#faf7ee" stroke-width="1.5"/><text x="511.40" y="335.76" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Argentini…</text><text x="511.40" y="348.76" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">0.9%</text></a><a href="/cuisine/latin"><title>Latin American: 0.9%</title><rect x="504.40" y="370.38" width="57.49" height="49.62" fill="#fcd116" stroke="#faf7ee" stroke-width="1.5"/><text x="511.40" y="385.38" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Latin Ame…</text><text x="511.40" y="398.38" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">0.9%</text></a><a href="/cuisine/trinidadian"><title>Trinidadian: 0.9%</title><rect x="561.89" y="221.52" width="52.70" height="54.13" fill="#ce1126" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/afghan"><title>Afghan: 0.9%</title><rect x="614.60" y="221.52" width="52.70" height="54.13" fill="#d32011" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/filipino"><title>Filipino: 0.9%</title><rect x="667.30" y="221.52" width="52.70" height="54.13" fill="#0038a8" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/nigerian"><title>Nigerian: 0.9%</title><rect x="561.89" y="275.65" width="59.29" height="48.12" fill="#008751" stroke="#faf7ee" stroke-width="1.5"/><text x="568.89" y="290.65" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Nigerian</text><text x="568.89" y="303.65" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">0.9%</text></a><a href="/cuisine/lebanese"><title>Lebanese: 0.9%</title><rect x="561.89" y="323.77" width="59.29" height="48.12" fill="#ed1c24" stroke="#faf7ee" stroke-width="1.5"/><text x="568.89" y="338.77" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Lebanese</text><text x="568.89" y="351.77" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">0.9%</text></a><a href="/cuisine/colombian"><title>Colombian: 0.9%</title><rect x="561.89" y="371.88" width="59.29" height="48.12" fill="#fcd116" stroke="#faf7ee" stroke-width="1.5"/><text x="568.89" y="386.88" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Colombian</text><text x="568.89" y="399.88" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">0.9%</text></a><a href="/cuisine/eritrean"><title>Eritrean: 0.9%</title><rect x="621.18" y="275.65" width="49.41" height="57.74" fill="#ea0437" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/peruvian"><title>Peruvian: 0.9%</title><rect x="670.59" y="275.65" width="49.41" height="57.74" fill="#d91023" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/kurdish"><title>Kurdish: 0.9%</title><rect x="621.18" y="333.39" width="65.88" height="43.31" fill="#a92c92" stroke="#faf7ee" stroke-width="1.5"/><text x="628.18" y="348.39" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Kurdish</text><text x="628.18" y="361.39" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">0.9%</text></a><a href="/cuisine/uyghur"><title>Uyghur: 0.9%</title><rect x="621.18" y="376.69" width="65.88" height="43.31" fill="#2ca93b" stroke="#faf7ee" stroke-width="1.5"/><text x="628.18" y="391.69" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Uyghur</text><text x="628.18" y="404.69" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">0.9%</text></a><a href="/cuisine/greek"><title>Greek: 0.9%</title><rect x="687.06" y="333.39" width="32.94" height="86.61" fill="#0d5eaf" stroke="#faf7ee" stroke-width="1.5"/></a></svg></div></div><div class="trends-take"><p><b><a href="/cuisine/indian">Indian</a></b> took the quarter at 17% — heavily Scarborough-led, with new entries on Markham Rd, Pharmacy Ave, Kennedy Rd, and Sheppard E, plus downtown spots like <a href="/r/dakshin-flavours-indian-kitchen-bar-5">Dakshin Flavours</a> on Baldwin and <a href="/r/zafraan-indian-cuisine-downtown-671">Zafraan</a> on Queen W. Six of nine new Vietnamese licences in the quarter are dedicated banh mi shops — including <a href="/r/and-banh-mi-13">And Banh Mi</a> on Elm (selling out daily since its May open) and <a href="/r/coco-banh-mi-222">Coco Banh Mi</a> on Spadina. blogTO has called it Toronto's "summer of Saigon."</p></div></section><section class="trends-section trends-section-card"><div class="trends-eyebrow">Full landscape · 36-month cumulative</div><h2 class="trends-h2">Last 3 years <span class="trends-h2-sub">· since 2023</span></h2><div class="trends-treemap-wrap"><div class="trends-treemap-eyebrow">All cuisines · sized by 3-year licence count</div><div class="trends-treemap"><svg viewBox="0 0 720 420" width="100%" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Toronto cuisine landscape — all cuisines sized by 3-year licence count"><a href="/cuisine/italian"><title>Italian: 13%</title><rect x="0.00" y="0.00" width="167.32" height="233.09" fill="#009246" stroke="#faf7ee" stroke-width="1.5"/><text x="7.00" y="21.00" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="16" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Italian</text><text x="7.00" y="40.00" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="13" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">13%</text></a><a href="/cuisine/japanese"><title>Japanese: 10%</title><rect x="0.00" y="233.09" width="167.32" height="186.91" fill="#bc002d" stroke="#faf7ee" stroke-width="1.5"/><text x="7.00" y="254.09" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="16" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Japanese</text><text x="7.00" y="273.09" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="13" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">10%</text></a><a href="/cuisine/chinese"><title>Chinese: 9.5%</title><rect x="167.32" y="0.00" width="176.51" height="163.06" fill="#de2910" stroke="#faf7ee" stroke-width="1.5"/><text x="174.32" y="21.00" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="16" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Chinese</text><text x="174.32" y="40.00" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="13" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">9.5%</text></a><a href="/cuisine/indian"><title>Indian: 8.0%</title><rect x="167.32" y="163.06" width="176.51" height="136.94" fill="#ff9933" stroke="#faf7ee" stroke-width="1.5"/><text x="174.32" y="184.06" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="16" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Indian</text><text x="174.32" y="203.06" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="13" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">8.0%</text></a><a href="/cuisine/mexican"><title>Mexican: 7.0%</title><rect x="167.32" y="300.00" width="176.51" height="120.00" fill="#c41e3a" stroke="#faf7ee" stroke-width="1.5"/><text x="174.32" y="321.00" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="16" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Mexican</text><text x="174.32" y="340.00" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="13" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">7.0%</text></a><a href="/cuisine/middle_east"><title>Middle Eastern: 5.2%</title><rect x="343.83" y="0.00" width="146.99" height="107.65" fill="#007a3d" stroke="#faf7ee" stroke-width="1.5"/><text x="350.83" y="15.00" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Middle Eastern</text><text x="350.83" y="28.00" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">5.2%</text></a><a href="/cuisine/vietnamese"><title>Vietnamese: 4.5%</title><rect x="490.83" y="0.00" width="126.16" height="107.65" fill="#da251d" stroke="#faf7ee" stroke-width="1.5"/><text x="497.83" y="15.00" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Vietnamese</text><text x="497.83" y="28.00" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">4.5%</text></a><a href="/cuisine/french"><title>French: 3.7%</title><rect x="616.99" y="0.00" width="103.01" height="107.65" fill="#002395" stroke="#faf7ee" stroke-width="1.5"/><text x="623.99" y="19.00" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="14" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">French</text><text x="623.99" y="36.00" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="11" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">3.7%</text></a><a href="/cuisine/korean"><title>Korean: 3.3%</title><rect x="343.83" y="107.65" width="80.18" height="122.76" fill="#003478" stroke="#faf7ee" stroke-width="1.5"/><text x="350.83" y="122.65" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Korean</text><text x="350.83" y="135.65" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">3.3%</text></a><a href="/cuisine/thai"><title>Thai: 2.7%</title><rect x="343.83" y="230.41" width="80.18" height="101.01" fill="#241d4f" stroke="#faf7ee" stroke-width="1.5"/><text x="350.83" y="251.41" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="16" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Thai</text><text x="350.83" y="270.41" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="13" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">2.7%</text></a><a href="/cuisine/south_asian"><title>South Asian: 2.3%</title><rect x="343.83" y="331.42" width="80.18" height="88.58" fill="#ff9933" stroke="#faf7ee" stroke-width="1.5"/><text x="350.83" y="346.42" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">South Asian</text><text x="350.83" y="359.42" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">2.3%</text></a><a href="/cuisine/caribbean"><title>Caribbean: 2.2%</title><rect x="424.01" y="107.65" width="77.21" height="87.14" fill="#009b3a" stroke="#faf7ee" stroke-width="1.5"/><text x="431.01" y="122.65" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Caribbean</text><text x="431.01" y="135.65" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">2.2%</text></a><a href="/cuisine/greek"><title>Greek: 2.2%</title><rect x="501.23" y="107.65" width="77.21" height="87.14" fill="#0d5eaf" stroke="#faf7ee" stroke-width="1.5"/><text x="508.23" y="124.65" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="12" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Greek</text><text x="508.23" y="139.65" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">2.2%</text></a><a href="/cuisine/pakistani"><title>Pakistani: 2.1%</title><rect x="578.44" y="107.65" width="74.35" height="87.14" fill="#01411c" stroke="#faf7ee" stroke-width="1.5"/><text x="585.44" y="122.65" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Pakistani</text><text x="585.44" y="135.65" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">2.1%</text></a><a href="/cuisine/persian"><title>Persian: 1.9%</title><rect x="652.79" y="107.65" width="67.21" height="87.14" fill="#da0000" stroke="#faf7ee" stroke-width="1.5"/><text x="659.79" y="122.65" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Persian</text><text x="659.79" y="135.65" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">1.9%</text></a><a href="/cuisine/turkish"><title>Turkish: 1.6%</title><rect x="424.01" y="194.79" width="61.41" height="77.10" fill="#e30a17" stroke="#faf7ee" stroke-width="1.5"/><text x="431.01" y="209.79" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Turkish</text><text x="431.01" y="222.79" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">1.6%</text></a><a href="/cuisine/tamil"><title>Tamil: 1.5%</title><rect x="424.01" y="271.89" width="61.41" height="75.07" fill="#ce1126" stroke="#faf7ee" stroke-width="1.5"/><text x="431.01" y="286.89" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Tamil</text><text x="431.01" y="299.89" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">1.5%</text></a><a href="/cuisine/jewish_deli"><title>Jewish deli: 1.5%</title><rect x="424.01" y="346.96" width="61.41" height="73.04" fill="#0038b8" stroke="#faf7ee" stroke-width="1.5"/><text x="431.01" y="361.96" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Jewish deli</text><text x="431.01" y="374.96" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">1.5%</text></a><a href="/cuisine/jamaican"><title>Jamaican: 1.5%</title><rect x="485.42" y="194.79" width="74.14" height="60.50" fill="#009b3a" stroke="#faf7ee" stroke-width="1.5"/><text x="492.42" y="209.79" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Jamaican</text><text x="492.42" y="222.79" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">1.5%</text></a><a href="/cuisine/ethiopian"><title>Ethiopian: 1.4%</title><rect x="485.42" y="255.29" width="74.14" height="55.46" fill="#fcdd09" stroke="#faf7ee" stroke-width="1.5"/><text x="492.42" y="270.29" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Ethiopian</text><text x="492.42" y="283.29" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">1.4%</text></a><a href="/cuisine/lebanese"><title>Lebanese: 1.4%</title><rect x="485.42" y="310.76" width="74.14" height="55.46" fill="#ed1c24" stroke="#faf7ee" stroke-width="1.5"/><text x="492.42" y="325.76" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Lebanese</text><text x="492.42" y="338.76" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">1.4%</text></a><a href="/cuisine/filipino"><title>Filipino: 1.3%</title><rect x="485.42" y="366.22" width="74.14" height="53.78" fill="#0038a8" stroke="#faf7ee" stroke-width="1.5"/><text x="492.42" y="381.22" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Filipino</text><text x="492.42" y="394.22" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">1.3%</text></a><a href="/cuisine/taiwanese"><title>Taiwanese: 1.2%</title><rect x="559.56" y="194.79" width="60.71" height="57.47" fill="#a93b2c" stroke="#faf7ee" stroke-width="1.5"/><text x="566.56" y="209.79" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Taiwanese</text><text x="566.56" y="222.79" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">1.2%</text></a><a href="/cuisine/african_west"><title>West African: 1.0%</title><rect x="620.27" y="194.79" width="52.04" height="57.47" fill="#5a8a3a" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/irish_uk"><title>Irish/UK: 0.9%</title><rect x="672.30" y="194.79" width="47.70" height="57.47" fill="#2a6a40" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/latin"><title>Latin American: 0.9%</title><rect x="559.56" y="252.26" width="56.15" height="46.60" fill="#fcd116" stroke="#faf7ee" stroke-width="1.5"/><text x="566.56" y="267.26" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="10" font-weight="800" fill="#fff" pointer-events="none" letter-spacing="-0.3">Latin Ame…</text><text x="566.56" y="280.26" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="9" font-weight="600" fill="rgba(255,255,255,0.88)" pointer-events="none">0.9%</text></a><a href="/cuisine/portuguese"><title>Portuguese: 0.8%</title><rect x="615.71" y="252.26" width="53.48" height="46.60" fill="#006600" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/nepalese"><title>Nepalese: 0.8%</title><rect x="669.19" y="252.26" width="50.81" height="46.60" fill="#5ea92c" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/tibetan"><title>Tibetan: 0.7%</title><rect x="559.56" y="298.85" width="44.22" height="50.71" fill="#b15a25" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/nigerian"><title>Nigerian: 0.6%</title><rect x="559.56" y="349.56" width="44.22" height="39.44" fill="#008751" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/peruvian"><title>Peruvian: 0.5%</title><rect x="559.56" y="389.01" width="44.22" height="30.99" fill="#d91023" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/afghan"><title>Afghan: 0.5%</title><rect x="603.78" y="298.85" width="44.08" height="31.09" fill="#d32011" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/brazilian"><title>Brazilian: 0.4%</title><rect x="647.86" y="298.85" width="40.08" height="31.09" fill="#009c3b" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/german"><title>German: 0.3%</title><rect x="687.94" y="298.85" width="32.06" height="31.09" fill="#1a1a1a" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/bangladeshi"><title>Bangladeshi: 0.3%</title><rect x="603.78" y="329.94" width="27.67" height="36.02" fill="#006a4e" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/spanish"><title>Spanish: 0.2%</title><rect x="603.78" y="365.97" width="27.67" height="27.02" fill="#aa151b" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/sri_lankan"><title>Sri Lankan: 0.2%</title><rect x="603.78" y="392.98" width="27.67" height="27.02" fill="#8d153a" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/colombian"><title>Colombian: 0.2%</title><rect x="631.45" y="329.94" width="22.14" height="22.51" fill="#fcd116" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/indonesian"><title>Indonesian: 0.2%</title><rect x="653.59" y="329.94" width="22.14" height="22.51" fill="#ce1126" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/eritrean"><title>Eritrean: 0.2%</title><rect x="675.73" y="329.94" width="22.14" height="22.51" fill="#ea0437" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/african_horn"><title>East African: 0.2%</title><rect x="697.86" y="329.94" width="22.14" height="22.51" fill="#a0522d" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/ghanaian"><title>Ghanaian: 0.2%</title><rect x="631.45" y="352.46" width="22.14" height="22.51" fill="#fcd116" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/israeli"><title>Israeli: 0.2%</title><rect x="631.45" y="374.97" width="22.14" height="22.51" fill="#2ca97f" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/georgian"><title>Georgian: 0.2%</title><rect x="631.45" y="397.49" width="22.14" height="22.51" fill="#a92c8c" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/guyanese"><title>Guyanese: 0.2%</title><rect x="653.59" y="352.46" width="26.56" height="18.76" fill="#009e49" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/trinidadian"><title>Trinidadian: 0.1%</title><rect x="680.15" y="352.46" width="19.92" height="18.76" fill="#ce1126" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/argentinian"><title>Argentinian: 0.1%</title><rect x="700.08" y="352.46" width="19.92" height="18.76" fill="#74acdf" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/salvadoran"><title>Salvadoran: 0.1%</title><rect x="653.59" y="371.22" width="15.33" height="24.39" fill="#c8553a" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/eastern_eu"><title>Eastern European: 0.1%</title><rect x="653.59" y="395.61" width="15.33" height="24.39" fill="#7a4a4a" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/polish"><title>Polish: 0.1%</title><rect x="668.92" y="371.22" width="15.33" height="16.26" fill="#dc143c" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/somali"><title>Somali: 0.1%</title><rect x="668.92" y="387.48" width="15.33" height="16.26" fill="#4189dd" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/cajun"><title>Cajun: 0.1%</title><rect x="668.92" y="403.74" width="15.33" height="16.26" fill="#6b2ca9" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/hungarian"><title>Hungarian: 0.0%</title><rect x="684.24" y="371.22" width="11.92" height="10.45" fill="#8a5050" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/cuban"><title>Cuban: 0.0%</title><rect x="696.16" y="371.22" width="11.92" height="10.45" fill="#882ca9" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/iraqi"><title>Iraqi: 0.0%</title><rect x="708.08" y="371.22" width="11.92" height="10.45" fill="#962ca9" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/malaysian"><title>Malaysian: 0.0%</title><rect x="684.24" y="381.67" width="11.92" height="10.45" fill="#5a7a55" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/dominican"><title>Dominican: 0.0%</title><rect x="696.16" y="381.67" width="11.92" height="10.45" fill="#a9562c" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/russian"><title>Russian: 0.0%</title><rect x="708.08" y="381.67" width="11.92" height="10.45" fill="#0033a0" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/uyghur"><title>Uyghur: 0.0%</title><rect x="684.24" y="392.13" width="13.41" height="9.29" fill="#2ca93b" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/egyptian"><title>Egyptian: 0.0%</title><rect x="684.24" y="401.42" width="13.41" height="9.29" fill="#39a92c" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/costa_rican"><title>Costa Rican: 0.0%</title><rect x="684.24" y="410.71" width="13.41" height="9.29" fill="#a9a92c" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/cambodian"><title>Cambodian: 0.0%</title><rect x="697.65" y="392.13" width="11.17" height="11.15" fill="#2c9ea9" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/armenian"><title>Armenian: 0.0%</title><rect x="708.83" y="392.13" width="11.17" height="11.15" fill="#37a92c" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/moroccan"><title>Moroccan: 0.0%</title><rect x="697.65" y="403.28" width="14.90" height="8.36" fill="#b87a2a" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/singaporean"><title>Singaporean: 0.0%</title><rect x="697.65" y="411.64" width="14.90" height="8.36" fill="#502ca9" stroke="#faf7ee" stroke-width="1.5"/></a><a href="/cuisine/syrian"><title>Syrian: 0.0%</title><rect x="712.55" y="403.28" width="7.45" height="16.72" fill="#9b5520" stroke="#faf7ee" stroke-width="1.5"/></a></svg></div></div><div class="trends-take"><p>Six cuisines = 53% of 2,404 licences since 2023; the remaining 47% spreads across ~60 smaller buckets — <a href="/cuisine/eritrean">Eritrean</a>, <a href="/cuisine/salvadoran">Salvadoran</a>, <a href="/cuisine/tibetan">Tibetan</a>, <a href="/cuisine/uyghur">Uyghur</a> kitchens opening one or two storefronts a year. Ottawa's 2026 plan cuts new study permits roughly in half and caps PR at 380,000/yr through 2028, throttling the diaspora pipeline that feeds that tail. Dalhousie's Agri-Food Analytics Lab is forecasting 4,000 net Canadian restaurant closures in 2026 — the licence stream is one of the few places the new is still winning against what's being killed.</p></div></section><section class="trends-section trends-section-news"><div class="trends-events"><h3 class="trends-events-h">June 2026</h3><ul class="trends-events-list"><li><span class="trends-events-tag">UPSET</span> <a class="trends-events-cuisine" href="/cuisine/vietnamese">Vietnamese</a> cracked the short-term top 6 with 7 new registrations, despite missing the 3-year top 6.</li><li><span class="trends-events-tag">UPSET</span> <a class="trends-events-cuisine" href="/cuisine/korean">Korean</a> cracked the short-term top 6 with 7 new registrations, despite missing the 3-year top 6.</li><li><span class="trends-events-tag">DROUGHT BROKEN</span> <a class="trends-events-cuisine" href="/cuisine/kurdish">Kurdish</a> first new kitchen in 10+ months.</li><li><span class="trends-events-tag">DROUGHT BROKEN</span> <a class="trends-events-cuisine" href="/cuisine/belgian">Belgian</a> first new kitchen in 11+ months.</li><li><span class="trends-events-tag">HOT STREAK</span> <a class="trends-events-cuisine" href="/cuisine/turkish">Turkish</a> hit 2 new registrations last month (vs 0.8/mo average).</li></ul></div></section><div class="trends-sources"><div class="trends-sources-eyebrow">Sources</div><ul class="trends-sources-list"><li><a href="https://www.blogto.com/eat_drink/2026/05/fusaros-toronto-closed/" target="_blank" rel="noopener">Fusaro's closes after 28 years on Spadina — blogTO</a></li><li><a href="https://www.blogto.com/eat_drink/2025/07/vivoli-toronto-closed/" target="_blank" rel="noopener">Vivoli's 20-year run ends on College — blogTO</a></li><li><a href="https://www.blogto.com/eat_drink/2025/07/toronto-chef-taking-over-italian-restaurant/" target="_blank" rel="noopener">Adam Pereira's Osteria Alba takes the Vivoli room — blogTO</a></li><li><a href="https://www.blogto.com/eat_drink/2026/05/banh-mi-taking-over-toronto/" target="_blank" rel="noopener">"Banh mi is taking over Toronto" (And Banh Mi, Viet Bites, "summer of Saigon") — blogTO</a></li><li><a href="https://www.canada.ca/en/immigration-refugees-citizenship/news/notices/2026-provincial-territorial-allocations-under-international-student-cap.html" target="_blank" rel="noopener">2026 international student cap allocations — IRCC (Canada.ca)</a></li><li><a href="https://www.canada.ca/en/immigration-refugees-citizenship/corporate/mandate/corporate-initiatives/levels/supplementary-immigration-levels-2026-2028.html" target="_blank" rel="noopener">2026–2028 Immigration Levels Plan: PR capped at 380K through 2028 — IRCC (Canada.ca)</a></li><li><a href="https://agrifoodanalyticslab.substack.com/p/canada-is-poised-to-lose-4000-restaurants" target="_blank" rel="noopener">"Canada Is Poised to Lose 4,000 Restaurants in 2026" — Dalhousie Agri-Food Analytics Lab</a></li></ul></div><p class="trends-share"><a class="trends-tweet-btn" href="https://twitter.com/intent/tweet?text=Toronto%27s+22+newest+restaurants+this+month%3A+Uyghur+kebabs+in+Scarborough%2C+Tamil+dosa+on+Bloor%2C+Salvadoran+pupusas+in+Etobicoke.%0A%0Ahttps%3A%2F%2Fnowservingto.com%2Ftrends%2F2026-06%3Fv%3D1780516214%0A%0A%23TorontoEats+%23TorontoFoodie" target="_blank" rel="noopener">Share this on X &rsaquo;</a> <span class="trends-note">Auto-refreshes daily from City open data + DineSafe.</span></p>
   <div class="open-feed" id="open-feed">
     <!-- STATIC-FEED-START - pre-rendered daily by tools/inject_openings.py for crawlers + no-JS visitors. Replaced by interactive JS render on page load. -->
     
@@ -841,7 +1183,7 @@
     <div class="map-toolbar">
       <span class="map-info" id="map-info"></span>
     </div>
-    <div id="map" role="region" aria-label="Map of new restaurant openings"></div>
+    <div id="map" role="region" aria-label="Map of new restaurant registrations"></div>
   </div>
 
   <!-- RELATED-CUISINES-START --><!-- RELATED-CUISINES-END -->
@@ -859,7 +1201,7 @@
   </section>
 
   <footer class="site-foot">
-    <a href="https://x.com/nowservingto" target="_blank" rel="noopener">Follow @nowservingto on X</a>
+    <a href="/trends">Trends</a>
     <span class="dot">·</span>
     <a href="/contribute">Got a tip?</a>
     <span class="dot">·</span>
@@ -940,16 +1282,17 @@ function nameJaccard(a, b) {
 }
 
 function tierLabel(days) {
-  // Consistent 'Registered' verb across the ladder. Visual tier (★ + accent
-  // / muted / muted-light) does the freshness signaling; text stays honest
-  // about what the date represents (earliest evidence in our permit +
-  // inspection + review pool, not necessarily opening day).
+  // Single 'First seen' label across all entries — visitor doesn't care
+  // whether the underlying date is licence / DineSafe / review; two
+  // different verbs just confuses ("why does this place have a different
+  // freshness metric?"). Date is still the earliest-evidence swap, label
+  // just stops leaking provenance. Must match Python _tier_label().
   if (days == null) return '';
-  if (days <= 0)    return 'Registered today';
-  if (days === 1)   return 'Registered yesterday';
-  if (days <= 30)   return 'Registered ' + days + 'd ago';
-  if (days <= 90)   return 'Registered ' + Math.max(5, Math.round(days/7)) + 'w ago';
-  if (days <= 365)  return 'Registered ' + Math.max(3, Math.round(days/30)) + 'mo ago';
+  if (days <= 0)    return 'First seen today';
+  if (days === 1)   return 'First seen yesterday';
+  if (days <= 30)   return 'First seen ' + days + 'd ago';
+  if (days <= 90)   return 'First seen ' + Math.max(5, Math.round(days/7)) + 'w ago';
+  if (days <= 365)  return 'First seen ' + Math.max(3, Math.round(days/30)) + 'mo ago';
   return '';
 }
 
@@ -1141,13 +1484,9 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
     // website because for entries whose thumb is a Street View image (the
     // photogenic fallback for no-Places entries), tapping the pic should
     // land the user at the exact same view.
-    const thumbTarget = r.mapsUrl || coordPin || r.website || internalUrl || '';
-    const thumbHtml = thumb && thumbTarget
-      ? `<a class="row-pic-link" href="${thumbTarget}"${tgt} rel="noopener" aria-label="View ${r.operatingName}"><img class="row-pic" src="${thumb}" alt="${r.operatingName}" loading="lazy" decoding="async"></a>`
-      : thumb
-      ? `<img class="row-pic" src="${thumb}" alt="${r.operatingName}" loading="lazy" decoding="async">`
-      : '';
-    if (thumb) row.classList.add('has-pic');
+    // No image slot — photos retired site-wide 2026-06-03. Row carries
+    // cuisine identity via the cuisine-color pill on the right side.
+    const thumbHtml = '';
     const agoText = tierLabel(r.daysOpen);
     const agoHtml = agoText
       ? (r.slug
@@ -1913,7 +2252,7 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
       ? ` at ${r.address} in ${districtPhrase}`
       : r.address ? ` at ${r.address}`
       : districtPhrase ? ` in ${districtPhrase}` : '';
-    const text = `${r.operatingName} - newly-registered ${cuisineLbl} kitchen${where}. Registered ${ago}.`;
+    const text = `${r.operatingName} - newly-registered ${cuisineLbl} kitchen${where}. First seen ${ago}.`;
     if (navigator.share) {
       try { await navigator.share({ title: r.operatingName, text, url }); }
       catch (e) { /* user dismissed */ }

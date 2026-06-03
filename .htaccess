@@ -105,8 +105,16 @@ RewriteRule ^contribute/?$ /contribute.html [L]
 # /press → press.html (media kit: stats, embed widget, citation format)
 RewriteRule ^press/?$ /press.html [L]
 
+# /press/data → press/data.html (data terminal for journalists)
+RewriteRule ^press/data/?$ /press/data.html [L]
+
 # /trends → trends.html (monthly cuisine-velocity chart, screenshot-shareable)
 RewriteRule ^trends/?$ /trends.html [L]
+# Monthly archive: /trends/2026-06 → trends/2026-06.html (immutable snapshot
+# after month rollover; the X share button points at the dated URL so tweets
+# stay accurate when leaderboard shifts).
+RewriteCond %{DOCUMENT_ROOT}/trends/$1.html -f
+RewriteRule ^trends/([0-9]{4}-[0-9]{2})/?$ /trends/$1.html [L]
 
 # /wire/{cuisine} → wire/{cuisine}.html. Diaspora media pitch pages -
 # self-contained editorial briefs (inline SVG charts, no JS) generated

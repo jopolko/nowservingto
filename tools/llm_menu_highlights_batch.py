@@ -17,8 +17,8 @@ silently skips the menu line for that entry.
 Safe to call from cron - already-cached entries are skipped. Designed for
 the same Message Batches API + 50%-off pricing as llm_classify_batch.py.
 """
-import os, sys, json, time, re
-from datetime import datetime
+import os, sys, json, time, re, argparse
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError
@@ -36,33 +36,53 @@ POLL_INTERVAL_SEC = 30
 # cache-format changes.
 MAX_TEXT_CHARS = 3500
 
-SYSTEM_PROMPT = """You extract SPECIFIC DISH NAMES from a restaurant's
-website text. Strict rules:
+SYSTEM_PROMPT = """You read a restaurant's website text and return TWO
+menu signals:
 
-1. Return ONLY dishes that appear VERBATIM (or near-verbatim with trivial
-   capitalization changes) in the provided text. Do not infer, do not
-   translate, do not add common dishes of the cuisine that aren't named.
+A) `dishes` — SPECIFIC DISH NAMES that appear VERBATIM in the text.
+B) `categories` — MENU SECTION NAMES / FOOD-TYPE GROUPINGS that appear
+                  verbatim in the text, used as a fallback when dish
+                  names aren't extractable.
 
-2. Each dish must be a specific, recognizable food item - not a category
-   ("appetizers", "mains", "desserts" are NOT dishes), not a cooking style
-   ("grilled", "fried"), not a generic cuisine word ("Italian food",
-   "Thai cuisine"). "Biryani" is a dish. "Indian curry" is not.
+Strict rules:
 
-3. Prefer signature / culturally-distinctive dishes when several appear:
-   "mandi", "shawarma", "pho", "banh mi", "jollof rice", "pad thai",
-   "injera", "tibs", "kibbeh", "kulcha", "biryani", "tagine", "samosa".
-   Skip generic items ("salad", "sandwich", "burger", "fries") unless
-   the restaurant clearly specializes in them.
+1. NEVER invent or infer. Both fields must come VERBATIM (or near-verbatim
+   with trivial capitalization changes) from the text. Do not translate,
+   do not add common items of the cuisine that aren't named.
 
-4. Maximum 5 dishes. Minimum 2 to report anything - if you can't find at
-   least 2 specific verbatim dishes, return null. NEVER fabricate.
+2. `dishes` = specific, recognizable food items.
+   - YES: "mandi", "shawarma", "pho", "banh mi", "jollof rice", "pad thai",
+          "injera", "tibs", "kibbeh", "kulcha", "biryani", "tagine",
+          "samosa", "beef hari kebab", "dhaka beef tehari"
+   - NO: categories ("appetizers", "mains", "desserts", "drinks"), cooking
+         styles ("grilled", "fried"), cuisine words ("Italian food").
+   - Skip generic items ("salad", "sandwich", "burger", "fries") unless the
+     restaurant clearly specializes in them.
 
-5. Use the form that appears in the text. Lowercase the output.
+3. `categories` = the menu's own section headings / food-type groupings.
+   These describe what KINDS of food the restaurant serves, even when
+   no specific dishes are named. Examples:
+   - "biryanis", "curries", "kebabs", "tandoor specials"
+   - "noodles", "rice bowls", "small plates", "wraps"
+   - "appetizers", "mains", "sides", "desserts"
+   - "vegetarian options", "halal", "seafood"
+   Use plural forms ("curries" not "curry") when the menu groups by type.
+   Skip pure logistics words ("lunch", "dinner", "happy hour", "to go").
+
+4. Maximum 5 of each. Lowercase the output.
+
+5. Prefer dishes over categories. Only include `categories` when you have
+   FEWER than 2 dishes — categories are the fallback signal so we can still
+   say something useful about menus that only list section headers. If you
+   have 2+ dishes, return categories=null. If you have <2 dishes AND <2
+   categories, return both null.
 
 Return JSON on one line, nothing else:
-  {"dishes": ["dish1", "dish2", "dish3"]}
+  {"dishes": ["dish1", "dish2"], "categories": null}
 or:
-  {"dishes": null}
+  {"dishes": null, "categories": ["biryanis", "curries", "kebabs"]}
+or:
+  {"dishes": null, "categories": null}
 """
 
 
@@ -97,19 +117,40 @@ def http_request(method, url, data=None):
         raise
 
 
+_CATEGORY_REJECT = {'menu', 'food', 'cuisine', 'lunch', 'dinner',
+                    'breakfast', 'brunch', 'happy hour', 'to go', 'takeout',
+                    'pickup', 'delivery'}
+_DISH_REJECT = _CATEGORY_REJECT | {'appetizers', 'mains', 'entrees',
+                                   'desserts', 'sides', 'drinks',
+                                   'beverages', 'specials', 'starters',
+                                   'small plates', 'salads', 'soups'}
+
+
 def _clean_dishes(value):
-    """Validate + normalize. Returns list[str] capped at 5 or None."""
+    """Validate + normalize specific dishes. Returns list[str] (>=2) or None."""
     if not isinstance(value, list): return None
     out = []
     for d in value:
         if not isinstance(d, str): continue
         s = re.sub(r'\s+', ' ', d.strip().lower())
-        # Reject obvious category words / 1-word generic stuff.
         if not s or len(s) > 60: continue
-        if s in {'appetizers', 'mains', 'entrees', 'desserts', 'sides',
-                 'drinks', 'beverages', 'specials', 'lunch', 'dinner',
-                 'breakfast', 'brunch', 'menu', 'food', 'cuisine'}:
-            continue
+        if s in _DISH_REJECT: continue
+        if s not in out:
+            out.append(s)
+        if len(out) >= 5: break
+    return out if len(out) >= 2 else None
+
+
+def _clean_categories(value):
+    """Validate + normalize menu categories. More permissive than dishes —
+    we WANT category words here. Returns list[str] (>=2) or None."""
+    if not isinstance(value, list): return None
+    out = []
+    for c in value:
+        if not isinstance(c, str): continue
+        s = re.sub(r'\s+', ' ', c.strip().lower())
+        if not s or len(s) > 40: continue
+        if s in _CATEGORY_REJECT: continue
         if s not in out:
             out.append(s)
         if len(out) >= 5: break
@@ -117,8 +158,16 @@ def _clean_dishes(value):
 
 
 def main():
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument('--max-age-days', type=int, default=0,
+                    help='Re-extract entries whose cached extraction is older '
+                         'than N days (in addition to never-extracted ones). '
+                         'Default 0 = never re-extract (first-time only). '
+                         'Recommended: 90 (~quarterly refresh, ~$0.30/sweep).')
+    args = ap.parse_args()
+
     cache = json.loads(CACHE_PATH.read_text()) if CACHE_PATH.exists() else {}
-    print(f"cache state: total={len(cache)}")
+    print(f"cache state: total={len(cache)}  (max-age-days={args.max_age_days})")
 
     if not DATA_PATH.exists():
         sys.exit(f"{DATA_PATH} missing - run inject_openings.py first")
@@ -129,15 +178,43 @@ def main():
     website_text = json.loads(WEBSITE_TEXT_PATH.read_text())
     recent = data.get('newOpenings', {}).get('recent', [])
 
+    # Threshold for "stale" — entries with extracted_at before this get re-run.
+    # When max_age_days=0 (default) the cutoff is unreachable, so re-extract is
+    # disabled and only never-cached entries become targets.
+    if args.max_age_days > 0:
+        stale_cutoff = (datetime.now(timezone.utc)
+                        - timedelta(days=args.max_age_days)).isoformat()
+    else:
+        stale_cutoff = None
+
     # Build target list: entries with a cached website AND that website has
-    # non-null text AND not already in our cache.
+    # non-null text AND one of:
+    #   (a) not in cache yet (first-time)
+    #   (b) cache entry is older than max-age-days
+    #   (c) cache entry was extracted under the old (pre-categories) prompt
+    #       — schema upgrade: dishes=None AND 'categories' key absent. Lets
+    #       us backfill the 159 nulls with category fallback without a
+    #       blanket re-extract of entries that already returned good dishes.
     targets = []   # list of (cache_key, name, text)
-    n_no_website = n_no_text = n_already = 0
+    n_no_website = n_no_text = n_already_fresh = n_restale = n_upgrade = 0
     for r in recent:
         ck = r.get('_cacheKey', '')
         if not ck: continue
-        if ck in cache:
-            n_already += 1; continue
+        is_restale = False
+        is_upgrade = False
+        cached = cache.get(ck)
+        if cached:
+            needs_upgrade = (cached.get('dishes') is None
+                             and 'categories' not in cached)
+            if needs_upgrade:
+                is_upgrade = True
+            elif stale_cutoff is None:
+                n_already_fresh += 1; continue
+            else:
+                cached_at = cached.get('extracted_at') or ''
+                if cached_at >= stale_cutoff:
+                    n_already_fresh += 1; continue
+                is_restale = True
         url = r.get('website')
         if not url:
             n_no_website += 1; continue
@@ -148,11 +225,15 @@ def main():
         # Drop the jina-header noise and trim length.
         text = re.sub(r'\s+', ' ', text)[:MAX_TEXT_CHARS]
         targets.append((ck, r.get('operatingName', ''), text))
+        if is_restale: n_restale += 1
+        if is_upgrade: n_upgrade += 1
 
     print(f"  candidates: {len(recent)} recent / "
           f"{len(recent) - n_no_website} with website / "
           f"{len(recent) - n_no_website - n_no_text} with cached text / "
-          f"{len(targets)} not-yet-cached")
+          f"{len(targets)} targets ({n_restale} re-extracts, "
+          f"{n_upgrade} schema-upgrades, "
+          f"{len(targets) - n_restale - n_upgrade} first-time)")
 
     if not targets:
         print("nothing to extract.")
@@ -210,7 +291,7 @@ def main():
     raw = http_request('GET', results_url)
     raw_text = json.dumps(raw) if isinstance(raw, dict) else raw.decode('utf-8')
 
-    n_with = n_null = n_err = 0
+    n_with_dishes = n_with_cats = n_null = n_err = 0
     total_in = total_out = 0
     extracted_at = datetime.utcnow().isoformat() + 'Z'
     for line in raw_text.strip().split('\n'):
@@ -233,6 +314,7 @@ def main():
         text_out = ''.join(b.get('text', '') for b in msg.get('content', [])
                            if b.get('type') == 'text').strip()
         dishes = None
+        categories = None
         parsed_obj = None
         for ln in text_out.split('\n'):
             s = ln.strip().lstrip('`').strip()
@@ -243,22 +325,29 @@ def main():
                     continue
         if parsed_obj is not None:
             dishes = _clean_dishes(parsed_obj.get('dishes'))
+            # Only honor categories when we have no dishes — keeps the
+            # render side simple (dishes win when both exist).
+            if not dishes:
+                categories = _clean_categories(parsed_obj.get('categories'))
         cache[key] = {
             'status': 'ok',
             'dishes': dishes,
+            'categories': categories,
             'raw': text_out[:200],
             'in_tok': usage.get('input_tokens', 0),
             'out_tok': usage.get('output_tokens', 0),
             'via': 'batch',
             'extracted_at': extracted_at,
         }
-        if dishes: n_with += 1
-        else:      n_null += 1
+        if dishes:        n_with_dishes += 1
+        elif categories:  n_with_cats += 1
+        else:             n_null += 1
 
     CACHE_PATH.write_text(json.dumps(cache, separators=(',', ':')))
     # Batch API: 50% off Haiku list price ($1/Mtok in, $5/Mtok out)
     cost = (total_in / 1e6 * 1.0 + total_out / 1e6 * 5.0) * 0.5
-    print(f"\nbatch merged: with-dishes={n_with} null={n_null} err={n_err}  "
+    print(f"\nbatch merged: with-dishes={n_with_dishes} with-categories={n_with_cats} "
+          f"null={n_null} err={n_err}  "
           f"tokens in={total_in:,} out={total_out:,}  est ${cost:.3f} (50%-off)")
     try:
         sys.path.insert(0, str(Path(__file__).resolve().parent))
