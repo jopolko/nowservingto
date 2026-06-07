@@ -30,6 +30,8 @@ from pathlib import Path
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError
 
+import re as _re
+
 ROOT = Path(__file__).resolve().parent.parent
 DATA_PATH      = ROOT / 'data' / 'corridors.json'
 WV_CACHE_PATH  = ROOT / 'tools' / 'cache' / 'web_verify_cache.json'
@@ -38,46 +40,156 @@ SECRETS        = Path('/var/secrets/nowservingto.env')
 MODEL          = 'claude-haiku-4-5-20251001'
 POLL_INTERVAL_SEC = 30
 
-SYSTEM_PROMPT = """You're rewriting verification notes about Toronto
-restaurants into editorial prose that reads like a restaurant directory
-entry, not like a verification log.
+# Word-numbers (one..ninety + hundred). Mirrors the cleanup-pass script in
+# tools/scrub_cache.py — any change here must mirror there.
+_WORD_NUM = (r'(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|'
+             r'thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|'
+             r'thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred)'
+             r'(?:[\s-](?:one|two|three|four|five|six|seven|eight|nine))?')
 
-The input is a 1-3 sentence note written by a verification system. It
-typically includes phrases like:
-  - "Website confirms X is..."
-  - "Google Places match shows..."
-  - "WEB VERIFY reports operational at..."
-  - "Licence and Places match on..."
-  - "Places reviews praise..."
-  - "Operational ___ restaurant at ___, with..."
+# Defensive scrubber — even when the prompt explicitly bans these phrases,
+# Haiku still slips them in occasionally. Anything matching here is stripped
+# before the blurb hits the cache. Markers (⟂) preserve sentence boundaries.
+_TIMEBOMB_PATTERNS = [
+    # "opened just over ten weeks ago" / "opened 29 days ago"
+    (_re.compile(rf',?\s*\bopened\s+(?:just\s+over\s+|just\s+under\s+|about\s+|around\s+|nearly\s+|over\s+)?'
+                 rf'(?:a\s+|{_WORD_NUM}\s+|\d+\s+)?(?:few\s+|several\s+)?'
+                 rf'(?:weeks?|months?|years?|days?)\s+ago\b\.?', _re.I), '⟂'),
+    # "thirteen weeks ago" / "29 days old"
+    (_re.compile(rf',?\s*\b(?:about\s+|around\s+|nearly\s+|over\s+|just\s+over\s+|just\s+under\s+)?'
+                 rf'(?:a\s+|{_WORD_NUM}\s+|\d+\s+)(?:few\s+|several\s+)?'
+                 rf'(?:weeks?|months?|years?|days?)\s+(?:ago|old)\b\.?', _re.I), '⟂'),
+    # "this/last + month/week/year/season"
+    (_re.compile(r',?\s*\b(?:this|last)\s+(?:month|week|year|spring|summer|fall|autumn|winter|quarter|season)\b\.?', _re.I), '⟂'),
+    # "Among/One of/Now the freshest ___ openings"
+    (_re.compile(r',?\s*\b(?:Among|One\s+of|Now)\s+(?:the\s+)?(?:freshest|newest)\s+[^.]*?openings?(?:\s+in\s+(?:the\s+)?(?:city|area|Toronto))?\b\.?', _re.I), '⟂'),
+    # "in the past/last (few) N months"
+    (_re.compile(r',?\s*\b(?:in|over|during)\s+(?:the\s+)?(?:past|last)\s+(?:few\s+)?\d*\s*(?:months?|weeks?|years?)\b\.?', _re.I), '⟂'),
+    # "newly/recently/just opened/launched/debuted/established/inaugurated"
+    (_re.compile(r',?\s*\b(?:newly|recently|just)\s+(?:opened|launched|debuted|established|inaugurated)\b\.?', _re.I), '⟂'),
+    # "brand new" / "brand-new"
+    (_re.compile(r'\bbrand[\s-]?new\b\s*', _re.I), '⟂'),
+]
 
-You'll be given the restaurant's name, cuisine, and the raw note.
-Write 1-2 natural-sounding sentences (45-110 words) about the
-restaurant itself. Focus on:
-  - what kind of food they serve (specific dishes when the note names them)
-  - what's distinctive (family-run, takeout-only, signature item, etc.)
-  - atmosphere or format if mentioned
+_SENT_STARTERS = r'(?:The|A|An|This|That|Among|One|Now|Verified|Operating|Licensed|Online|Reviewers?|Operators?|No)'
+_PERIOD_FIXUP = _re.compile(rf'(\b\w+)(\s+)({_SENT_STARTERS}\s+\w)')
+_BANNED_PRIOR = {'and','or','but','to','of','in','at','on','with','for',
+                 'from','by','as','than','that','about','around','through',
+                 'over','under','across','near','beyond','via','per','off'}
+
+
+def _scrub_timebombs(text):
+    """Run the defensive scrubber + period-restoration pass on a blurb.
+    Returns the cleaned text. Idempotent."""
+    if not text: return text
+    for pat, repl in _TIMEBOMB_PATTERNS:
+        text = pat.sub(repl, text)
+    # Collapse markers: ⟂ at sentence end → period, mid-sentence → drop
+    text = _re.sub(r'⟂\s*\.', '⟂', text)
+    text = _re.sub(r'⟂\s*(?=[A-Z][a-z])', '. ', text)
+    text = _re.sub(r'⟂', '', text)
+    # Restore sentence-boundary periods the strips may have swallowed
+    def _maybe_period(m):
+        prior = m.group(1)
+        if prior.lower() in _BANNED_PRIOR: return m.group(0)
+        return prior + '. ' + m.group(3)
+    prev = None
+    while prev != text:
+        prev = text
+        text = _PERIOD_FIXUP.sub(_maybe_period, text)
+    # Punctuation tidy-up
+    text = _re.sub(r'\s{2,}', ' ', text)
+    text = _re.sub(r'\s+([,.;:])', r'\1', text)
+    text = _re.sub(r',\s*\.', '.', text)
+    text = _re.sub(r',\s*,', ',', text)
+    text = _re.sub(r'\.\s*\.', '.', text)
+    text = _re.sub(r'^\s*,\s*', '', text)
+    text = text.strip()
+    if text:
+        text = text[:1].upper() + text[1:]
+    return text
+
+SYSTEM_PROMPT = """You're writing editorial blurbs for a Toronto
+restaurant directory. Each blurb reads like a directory entry from a
+careful neighbourhood guide — factual, specific, and grounded in the
+operating reality of the kitchen.
+
+You'll be given the restaurant's name, cuisine, address+district, prior
+tenant (if the storefront had one), and a verification note containing
+what we know about the operation. Write a blurb of **70-110 words**
+following this structure:
+
+  Sentence 1 — WHAT + WHERE: identify the cuisine/format and the
+  specific neighbourhood + street it sits on. Reference the prior
+  tenant if one is provided ("taking over from X" / "in a unit most
+  recently held by X").
+
+  Sentence 2-4 — WHO + DIFFERENTIATOR: name the signature dishes,
+  the regional cuisine sub-style (Hyderabadi vs. Punjabi, Cantonese
+  vs. Sichuan, Tamil vs. Sinhalese, etc.) when the note supports it,
+  the operating format (counter, sit-down, family-run, halal, etc.),
+  and what distinguishes the kitchen. End on a factual closer about
+  the operation — neighbourhood corridor, online ordering presence,
+  hours format, sit-down vs takeout, etc.
+
+  DO NOT add a source-attribution sentence ("Verified open via the
+  City of Toronto licence registry" or similar). The site-wide
+  methodology line on every page already attributes the source —
+  repeating it per-entry is redundant boilerplate.
 
 Hard rules:
-  - DO NOT mention "website", "Places", "Google", "verification",
-    "verified", "registry", "licence", "licensed", "operational",
-    "confirmed", "matched", "address" - any verification-system word.
-  - DO NOT use the word "opened" (the site only knows the licence
-    registration date, not when the kitchen actually opened) or any
-    time-relative phrase like "X days ago", "recently opened", "this
-    month", "this week" - the blurb is cached forever so anything
-    relative goes stale. The page elsewhere shows the registration
-    date dynamically.
-  - DO NOT start with the restaurant name.
-  - DO NOT fabricate details that aren't in the note. If the note
-    mentions arancini, you can write about arancini. If it doesn't
-    mention a specific dish, write about the cuisine in general terms.
-  - Lead with the food or the kitchen, not corporate-y framing.
-  - Sentence form, lowercase first letter is fine (it follows
-    "What we know:" on the page).
+  - First letter of the blurb MUST be capitalized (full sentence case).
+  - **CAPITALIZE proper nouns** correctly:
+      • Cuisine adjectives: Indian, Italian, Vietnamese, Sri Lankan,
+        Hakka, Hyderabadi, Telangana, Cantonese, Eelam, Habesha.
+      • Neighbourhoods: Downtown, Scarborough, Etobicoke, North York,
+        East Toronto, West Toronto, Midtown, East York.
+      • Street names: Davenport Rd, Queen St W, Bloor St, Spadina Ave.
+      • Dish names: Biryani, Mandi, Dosa, Idli, Vada, Paratha, Naan,
+        Samosa, Paneer, Tikka, Masala, Tandoori, Kebab, Shawarma,
+        Bibimbap, Kimchi, Bulgogi, Sushi, Sashimi, Ramen, Pho, Banh Mi,
+        Pad Thai, Tom Yum, Laksa, Satay, Rendang, Hopper, Hoppers,
+        Kothu, Parotta, Injera, Tibs, Shiro, Jollof, Empanada, Pupusa,
+        Ceviche, Mole, Birria, Pierogi, Borscht, Falafel, Hummus,
+        Baklava, Kibbeh, Shakshuka, Tahdig, Koobideh, Ghormeh Sabzi,
+        Char Siu, Xiao Long Bao, Dim Sum, Wonton, Bao, Momo, Laphing.
+      • When a dish name appears as a multi-word phrase (Pad Thai, Tom
+        Yum, Banh Mi, Tikka Masala, Butter Chicken, Char Siu, Pani
+        Puri), capitalize each word.
+      • Cooking-method words that are not dish names stay lowercase
+        (dum-cooked, slow-braised, wood-fired, seekh-skewered).
+  - DO NOT start with the restaurant name. Lead with the cuisine
+    or kitchen format.
+  - **TIME-BOMB BAN** — the blurb is cached permanently, so anything
+    relative-to-now goes stale and becomes a lie in production. Forbidden:
+      • "opened N weeks/months/years/days ago" (any form, including word
+        numbers — "opened just over ten weeks ago", "opened five weeks ago")
+      • bare "N weeks/months/years/days ago" or "N days old"
+      • "this month / this week / this year / this season"
+      • "last month / last year / last quarter"
+      • "recently opened / newly opened / just opened / brand new"
+      • "Among the freshest ___ openings", "One of the newest ___ in the city"
+      • "in the past few months", "in the last year"
+    Allowed time references (do not go stale): "licensed in summer 2025",
+    "licensed in August 2025", "operating since 2024", "opened in 2024".
+    Bare month-year and bare year are fine. "newly registered" is fine —
+    it restates the coverage policy, not a relative-to-now claim.
+  - DO NOT attribute facts to Google, Google Places, Google Maps,
+    Google reviews, or "Places reviews". Treat any review snippets in
+    the note as raw factual intel — restate the fact directly without
+    citing the source. (Reviews citing "great biryani" → write "the
+    biryani is the calling card", not "reviewers praise the biryani".)
+  - DO NOT fabricate. If the note doesn't name a dish, write about
+    the cuisine in general terms or skip that beat. Never invent
+    operators, neighbourhoods, or signature dishes.
+  - DO NOT use em-dashes or en-dashes. Use commas, periods, or
+    parenthetical asides.
+  - DO NOT add a source-attribution closing sentence. The site
+    methodology line handles source attribution site-wide.
+  - Return PURE JSON ONLY — no ```json fences, no markdown wrapper.
 
 Return JSON on one line:
-  {"blurb": "<your rewrite>"}
+  {"blurb": "<your 70-110 word blurb, no source-attribution closing>"}
 """
 
 
@@ -130,7 +242,7 @@ def main():
     for c in data.get('newOpenings', {}).get('cuisines', []):
         if c.get('key'): labels[c['key']] = c.get('label', c['key'])
 
-    targets = []   # list of (cache_key, name, cuisine_label, evidence)
+    targets = []   # list of (cache_key, name, cuisine_label, address, district, prior, evidence)
     for r in recent:
         ck = r.get('_cacheKey', '')
         if not ck or ck in cache: continue
@@ -139,7 +251,10 @@ def main():
         if not ev: continue
         keys = r.get('cuisines') or ([r['cuisine']] if r.get('cuisine') else [])
         cuisine_label = labels.get(keys[0], keys[0].title()) if keys else 'restaurant'
-        targets.append((ck, r.get('operatingName', ''), cuisine_label, ev))
+        addr = (r.get('address') or '').strip()
+        district = (r.get('district') or '').strip()
+        prior = ((r.get('priorTenant') or {}).get('name') or '').strip()
+        targets.append((ck, r.get('operatingName', ''), cuisine_label, addr, district, prior, ev))
 
     print(f"  candidates: {len(targets)} uncached entries")
 
@@ -149,19 +264,28 @@ def main():
 
     requests = []
     target_keys = []
-    for ck, name, cuisine, ev in targets:
+    for ck, name, cuisine, addr, district, prior, ev in targets:
         custom_id = 'e' + str(abs(hash(ck)) & 0x7fffffff)
-        prompt = (
-            f"Restaurant: {name}\n"
-            f"Cuisine: {cuisine}\n"
-            f"Verification note: {ev}\n\n"
-            f"Rewrite as editorial blurb."
+        prompt_lines = [
+            f"Restaurant: {name}",
+            f"Cuisine: {cuisine}",
+            f"Address: {addr}" + (f" ({district})" if district else ''),
+        ]
+        if prior:
+            prompt_lines.append(f"Prior tenant at this address: {prior}")
+        prompt_lines.append(f"Verification note: {ev}")
+        prompt_lines.append("")
+        prompt_lines.append(
+            "Write an 80-120 word editorial blurb following the structure "
+            "in the system prompt. End with the verbatim source-assertion "
+            "sentence."
         )
+        prompt = '\n'.join(prompt_lines)
         requests.append({
             'custom_id': custom_id,
             'params': {
                 'model': MODEL,
-                'max_tokens': 200,
+                'max_tokens': 400,
                 'system': SYSTEM_PROMPT,
                 'messages': [{'role': 'user', 'content': prompt}],
             },
@@ -241,13 +365,26 @@ def main():
             cache[ck] = {'status': 'error', 'error': 'empty-blurb',
                          'raw': text_out[:200], 'rewrote_at': rewrote_at}
             continue
+        # Defensive cleanup: capitalize first letter, strip em/en-dashes,
+        # scrub time-bomb phrases (anything relative-to-now that goes stale),
+        # and strip any source-attribution closing sentence Haiku still
+        # appends despite the prompt ban. The site methodology line handles
+        # source attribution site-wide; per-entry repetition is redundant.
+        blurb = blurb[:1].upper() + blurb[1:] if blurb else blurb
+        blurb = blurb.replace('—', ',').replace('–', ',')
+        blurb = _scrub_timebombs(blurb)
+        blurb = _re.sub(
+            r"\s*Verified\s+open\s+via\s+the\s+City('s|\s+of\s+Toronto)\s+licence\s+registry\.\s*$",
+            '', blurb, flags=_re.I).rstrip()
+        if blurb and blurb[-1] not in '.!?':
+            blurb += '.'
         cache[ck] = {
             'status': 'ok',
             'blurb': blurb,
             'raw': text_out[:280],
             'in_tok': usage.get('input_tokens', 0),
             'out_tok': usage.get('output_tokens', 0),
-            'via': 'batch',
+            'via': 'haiku_editorial_v2',
             'rewrote_at': rewrote_at,
         }
         n_ok += 1

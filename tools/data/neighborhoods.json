@@ -1,0 +1,409 @@
+{
+  "_doc": "Curated iconic Toronto food corridors + diaspora neighborhoods. Each maps to one or more entries in the City's 158 official neighbourhood polygons (tools/cache/neighbourhoods.geojson), optionally narrowed by an address street_pattern for cases where the official polygon contains MULTIPLE iconic corridors (e.g. Kensington-Chinatown contains both Kensington Market and Chinatown). Used by inject_openings.py to attach entry.corridor and emit /neighborhood/<slug>.html pages. Schema: {label, cuisine_anchor (optional), parent_district, official_areas: [AREA_NAME, ...], street_pattern (regex, optional), wikidata_qid (optional), blurb}.",
+  "greektown": {
+    "label": "Greektown",
+    "cuisine_anchor": "greek",
+    "parent_district": "East Toronto",
+    "official_areas": [
+      "Playter Estates-Danforth",
+      "North Riverdale"
+    ],
+    "street_pattern": "\\b(danforth|chester|pape|jones|broadview)\\b",
+    "wikidata_qid": "Q9357917",
+    "blurb": "Toronto's Greek corridor along the Danforth, anchored by tavernas, gyro counters, and souvlaki spots running roughly from Pape to Jones. Greektown extends along Danforth Ave through the Playter Estates and North Riverdale neighbourhoods.",
+    "adjacent": [
+      "east-chinatown",
+      "leslieville",
+      "cabbagetown"
+    ]
+  },
+  "little-italy": {
+    "label": "Little Italy",
+    "cuisine_anchor": "italian",
+    "parent_district": "Downtown",
+    "official_areas": [
+      "Palmerston-Little Italy"
+    ],
+    "wikidata_qid": "Q3125013",
+    "blurb": "Toronto's original Italian commercial district along College Street between Bathurst and Ossington. Postwar Calabrian and Sicilian families anchored the corridor; today's Little Italy is a mix of legacy trattorias, third-wave coffee, and Roman-style pasta bars.",
+    "adjacent": [
+      "little-portugal",
+      "kensington-market",
+      "west-queen-west"
+    ]
+  },
+  "little-portugal": {
+    "label": "Little Portugal",
+    "cuisine_anchor": "portuguese",
+    "parent_district": "West Toronto",
+    "official_areas": [
+      "Little Portugal",
+      "Dufferin Grove",
+      "Trinity-Bellwoods"
+    ],
+    "street_pattern": "\\b(dundas|dovercourt|college|ossington)\\b",
+    "wikidata_qid": "Q6651410",
+    "blurb": "Portuguese commercial corridor along Dundas Street West, west of Ossington. Pastel de nata bakeries, charcoal-grilled chicken (frango churrasco), and seafood spots; one of Toronto's densest concentrations of European immigrant food heritage.",
+    "adjacent": [
+      "little-italy",
+      "west-queen-west",
+      "parkdale"
+    ]
+  },
+  "corso-italia": {
+    "label": "Corso Italia",
+    "cuisine_anchor": "italian",
+    "parent_district": "West Toronto",
+    "official_areas": [
+      "Corso Italia-Davenport"
+    ],
+    "wikidata_qid": "Q85754170",
+    "blurb": "Toronto's second Italian commercial district, anchored along St. Clair Avenue West roughly from Lansdowne to Caledonia. Settled later than College Street's Little Italy; carries a stronger southern-Italian and Portuguese-Italian mix.",
+    "adjacent": [
+      "little-italy",
+      "little-jamaica"
+    ]
+  },
+  "roncesvalles": {
+    "label": "Roncesvalles",
+    "cuisine_anchor": "polish",
+    "parent_district": "West Toronto",
+    "official_areas": [
+      "Roncesvalles",
+      "High Park-Swansea"
+    ],
+    "street_pattern": "\\b(roncesvalles|sorauren|fern|garden|geoffrey|grenadier|grafton|wright)\\b",
+    "wikidata_qid": "Q3441634",
+    "blurb": "Polish commercial corridor along Roncesvalles Avenue between Queen Street West and Howard Park. Pierogi spots, smoked meats, deli counters; one of Toronto's last visible postwar central-European enclaves.",
+    "adjacent": [
+      "parkdale",
+      "the-junction",
+      "bloor-west-village"
+    ]
+  },
+  "kensington-market": {
+    "label": "Kensington Market",
+    "parent_district": "Downtown",
+    "official_areas": [
+      "Kensington-Chinatown"
+    ],
+    "street_pattern": "\\b(augusta|kensington|baldwin|nassau|bellevue|st andrew)\\b",
+    "wikidata_qid": "Q3195260",
+    "blurb": "Toronto's most layered immigrant food neighbourhood: Jewish, Portuguese, Caribbean, Latin American, and East Asian arrivals each built on top of the previous wave. Walking-scale streets between College, Spadina, Dundas, and Augusta.",
+    "adjacent": [
+      "chinatown",
+      "little-italy",
+      "west-queen-west"
+    ]
+  },
+  "chinatown": {
+    "label": "Chinatown",
+    "cuisine_anchor": "chinese",
+    "parent_district": "Downtown",
+    "official_areas": [
+      "Kensington-Chinatown"
+    ],
+    "street_pattern": "\\b(spadina|dundas|huron|st patrick|d'arcy|cecil|grange)\\b",
+    "wikidata_qid": "Q2963746",
+    "blurb": "Toronto's main Chinatown, centred on Spadina Avenue between Dundas and College. Hand-pulled noodle shops, Vietnamese pho counters that arrived in the 80s, and an expanding wave of regional Chinese cuisines beyond Cantonese.",
+    "adjacent": [
+      "kensington-market",
+      "little-italy",
+      "west-queen-west"
+    ]
+  },
+  "east-chinatown": {
+    "label": "East Chinatown",
+    "cuisine_anchor": "chinese",
+    "parent_district": "East Toronto",
+    "official_areas": [
+      "South Riverdale",
+      "Broadview North"
+    ],
+    "street_pattern": "\\b(broadview|gerrard|riverdale|booth|logan|carlaw)\\b",
+    "blurb": "Toronto's second, quieter Chinatown at Gerrard and Broadview. Cantonese roots; Vietnamese arrivals expanded the corridor through the 80s and 90s. Smaller and less commercial than the Spadina Chinatown but still anchored by long-running family-run kitchens.",
+    "adjacent": [
+      "greektown",
+      "leslieville",
+      "gerrard-india-bazaar"
+    ]
+  },
+  "koreatown": {
+    "label": "Koreatown",
+    "cuisine_anchor": "korean",
+    "parent_district": "Downtown",
+    "official_areas": [
+      "Annex",
+      "Wychwood"
+    ],
+    "street_pattern": "\\b(bloor|christie|bathurst|markham|major)\\b",
+    "blurb": "Korean commercial corridor along Bloor Street West between Bathurst and Christie. Korean BBQ, soft-tofu stews, fried chicken counters; established in the 70s by post-war Korean immigrants and still the city's largest concentration of Korean food.",
+    "adjacent": [
+      "little-italy",
+      "kensington-market"
+    ]
+  },
+  "gerrard-india-bazaar": {
+    "label": "Gerrard India Bazaar",
+    "cuisine_anchor": "indian",
+    "parent_district": "East Toronto",
+    "official_areas": [
+      "Greenwood-Coxwell",
+      "Blake-Jones"
+    ],
+    "street_pattern": "\\b(gerrard|coxwell|woodfield|highfield|hiawatha|craven)\\b",
+    "blurb": "South Asian commercial corridor on Gerrard East between Coxwell and Greenwood. North Indian sweet shops, Pakistani biryani halls, Bengali grocers; established in the 70s and still the city's longest-running South Asian commercial street.",
+    "adjacent": [
+      "east-chinatown",
+      "leslieville",
+      "greektown"
+    ]
+  },
+  "little-jamaica": {
+    "label": "Little Jamaica",
+    "cuisine_anchor": "jamaican",
+    "parent_district": "West Toronto",
+    "official_areas": [
+      "Oakwood Village",
+      "Caledonia-Fairbank",
+      "Briar Hill-Belgravia",
+      "Keelesdale-Eglinton West"
+    ],
+    "street_pattern": "\\b(eglinton|oakwood|northcliffe|vaughan|dufferin|fairbank)\\b",
+    "wikidata_qid": "Q5348082",
+    "blurb": "Jamaican and Caribbean commercial corridor along Eglinton Avenue West roughly from Dufferin to Keele. Patty shops, jerk-chicken counters, oxtail stews; one of North America's largest Jamaican commercial districts.",
+    "adjacent": [
+      "corso-italia"
+    ]
+  },
+  "parkdale": {
+    "label": "Parkdale",
+    "cuisine_anchor": "tibetan",
+    "parent_district": "West Toronto",
+    "official_areas": [
+      "South Parkdale"
+    ],
+    "wikidata_qid": "Q3365446",
+    "blurb": "Tibetan, Eritrean, Roma, and Filipino diaspora corridor along Queen Street West and Roncesvalles south end. Toronto's largest Tibetan community outside Asia, anchored by momo houses and Himalayan kitchens around Queen and Lansdowne.",
+    "adjacent": [
+      "roncesvalles",
+      "west-queen-west",
+      "the-junction"
+    ]
+  },
+  "cabbagetown": {
+    "label": "Cabbagetown",
+    "parent_district": "Downtown",
+    "official_areas": [
+      "Cabbagetown-South St.James Town"
+    ],
+    "wikidata_qid": "Q738848",
+    "blurb": "Heritage-Victorian residential neighbourhood east of Yonge between Bloor and Wellesley, named for the cabbage plots Irish immigrants kept in the 19th century. Newer arrivals layer onto Parliament Street's mixed commercial strip.",
+    "adjacent": [
+      "greektown",
+      "leslieville"
+    ]
+  },
+  "thorncliffe-park": {
+    "label": "Thorncliffe Park",
+    "cuisine_anchor": "pakistani",
+    "parent_district": "East Toronto",
+    "official_areas": [
+      "Thorncliffe Park"
+    ],
+    "wikidata_qid": "Q7796352",
+    "blurb": "Dense apartment-cluster neighbourhood off Don Mills Road, home to one of Canada's largest South Asian populations. Pakistani biryani halls, Afghan kebab counters, Bangladeshi sweet shops; commercial activity concentrated along Overlea Boulevard.",
+    "adjacent": [
+      "flemingdon-park",
+      "greektown"
+    ]
+  },
+  "flemingdon-park": {
+    "label": "Flemingdon Park",
+    "cuisine_anchor": "south_asian",
+    "parent_district": "East Toronto",
+    "official_areas": [
+      "Flemingdon Park"
+    ],
+    "blurb": "South Asian, Filipino, and Latin American diaspora neighbourhood north of the Don Valley, bounded by Don Mills, Eglinton, and the DVP. Commercial activity threaded along Don Mills Road.",
+    "adjacent": [
+      "thorncliffe-park"
+    ]
+  },
+  "wexford": {
+    "label": "Wexford",
+    "cuisine_anchor": "tamil",
+    "parent_district": "Scarborough",
+    "official_areas": [
+      "Wexford/Maryvale"
+    ],
+    "wikidata_qid": "Q7990239",
+    "blurb": "Tamil and Sri Lankan diaspora neighbourhood in central Scarborough, anchored by Lawrence Avenue East and Pharmacy Avenue. Toronto's Tamil community is one of the largest outside South Asia, and Wexford carries a heavy concentration of dosa houses and Jaffna-style kitchens.",
+    "adjacent": [
+      "agincourt",
+      "malvern"
+    ]
+  },
+  "agincourt": {
+    "label": "Agincourt",
+    "cuisine_anchor": "chinese",
+    "parent_district": "Scarborough",
+    "official_areas": [
+      "Agincourt North",
+      "Agincourt South-Malvern West"
+    ],
+    "wikidata_qid": "Q4692573",
+    "blurb": "Major Chinese commercial corridor in northeast Scarborough, anchored around Sheppard and Kennedy. Hong Kong-style cafes, Cantonese seafood houses, hand-pulled noodle shops; complementary to the downtown Spadina Chinatown.",
+    "adjacent": [
+      "wexford",
+      "malvern"
+    ]
+  },
+  "malvern": {
+    "label": "Malvern",
+    "cuisine_anchor": "caribbean",
+    "parent_district": "Scarborough",
+    "official_areas": [
+      "Malvern East",
+      "Malvern West"
+    ],
+    "wikidata_qid": "Q6745045",
+    "blurb": "Caribbean (Jamaican, Trinidadian, Guyanese) and East African diaspora neighbourhood in northeast Scarborough. Commercial activity along McCowan and Sheppard; one of the city's largest concentrations of West Indian food businesses outside Eglinton West.",
+    "adjacent": [
+      "agincourt",
+      "wexford"
+    ]
+  },
+  "leslieville": {
+    "label": "Leslieville",
+    "parent_district": "East Toronto",
+    "official_areas": [
+      "South Riverdale"
+    ],
+    "street_pattern": "\\b(queen|leslie|jones|carlaw|pape|broadview)\\b.*\\b(east|e)\\b|\\b(jones|leslie|pape)\\b",
+    "wikidata_qid": "Q3236730",
+    "blurb": "Independent-restaurant corridor along Queen Street East between Broadview and Jones. Brunch, third-wave coffee, neighbourhood Italian and Asian; less heritage-immigrant, more contemporary independent.",
+    "adjacent": [
+      "greektown",
+      "east-chinatown",
+      "the-beaches"
+    ]
+  },
+  "liberty-village": {
+    "label": "Liberty Village",
+    "parent_district": "Downtown",
+    "official_areas": [
+      "Fort York-Liberty Village"
+    ],
+    "wikidata_qid": "Q14875253",
+    "blurb": "Former industrial district remade into a high-density residential and office cluster between King West and the rail corridor. Restaurant scene leans casual-fast and concept-driven; less heritage, more turnover.",
+    "adjacent": [
+      "king-west",
+      "west-queen-west"
+    ]
+  },
+  "the-beaches": {
+    "label": "The Beaches",
+    "parent_district": "East Toronto",
+    "official_areas": [
+      "The Beaches",
+      "Woodbine Corridor"
+    ],
+    "wikidata_qid": "Q7715974",
+    "blurb": "Lakeshore neighbourhood along Queen East from Coxwell to Victoria Park. Brunch, casual pubs, family kitchens; commercial activity threaded along Queen with a heavy patio summer trade.",
+    "adjacent": [
+      "leslieville"
+    ]
+  },
+  "yorkville": {
+    "label": "Yorkville",
+    "parent_district": "Downtown",
+    "official_areas": [
+      "Annex",
+      "Yonge-Bay Corridor"
+    ],
+    "street_pattern": "\\b(yorkville|cumberland|hazelton|scollard|prince arthur|bellair|bay)\\b",
+    "wikidata_qid": "Q1022897",
+    "blurb": "High-end dining cluster around Bay, Yonge, Cumberland and Hazelton, north of Bloor. Hotel restaurants, omakase counters, French bistros, and tasting menus; one of Toronto's densest concentrations of fine dining.",
+    "adjacent": [
+      "king-west",
+      "koreatown"
+    ]
+  },
+  "the-junction": {
+    "label": "The Junction",
+    "parent_district": "West Toronto",
+    "official_areas": [
+      "Junction Area"
+    ],
+    "wikidata_qid": "Q7743816",
+    "blurb": "Independent-restaurant corridor along Dundas Street West around Keele. Former railway-junction industrial district remade in the last two decades into a contemporary food strip — third-wave cafes, neighbourhood Italian, casual sushi, and craft brewpubs.",
+    "adjacent": [
+      "roncesvalles",
+      "parkdale",
+      "bloor-west-village"
+    ]
+  },
+  "willowdale": {
+    "label": "Willowdale",
+    "cuisine_anchor": "korean",
+    "parent_district": "North York",
+    "official_areas": [
+      "Willowdale West",
+      "Newtonbrook East",
+      "Newtonbrook West",
+      "East Willowdale",
+      "Lansing-Westgate"
+    ],
+    "street_pattern": "\\b(yonge|sheppard|finch|empress|park home|kempford|cummer|drewry)\\b",
+    "wikidata_qid": "Q3569134",
+    "blurb": "Korean-anchored commercial corridor along Yonge Street between Sheppard and Finch, north of the downtown core. Toronto's second Korean food district after Koreatown — denser concentration of Korean BBQ, fried chicken, and bunsik counters.",
+    "adjacent": [
+      "yorkville"
+    ]
+  },
+  "west-queen-west": {
+    "label": "West Queen West",
+    "parent_district": "Downtown",
+    "official_areas": [
+      "West Queen West"
+    ],
+    "blurb": "Restaurant + gallery corridor along Queen Street West between Trinity-Bellwoods and Dufferin. Independent kitchens, third-wave coffee, brunch spots, and an active nightlife strip; transitions from gallery district to restaurant row roughly west of Bathurst.",
+    "adjacent": [
+      "little-portugal",
+      "kensington-market",
+      "little-italy"
+    ]
+  },
+  "bloor-west-village": {
+    "label": "Bloor West Village",
+    "parent_district": "West Toronto",
+    "official_areas": [
+      "Runnymede-Bloor West Village",
+      "High Park North",
+      "Lambton Baby Point"
+    ],
+    "street_pattern": "\\b(bloor|jane|windermere|durie|annette|runnymede|baby point|colbeck)\\b",
+    "blurb": "Family-scale food strip along Bloor Street West between Runnymede and Jane. Eastern European delis, casual independent restaurants, and a quieter residential commercial rhythm than the downtown food corridors.",
+    "adjacent": [
+      "the-junction",
+      "parkdale"
+    ]
+  },
+  "king-west": {
+    "label": "King West",
+    "parent_district": "Downtown",
+    "official_areas": [
+      "Wellington Place",
+      "Fort York-Liberty Village",
+      "Kensington-Chinatown"
+    ],
+    "street_pattern": "\\b(king|wellington|niagara|portland|brant|stewart|tecumseth|adelaide)\\b",
+    "blurb": "Restaurant row along King Street West between Bathurst and Spadina, expanding into the Wellington Place and Fort York districts. Concept restaurants, hotel dining rooms, club-style steakhouses, and one of the city's densest stretches of after-work dining.",
+    "adjacent": [
+      "west-queen-west",
+      "liberty-village",
+      "yorkville"
+    ]
+  }
+}

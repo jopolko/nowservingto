@@ -36,7 +36,6 @@
       '.nsto-embed li{display:flex;gap:10px;padding:8px 0;border-top:1px solid #ebecef;align-items:center}',
       '.nsto-embed.dark li{border-color:#2a2a2a}',
       '.nsto-embed li:first-child{border-top:0;padding-top:0}',
-      '.nsto-embed-pic{width:42px;height:42px;border-radius:6px;flex-shrink:0;object-fit:cover;background:#ebecef}',
       '.nsto-embed-body{flex:1;min-width:0}',
       '.nsto-embed-name{font:700 14px/1.25 inherit;margin:0 0 2px;letter-spacing:-.005em}',
       '.nsto-embed-name a{color:inherit;text-decoration:none;border-bottom:1px solid transparent;transition:border-color .12s}',
@@ -99,13 +98,12 @@
     var items = rows.map(function (r) {
       var slug = r.slug || '';
       var rUrl = slug ? (SITE + '/r/' + slug + utm) : (SITE + utm);
-      var thumb = r.thumb ? (SITE + r.thumb) : '';
       var addr  = r.address || '';
       var dist  = r.district || '';
       var meta  = ago(r.daysOpen || 0) + (dist ? ' · ' + dist : '');
+      // Photo thumbnail retired 2026-06-03 (site went text-only).
       return ''
         + '<li>'
-        + (thumb ? '<img class="nsto-embed-pic" src="' + esc(thumb) + '" alt="" loading="lazy">' : '<div class="nsto-embed-pic"></div>')
         + '<div class="nsto-embed-body">'
         +   '<p class="nsto-embed-name"><a href="' + esc(rUrl) + '" target="_blank" rel="noopener">' + esc(r.operatingName || '') + '</a></p>'
         +   '<p class="nsto-embed-meta">' + esc(addr) + (addr ? ' · ' : '') + esc(meta) + '</p>'

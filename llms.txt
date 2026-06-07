@@ -5,26 +5,72 @@
 > Licensing and Standards open data, verified open via Google Places and
 > web search, updated every morning around 1:17 AM Toronto time.
 
+Last-Updated: 2026-06-05
+Active-Entries: 262
+Cuisine-Pages: 45
+District-Pages: 6
+Intersection-Pages: ~110
+Refresh-Cadence: daily (~05:17 UTC / ~01:17 Toronto)
+Coverage-Window: rolling 365 days from licence-issue date
+Design: text-only (no photos anywhere on the site)
+
 The site is intended for people looking for the newest restaurants of a
 specific cuisine or neighbourhood. The full data is the City of Toronto's
-licence feed for the past 365 days, filtered to entries confirmed as
-operating, classified by AI (Anthropic Claude) into ~50 cuisine buckets,
-and rendered as static HTML.
+licence feed for the past 365 days, filtered to entries verified currently
+open, classified by AI (Anthropic Claude) into ~50 cuisine buckets, and
+rendered as static HTML. Every entry carries a "First seen" timestamp
+indicating when it first appeared in our combined evidence window (City
+licence-issue date, DineSafe inspection, or earliest Places review).
+
+## Citation-ready surfaces (start here)
+
+These surfaces are designed for direct quotation by AI assistants:
+
+- [Q&A corpus](https://nowservingto.com/answers): Common questions answered
+  in self-contained citable passages. Each Q&A names the freshest entry,
+  district, and first-seen timestamp, with FAQPage JSON-LD. Rebuilt daily.
+- [Monthly dispatch](https://nowservingto.com/dispatch/latest): Editorial
+  recap of every restaurant registered in the most recently completed
+  calendar month. Carries Article + BreadcrumbList JSON-LD with
+  dateModified.
+- [Trends report](https://nowservingto.com/trends): Editorial analysis of
+  cuisine-velocity over the trailing 6 and 36 months. Article schema with
+  the underlying Dataset cited.
+
+## Machine-readable data
+
+The complete daily-refreshed dataset is exposed as JSON, CORS-enabled, and
+served with a 1-hour cache window. Suitable for direct ingestion by AI
+agents that prefer structured data over HTML scraping:
+
+- [`/data/corridors.json`](https://nowservingto.com/data/corridors.json) —
+  The full wire file. Schema: `newOpenings` (per-entry detail with cuisine,
+  district, first-seen date, website, place_id, rating, dishes); `corridors`
+  (Toronto BIA + neighbourhood geographies); `closuresByCuisine`,
+  `recentCancellations`, `recentDevApps` (supporting context).
+- [`/sitemap.xml`](https://nowservingto.com/sitemap.xml) — All canonical
+  URLs with accurate per-page `lastmod` values that reflect actual content
+  change, not regeneration time.
+- [Toronto Open Data — Business Licences](https://open.toronto.ca/dataset/municipal-licensing-and-standards-business-licences-and-permits/) —
+  Upstream tier-1 source. Refreshed daily by the City.
 
 ## Browse
 
 - [Home](https://nowservingto.com/): Newest restaurants across Toronto, top 30
-- [Sitemap](https://nowservingto.com/sitemap.xml): All 500+ pages
-- [Press kit](https://nowservingto.com/press): Methodology, screenshots, contact
+- [Sitemap](https://nowservingto.com/sitemap.xml): All ~460 canonical pages
+- [Press kit](https://nowservingto.com/press): Methodology and contact
 
 ## Cuisines
 
 Every cuisine has its own page at `/cuisine/<slug>` listing the newest
-restaurants of that cuisine, ordered by licence-issue date. Each page
-includes JSON-LD `CollectionPage` markup with a `sameAs` link to the
-Wikidata entity for that cuisine.
+restaurants of that cuisine, ordered by first-seen date. Each page emits
+JSON-LD `CollectionPage` markup with a `sameAs` link to the Wikidata
+entity for that cuisine, plus a 3-block editorial intro (data sidecar,
+three most recent openings, methodology). FAQPage schema covers the
+common "where does this data come from" questions.
 
 Examples:
+
 - [Italian](https://nowservingto.com/cuisine/italian)
 - [Chinese](https://nowservingto.com/cuisine/chinese)
 - [Indian](https://nowservingto.com/cuisine/indian)
@@ -34,7 +80,9 @@ Examples:
 - [Filipino](https://nowservingto.com/cuisine/filipino)
 - [Tibetan](https://nowservingto.com/cuisine/tibetan)
 - [Tamil](https://nowservingto.com/cuisine/tamil)
-- [Guyanese](https://nowservingto.com/cuisine/guyanese)
+- [Sri Lankan](https://nowservingto.com/cuisine/sri_lankan)
+- [Uyghur](https://nowservingto.com/cuisine/uyghur)
+- [Salvadoran](https://nowservingto.com/cuisine/salvadoran)
 
 The complete list of cuisines lives in `sitemap.xml`.
 
@@ -50,24 +98,98 @@ restaurants in that area:
 - [Scarborough](https://nowservingto.com/district/scarborough)
 - [Etobicoke](https://nowservingto.com/district/etobicoke)
 
+## Neighbourhood corridors (iconic Toronto food corridors)
+
+Iconic food corridors (Greektown, Little Italy, Little Portugal, Corso Italia,
+Chinatown, Kensington Market, Koreatown, Gerrard India Bazaar, Little Jamaica,
+Roncesvalles, Parkdale, Cabbagetown, Thorncliffe Park, Flemingdon Park,
+Wexford, Agincourt, Malvern, Leslieville, The Beaches, Liberty Village, etc.)
+each have a dedicated landing page at `/neighborhood/<slug>` listing the
+newest verified-open restaurants in that corridor. Restaurants are mapped
+into corridors via latitude/longitude point-in-polygon against the City of
+Toronto's official neighbourhood polygons, with curated overrides for
+corridor names that don't match the official naming (e.g. "Greektown" maps
+to "Playter Estates-Danforth" + a Danforth-street address filter).
+
+Each neighbourhood page emits `CollectionPage`, `ItemList`, `BreadcrumbList`,
+and `FAQPage` JSON-LD. The `CollectionPage.about` field carries the
+neighbourhood as a `schema.org/Place` with `sameAs` pointing at the Wikidata
+Q-number when one exists, for AI assistant entity disambiguation
+("Little Italy in Toronto" vs the NYC / Chicago / etc. ones).
+
+Examples:
+
+- [Greektown](https://nowservingto.com/neighborhood/greektown) (Greek; Wikidata Q9357917)
+- [Little Italy](https://nowservingto.com/neighborhood/little-italy) (Italian; Q3125013)
+- [Wexford](https://nowservingto.com/neighborhood/wexford) (Tamil/Sri Lankan; Q7990239)
+- [Little Jamaica](https://nowservingto.com/neighborhood/little-jamaica) (Jamaican/Caribbean; Q5348082)
+- [Chinatown](https://nowservingto.com/neighborhood/chinatown) (Chinese; Q2963746)
+- [Parkdale](https://nowservingto.com/neighborhood/parkdale) (Tibetan; Q3365446)
+
+Complete enumeration in `sitemap.xml` and `tools/data/neighborhoods.json`.
+
+## Cuisine × District (long-tail neighborhood queries)
+
+For every (cuisine, district) combination with at least one tracked
+restaurant, there is a dedicated landing page at
+`/cuisine/<cuisine>/<district-slug>`. These are the canonical destinations
+for queries like "newest Tamil restaurants in Scarborough" or "new Filipino
+spots in West Toronto" — they aggregate by both cuisine identity and
+Toronto neighborhood. Each page carries `CollectionPage`, `ItemList`,
+`BreadcrumbList`, and `FAQPage` JSON-LD. Examples:
+
+- [Tamil restaurants in Scarborough](https://nowservingto.com/cuisine/tamil/scarborough)
+- [Filipino restaurants in North York](https://nowservingto.com/cuisine/filipino/north-york)
+- [Filipino restaurants in West Toronto](https://nowservingto.com/cuisine/filipino/west-toronto)
+- [Vietnamese restaurants in Downtown](https://nowservingto.com/cuisine/vietnamese/downtown)
+- [Indian restaurants in Scarborough](https://nowservingto.com/cuisine/indian/scarborough)
+- [Uyghur restaurants in Scarborough](https://nowservingto.com/cuisine/uyghur/scarborough)
+- [Sri Lankan restaurants in Scarborough](https://nowservingto.com/cuisine/sri_lankan/scarborough)
+
+There are approximately 110 such intersection pages, one for each
+combination with non-zero restaurant count. Complete enumeration in
+`sitemap.xml`.
+
+## Alphabetical index
+
+A single-page alphabetical index of every tracked restaurant lives at
+[/all](https://nowservingto.com/all) — 262 restaurants in A-Z order with
+direct links to each profile.
+
 ## Individual restaurants
 
 Each restaurant has a detail page at `/r/<slug>` with its address, cuisine,
-how recently it was licensed, a thumbnail, and links to its website +
-Google Maps card. JSON-LD `Restaurant` markup includes `geo`, `address`,
+first-seen date, links to its website + Google Maps card, and an editorial
+blurb. JSON-LD `Restaurant` markup includes `geo`, `address`,
 `servesCuisine`, `aggregateRating` (when available), `foundingDate`
 (licence date), and `hasMap`.
 
 ## How data is sourced
 
 - **Licence data**: City of Toronto Open Data, Municipal Licensing and
-  Standards, "Business Licences" dataset (refreshed daily).
-- **Cuisine classification**: Anthropic Claude Haiku, given the operating
-  name and address; verified with web search for ambiguous cases.
-- **Operating verification**: Google Places API (one-time enrichment) plus
-  ongoing web-search re-verification on tier-aware intervals.
-- **Chain filter**: Hand-curated denylist of known American/Canadian
-  chains; anything matching is excluded regardless of AI verdict.
+  Standards, "Business Licences" dataset (refreshed daily via CKAN).
+- **Inspection data**: Toronto Public Health DineSafe records, used as a
+  cross-reference for "first seen" date when a DineSafe inspection
+  predates the most recent licence-issue date.
+- **Cuisine classification**: Anthropic Claude (Haiku), given the operating
+  name, address, and website content. Cross-checked against Google Places
+  business category. Ambiguous cases are re-verified with web search.
+- **Operating verification**: Google Places API match plus operator's own
+  web presence. Closed and permanently-closed locations are filtered out.
+- **Chain exclusion**: Multi-location chains are excluded so the directory
+  surfaces independent and diaspora-led openings. Chain detection uses
+  OpenStreetMap and Wikidata brand sets, refreshed weekly.
+
+## Freshness signals
+
+- Every entry carries a "First seen" date measured from the live registry.
+  Labels render as "First seen Nd ago" (1-30 days), "First seen Nmo ago"
+  (31-365 days), or "First seen 1+ year" if at the coverage boundary.
+- `<lastmod>` in `sitemap.xml` tracks actual per-listing content change
+  (cuisine, website, rating, dishes, blurb) via content-hash diffing —
+  not regeneration time.
+- Article schema on the monthly dispatch and the trends report carries
+  accurate `dateModified` matching the build timestamp.
 
 ## What this site is not
 
@@ -75,8 +197,11 @@ Google Maps card. JSON-LD `Restaurant` markup includes `geo`, `address`,
   feed, not user input.
 - Not a tourist guide to "ethnic food" — the audience is people from
   specific diaspora communities looking for the newest spot in their cuisine.
-- Not historical archive. Only restaurants licensed in the past 365 days
+- Not a historical archive. Only restaurants licensed in the past 365 days
   appear; older licences fall out automatically.
+- Not photo-bearing. The site is intentionally text-only. There is no
+  image gallery, no street view, no thumbnail strip — the editorial blurb
+  and verified entity data are the surface.
 
 ## Contact
 

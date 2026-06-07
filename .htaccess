@@ -22,6 +22,13 @@
     <FilesMatch "\.(woff2?|ttf|otf)$">
         Header set Cache-Control "public, max-age=2592000, immutable"
     </FilesMatch>
+    # JS bundle (app.js, embed.js) — cache-bust query strings on script
+    # tags (e.g. /js/app.js?v=<epoch>) handle invalidation, so immutable
+    # is safe. Lifts repeat-visit Lighthouse score by removing the
+    # default "no cache TTL" warning.
+    <FilesMatch "\.js$">
+        Header set Cache-Control "public, max-age=2592000, immutable"
+    </FilesMatch>
     # robots.txt + sitemap.xml: short cache so edits propagate fast through
     # Cloudflare. Previously these inherited a multi-hour default which made
     # stale Lighthouse robots.txt validations linger after content fixes.
@@ -79,6 +86,14 @@ RewriteRule ^(.*)$ https://nowservingto.com/$1 [R=301,L]
 RewriteCond %{DOCUMENT_ROOT}/cuisine/$1.html -f
 RewriteRule ^cuisine/([a-z_]+)/?$ /cuisine/$1.html [L]
 
+# A-Z restaurant index: /all → /all.html
+RewriteRule ^all/?$ /all.html [L]
+
+# Cuisine × district intersection pages — /cuisine/<key>/<district-slug>
+# rewrites to the static file at /cuisine/<key>/<district-slug>.html
+RewriteCond %{DOCUMENT_ROOT}/cuisine/$1/$2.html -f
+RewriteRule ^cuisine/([a-z_]+)/([a-z-]+)/?$ /cuisine/$1/$2.html [L]
+
 # Canonical-alias redirects. Mirrors _CANONICAL_ALIASES in tools/cuisines.py
 # (validator collapses these slugs to the seed canonical form). Preserves
 # link equity from any historically-indexed alias URL.
@@ -107,6 +122,18 @@ RewriteRule ^press/?$ /press.html [L]
 
 # /press/data → press/data.html (data terminal for journalists)
 RewriteRule ^press/data/?$ /press/data.html [L]
+
+# /answers → answers.html (static Q&A corpus for AI assistant citation)
+RewriteRule ^answers/?$ /answers.html [L]
+
+# /game → game.html (The Toronto Dinner Lottery — shareable scratch-ticket
+# that draws a real newest-opening; deep-links into /r, /cuisine, /neighborhood)
+RewriteRule ^game/?$ /game.html [L]
+
+# /neighborhood/<slug> → neighborhood/<slug>.html (iconic Toronto food
+# corridors: Greektown, Little Italy, Wexford, etc.)
+RewriteCond %{DOCUMENT_ROOT}/neighborhood/$1.html -f
+RewriteRule ^neighborhood/([a-z-]+)/?$ /neighborhood/$1.html [L]
 
 # /trends → trends.html (monthly cuisine-velocity chart, screenshot-shareable)
 RewriteRule ^trends/?$ /trends.html [L]

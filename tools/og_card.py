@@ -440,3 +440,111 @@ def render_trends_card_png(dispatch_label, total_licences, hero_entries, out_pat
     finally:
         try: os.unlink(svg_path)
         except OSError: pass
+
+
+def build_dispatch_card_svg(month_label, total_count, top_picks):
+    """Build the /dispatch OG card SVG — stat-led editorial design.
+
+    Pure typography, no photos (matches the post-photo-retirement site
+    aesthetic). Big editorial number anchors the eye, three named picks
+    beneath give specificity for X / Reddit / iMessage previews.
+
+    Args:
+      month_label: e.g. 'May 2026'
+      total_count: int — number of new openings in the month
+      top_picks: list of dicts with at least 'name', 'cuisine_label',
+        'district'. Renders up to 3.
+    """
+    if not month_label or total_count is None:
+        return ''
+
+    # Build pick rows. Format: NAME · CUISINE · DISTRICT
+    pick_rows = []
+    for p in (top_picks or [])[:3]:
+        name = (p.get('name') or '').strip()
+        cuisine = (p.get('cuisine_label') or '').strip()
+        district = (p.get('district') or '').strip()
+        if not name: continue
+        parts = [name]
+        if cuisine: parts.append(cuisine)
+        if district: parts.append(district)
+        pick_rows.append(' · '.join(parts))
+
+    # Render pick rows as SVG text lines.
+    picks_svg = []
+    picks_y_start = 510
+    for i, line in enumerate(pick_rows):
+        # Truncate overly long combined strings
+        if len(line) > 58: line = line[:56] + '…'
+        picks_svg.append(
+            f'<text x="600" y="{picks_y_start + i * 36}" '
+            f'font-family="Iowan Old Style, Charter, Georgia, serif" font-size="26" '
+            f'fill="#2a2620" text-anchor="middle">{_xml_escape(line)}</text>'
+        )
+
+    # Stat framing: singular vs plural
+    stat_phrase = 'new restaurant' if total_count == 1 else 'new restaurants'
+
+    return f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" width="1200" height="675">
+  <rect width="1200" height="675" fill="#f4efe2" />
+
+  <!-- NOWSERVING masthead chip, top-left -->
+  <g transform="translate(40,32)">
+    <rect width="180" height="32" rx="2" fill="#2a2620" />
+    <text x="90" y="22" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="13"
+          font-weight="700" fill="#fff" text-anchor="middle" letter-spacing="3">NOWSERVING</text>
+  </g>
+
+  <!-- Right-side meta: edition + month -->
+  <text x="1160" y="54" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="13"
+        font-weight="600" fill="#7a746a" text-anchor="end" letter-spacing="3">
+    DAILY EDITION · DISPATCH
+  </text>
+
+  <!-- Eyebrow above the stat -->
+  <text x="600" y="190" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="15"
+        font-weight="800" fill="#c83624" text-anchor="middle" letter-spacing="4">
+    TORONTO RESTAURANT REGISTRY · {_xml_escape(month_label.upper())}
+  </text>
+
+  <!-- Big editorial number -->
+  <text x="600" y="350" font-family="Iowan Old Style, Charter, Georgia, serif" font-size="180"
+        font-weight="800" fill="#2a2620" text-anchor="middle" letter-spacing="-6">{total_count}</text>
+
+  <!-- Stat phrase under the number -->
+  <text x="600" y="420" font-family="Iowan Old Style, Charter, Georgia, serif" font-size="36"
+        font-style="italic" fill="#45403a" text-anchor="middle">{stat_phrase} in</text>
+
+  <text x="600" y="468" font-family="Iowan Old Style, Charter, Georgia, serif" font-size="42"
+        font-weight="700" fill="#2a2620" text-anchor="middle" letter-spacing="-1">{_xml_escape(month_label)}</text>
+
+  <!-- Picks -->
+  {chr(10).join(picks_svg)}
+
+  <!-- Footer line -->
+  <text x="40" y="650" font-family="ui-monospace,Menlo,Consolas,monospace"
+        font-size="14" fill="#7a746a" letter-spacing="1">
+    Chains excluded · Verified open · Daily refresh from City open data
+  </text>
+  <text x="1160" y="650" font-family="ui-monospace,Menlo,Consolas,monospace"
+        font-size="14" fill="#7a746a" text-anchor="end" letter-spacing="1">
+    nowservingto.com/dispatch
+  </text>
+</svg>"""
+
+
+def render_dispatch_card_png(month_label, total_count, top_picks, out_path):
+    """Render the dispatch share card SVG to PNG at out_path."""
+    svg = build_dispatch_card_svg(month_label, total_count, top_picks)
+    if not svg:
+        return
+    with tempfile.NamedTemporaryFile(suffix='.svg', mode='w', delete=False, encoding='utf-8') as f:
+        f.write(svg); svg_path = f.name
+    try:
+        subprocess.run(
+            ['rsvg-convert', '-w', '1200', '-h', '675', svg_path, '-o', str(out_path)],
+            check=True, capture_output=True,
+        )
+    finally:
+        try: os.unlink(svg_path)
+        except OSError: pass

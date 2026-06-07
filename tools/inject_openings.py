@@ -2554,7 +2554,8 @@ def build_ld_itemlist(entries, name, description):
     }
 
 
-def build_ld_collectionpage(itemlist, *, url, dateModified, about=None):
+def build_ld_collectionpage(itemlist, *, url, dateModified, about=None,
+                            datePublished=None):
     """Wrap an ItemList in CollectionPage so it carries url + dateModified
     (ItemList itself has no dateModified property). Boosts the freshness
     signal Google reads - the whole point of the daily refresh.
@@ -2574,6 +2575,11 @@ def build_ld_collectionpage(itemlist, *, url, dateModified, about=None):
                      'url': 'https://nowservingto.com/'},
         'mainEntity': {k: v for k, v in itemlist.items() if k != '@context'},
     }
+    # datePublished gives AI extractors a stable "first published" anchor
+    # alongside the daily-moving dateModified — a 2026-06-06 GEO audit flagged
+    # the page as missing publish-date metadata. Founding date of the site.
+    if datePublished:
+        page['datePublished'] = datePublished
     if about:
         page['about'] = about
     return page
@@ -2775,6 +2781,62 @@ def swap_newsletter_cta(html, section_html):
     )
 
 
+def build_home_intro(all_entries, freshest, n_week, n30):
+    """Answer-first lead block for the homepage PAGE-INTRO marker.
+
+    The homepage previously injected an empty intro, so a text-only crawler
+    (or AI extractor) hit the masthead + filters + feed with no upfront,
+    extractable answer to "what are the newest restaurants in Toronto" — the
+    exact gap a 2026-06-06 GEO audit flagged as a buried answer. This emits a
+    short data sentence (total / this-week / 30-day counts, fixing the
+    "vague counts" flag) plus a 3-item freshest list, reusing the same
+    page-intro-data / wn-* markup the cuisine pages already style.
+
+    all_entries: full verified-open set in the 365d window (for the total).
+    freshest:    the same set sorted freshest-first (top 3 are named).
+    Returns '' when there are no entries (the masthead stands alone)."""
+    n_total = len(all_entries)
+    if not n_total or not freshest:
+        return ''
+    week_clause = (f' — <b>{n_week}</b> first seen this week' if n_week else '')
+    last_30 = (f', <b>{n30}</b> in the last 30 days' if n30 else '')
+    data = (
+        f'<p class="page-intro-data">Toronto has <b>{n_total}</b> independent '
+        f'restaurants newly registered with the City in the last 365 days'
+        f'{week_clause}{last_30}. Every entry is verified open, chains are '
+        f'excluded, and the list refreshes daily from the City of Toronto '
+        f'licence file.</p>'
+    )
+    rows = []
+    for e in freshest[:3]:
+        n = (e.get('operatingName') or '').strip()
+        days = e.get('daysOpen')
+        if not n or days is None:
+            continue
+        ck = e.get('cuisine') or ''
+        lbl = CUISINE_LABEL.get(ck, ck.replace('_', ' ').title()) if ck else ''
+        street = _street_name_only(e)
+        geo = (e.get('neighborhood') or {}).get('label') or (e.get('district') or '').strip()
+        bits = [b for b in (lbl, street, geo) if b]
+        loc_par = f' <span class="wn-d">({_esc(" · ".join(bits))})</span>' if bits else ''
+        rows.append(
+            f'<li class="wn-row"><b>{_esc(n)}</b>{loc_par} '
+            f'<span class="wn-fs">— first seen {_ago_long(days)} ago</span></li>'
+        )
+    whats_new = ''
+    if rows:
+        whats_new = (
+            f'<div class="page-intro-whatsnew">'
+            f'<h2 class="wn-h">Toronto\'s newest restaurants right now</h2>'
+            f'<ul class="wn-list">{"".join(rows)}</ul>'
+            f'<p class="wn-foot">All verified open at last refresh. The full '
+            f'list is below; see <a href="/answers">common questions</a> for '
+            f'how we verify.</p>'
+            f'</div>'
+        )
+    return f'<div class="page-intro">{data}{whats_new}</div>'
+
+
 # ---------------------------------------------------------------------------
 # Inject into the HOMEPAGE (index.html).
 # ---------------------------------------------------------------------------
@@ -2790,7 +2852,12 @@ home_itemlist = build_ld_itemlist(
 )
 home_collection = build_ld_collectionpage(
     home_itemlist, url=home_url, dateModified=REFERENCE_DATE.isoformat(),
+    datePublished='2026-05-13',
 )
+# Answer-first homepage lead: total / this-week / 30-day counts + 3 freshest.
+_home_n_week = sum(1 for e in all_recent if (e.get('daysOpen') or 9999) <= 7)
+_home_n30 = sum(1 for e in all_recent if (e.get('daysOpen') or 9999) <= 30)
+home_intro_html = build_home_intro(all_recent, top_for_static, _home_n_week, _home_n30)
 try:
     home_html = open(INDEX_PATH).read()
     # Homepage gets no breadcrumb (it IS the root) - just the CollectionPage
@@ -2798,7 +2865,7 @@ try:
     home_lcp_thumb = (top_for_static[0].get('thumb') if top_for_static else '') or ''
     home_html = inject_into_html(home_html,
         static_block=static_block, ld_payloads=[home_collection], breadcrumb_html='',
-        lcp_preload_url=home_lcp_thumb)
+        page_intro_html=home_intro_html, lcp_preload_url=home_lcp_thumb)
 
     # Freshness razzmatazz: dynamic title + description + masthead subtitle
     # all carry today's date and the live count. Re-baked every cron, so
@@ -4131,6 +4198,11 @@ for _ns in by_nbhd:
 neighborhood_template = open(INDEX_PATH).read()
 neighborhood_pages_written = 0
 live_neighborhoods = set()
+# (label, slug) for every neighborhood that actually gets a page — feeds the
+# static "Neighbourhoods:" footer nav so crawlers see a link to each landing
+# page from the homepage + every sub-page (same orphan-prevention rationale
+# as the all-cuisines / all-districts blocks below).
+_nbhd_nav_items = []
 for nbhd_slug, nbhd_entries in by_nbhd.items():
     if not nbhd_entries: continue
     meta = _ICONIC_NBHDS.get(nbhd_slug) or {}
@@ -4329,6 +4401,7 @@ for nbhd_slug, nbhd_entries in by_nbhd.items():
     (NEIGHBORHOOD_DIR / f'{nbhd_slug}.html').write_text(page)
     neighborhood_pages_written += 1
     live_neighborhoods.add(nbhd_slug)
+    _nbhd_nav_items.append((label, nbhd_slug))
 print(f"  wrote {neighborhood_pages_written} per-neighborhood SEO landing pages → neighborhood/<slug>.html")
 
 
@@ -4653,6 +4726,14 @@ _all_districts_html = ''.join(
     f'<a href="/district/{_district_slug(d)}">{_esc(d)}</a>'
     for d in _sorted_districts
 )
+# "Neighbourhoods:" footer nav — one <a> per generated /neighborhood/<slug>
+# landing page, sorted by label. Built from _nbhd_nav_items (collected as the
+# pages were written above) so the nav links exactly the set of pages that
+# exist — no dead links to corridors with zero current openings.
+_all_neighborhoods_html = ''.join(
+    f'<a href="/neighborhood/{_slug}">{_esc(_label)}</a>'
+    for _label, _slug in sorted(_nbhd_nav_items, key=lambda it: it[0].lower())
+)
 
 # Static dropdown panel content — pre-rendered <a> links so crawlers
 # follow them + first paint shows the options before JS runs. JS detects
@@ -4689,6 +4770,7 @@ _district_picker_html = (
 _nav_subs = [
     (r'(<!-- ALL-CUISINES-START -->).*?(<!-- ALL-CUISINES-END -->)', _all_cuisines_html),
     (r'(<!-- ALL-DISTRICTS-START -->).*?(<!-- ALL-DISTRICTS-END -->)', _all_districts_html),
+    (r'(<!-- ALL-NEIGHBORHOODS-START -->).*?(<!-- ALL-NEIGHBORHOODS-END -->)', _all_neighborhoods_html),
     (r'(<!-- CUISINE-DROPDOWN-START -->).*?(<!-- CUISINE-DROPDOWN-END -->)', _cuisine_picker_html),
     (r'(<!-- DISTRICT-DROPDOWN-START -->).*?(<!-- DISTRICT-DROPDOWN-END -->)', _district_picker_html),
 ]
@@ -7369,6 +7451,7 @@ url_blocks = [
     _sitemap_url(f'{SITE_BASE}/all',        _today_iso),
     _sitemap_url(f'{SITE_BASE}/usage',      _today_iso),
     _sitemap_url(f'{SITE_BASE}/contribute', _today_iso),
+    _sitemap_url(f'{SITE_BASE}/game',       _today_iso),
 ]
 # Monthly dispatch archive pages — one per month, indexed for SEO
 # ("newest toronto restaurants June 2026" type queries). `latest.html`

@@ -709,15 +709,10 @@ def build_card_grid(matches, color, limit=12):
         days = e.get('daysOpen', 999)
         when = _when_label(days)
         link = e.get('mapsUrl') or e.get('website') or (f'/r/{slug}' if slug else '#')
-        # Use the WebP thumb (196x196) - browser scales to fit card; cheap on bandwidth
-        thumb = f'/og/thumb/{slug}.webp' if slug and (ROOT/'og'/'thumb'/f'{slug}.webp').exists() else None
-        photo_html = (f'<a class="card-photo" href="{_esc(link)}" rel="noopener" aria-label="View {name}">'
-                      f'<img src="{thumb}" alt="{name}" loading="lazy" decoding="async">'
-                      f'</a>') if thumb else f'<div class="card-photo card-photo-empty"></div>'
+        # Photo slot retired site-wide 2026-06-03; cards are text-only.
         district_pill = f' <span class="card-district">{district}</span>' if district else ''
         cards.append(
             f'<article class="card">'
-            f'{photo_html}'
             f'<div class="card-body">'
             f'<div class="card-when" style="color:{color}">{when}</div>'
             f'<h3 class="card-name"><a href="{_esc(link)}" rel="noopener">{name}</a></h3>'
@@ -753,10 +748,8 @@ def build_wire_page(target, entries):
     else:
         pulse_n, pulse_window = n_total, 'PAST 12 MONTHS'
 
-    hero_entry, hero_photo = _pick_hero(matches, target.get('hero_slug'))
-    if not hero_photo:
-        # Fallback if no entry has any photo at all - use accent color block
-        hero_photo = None
+    # Hero picker retired (no photos to pick from) — flat color hero only.
+    hero_entry, hero_photo = None, None
 
     color = target['color']
     color_dark = target['color_dark']
@@ -815,29 +808,18 @@ def build_wire_page(target, entries):
     today = date.today()
     updated_str = today.strftime('%B %-d, %Y')
 
-    # Hero overlay: photo + dark bottom gradient + headline/dek on top
-    if hero_photo:
-        hero_credit = _esc(hero_entry.get('operatingName', '')) if hero_entry else ''
-        hero_html = (
-            f'<div class="hero" style="background-image: linear-gradient(180deg, transparent 0%, transparent 45%, rgba(0,0,0,0.75) 100%), url(\'{hero_photo}\');">'
-            f'<div class="hero-inner">'
-            f'<div class="hero-eyebrow" style="color:{color}">{eyebrow}</div>'
-            f'<h1 class="hero-headline">{_esc(headline)}</h1>'
-            f'<p class="hero-dek">{_esc(dek)}</p>'
-            f'</div>'
-            f'<div class="hero-credit">Pictured: {hero_credit}</div>'
-            f'</div>'
-        )
-    else:
-        hero_html = (
-            f'<div class="hero hero-flat" style="background: linear-gradient(135deg, {color} 0%, {color_dark} 100%);">'
-            f'<div class="hero-inner">'
-            f'<div class="hero-eyebrow" style="color:rgba(255,255,255,0.9)">{eyebrow}</div>'
-            f'<h1 class="hero-headline">{_esc(headline)}</h1>'
-            f'<p class="hero-dek">{_esc(dek)}</p>'
-            f'</div>'
-            f'</div>'
-        )
+    # Hero — photo backdrop retired 2026-06-03 with the rest of the photo
+    # pipeline. All wire pages now use the flat cuisine-color gradient hero
+    # (was previously the no-photo fallback path).
+    hero_html = (
+        f'<div class="hero hero-flat" style="background: linear-gradient(135deg, {color} 0%, {color_dark} 100%);">'
+        f'<div class="hero-inner">'
+        f'<div class="hero-eyebrow" style="color:rgba(255,255,255,0.9)">{eyebrow}</div>'
+        f'<h1 class="hero-headline">{_esc(headline)}</h1>'
+        f'<p class="hero-dek">{_esc(dek)}</p>'
+        f'</div>'
+        f'</div>'
+    )
 
     card_grid = build_card_grid(matches, color)
     district_bars = build_district_bars(by_district, color)
@@ -894,7 +876,7 @@ def build_wire_page(target, entries):
   .hero-eyebrow {{ font: 800 12px/1 var(--sans); letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 14px; }}
   .hero-headline {{ font: 800 clamp(34px, 5vw, 56px)/1.08 var(--sans); margin: 0; letter-spacing: -0.025em; }}
   .hero-dek {{ font: 400 clamp(15px, 1.7vw, 17px)/1.5 var(--sans); margin: 18px 0 0; color: rgba(255,255,255,0.88); }}
-  .hero-credit {{ position: absolute; bottom: 10px; right: 14px; font: 500 10px/1.2 var(--sans); color: rgba(255,255,255,0.55); letter-spacing: 0.04em; z-index: 2; max-width: 280px; text-align: right; }}
+  /* .hero-credit retired with photo hero — 2026-06-03 */
 
   /* MAIN WRAPPER */
   main {{ max-width: 1080px; margin: 0 auto; padding: 0 32px; }}
@@ -928,9 +910,7 @@ def build_wire_page(target, entries):
   @media (max-width: 560px) {{ .grid {{ grid-template-columns: 1fr; }} }}
   .card {{ background: var(--paper); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; transition: transform 0.18s, box-shadow 0.18s; }}
   .card:hover {{ transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.08); }}
-  .card-photo {{ display: block; aspect-ratio: 1 / 1; overflow: hidden; background: #e8e8e8; }}
-  .card-photo img {{ width: 100%; height: 100%; object-fit: cover; display: block; }}
-  .card-photo-empty {{ background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%); opacity: 0.12; }}
+  /* .card-photo / .card-photo-empty retired with photo pipeline — 2026-06-03 */
   .card-body {{ padding: 16px 18px 18px; }}
   .card-when {{ font: 800 11px/1 var(--sans); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }}
   .card-name {{ font: 700 17px/1.25 var(--sans); margin: 0 0 6px; letter-spacing: -0.005em; }}

@@ -159,9 +159,11 @@
   </p>
 
   <h2>How it works</h2>
-  <p>Every night the pipeline pulls Toronto&apos;s business licence registry from the City&apos;s open-data CKAN portal (158k rows, refreshed daily), filters to restaurant categories issued in the last 365 days, deduplicates against OpenStreetMap and Wikidata chain databases, classifies each entry by cuisine via Claude Haiku with web-search verification, and matches against Google Places to confirm operational status.</p>
+  <p>Every night the pipeline pulls Toronto&apos;s business licence registry from the City&apos;s open-data CKAN portal (158k rows, refreshed daily), filters to restaurant categories issued in the last 365 days, deduplicates against OpenStreetMap and Wikidata chain databases, classifies each entry by cuisine via Claude Haiku with web-search verification, and cross-checks DineSafe inspections and social media signals to confirm the location is currently operating.</p>
 
-  <p>A second gate cross-checks every candidate against Toronto Public Health&apos;s DineSafe inspection record. If DineSafe inspected the establishment at the same address and name more than 180 days <em>before</em> the licence-issued date, the licence event is treated as a re-licensing of a pre-existing restaurant (ownership transfer, suite renumbering, licence-type addition) and the entry is suppressed - this is how MAKILALA-class long-operating places stay out of the &quot;newly registered&quot; feed even when their City paperwork looks fresh. Where DineSafe&apos;s earliest inspection is <em>later</em> than the licence date, that inspection date is used as the displayed &quot;registered&quot; date instead: a public-health officer walking in and inspecting the line is a tighter proof of operating-since than the day paperwork was issued. Only restaurants verified as currently open at the licensed address are shown.</p>
+  <p>A second gate cross-checks every candidate against Toronto Public Health&apos;s DineSafe inspection record. If DineSafe inspected the establishment at the same address and name more than 180 days <em>before</em> the licence-issued date, the licence event is treated as a re-licensing of a pre-existing restaurant (ownership transfer, suite renumbering, licence-type addition) and the entry is suppressed - this is how MAKILALA-class long-operating places stay out of the &quot;newly registered&quot; feed even when their City paperwork looks fresh. Only restaurants verified as currently open at the licensed address are shown.</p>
+
+  <p><b>The displayed &quot;First seen&quot; date is the earlier of the City licence-issued date or the first Toronto Public Health DineSafe inspection — whichever proves the restaurant was actually operating.</b> Roughly 72% of currently-tracked restaurants have a DineSafe match by address + name; for those, the inspection date is used (a public-health officer physically present in the kitchen is a stronger proof of operation than the paper filing). For the remaining 28% with no DineSafe match, the licence date is used as the fallback. This is what other Toronto restaurant aggregators can&apos;t do: BlogTO and Yelp don&apos;t cross-reference the inspection record, so their &quot;newly opened&quot; signals lean on press releases and social mentions. The City + Public Health cross-reference is the project&apos;s primary differentiator.</p>
 
   <h2>Embeddable widget</h2>
   <p>Drop a fresh feed of newly registered restaurants into any blog post or news article. The widget renders a small card with the 3–5 most recent licences for a cuisine or district, links each card to its restaurant page, and includes a footer attribution link back to NowServingTO. No iframe - the rendered links count for SEO.</p>
@@ -179,7 +181,7 @@
 
   <h2>Citation format</h2>
   <p>If you use our numbers or feed in a story, please credit us. Recommended language:</p>
-  <div class="cite-block"><b>Source:</b> NowServingTO.com, daily-tracked from the City of Toronto&apos;s business licence registry (Toronto Open Data, refreshed nightly). Last updated <!-- PRESS-UPDATED-DATE -->June 3, 2026<!-- /PRESS-UPDATED-DATE -->.</div>
+  <div class="cite-block"><b>Source:</b> NowServingTO.com, daily-tracked from the City of Toronto&apos;s business licence registry (Toronto Open Data, refreshed nightly). Last updated <!-- PRESS-UPDATED-DATE -->June 5, 2026<!-- /PRESS-UPDATED-DATE -->.</div>
   <p>Plain HTML:</p>
   <pre>Source: &lt;a href="https://nowservingto.com/"&gt;NowServingTO.com&lt;/a&gt;,
 daily-tracked from the &lt;a href="https://open.toronto.ca/dataset/municipal-licensing-and-standards-business-licences-and-permits/"&gt;City of Toronto business licence registry&lt;/a&gt;.</pre>
@@ -207,7 +209,7 @@ daily-tracked from the &lt;a href="https://open.toronto.ca/dataset/municipal-lic
 
   <h2>What we are not</h2>
   <ul>
-    <li><b>Not a review site.</b> We surface registry data, not user reviews or ratings. Stars come from Google Places only.</li>
+    <li><b>Not a review site.</b> We surface registry data, not user reviews or ratings.</li>
     <li><b>Not a directory of every Toronto restaurant.</b> We only track those registered in the past 365 days - the &quot;newly opened&quot; cohort.</li>
     <li><b>Not user-submitted.</b> No tips, no claims, no self-tagged ethnicity. The data is the City&apos;s licensing registry plus web-search verification.</li>
     <li><b>Not affiliated</b> with the City of Toronto, Google, or any restaurant listed.</li>
@@ -215,7 +217,7 @@ daily-tracked from the &lt;a href="https://open.toronto.ca/dataset/municipal-lic
 
   <footer class="foot">
     <p><a href="/">Home</a> · <a href="/sitemap.xml">Sitemap</a> · <a href="/usage">Operating cost</a> · <a href="/contribute">Submit a correction</a></p>
-    <p>NowServingTO is an independent project. Data: City of Toronto Open Data (business licences + DineSafe inspections), Google Places, OpenStreetMap, Wikidata. Code: Python + vanilla HTML/JS.</p>
+    <p>NowServingTO is an independent project. Data: City of Toronto Open Data (business licences + DineSafe inspections), social media signals, OpenStreetMap, Wikidata. Code: Python + vanilla HTML/JS.</p>
   </footer>
 
 </main>

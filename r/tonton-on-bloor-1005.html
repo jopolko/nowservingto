@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TONTON ON BLOOR - Japanese, 1005 Bloor St W · NowServingTO</title>
-<meta name="description" content="A matcha and coffee café that takes its tea seriously, drawing praise for the quality of the matcha itself.">
+<meta name="description" content="TONTON ON BLOOR — A matcha and coffee café that takes its tea seriously, drawing praise for the quality of the matcha itself. (licensed May 2026).">
 <!-- meta keywords removed 2026-05-18: Google ignores the tag and a generic
      cuisine-stuffed list reused across every generated page reads as spam. -->
 <meta name="author" content="NowServingTO">
@@ -14,10 +14,22 @@
 <!-- Warm DNS + TLS to ipapi.co at page load - when a visitor clicks Near
      Me, the HTTP request that follows skips ~150-300ms of handshake. -->
 <link rel="preconnect" href="https://ipapi.co" crossorigin>
-<!-- LCP preload: inject_openings.py drops a <link rel="preload" as="image" ...>
-     here pointing at the first row's thumbnail so the LCP image fetch
-     starts before the browser even parses past <head>. -->
-<!-- LCP-PRELOAD-START --><!-- LCP-PRELOAD-END -->
+<!-- LCP preload markers retired with photo pipeline (2026-06-03). The LCP
+     element on text-only pages is the editorial blurb; nothing to preload. -->
+
+<!-- Editorial type stack (2026-06-05): Fraunces (display, variable optical
+     sizing) + Newsreader (body serif, screen-optimized). Self-hosted at
+     /fonts/ as woff2 with the original Google Fonts subset slicing.
+     JetBrains Mono dropped 2026-06-05 — system ui-monospace renders the
+     data layer (day counts, addresses, date labels) without the extra
+     31KB + render-blocking request. @font-face declarations live in the
+     inline <style> block below; the Google Fonts CDN chain
+     (fonts.googleapis.com → fonts.gstatic.com → 3× woff2) is gone, saving
+     ~2.8s of LCP on mobile slow-4G per the 2026-06-05 Lighthouse audit. -->
+<link rel="preload" as="font" type="font/woff2" crossorigin
+      href="/fonts/fraunces-_9v0c2Wa0KxC9TeA.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin
+      href="/fonts/newsreader-hbuyalUrK4397yjA.woff2">
 
 <!-- Google Analytics 4. Distinct page_view events fire automatically for /, /cuisine/X,
      and /r/X since gtag reads location.pathname on each route. Loaded on the
@@ -66,7 +78,7 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://nowservingto.com/r/tonton-on-bloor-1005">
 <meta property="og:title" content="TONTON ON BLOOR - Japanese, 1005 Bloor St W · NowServingTO">
-<meta property="og:description" content="A matcha and coffee café that takes its tea seriously, drawing praise for the quality of the matcha itself.">
+<meta property="og:description" content="TONTON ON BLOOR — A matcha and coffee café that takes its tea seriously, drawing praise for the quality of the matcha itself. (licensed May 2026).">
 <meta property="og:image" content="https://nowservingto.com/og/tonton-on-bloor-1005.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="675">
@@ -76,8 +88,53 @@
 <!-- Twitter / X cards -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="TONTON ON BLOOR - Japanese, 1005 Bloor St W · NowServingTO">
-<meta name="twitter:description" content="A matcha and coffee café that takes its tea seriously, drawing praise for the quality of the matcha itself.">
+<meta name="twitter:description" content="TONTON ON BLOOR — A matcha and coffee café that takes its tea seriously, drawing praise for the quality of the matcha itself. (licensed May 2026).">
 <meta name="twitter:image" content="https://nowservingto.com/og/tonton-on-bloor-1005.png">
+
+<!-- Top-level Organization entity. Gives the publisher reference in
+     WebSite + Article + CollectionPage blocks a stable @id to resolve
+     against, so AI assistants treat NowServingTO as one entity-graph
+     node instead of a re-declared publisher in every page. Added
+     2026-06-05 in response to a GEO audit flagging missing org signals. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": ["Organization", "NewsMediaOrganization"],
+  "@id": "https://nowservingto.com/#organization",
+  "name": "NowServingTO",
+  "alternateName": "NowServing TO",
+  "url": "https://nowservingto.com/",
+  "logo": {
+    "@type": "ImageObject",
+    "url": "https://nowservingto.com/favicon.svg",
+    "width": 512,
+    "height": 512
+  },
+  "description": "An independent, daily-refreshed directory of restaurants newly licensed in Toronto. Sourced from the City of Toronto's Municipal Licensing and Standards open data, verified against Toronto Public Health DineSafe inspection records, classified by cuisine, and organized by neighbourhood corridor. Mission: surface the newest spots from specific diaspora and immigrant food scenes that aren't already on every food map.",
+  "foundingDate": "2026-05-13",
+  "founder": {
+    "@type": "Person",
+    "name": "Josh Opolko",
+    "url": "https://x.com/JoshuaOpolko"
+  },
+  "areaServed": {
+    "@type": "City",
+    "name": "Toronto",
+    "sameAs": "https://www.wikidata.org/wiki/Q172"
+  },
+  "knowsAbout": [
+    "Toronto restaurants",
+    "Toronto business licensing",
+    "Toronto Public Health DineSafe inspections",
+    "Toronto food corridors",
+    "Toronto diaspora cuisine",
+    "Newly opened restaurants in Toronto"
+  ],
+  "publishingPrinciples": "https://nowservingto.com/press",
+  "actionableFeedbackPolicy": "https://nowservingto.com/contribute",
+  "diversityPolicy": "https://nowservingto.com/press"
+}
+</script>
 
 <!-- Structured data: WebSite for the directory itself. Restaurant ItemList is
      injected by tools/inject_openings.py between the LIST markers below. -->
@@ -85,11 +142,20 @@
 {
   "@context": "https://schema.org",
   "@type": "WebSite",
+  "@id": "https://nowservingto.com/#website",
   "name": "NowServingTO",
   "url": "https://nowservingto.com/",
   "description": "A daily-fresh directory of every new restaurant registered with the City of Toronto, classified by cuisine.",
   "inLanguage": "en-CA",
-  "publisher": {"@type": "Organization", "name": "NowServingTO"},
+  "publisher": {"@id": "https://nowservingto.com/#organization"},
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": {
+      "@type": "EntryPoint",
+      "urlTemplate": "https://nowservingto.com/cuisine/{search_term_string}"
+    },
+    "query-input": "required name=search_term_string"
+  },
   "isBasedOn": {
     "@type": "Dataset",
     "name": "Municipal Licensing and Standards - Business Licences and Permits",
@@ -103,28 +169,200 @@
 }
 </script>
 <!-- LD-ITEMLIST-START -->
-<script type="application/ld+json" id="ld-itemlist">{"@context":"https://schema.org","@type":"Restaurant","name":"TONTON ON BLOOR","address":{"@type":"PostalAddress","streetAddress":"1005 Bloor St W, Toronto, ON M6H 1M1","addressLocality":"Toronto","addressRegion":"ON","addressCountry":"CA"},"servesCuisine":["Japanese"],"url":"http://tontonmatcha.com/","image":"https://nowservingto.com/og/tonton-on-bloor-1005.png","foundingDate":"2026-05-11","geo":{"@type":"GeoCoordinates","latitude":43.6607625,"longitude":-79.4304167},"hasMap":"https://maps.google.com/?cid=16456773959645853909","aggregateRating":{"@type":"AggregateRating","ratingValue":4.8,"reviewCount":21}}</script>
+<script type="application/ld+json" id="ld-itemlist">{"@context":"https://schema.org","@type":"Restaurant","@id":"https://nowservingto.com/r/tonton-on-bloor-1005","name":"TONTON ON BLOOR","address":{"@type":"PostalAddress","streetAddress":"1005 Bloor St W","addressLocality":"Toronto","addressRegion":"ON","addressCountry":"CA","postalCode":"M6H 1M1"},"servesCuisine":["Japanese"],"url":"https://tontonmatcha.com/","image":["https://nowservingto.com/og/tonton-on-bloor-1005.png"],"foundingDate":"2026-05-11","dateModified":"2026-06-05","subjectOf":{"@type":"CreativeWork","name":"Toronto Public Health DineSafe inspection record","url":"https://open.toronto.ca/dataset/dinesafe/","creator":{"@type":"GovernmentOrganization","name":"Toronto Public Health","url":"https://www.toronto.ca/community-people/health-wellness-care/health-programs-advice/dinesafe/"}},"additionalProperty":{"@type":"PropertyValue","name":"operatingStatus","value":"verified-operational","description":"Continuous daily verification across the City of Toronto business licence registry, Toronto Public Health DineSafe inspections, and the operator's presence on the open web (operator website, social media). Entries that fail any of these checks are dropped from the directory; entries shown here passed all available checks on the most recent daily refresh."},"containedInPlace":{"@type":"Place","name":"Dufferin Grove","containedInPlace":{"@type":"City","name":"Toronto","sameAs":"https://www.wikidata.org/wiki/Q172"}},"description":"a matcha and coffee caf\u00e9 that takes its tea seriously, drawing praise for the quality of the matcha itself. The Japanese seating area creates an intimate setting for sipping, and the space balances traditional aesthetics with a modern caf\u00e9 vibe.","geo":{"@type":"GeoCoordinates","latitude":43.6607625,"longitude":-79.4304167},"hasMap":"https://maps.google.com/?cid=16456773959645853909"}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://nowservingto.com/"},{"@type":"ListItem","position":2,"name":"Japanese restaurants","item":"https://nowservingto.com/cuisine/japanese"},{"@type":"ListItem","position":3,"name":"TONTON ON BLOOR","item":"https://nowservingto.com/r/tonton-on-bloor-1005"}]}</script>
 <!-- LD-ITEMLIST-END -->
 <style>
+  /* Self-hosted Fraunces + Newsreader subsets (Google Fonts v38 / v26).
+     SIL OFL 1.1; safe to self-host. Subset slicing preserves the
+     unicode-range hints so the browser only downloads the subsets it
+     actually needs for the document content. */
+  @font-face {
+    font-family: 'Fraunces';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url(/fonts/fraunces-v0c2Wa0KxCBTeO-U.woff2) format('woff2');
+    unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+  }
+  @font-face {
+    font-family: 'Fraunces';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url(/fonts/fraunces-v0c2Wa0KxCFTeO-U.woff2) format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+  }
+  @font-face {
+    font-family: 'Fraunces';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url(/fonts/fraunces-_9v0c2Wa0KxC9TeA.woff2) format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  }
+  @font-face {
+    font-family: 'Fraunces';
+    font-style: normal;
+    font-weight: 800;
+    font-display: swap;
+    src: url(/fonts/fraunces-v0c2Wa0KxCBTeO-U.woff2) format('woff2');
+    unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+  }
+  @font-face {
+    font-family: 'Fraunces';
+    font-style: normal;
+    font-weight: 800;
+    font-display: swap;
+    src: url(/fonts/fraunces-v0c2Wa0KxCFTeO-U.woff2) format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+  }
+  @font-face {
+    font-family: 'Fraunces';
+    font-style: normal;
+    font-weight: 800;
+    font-display: swap;
+    src: url(/fonts/fraunces-_9v0c2Wa0KxC9TeA.woff2) format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  }
+  @font-face {
+    font-family: 'Fraunces';
+    font-style: normal;
+    font-weight: 900;
+    font-display: swap;
+    src: url(/fonts/fraunces-v0c2Wa0KxCBTeO-U.woff2) format('woff2');
+    unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+  }
+  @font-face {
+    font-family: 'Fraunces';
+    font-style: normal;
+    font-weight: 900;
+    font-display: swap;
+    src: url(/fonts/fraunces-v0c2Wa0KxCFTeO-U.woff2) format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+  }
+  @font-face {
+    font-family: 'Fraunces';
+    font-style: normal;
+    font-weight: 900;
+    font-display: swap;
+    src: url(/fonts/fraunces-_9v0c2Wa0KxC9TeA.woff2) format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  }
+  @font-face {
+    font-family: 'Newsreader';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url(/fonts/newsreader-uyalUrK439HyjJBG.woff2) format('woff2');
+    unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+  }
+  @font-face {
+    font-family: 'Newsreader';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url(/fonts/newsreader-uyalUrK439DyjJBG.woff2) format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+  }
+  @font-face {
+    font-family: 'Newsreader';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url(/fonts/newsreader-hbuyalUrK4397yjA.woff2) format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  }
+  @font-face {
+    font-family: 'Newsreader';
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url(/fonts/newsreader-uyalUrK439HyjJBG.woff2) format('woff2');
+    unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+  }
+  @font-face {
+    font-family: 'Newsreader';
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url(/fonts/newsreader-uyalUrK439DyjJBG.woff2) format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+  }
+  @font-face {
+    font-family: 'Newsreader';
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url(/fonts/newsreader-hbuyalUrK4397yjA.woff2) format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  }
+  @font-face {
+    font-family: 'Newsreader';
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url(/fonts/newsreader-uyalUrK439HyjJBG.woff2) format('woff2');
+    unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+  }
+  @font-face {
+    font-family: 'Newsreader';
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url(/fonts/newsreader-uyalUrK439DyjJBG.woff2) format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+  }
+  @font-face {
+    font-family: 'Newsreader';
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url(/fonts/newsreader-hbuyalUrK4397yjA.woff2) format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  }
+  @font-face {
+    font-family: 'Newsreader';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url(/fonts/newsreader-uyalUrK439HyjJBG.woff2) format('woff2');
+    unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+  }
+  @font-face {
+    font-family: 'Newsreader';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url(/fonts/newsreader-uyalUrK439DyjJBG.woff2) format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+  }
+  @font-face {
+    font-family: 'Newsreader';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url(/fonts/newsreader-hbuyalUrK4397yjA.woff2) format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  }
   :root {
-    /* Modern food-tech palette 2026-05-31b - the cream/taupe variant
-       read as "1987 cookbook cover" (Joy of Cooking aesthetic); shifted
-       to off-white + coral + mint which reads as 2024 indie food media
-       (Eater 2.0, Resy, Toast). The masthead splotch pattern uses the
-       full cuisine palette so the page picks up vibrancy without
-       committing to any single culture's flag colours. */
-    --bg: #faf6ed;        /* soft latte cream - warm-affirming without going 1987 saturated */
-    --paper: #ffffff;     /* pure white cards - layered depth signal */
-    --ink: #1a1a1a;       /* near-pure black, modern */
-    --ink2: #2d2d2b;      /* dark grey - NOT brown taupe */
-    --muted: #6f6e6a;     /* warm-but-clean grey, not wood-panel */
-    --line: #ebe9e4;      /* warm-but-clean hairline */
-    --rule: #1a1a1a;
-    --accent: #e84e3a;    /* coral-red - friendlier, more vibrant than brick */
-    --accent-2: #3fb37f;  /* fresh mint/sage - "fresh produce" not "harvest moon" */
-    --moss: #4a6b2b;
-    --fresh: #1a7340;
+    /* Editorial palette 2026-06-04 — deepened from the previous "1987
+       cookbook" register toward a confident-print-magazine direction.
+       Warm cream paper, ink-black (not grey), saturated oxblood accent,
+       moss-green for the freshness signal. The mono data layer (day
+       counts + addresses) reads against the serif body as "facts" vs
+       "prose" — the trick that separates a data product from a blog. */
+    --bg: #fbf8f0;        /* off-white with the faintest warm cast — magazine paper */
+    --paper: #ffffff;     /* pure white cards layered on the warm-white bg */
+    --ink: #0a0a0a;       /* true black — maximum ink contrast */
+    --ink2: #222222;      /* dark grey, near-ink */
+    --muted: #6e665a;     /* warm muted grey */
+    --line: #e7e1d2;      /* neutral warm hairline */
+    --rule: #0a0a0a;
+    --accent: #b5252e;    /* saturated Bon-Appétit-style editorial red */
+    --accent-2: #1f3a26;  /* deep forest green */
+    --moss: #1f3a26;
+    --fresh: #1f3a26;
     /* cuisine palette */
     --c-italian:    #c83624;
     --c-caribbean:  #1a8a5a;
@@ -148,30 +386,123 @@
     --c-latin:      #cc4a4a;
     --c-african_horn:#a0522d;
     --c-african_west:#5a8a3a;
-    --serif: 'Iowan Old Style', 'Charter', Georgia, ui-serif, serif;
-    --sans: -apple-system, 'Helvetica Neue', ui-sans-serif, sans-serif;
-    --mono: ui-monospace, 'JetBrains Mono', Menlo, monospace;
+    --display: 'Fraunces', 'Iowan Old Style', 'Charter', Georgia, ui-serif, serif;
+    --serif: 'Newsreader', 'Iowan Old Style', 'Charter', Georgia, ui-serif, serif;
+    --sans: 'Newsreader', -apple-system, 'Helvetica Neue', ui-sans-serif, sans-serif;
+    --mono: ui-monospace, Menlo, Consolas, 'SF Mono', monospace;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--sans); -webkit-font-smoothing: antialiased; }
+  body { background: var(--bg); color: var(--ink); font: 16px/1.55 var(--serif); -webkit-font-smoothing: antialiased; font-feature-settings: 'kern','liga','onum','tnum'; }
   a { color: var(--accent); text-decoration: none; }
   a:hover { text-decoration: underline; }
   .wrap { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
 
-  .mast { padding: 22px 0 0; }
-  .mast .wrap { border-bottom: 3px solid var(--rule); padding-bottom: 16px; }
-  .mast .brand { font: 800 28px/1 var(--serif); letter-spacing: -0.02em; color: var(--ink); display: inline-block; text-decoration: none; }
-  .mast .brand:hover { color: var(--accent); }
-  .mast .brand sup { font: 600 10px/1 var(--sans); letter-spacing: 0.08em; color: var(--muted); margin-left: 6px; vertical-align: super; text-transform: uppercase; }
-  .mast .sub { color: var(--ink2); font: 400 14px/1.4 var(--serif); margin: 6px 0 0; font-style: italic; }
+  .mast { padding: 28px 0 0; }
+  .mast .wrap { border-bottom: 2px solid var(--rule); padding-bottom: 18px; }
+  /* Stacked-wordmark masthead — "NOW / SERVING TO" two-line lockup on the
+     left, daily-edition meta block right-aligned in mono. Reads as a real
+     editorial masthead rather than a single-text-line site title. */
+  .mast .mast-lockup {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 24px; padding-bottom: 14px; border-bottom: 1px solid var(--line);
+    flex-wrap: wrap;
+  }
+  .mast .brand {
+    display: inline-block; white-space: nowrap;
+    color: var(--ink); text-decoration: none;
+    font: 800 38px/1 var(--display);
+    letter-spacing: -0.025em;
+    font-variation-settings: "opsz" 144;
+  }
+  .mast .brand:hover { color: var(--accent); text-decoration: none; }
+  @media (max-width: 560px) {
+    .mast .brand { font-size: 28px; letter-spacing: -0.022em; }
+  }
+  .mast .mast-meta {
+    display: flex; flex-direction: row; align-items: baseline; gap: 10px;
+    font: 500 11px/1.2 var(--mono);
+    letter-spacing: 0.08em; color: var(--muted);
+    text-transform: uppercase;
+  }
+  .mast .mast-meta .mast-issue { color: var(--accent); font-weight: 600; }
+  .mast .mast-meta .mast-date { color: var(--ink); font-weight: 500;
+    font-variant-numeric: tabular-nums; font-size: 13px; letter-spacing: 0.04em; }
+  @media (max-width: 560px) {
+    .mast .mast-meta { font-size: 10px; gap: 8px; }
+    .mast .mast-meta .mast-date { font-size: 11px; }
+  }
+  /* /answers.html — pure-text Q&A corpus for AI citation. Body class
+     `page-answers` hides directory chrome (filter row, feed, map toggle,
+     newsletter card). The page lives as a passage-citable surface for
+     ChatGPT/Perplexity/Claude/Gemini extraction. */
+  body.page-answers .filters,
+  body.page-answers .open-feed,
+  body.page-answers .map-view,
+  body.page-answers .view-toggle,
+  body.page-answers .newsletter-cta,
+  body.page-answers .data-note-tip,
+  body.page-answers .all-cuisines,
+  body.page-answers .all-districts { display: none !important; }
+  body.page-answers .answers-corpus { margin: 12px 0 32px; }
+  body.page-answers .ans-hdr { margin: 0 0 28px; padding: 0 0 18px; border-bottom: 1px solid var(--line); }
+  body.page-answers .ans-h1 { font: 800 32px/1.15 var(--display); color: var(--ink); margin: 0 0 12px; letter-spacing: -0.02em; }
+  body.page-answers .ans-lede { font: 400 16px/1.55 var(--serif); color: var(--ink2); margin: 0; }
+  body.page-answers .ans-main { display: block; }
+  body.page-answers .ans { padding: 22px 0; border-bottom: 1px solid var(--line); }
+  body.page-answers .ans:last-child { border-bottom: 0; }
+  body.page-answers .ans-q { font: 700 22px/1.3 var(--display); color: var(--ink); margin: 0 0 12px; letter-spacing: -0.012em; }
+  body.page-answers .ans-a { font: 400 16px/1.65 var(--serif); color: var(--ink); margin: 0; }
+  body.page-answers .ans-a strong { color: var(--ink); font-weight: 700; }
+  body.page-answers .ans-a a { color: var(--accent); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.12s; font-weight: 600; }
+  body.page-answers .ans-a a:hover { border-bottom-color: var(--accent); }
+  @media (max-width: 560px) {
+    body.page-answers .ans-h1 { font-size: 26px; }
+    body.page-answers .ans-q { font-size: 19px; }
+    body.page-answers .ans-a { font-size: 15px; }
+  }
+  /* Dispatch chip in the masthead — discrete nav anchor pointing at
+     /dispatch/latest. Lives OUTSIDE the aria-hidden mast-meta block so
+     screen readers announce it. Hidden on /dispatch/* itself (you're
+     already there) and on /r/<slug>/ listing pages (where the masthead
+     is intentionally minimal). Build-time injection swaps the label
+     text to include the current dispatch month ("May Dispatch ›"). */
+  .mast .mast-dispatch {
+    margin-left: 14px;
+    font: 600 11px/1.2 var(--mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink2);
+    text-decoration: none;
+    padding: 4px 10px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--paper);
+    transition: color 0.12s, border-color 0.12s, background 0.12s;
+    white-space: nowrap;
+  }
+  .mast .mast-dispatch:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  body.page-dispatch .mast .mast-dispatch,
+  body.page-listing .mast .mast-dispatch { display: none; }
+  @media (max-width: 560px) {
+    .mast .mast-dispatch { margin-left: 8px; font-size: 10px; padding: 3px 8px; }
+  }
+  .mast .sub { color: var(--ink2); font: 400 15px/1.45 var(--serif); margin: 14px 0 0; font-style: italic; }
   /* Discrete methodology line under the homepage H1. Italic serif,
      muted, narrow — sits as a quiet dek that builds credibility
      without competing with the H1 for attention. Suppressed on
      non-homepage routes (cuisine / district / listing / dispatch /
      trends) since those pages get the same line elsewhere or in their
      own framing. */
-  .mast .home-methodology { color: var(--muted); font: 400 12.5px/1.5 var(--serif); font-style: italic; margin: 8px 0 0; }
+  .mast .home-methodology { color: var(--muted); font: 400 12.5px/1.5 var(--serif); font-style: normal; margin: 8px 0 0; }
+  /* Source citation links — inherit the muted italic register so
+     they read as cited authorities, not chrome. Hairline underline
+     by default, oxblood accent on hover. */
+  .mast .home-methodology a { color: inherit; text-decoration: underline dotted; text-decoration-color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; transition: color 0.12s, text-decoration-color 0.12s; }
+  .mast .home-methodology a:hover { color: var(--accent); text-decoration-color: var(--accent); }
   body.page-listing .mast .home-methodology,
   body.page-dispatch .mast .home-methodology,
   body.page-trends .mast .home-methodology { display: none; }
@@ -269,11 +600,38 @@
   .cuisine-picker .cp-opt { display: flex; align-items: baseline; gap: 8px; padding: 10px 16px; cursor: pointer; font: 500 14px/1.3 var(--sans); color: var(--ink); border: 0; background: transparent; width: 100%; text-align: left; min-height: 40px; }
   .cuisine-picker .cp-opt:hover, .cuisine-picker .cp-opt:focus-visible { background: var(--bg); outline: none; }
   .cuisine-picker .cp-opt[aria-selected="true"] { background: rgba(200, 54, 36, 0.06); font-weight: 700; }
+  /* <a class="cp-opt"> needs text-decoration override since browser
+     defaults underline links. The cp-opt button styles above mostly
+     apply already, this is the safety net. */
+  .cuisine-picker a.cp-opt { text-decoration: none; }
+  /* Typeahead landing marker — when the visitor types a letter and the
+     dropdown jumps to a match, that match gets aria-current="true". Pulse-
+     less highlight (no transition; it's a positioning aid, not a CTA). */
+  .cuisine-picker .cp-opt[aria-current="true"] { background: rgba(138, 42, 31, 0.10); }
   .cuisine-picker .cp-opt .ct { color: var(--muted); font: 500 11.5px/1 var(--mono); font-variant-numeric: lining-nums tabular-nums; margin-left: auto; }
   .cuisine-picker .cp-opt.cp-all { border-bottom: 1px solid var(--line); }
 
-  .open-feed { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 0; margin-bottom: 28px; box-shadow: 0 1px 3px rgba(20,24,34,0.06), 0 8px 24px rgba(20,24,34,0.04); overflow: hidden; }
-  .open-row { display: grid; grid-template-columns: 110px 1fr 165px; align-items: center; gap: 16px; padding: 16px 20px; border-bottom: 1px solid var(--line); transition: background 0.12s; position: relative; }
+  .open-feed { background: var(--paper); border: 1px solid #d9d1ba; border-radius: 12px; padding: 0; margin-bottom: 28px; box-shadow: 0 2px 6px rgba(0,0,0,0.06), 0 12px 32px rgba(0,0,0,0.05); overflow: hidden; }
+  /* Date-grouped section header — sits between row groups in the feed.
+     The accent-coloured bucket label, a hairline rule that fills the gap,
+     and the entry count in mono. Reads as a real editorial section break
+     ("THIS WEEK", "MAY 2026") rather than a flat scroll. */
+  .feed-section {
+    display: flex; align-items: center; gap: 14px;
+    margin: 36px 0 8px;
+    padding: 0 20px;
+    font: 600 11px/1 var(--mono);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .feed-section:first-child { margin-top: 0; }
+  .feed-section .fs-label { color: var(--accent); white-space: nowrap; }
+  .feed-section .fs-rule { flex: 1; height: 1px; background: var(--rule); opacity: 0.45; }
+  .feed-section .fs-count { color: var(--muted); white-space: nowrap; font-weight: 500; }
+  /* Single-line row layout: date hugs its content on the left, name +
+     address in the middle (1fr), cuisine pill on the right. Two grid
+     rows so the editorial blurb can flow on row 2 beneath. */
+  .open-row { display: grid; grid-template-columns: 96px 1fr auto; grid-template-rows: auto auto; align-items: baseline; column-gap: 14px; row-gap: 0; padding: 16px 20px; border-bottom: 1px solid var(--line); transition: background 0.12s; position: relative; }
   /* Left-edge cuisine accent strip - quiet hint of colour per row.
      Driven by --row-accent on the row itself (set inline by the server
      row builder + the JS hydrator). Fades to transparent at top/bottom
@@ -308,25 +666,15 @@
   body:not(.page-listing) .open-row[data-slug] { cursor: pointer; }
   body:not(.page-listing) .open-row[data-slug]:hover { background: #fafafa; }
   .open-row:hover { background: #f6f7f8; }
-  .open-row.has-pic { grid-template-columns: 80px 110px 1fr 165px; }
-  .open-row .row-pic-link { display: block; line-height: 0; text-decoration: none; border-radius: 10px; overflow: hidden; transition: transform 0.18s; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
-  .open-row .row-pic-link:hover { transform: scale(1.03); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-  .open-row .row-pic { width: 80px; height: 80px; object-fit: cover; border-radius: 10px; background: var(--line); display: block; }
   .open-row:last-child { border-bottom: 0; }
-  .open-row .od { font: 700 10px/1.2 var(--sans); color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
-  .open-row .od .ago { display: block; color: var(--muted); text-decoration: none; }
-  .open-row .od a.ago:hover { color: var(--ink); }
-  .open-row[data-fresh="hot"] .od .ago { color: var(--fresh); font-size: 10.5px; }
-  .open-row[data-fresh="hot"] .od .ago::before { content: '★ '; }
-  /* "Recent" tier (31-90d) and "Aged" tier (91-365d) carry longer labels
-     ('Recent · 7w ago', 'First seen 4mo ago') than fits at the default 10px
-     + 0.06em tracking. Shrink to 9px / 0.02em so the duration anchors fit
-     the 110px column without wrapping. "New" tier stays at its accent
-     treatment since 'New · 5d ago' fits comfortably. */
-  .open-row[data-fresh="recent"] .od .ago,
-  .open-row[data-fresh="aged"] .od .ago { font-size: 9px; letter-spacing: 0.02em; line-height: 1.3; }
-  .open-row[data-fresh="recent"] .od .ago { color: var(--ink2); }
-  .open-row[data-fresh="aged"] .od .ago { color: var(--muted); }
+  /* Freshness date — same size + weight as the restaurant name (16px
+     sans bold) so the two anchors visually balance. Hot tier (0-30d)
+     stays green; older tiers fade to ink/muted. No star. */
+  /* Date color uniformly fresh-green across all tiers — the entire site is
+     a freshness signal, no reason to visually downgrade older entries. */
+  .open-row .od { font: 500 13px/1.3 var(--mono); color: var(--fresh); white-space: nowrap; font-variant-numeric: tabular-nums; letter-spacing: 0; text-transform: uppercase; }
+  .open-row .od .ago { display: inline; color: inherit; text-decoration: none; }
+  .open-row .od a.ago:hover { opacity: 0.7; }
   /* "About Registered dates" info-tip - sits inline with the filter buttons.
      Closed: ⓘ + label styled like a quiet button-row chip. Open: paragraph
      pops down as an absolutely-positioned tooltip below the summary so the
@@ -343,9 +691,27 @@
   @media (max-width: 500px) {
     .data-note-tip summary { padding: 7px 10px; }
     .data-note-tip .dnt-label { display: none; }
-    .data-note-tip p { left: auto; right: 0; }
+    /* Bottom-sheet placement on mobile. The dropdown was previously
+       anchored to the parent button's right edge (`right: 0`) which
+       caused it to overflow LEFT off-screen when the (i) sat near the
+       viewport's left side — which is exactly where the filter row puts
+       it after the 2-row mobile reflow. Switching to viewport-anchored
+       `position: fixed` decouples the dropdown from the button's
+       horizontal position entirely. Reads as a small toast pinned to
+       the bottom of the screen; tap (i) again or anywhere outside to
+       dismiss (the native <details> open/close still drives it). */
+    .data-note-tip p {
+      position: fixed;
+      top: auto;
+      bottom: 20px;
+      left: 16px;
+      right: 16px;
+      width: auto;
+      max-width: none;
+      z-index: 100;
+    }
   }
-  .open-row .on { font: 700 16px/1.3 var(--sans); color: var(--ink); letter-spacing: -0.01em; }
+  .open-row .on { font: 600 17px/1.3 var(--display); color: var(--ink); letter-spacing: -0.015em; font-variation-settings: "opsz" 72; }
   /* Quiet dotted underline says "this is a link" without committing to a heavy
      solid underline. Solid red underline on hover/active for the affordance. */
   .open-row .on a { color: var(--ink); text-decoration: none; transition: color 0.12s; }
@@ -367,11 +733,59 @@
   .open-row .on .rating { display: inline-block; margin-left: 10px; font: 700 12px/1 var(--sans); color: var(--ink2); font-variant-numeric: tabular-nums; vertical-align: 1px; white-space: nowrap; }
   .open-row .on .rating::before { content: '★'; color: #d4a017; margin-right: 3px; font-size: 13px; }
   .open-row .on .rating .rc { color: #5d6166; font-weight: 500; margin-left: 4px; font-size: 11px; }
-  .open-row .on .oad { display: block; font: 400 13px/1.4 var(--sans); color: var(--muted); margin-top: 4px; }
+  /* Address inline with the name (was display:block, wasted a row). Soft
+     · separator before so the address reads as a distinct fact, not a
+     suffix on the name. Wraps naturally on narrow screens since it's a
+     plain inline element. */
+  .open-row .on .oad { display: inline; font: 400 12px/1.4 var(--mono); color: var(--muted); margin-left: 10px; font-variant-numeric: tabular-nums; letter-spacing: 0; }
+  .open-row .on .oad::before { content: '· '; color: var(--muted); margin-right: 2px; }
   .open-row .on .oad .oad-d { color: var(--ink2); font-weight: 500; }
   .open-row .on .oad .oad-dist { font-variant-numeric: tabular-nums; }
   .open-row .on .oad a { color: var(--muted); text-decoration: none; transition: color 0.12s; }
   .open-row .on .oad a:hover { color: var(--accent); }
+  /* Editorial row blurb — spans the FULL row width (cols 1/-1) on grid
+     row 2, using ALL available horizontal space across the row, not
+     just under the name column. Italic serif muted so it reads as
+     supporting context, not a third headline.
+     NOTE: individual font-* properties (not the `font:` shorthand) —
+     some browsers reject the shorthand when font-family is a CSS
+     custom-property reference like var(--serif), silently dropping
+     the whole declaration. */
+  .row-blurb {
+    font-family: var(--serif) !important;
+    font-size: 13.5px !important;
+    font-style: normal !important;
+    font-weight: 400 !important;
+    line-height: 1.55 !important;
+    color: var(--ink);
+  }
+  .row-blurb .row-fresh {
+    color: var(--accent) !important;
+    font-style: normal !important;
+    font-weight: 600 !important;
+  }
+  .open-row > .row-blurb {
+    grid-column: 2 / 3;
+    margin: 6px 0 0;
+  }
+
+  /* Bare-bones / "fresh off the boat" rows: small oxblood ◆ glyph
+     beside the freshness date + oxblood tag at end of the blurb.
+     Confident editorial mark, not garden-emoji. Discovery cohort
+     where the City + Google + DineSafe know the place but the
+     marketing web hasn't caught up. */
+
+  /* ◆ diamond dropped — the oxblood "No website yet" tag is enough signal. */
+  .open-row > .row-blurb .row-fresh { color: var(--accent); font-style: normal; font-weight: 600; }
+  /* Generic .row-fresh fallback so the oxblood "No website yet" tag
+     also displays on the /r/<slug> listing-page editorial card. */
+  .listing-extra .lx-evidence .row-fresh { color: var(--accent); font-style: normal; font-weight: 600; }
+  /* Top-align row cells so the date + pill don't drift to middle when
+     the row grows to fit the blurb on the second grid row. */
+  .open-row { align-items: start; }
+  /* Listing pages already render the full editorial blurb in the
+     lx-evidence card — don't repeat it in the primary row above. */
+  body.page-listing .open-row > .row-blurb { display: none; }
   .open-row .oc { text-align: right; display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 4px 6px; }
   /* Cuisine pill is now an <a> linking to /cuisine/<key> - tap/click jumps
      straight to that cuisine's landing page. Removed underline, locked text
@@ -399,9 +813,11 @@
      whose ONLY cuisine matches the filter. Multi-cuisine rows keep their pills
      visible so the user sees "Afghan · Pakistani · Indian" even on the Indian
      filter - useful signal that the place serves multiple traditions. */
-  .open-feed.single-cuisine .open-row:not([data-multi]) { grid-template-columns: 110px 1fr; }
-  .open-feed.single-cuisine .open-row.has-pic:not([data-multi]) { grid-template-columns: 80px 110px 1fr; }
-  .open-feed.single-cuisine .open-row:not([data-multi]) .oc { display: none; }
+  /* On single-cuisine pages, hide just the redundant pill (e.g. CHINESE on
+     /cuisine/chinese) — keep heart + share visible so EVERY row has the
+     same right-column anchor. Multi-cuisine rows keep their pills so the
+     user sees "Chinese + Indian" as a useful multi-tradition signal. */
+  .open-feed.single-cuisine .open-row:not([data-multi]) .oc .pill { display: none; }
   .open-feed .empty { padding: 28px 20px; color: var(--muted); font: italic 13px/1.4 var(--serif); text-align: center; }
   .open-feed .show-more { display: block; width: calc(100% - 36px); margin: 8px 18px 12px; padding: 11px 14px; background: var(--paper); border: 1px solid var(--line); border-radius: 6px; cursor: pointer; font: 700 11.5px/1 var(--sans); text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink2); transition: all 0.12s; }
   .open-feed .show-more:hover { background: var(--bg); border-color: var(--rule); color: var(--ink); }
@@ -427,7 +843,39 @@
      listing pages show the all-Toronto weekly digest form;
      cuisine/district pages swap in a per-axis instant-alert form
      (same outer markup, different copy). Not a popup, not sticky. */
-  .newsletter-cta { margin: 40px 0 24px; padding: 22px 24px; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); display: grid; grid-template-columns: 1fr; gap: 16px; align-items: center; }
+  /* Subscription CTA: soft oxblood tint — the single warm anchor
+     color. Echoes the accent without overwhelming. Sharper radius +
+     no shadow = editorial-grade tile, not blogspot card. */
+  /* ─── A-Z restaurant index page (/all) ─── */
+  body.page-all .all-page-body { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+  body.page-all .all-page-intro { font: 400 15px/1.55 var(--serif); color: var(--ink2); margin: 24px 0 16px; max-width: 70ch; }
+  body.page-all .all-letter-nav { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 32px; padding: 14px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--bg); z-index: 10; }
+  body.page-all .all-letter-link { font: 700 13px/1 var(--sans); color: var(--ink); text-decoration: none; padding: 6px 10px; border-radius: 4px; min-width: 24px; text-align: center; transition: background 0.12s, color 0.12s; }
+  body.page-all .all-letter-link:hover { background: var(--accent); color: #fff; }
+  body.page-all .all-section { margin-bottom: 36px; scroll-margin-top: 60px; }
+  body.page-all .all-letter-h { font: 800 38px/1 var(--serif); color: var(--accent); margin: 0 0 12px; border-bottom: 1px solid var(--line); padding-bottom: 8px; letter-spacing: -0.02em; }
+  body.page-all .all-list { list-style: none; padding: 0; margin: 0; columns: 2; column-gap: 32px; }
+  @media (max-width: 760px) { body.page-all .all-list { columns: 1; } }
+  body.page-all .all-row { break-inside: avoid; padding: 8px 0; border-bottom: 1px dotted var(--line); display: flex; flex-direction: column; gap: 2px; }
+  body.page-all .all-name { font: 700 15px/1.25 var(--serif); color: var(--ink); text-decoration: none; letter-spacing: -0.005em; }
+  body.page-all .all-name:hover { color: var(--accent); }
+  body.page-all .all-meta { font: italic 13px/1.35 var(--serif); color: var(--muted); }
+  body.page-all .all-count { font-size: 0.7em; font-weight: 600; color: var(--muted); margin-left: 4px; }
+  body.page-all .filters, body.page-all .map-view, body.page-all .newsletter-cta { display: none !important; }
+
+  /* "All cuisines" / "All districts" link blocks — render every cuisine
+     + district as a static HTML link from every page. Prevents orphan
+     pages (Filipino, Belgian, Sri Lankan, etc.) when their cuisine
+     doesn't have a recent enough entry to land in the top-30 static
+     feed. SEO + AI-crawler discovery without visual heft. */
+  .all-cuisines, .all-districts { font: 400 12px/1.7 var(--sans); color: var(--muted); margin: 32px auto 6px; max-width: 1100px; padding: 0 24px; }
+  .all-cuisines-label { font-weight: 700; color: var(--ink2); margin-right: 6px; text-transform: uppercase; letter-spacing: 0.04em; font-size: 10px; }
+  .all-cuisines a, .all-districts a { color: var(--muted); text-decoration: none; border-bottom: 1px dotted transparent; margin-right: 2px; }
+  .all-cuisines a:hover, .all-districts a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+  .all-cuisines a + a::before, .all-districts a + a::before { content: ' · '; color: var(--line); }
+  .all-districts { margin-top: 8px; margin-bottom: 32px; }
+  /* Subtle warm grey — neutral/professional, blends with content tier */
+  .newsletter-cta { margin: 40px 0 24px; padding: 22px 24px; background: #f1f1ed; border: 1px solid #d9d1ba; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); display: grid; grid-template-columns: 1fr; gap: 16px; align-items: center; }
   .newsletter-cta .nl-pitch h2 { font: 700 17px/1.25 var(--sans); margin: 0 0 6px; color: var(--ink); letter-spacing: -0.005em; }
   .newsletter-cta .nl-pitch p { font: 400 13px/1.45 var(--sans); margin: 0; color: var(--ink2); }
   @media (min-width: 640px) { .newsletter-cta { grid-template-columns: 1.1fr 1fr; gap: 28px; } }
@@ -441,6 +889,60 @@
      while every other block on the page used the full column. */
   .page-intro { margin: 4px 0 18px; }
   .page-intro p { font: 400 14.5px/1.55 var(--sans); margin: 0; color: var(--ink2); letter-spacing: -0.002em; }
+  /* Data sidecar (Block 1 of cuisine editorial template): count + freshest
+     entry, answer-first passage targeting AI-citation extraction for
+     "newest <cuisine> Toronto" queries. Sits one breath below the cultural
+     intro paragraph. Bolded numerals + name + days pull the eye to the
+     three claims a passage extractor wants. */
+  .page-intro .page-intro-data { margin: 10px 0 0; font: 400 14.5px/1.55 var(--sans); color: var(--ink2); letter-spacing: -0.002em; }
+  .page-intro .page-intro-data b { color: var(--ink); font-weight: 700; }
+  /* "Three most recent openings" (Block 2): named entries with first-seen
+     days. Same passage-citable target as Block 1 but with the top-3
+     specifics. Compact list, single column on mobile. */
+  .page-intro .page-intro-whatsnew { margin: 16px 0 0; }
+  .page-intro-whatsnew .wn-h { font: 700 11px/1.4 var(--sans); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 6px; }
+  .page-intro-whatsnew .wn-list { list-style: none; padding: 0; margin: 0 0 6px; font: 400 14px/1.55 var(--sans); color: var(--ink2); }
+  .page-intro-whatsnew .wn-row { padding: 2px 0; }
+  .page-intro-whatsnew .wn-row b { color: var(--ink); font-weight: 700; }
+  .page-intro-whatsnew .wn-d { color: var(--muted); }
+  .page-intro-whatsnew .wn-fs { color: var(--fresh); font-variant-numeric: tabular-nums; }
+  .page-intro-whatsnew .wn-foot { margin: 4px 0 0; font: italic 12.5px/1.5 var(--serif); color: var(--muted); }
+  /* "How we track <cuisine>" (Block 3): methodology sidebar above the
+     related-cuisines + community-partners blocks. Same quiet footer
+     register; provides the source-dataset outbound link for E-E-A-T
+     and reassures AI-citation extractors the data has provenance. */
+  .how-we-track { margin: 36px 0 8px; padding: 14px 0 0; border-top: 1px solid var(--line); font: 400 13px/1.6 var(--sans); color: var(--muted); }
+  .how-we-track .hwt-h { font: 700 11px/1.4 var(--sans); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 6px; }
+  .how-we-track .hwt-p { margin: 0; color: var(--ink2); }
+  .how-we-track .hwt-p a { color: var(--ink); text-decoration: underline dotted; text-decoration-color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; transition: color 0.12s; }
+  .how-we-track .hwt-p a:hover { color: var(--accent); }
+  /* Dispatch editorial intro (body.page-dispatch only). Three stacked
+     answer-first passages — lead + by-cuisine + by-district — designed
+     for AI-citation extraction on "what opened in Toronto <month>"
+     queries. Inherits .page-intro for spacing; adds its own bolds + lists. */
+  .page-intro.dispatch-intro { margin: 4px 0 24px; }
+  .dispatch-intro .dispatch-lead { font: 400 15.5px/1.6 var(--serif); color: var(--ink); margin: 0; }
+  .dispatch-intro .dispatch-lead b { font-weight: 700; color: var(--accent); font-style: normal; }
+  .dispatch-intro .dispatch-by-cuisine,
+  .dispatch-intro .dispatch-by-district { margin: 18px 0 0; }
+  .dispatch-intro .dc-h { font: 700 11px/1.4 var(--sans); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 8px; }
+  .dispatch-intro .dc-list { list-style: none; padding: 0; margin: 0; font: 400 14.5px/1.65 var(--sans); color: var(--ink2); }
+  .dispatch-intro .dc-row { padding: 3px 0; }
+  .dispatch-intro .dc-row b { color: var(--ink); font-weight: 700; }
+  .dispatch-intro .dc-row a { color: var(--ink); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.12s; }
+  .dispatch-intro .dc-row a:hover { border-bottom-color: var(--accent); }
+  .dispatch-intro .dc-row .dc-n { color: var(--muted); font: 600 12px/1 var(--mono); margin-left: 4px; font-variant-numeric: tabular-nums; }
+  /* Cuisine mix callout — data-derived distribution shown on multi-cuisine
+     neighborhood pages (Kensington Market, Cabbagetown, The Beaches, etc.)
+     where there's no single cuisine anchor. Sits between Block 2 and the
+     static feed. Answer-first passage for "what cuisines are in
+     <neighborhood>" AI extractor queries. */
+  .page-intro .cuisine-mix { margin: 16px 0 0; }
+  .page-intro .cuisine-mix .cm-h { font: 700 11px/1.4 var(--sans); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 6px; }
+  .page-intro .cuisine-mix .cm-p { margin: 0; font: 400 14.5px/1.6 var(--sans); color: var(--ink2); }
+  .page-intro .cuisine-mix .cm-p b { color: var(--ink); font-weight: 700; }
+  .page-intro .cuisine-mix .cm-p a { color: var(--ink); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.12s; font-weight: 600; }
+  .page-intro .cuisine-mix .cm-p a:hover { border-bottom-color: var(--accent); }
   /* Related-cuisines strip. Sits just above the newsletter CTA. Three
      siblings, comma-separated; visual rhythm matches the footer link row. */
   .related-cuisines { margin: 36px 0 8px; padding: 14px 0 0; border-top: 1px solid var(--line); font: 400 13px/1.6 var(--sans); color: var(--muted); }
@@ -777,39 +1279,25 @@
   body.page-trends .trends-tweet-btn:hover { background: var(--accent); }
   body.page-trends .trends-note { font: 400 12.5px/1.4 var(--sans); color: var(--muted); font-style: italic; }
   body.page-listing .open-feed { margin-bottom: 8px; }
-  /* Primary listing row: gentle warm-sand tint so the page's headline
-     element doesn't read as flat paper-white. Matches the alternating
-     shade used on lx-cards and nearby cards for one consistent palette
-     rhythm. Independent of nth-child position. */
-  body.page-listing .open-row { background: #f3eedf; }
-  body.page-listing .open-row:nth-child(even) { background: #f3eedf; }
-  body.page-listing .open-row:hover { background: #ebe5d2; }
+  /* Primary listing row: warm vellum — restraint over color, ink-on-
+     paper feel. Single neutral tone so the row reads as confident
+     editorial rather than tea-room sage. */
+  body.page-listing .open-row { background: #ffffff; border: 1px solid #e6e0cf; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.03); }
+  body.page-listing .open-row:nth-child(even) { background: #ffffff; }
+  body.page-listing .open-row:hover { background: #faf6ec; }
   /* Listing page hierarchy: the page's subject restaurant deserves a bigger
      thumb than the "Other nearby" cards below. Without this the 4-up
      grid of nearby cards visually dominated the smaller 80px primary
      row, which read like the page was about the secondary cards. */
-  body.page-listing .open-row.has-pic { grid-template-columns: 140px 110px 1fr 165px; }
-  body.page-listing .open-row .row-pic { width: 140px; height: 140px; }
-  /* Shrink the nearby-card thumbs slightly so they don't compete with
-     the primary subject. Switching the grid from 4 cols to 5 makes
-     each card ~20% smaller. */
+  /* Nearby-card grid sizing — 5-up desktop, 4-up tablet, narrower below. */
   body.page-listing .listing-extra .lx-near-grid { grid-template-columns: repeat(5, 1fr); }
   @media (max-width: 900px) {
     body.page-listing .listing-extra .lx-near-grid { grid-template-columns: repeat(4, 1fr); }
   }
-  /* Mobile: must match the 3-col layout from the @media (max-width: 760px)
-     block below (thumb / body / pill), otherwise grid-column placements
-     on .on and .oc fight grid-template-columns and the body gets squeezed.
-     We just bump the thumb dimensions so the page subject still feels
-     primary. */
   @media (max-width: 760px) {
-    body.page-listing .open-row.has-pic { grid-template-columns: 90px 1fr 110px; }
-    body.page-listing .open-row.has-pic .row-pic { width: 90px; height: 90px; }
     body.page-listing .listing-extra .lx-near-grid { grid-template-columns: repeat(3, 1fr); }
   }
   @media (max-width: 480px) {
-    body.page-listing .open-row.has-pic { grid-template-columns: 78px 1fr 80px; }
-    body.page-listing .open-row.has-pic .row-pic { width: 78px; height: 78px; }
     body.page-listing .listing-extra .lx-near-grid { grid-template-columns: repeat(2, 1fr); }
   }
   /* Listing lede: prose strip directly under the H1 carrying the three
@@ -824,180 +1312,61 @@
     max-width: 720px;
     letter-spacing: 0.005em;
   }
-  /* Compact horizontal masthead: NowServingTO on the left, the page-
-     specific h1 + (listing only) registration age as a single inline run
-     on the right. Applied to /r/ (listing), /cuisine/, and /district/
-     pages - all three are "inner" pages where the brand is reference info,
-     not the headline. Homepage keeps the original stacked layout because
-     the masthead IS the headline there. */
-  body.page-listing .mast .wrap {
-    display: flex;
-    align-items: baseline;
-    flex-wrap: wrap;
-    column-gap: 18px;
-    row-gap: 4px;
-  }
+  /* Listing-page masthead H1 is kept in the DOM for SEO + screen readers
+     (the page's primary topic signal), but hidden visually because the
+     primary row below already shows the restaurant name + freshness
+     date. Avoids the duplication the user flagged. */
   body.page-listing .mast .sub {
-    margin: 0;
-    font-style: normal;
-    font-weight: 700;
-    font-size: 16px;
-    color: var(--ink);
-    letter-spacing: -0.005em;
+    position: absolute !important;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+    border: 0;
   }
-  /* Cuisine + district pages inherit the homepage .mast .sub treatment
-     (italic 14px serif dek) - keeps the masthead exactly the same height
-     across home / cuisine / district navigation so the layout doesn't
-     jump when filtering. The .hl accent span on each page-specific H1
-     also inherits the homepage rule. */
-  body.page-listing .mast .listing-lede {
-    margin: 0;
+  /* Lede renders inline INSIDE the H1 as a span with a · separator —
+     "AND BANH MI · First seen 5 days ago" on one line. Inherits H1
+     baseline but in a quieter weight + muted color so it reads as
+     supporting text, not part of the title. Wraps to next line
+     naturally if the combined run is too long for the viewport. */
+  body.page-listing .mast .sub .listing-lede {
     font-size: 13.5px;
     color: var(--muted);
-    display: inline;
+    font-weight: 400;
+    letter-spacing: 0;
+    margin-left: 10px;
   }
-  body.page-listing .mast .listing-lede::before {
-    content: "·";
+  body.page-listing .mast .sub .listing-lede::before {
+    content: '· ';
     color: var(--muted);
-    margin: 0 8px 0 0;
-    font-weight: 700;
+    margin-right: 2px;
   }
   @media (max-width: 560px) {
-    body.page-listing .mast .listing-lede::before { content: none; }
     body.page-listing .mast .sub,
     body.page-cuisine .mast .sub,
     body.page-district .mast .sub { font-size: 15px; }
-    body.page-listing .mast .listing-lede { font-size: 13px; }
+    body.page-listing .mast .sub .listing-lede { font-size: 13px; }
   }
 
-  /* "N new since you last visited" badge - tracks lastVisitedAt in
-     localStorage and shows a pulsing red pill when there are fresh
-     entries to surface. Habit loop: visit, see new things, come back
-     tomorrow to see what's been added. */
-  .fresh-badge {
-    display: none; align-items: center; gap: 6px;
-    margin: 8px 0 0; padding: 6px 14px;
-    /* Uses --accent-2 (saffron) instead of --accent (red) so the
-       freshness signal stays visually distinct from the brand red CTAs.
-       Reads as "new content available" without competing with the
-       primary action colour. */
-    background: var(--accent-2); color: #15110d;
-    border: 0; border-radius: 999px;
-    font: 700 13px/1 var(--sans); letter-spacing: 0.01em;
-    cursor: pointer;
-    box-shadow: 0 2px 12px rgba(230,166,58,0.42);
-    animation: fresh-pulse 2.4s ease-in-out infinite;
-    transition: transform 0.12s, box-shadow 0.12s;
-  }
-  .fresh-badge.is-visible { display: inline-flex; }
-  .fresh-badge:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(230,166,58,0.55); }
-  .fresh-badge .fb-spark { font-size: 14px; line-height: 1; }
-  @keyframes fresh-pulse {
-    0%, 100% { box-shadow: 0 2px 12px rgba(230,166,58,0.42); }
-    50%      { box-shadow: 0 2px 18px rgba(230,166,58,0.62); }
-  }
-  /* Highlight applied to rows that are "new since last visit" after the
-     badge is clicked. Soft accent-tinted background, fades after 4s. */
-  .open-row.is-fresh-flash { background: rgba(200, 54, 36, 0.06); transition: background 1.2s ease-out; }
+  /* fresh-badge removed 2026-06-04 — the "new since you last looked"
+     CTA read as gamification chrome; the daily-edition masthead carries
+     the freshness signal more elegantly. Related JS in js/app.js retired. */
 
-  /* "🎲 Surprise me" floating action button - bottom-right, picks a
-     random restaurant from the freshest cohort (≤30 days). Pure curiosity
-     bait; high tap rate from new visitors. Hidden on /r/<slug> pages
-     (already in single-listing view, no need to surprise). */
-  .surprise-fab {
-    position: fixed; right: 18px; bottom: 18px; z-index: 950;
-    width: 56px; height: 56px;
-    border: 0; border-radius: 50%;
-    background: var(--accent); color: #fff;
-    font-size: 24px; line-height: 1; cursor: pointer;
-    box-shadow: 0 6px 18px rgba(20,24,34,0.22), 0 2px 4px rgba(20,24,34,0.12);
-    transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .surprise-fab:hover, .surprise-fab:focus-visible {
-    transform: translateY(-2px) scale(1.05);
-    box-shadow: 0 10px 24px rgba(20,24,34,0.32), 0 3px 6px rgba(20,24,34,0.16);
-    outline: none;
-  }
-  .surprise-fab:active { transform: translateY(0) scale(0.95); }
-  .surprise-fab .sf-tooltip {
-    position: absolute; right: calc(100% + 12px); top: 50%; transform: translateY(-50%);
-    background: var(--ink); color: var(--paper);
-    padding: 6px 10px; border-radius: 6px;
-    font: 600 12px/1 var(--sans);
-    white-space: nowrap; pointer-events: none;
-    opacity: 0; transition: opacity 0.16s;
-  }
-  .surprise-fab:hover .sf-tooltip, .surprise-fab:focus-visible .sf-tooltip { opacity: 1; }
-  body.page-listing .surprise-fab { display: none; }  /* hide on single-restaurant pages */
+  /* surprise-fab removed 2026-06-04 — gamification chrome retired
+     alongside the fresh-badge as part of the editorial-direction redesign. */
   .listing-extra { margin: 4px 0 32px; display: flex; flex-direction: column; gap: 22px; }
-  .listing-extra .lx-card { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
-  /* Alternating neutral shades on the plain content cards so the column
-     doesn't read as one continuous slab of paper-white. Skips cards that
-     carry their own tint (owner-content, featured-press, owner-cta,
-     dishes) — those already break the rhythm with accent colors. */
-  .listing-extra .lx-card:nth-of-type(even):not(.lx-owner-content):not(.lx-featured):not(.lx-owner-cta):not(.lx-dishes) {
-    background: #f8f4ea;
-    border-color: #e6dfce;
-  }
-  /* "What to order" block: dish names get their own typographic card
-     with a warm accent edge so it reads as a recommendation tile rather
-     than another paragraph of editorial. Serif italic body, bold dish
-     names. Pairs the eyebrow with the accent color used elsewhere on the
-     site for editorial CTAs. */
-  .listing-extra .lx-dishes { background: #fffaf2; border-left: 4px solid var(--accent); }
-  .listing-extra .lx-dishes .lx-eyebrow { color: var(--accent); }
-  .listing-extra .lx-dishes-list { font: 400 17px/1.6 var(--serif); font-style: italic; color: var(--ink); margin: 0; letter-spacing: -0.005em; }
-  .listing-extra .lx-dishes-list b { font-style: normal; font-weight: 700; color: var(--ink); }
-  /* Categories variant — softer treatment so visitors can intuit the
-     difference between "we know specific dishes" and "we know menu
-     categories." Muted edge color, muted eyebrow, same warm-cream tile. */
-  .listing-extra .lx-dishes-cats { border-left-color: #c4b896; }
-  .listing-extra .lx-dishes-cats .lx-eyebrow { color: var(--muted); }
-  /* ─── Cuisine-color typographic graphic (replaces photos site-wide).
-     Three sizes: hero (per-listing top + OG), card (nearby/strip),
-     thumb (feed row). All share cuisine-colored gradient + native
-     script ornament + serif name typography. ─── */
-  /* Soft treatment: cream-paper background tinted ~12% with cuisine
-     color + thin cuisine-color accent bar on the left + dark text +
-     faded cuisine-color native script. Five Vietnam-reds on one page
-     felt fatiguing as full-saturation blocks; this reads as editorial
-     calm while keeping each cuisine visually distinct. */
-  .cg { position: relative; overflow: hidden; border-radius: 6px;
-        background: color-mix(in srgb, var(--cg-color, #7a746a) 11%, #faf7ee);
-        color: var(--ink);
-        border-left: 4px solid var(--cg-color, #7a746a); }
-  .cg::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, transparent 55%, color-mix(in srgb, var(--cg-color, #7a746a) 8%, transparent) 100%); pointer-events: none; }
-  .cg-script { position: absolute; bottom: -10%; right: -4%; font: 700 200% 'Noto Sans', 'Noto Sans Bengali', 'Noto Naskh Arabic', 'Noto Sans Tamil', 'Noto Sans CJK SC', 'Noto Sans Devanagari', 'Noto Sans Ethiopic', system-ui, serif; color: color-mix(in srgb, var(--cg-color, #7a746a) 22%, transparent); letter-spacing: -0.02em; pointer-events: none; white-space: nowrap; line-height: 1; }
-  .cg-script-rtl { right: auto; left: -4%; bottom: -10%; }
-  .cg-name, .cg-eyebrow, .cg-district { position: relative; z-index: 2; }
-  .cg-eyebrow { font: 700 10px/1 var(--mono); letter-spacing: 0.22em; color: color-mix(in srgb, var(--cg-color, #7a746a) 75%, #000); text-transform: uppercase; margin-bottom: 12px; }
-  .cg-name { font: 800 28px/1.15 var(--serif); letter-spacing: -0.6px; color: var(--ink); margin: 0; }
-  .cg-district { font: 400 14px/1.3 var(--serif); font-style: italic; color: var(--ink2); margin: 8px 0 0; }
-  /* Hero: full-bleed featured display (per-listing top, /trends magazine hero) */
-  .cg-hero { padding: 32px 36px 30px; min-height: 320px; display: flex; flex-direction: column; justify-content: flex-end; }
-  .cg-hero .cg-script { font-size: 320px; bottom: -60px; }
-  .cg-hero .cg-name { font-size: 44px; letter-spacing: -1.2px; }
-  .cg-hero .cg-district { font-size: 17px; }
-  /* Card: nearby + hero-strip slot */
-  .cg-card { padding: 18px 20px 18px; aspect-ratio: 4 / 3; display: flex; flex-direction: column; justify-content: flex-end; }
-  .cg-card .cg-script { font-size: 130px; bottom: -28px; }
-  .cg-card .cg-name { font-size: 18px; letter-spacing: -0.3px; color: var(--ink); }
-  /* Thumb: square row-slot replacement for the listing-page row-pic */
-  .cg-thumb { aspect-ratio: 1 / 1; padding: 10px 12px; display: flex; flex-direction: column; justify-content: flex-end; }
-  .cg-thumb .cg-script { font-size: 110px; bottom: -22px; }
-  .cg-thumb .cg-name { font-size: 13px; letter-spacing: -0.2px; font-weight: 700; line-height: 1.15; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; color: var(--ink); }
-  @media (max-width: 600px) {
-    .cg-hero { min-height: 240px; padding: 24px 24px 22px; }
-    .cg-hero .cg-name { font-size: 32px; }
-    .cg-hero .cg-script { font-size: 220px; bottom: -40px; }
-  }
-
-  /* Photo credit line — discrete per Google Places ToS §5.3 attribution
-     requirement. Small, muted, sits at the foot of each listing page. */
-  .listing-extra .lx-photo-credit { font: 400 11px/1.4 var(--sans); color: var(--muted); margin: 18px 0 0; text-align: center; }
-  .listing-extra .lx-photo-credit a { color: var(--muted); text-decoration: underline; text-decoration-color: var(--line); }
-  .listing-extra .lx-photo-credit a:hover { color: var(--accent); }
+  /* Content cards: single neutral cream-grey, tighter radius for
+     editorial-magazine feel (was 12px, too friendly/blogspot). */
+  .listing-extra .lx-card { background: #f4f0e6; border: 1px solid #d9d1ba; border-radius: 4px; padding: 20px 22px; box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.03); }
+  /* Nearby grid wrapper: lighter vellum to nest cleanly. */
+  .listing-extra .lx-card.lx-near-wrap { background: #faf6ec; border-color: #ddd2b8; }
+  /* "Try the..." dish line — rendered inline inside the editorial blurb
+     card (no longer its own section). Italic serif with bold dish names
+     so it reads as a continuation of the editorial in a slightly more
+     conversational voice. Top margin separates it from the prose. */
+  .listing-extra .lx-evidence-dishes { font: 400 16px/1.55 var(--serif); font-style: italic; color: var(--ink); margin: 12px 0 0; letter-spacing: -0.005em; }
+  .listing-extra .lx-evidence-dishes b { font-style: normal; font-weight: 700; color: var(--ink); }
   /* Report-an-error link — universal correction channel for wrong cuisine,
      wrong address, closed-and-missed, etc. Same footer treatment as the
      photo credit so it stays out of the visual hierarchy of the page. */
@@ -1016,7 +1385,7 @@
   .listing-extra .fi-link { display: inline-flex; align-items: baseline; gap: 8px; text-decoration: none; color: var(--ink); }
   .listing-extra .fi-link:hover { color: var(--accent); }
   .listing-extra .fi-pub { font: 800 13px/1.3 var(--sans); letter-spacing: -0.005em; }
-  .listing-extra .fi-date { font: 500 11px/1 ui-monospace, 'JetBrains Mono', Menlo, monospace; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .listing-extra .fi-date { font: 500 11px/1 ui-monospace, Menlo, Consolas, monospace; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
   .listing-extra .fi-excerpt { display: block; font: 400 14px/1.5 var(--serif); color: var(--ink2); font-style: italic; margin-top: 2px; }
   .listing-extra .lx-evidence { font: 400 15.5px/1.55 var(--serif); color: var(--ink); margin: 0; }
   .listing-extra .lx-evidence cite { display: block; margin-top: 10px; font: 400 12px/1.45 var(--sans); color: var(--muted); font-style: normal; letter-spacing: 0.01em; }
@@ -1061,10 +1430,9 @@
      the actual business. Visitors who want context click photo or name;
      visitors in a hurry use the CTAs. */
   .listing-extra .lx-near-card { position: relative; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--paper); transition: border-color 0.14s, box-shadow 0.14s; }
-  /* Alternating neutral shades on nearby cards — same warm-sand tone as
-     the alternating lx-card rule above so the page reads as one consistent
-     palette rhythm rather than two unrelated stripes of color. */
-  .listing-extra .lx-near-card:nth-child(even) { background: #f8f4ea; border-color: #e6dfce; }
+  /* Uniform warm cream tile for nearby cards — matches the editorial
+     vellum family instead of competing sage. */
+  .listing-extra .lx-near-card { background: #ffffff; border-color: #e6dcc4; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
   .listing-extra .lx-near-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.07); border-color: var(--rule); }
   /* Card-wide click target: absolutely-positioned anchor covering the
      whole card so any blank-area tap navigates to /r/<slug>. Inner
@@ -1074,14 +1442,15 @@
   .listing-extra .lx-near-card .lx-near-body { position: relative; z-index: 2; }
   .listing-extra .lx-near-card .lx-near-body a { position: relative; z-index: 3; }
   .listing-extra .lx-near-card { cursor: pointer; }
-  .listing-extra .lx-near-card .lx-near-pic { display: block; aspect-ratio: 1 / 1; overflow: hidden; background: #e8e8e8; }
-  .listing-extra .lx-near-card .lx-near-pic img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.22s; }
-  .listing-extra .lx-near-card .lx-near-pic:hover img { transform: scale(1.04); }
   .listing-extra .lx-near-card .lx-near-body { display: flex; flex-direction: column; padding: 10px 12px 10px; gap: 4px; flex: 1; }
-  .listing-extra .lx-near-card .lx-near-when { display: block; font: 700 10px/1 var(--sans); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 0; }
+  .listing-extra .lx-near-card .lx-near-when { display: block; font: 700 10px/1 var(--sans); letter-spacing: 0.08em; text-transform: uppercase; color: var(--fresh); margin: 0; }
   .listing-extra .lx-near-card .lx-near-name { display: block; font: 700 13.5px/1.3 var(--sans); margin: 0; color: var(--ink); letter-spacing: -0.005em; word-break: break-word; text-decoration: none; }
   .listing-extra .lx-near-card .lx-near-name:hover { color: var(--accent); }
   .listing-extra .lx-near-card .lx-near-where { display: block; font: 400 12px/1.4 var(--sans); margin: 0; color: var(--muted); }
+  /* Bare-bones nearby card — tight oxblood "no website yet"
+     callout. Matches the row + listing-page treatment but
+     compressed for the small card. */
+  .listing-extra .lx-near-card .lx-near-bare { display: block; font: 600 10.5px/1.3 var(--sans); color: var(--accent); margin: 4px 0 0; letter-spacing: 0; }
   .listing-extra .lx-near-card .lx-near-ctas { display: flex; gap: 6px; margin-top: auto; padding-top: 8px; }
   .listing-extra .lx-near-card .lx-near-cta { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 3px; font: 600 11px/1 var(--sans); padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; color: var(--ink2); text-decoration: none; background: #fafafa; transition: background 0.12s, border-color 0.12s, color 0.12s; }
   .listing-extra .lx-near-card .lx-near-cta:hover { background: var(--ink); color: #fff; border-color: var(--ink); }
@@ -1108,29 +1477,34 @@
   .site-foot a:hover { color: var(--accent); }
   .site-foot .dot { margin: 0 6px; color: #c5c8cd; }
 
+  /* ─── Mobile: prune every wasted pixel ─── */
   @media (max-width: 760px) {
-    .wrap { padding: 0 14px; }
-    .open-row { grid-template-columns: 1fr 130px; gap: 12px; padding: 14px 14px; }
-    .open-row.has-pic { grid-template-columns: 56px 1fr 130px; }
-    .open-row.has-pic .row-pic { width: 56px; height: 56px; border-radius: 8px; }
-    .open-row .od { grid-column: 1 / 3; order: -1; display: flex; gap: 10px; align-items: baseline; }
-    .open-row.has-pic .od { grid-column: 1 / 4; }
-    .open-row.has-pic .row-pic { grid-row: 2; grid-column: 1; }
-    .open-row.has-pic .on { grid-column: 2; }
-    .open-row.has-pic .oc { grid-column: 3; }
-    /* Single-cuisine pages on mobile: the .oc pill column is display:none
-       per the .open-feed.single-cuisine .open-row:not([data-multi]) .oc
-       rule above, but the grid still reserves its 130px column, leaving
-       a blank gutter on the right. Drop the pill column entirely in this
-       case so the body column eats the leftover and the address stops
-       wrapping into 5 lines. */
-    .open-feed.single-cuisine .open-row.has-pic:not([data-multi]) { grid-template-columns: 56px 1fr; }
-    .open-feed.single-cuisine .open-row.has-pic:not([data-multi]) .od { grid-column: 1 / 3; }
-    .open-feed.single-cuisine .open-row:not([data-multi]):not(.has-pic) { grid-template-columns: 1fr; }
-    .open-feed.single-cuisine .open-row:not([data-multi]):not(.has-pic) .od { grid-column: 1 / 2; }
-    .open-row .od .ago { display: inline; margin-top: 0; }
-    .open-row .on { grid-column: 1; }
-    .open-row .oc { grid-column: 2; }
+    .wrap { padding: 0 12px; }
+    /* Row layout: compact, no shadows, tighter padding. */
+    .open-row { gap: 8px; padding: 11px 12px; column-gap: 10px; grid-template-columns: 76px 1fr auto; }
+    /* Hide the heart + share buttons on mobile — they're nice-to-have
+       but eat right-side space that the cuisine pill needs. The /r/<slug>
+       page has its own share/save flow. */
+    .open-row .oc .row-fav,
+    .open-row .oc .row-share { display: none; }
+    /* Hide rating count "· 154" on mobile — the star + score is enough.
+       Frees vertical real-estate in the name cell. */
+    .open-row .on .rating .rc { display: none; }
+    .open-row .on .rating { font-size: 11px; margin-left: 6px; }
+    /* Hide the "Toronto, ON M5G 1H1" postal/city tail of the address.
+       Street name + district pill is enough orientation on a phone. */
+    .open-row .on .oad .oad-rest { display: none; }
+    /* Tighter freshness date — was matching desktop's 16px name size;
+       on mobile shave to 13px so it doesn't dominate the row. */
+    .open-row .od { font-size: 13px; }
+    /* Smaller restaurant name + tighter address line on phone. */
+    .open-row .on { font-size: 14.5px; line-height: 1.25; }
+    .open-row .on .oad { font-size: 12px; margin-left: 6px; }
+    .open-row .on .oad::before { margin-right: 0; }
+    /* Pill: tiny chip — info color is the signal, not the text size. */
+    .open-row .oc .pill { font-size: 8.5px; padding: 4px 7px; letter-spacing: 0.04em; }
+    /* Blurb: smaller, tighter line-height, top margin trimmed. */
+    .open-row > .row-blurb { font-size: 12.5px !important; line-height: 1.45 !important; margin: 4px 0 0; }
   }
 </style>
 </head>
@@ -1138,13 +1512,16 @@
 
 <header class="mast">
   <div class="wrap">
-    <a href="/" class="brand" id="brand-link">NowServingTO</a>
-    <h1 class="sub">TONTON ON BLOOR</h1><div class="listing-lede">First seen 23 days ago</div>
-    <p class="home-methodology">New permits sourced from City of Toronto open datasets, cross-referenced with DineSafe and social media signals to bring you the freshest, newest kitchens in the city.</p>
-    <button type="button" id="fresh-badge" class="fresh-badge" aria-label="Jump to restaurants new since your last visit">
-      <span class="fb-spark" aria-hidden="true">✨</span>
-      <span id="fb-text">new since you last looked</span>
-    </button>
+    <div class="mast-lockup">
+      <a href="/" class="brand" id="brand-link">NowServingTO</a>
+      <div class="mast-meta" aria-hidden="true">
+        <span class="mast-issue">DAILY EDITION</span>
+        <span class="mast-date" id="mast-date">2026.06.05</span>
+      </div>
+      <a class="mast-dispatch" id="mast-dispatch" href="/dispatch/latest" aria-label="Read the latest monthly dispatch">May Dispatch &rsaquo;</a>
+    </div>
+    <h1 class="sub">TONTON ON BLOOR<span class="listing-lede">25 days</span></h1>
+    <p class="home-methodology"><a href="https://open.toronto.ca/dataset/municipal-licensing-and-standards-business-licences-and-permits/" target="_blank" rel="noopener"><b>Permits</b></a> sourced from the <a href="https://open.toronto.ca/" target="_blank" rel="noopener"><b>City of Toronto Open Data Portal</b></a>, cross-referenced with <a href="https://open.toronto.ca/dataset/dinesafe/" target="_blank" rel="noopener"><b>DineSafe</b></a> and social media to bring you the freshest, newest kitchens in the city.</p>
   </div>
 </header>
 
@@ -1154,11 +1531,15 @@
   <div class="filters">
     <div class="cuisine-picker">
       <button id="cp-trigger" class="cp-trigger" aria-haspopup="listbox" aria-expanded="false" aria-label="Filter by cuisine">All cuisines</button>
-      <div id="cp-panel" class="cp-panel" role="listbox" aria-labelledby="cp-trigger" hidden></div>
+      <div id="cp-panel" class="cp-panel" role="listbox" aria-labelledby="cp-trigger" hidden>
+        <!-- CUISINE-DROPDOWN-START --><a class="cp-opt cp-all" role="option" data-key="__all" href="/"><span class="lbl">All cuisines</span><span class="ct">281</span></a><a class="cp-opt" role="option" data-key="afghan" href="/cuisine/afghan"><span class="lbl">Afghan</span><span class="ct">3</span></a><a class="cp-opt" role="option" data-key="argentinian" href="/cuisine/argentinian"><span class="lbl">Argentinian</span><span class="ct">3</span></a><a class="cp-opt" role="option" data-key="armenian" href="/cuisine/armenian"><span class="lbl">Armenian</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="bangladeshi" href="/cuisine/bangladeshi"><span class="lbl">Bangladeshi</span><span class="ct">3</span></a><a class="cp-opt" role="option" data-key="belgian" href="/cuisine/belgian"><span class="lbl">Belgian</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="caribbean" href="/cuisine/caribbean"><span class="lbl">Caribbean</span><span class="ct">2</span></a><a class="cp-opt" role="option" data-key="chinese" href="/cuisine/chinese"><span class="lbl">Chinese</span><span class="ct">34</span></a><a class="cp-opt" role="option" data-key="colombian" href="/cuisine/colombian"><span class="lbl">Colombian</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="costa_rican" href="/cuisine/costa_rican"><span class="lbl">Costa Rican</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="eritrean" href="/cuisine/eritrean"><span class="lbl">Eritrean</span><span class="ct">2</span></a><a class="cp-opt" role="option" data-key="ethiopian" href="/cuisine/ethiopian"><span class="lbl">Ethiopian</span><span class="ct">2</span></a><a class="cp-opt" role="option" data-key="filipino" href="/cuisine/filipino"><span class="lbl">Filipino</span><span class="ct">4</span></a><a class="cp-opt" role="option" data-key="french" href="/cuisine/french"><span class="lbl">French</span><span class="ct">4</span></a><a class="cp-opt" role="option" data-key="ghanaian" href="/cuisine/ghanaian"><span class="lbl">Ghanaian</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="greek" href="/cuisine/greek"><span class="lbl">Greek</span><span class="ct">3</span></a><a class="cp-opt" role="option" data-key="guatemalan" href="/cuisine/guatemalan"><span class="lbl">Guatemalan</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="indian" href="/cuisine/indian"><span class="lbl">Indian</span><span class="ct">48</span></a><a class="cp-opt" role="option" data-key="indonesian" href="/cuisine/indonesian"><span class="lbl">Indonesian</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="italian" href="/cuisine/italian"><span class="lbl">Italian</span><span class="ct">21</span></a><a class="cp-opt" role="option" data-key="jamaican" href="/cuisine/jamaican"><span class="lbl">Jamaican</span><span class="ct">3</span></a><a class="cp-opt" role="option" data-key="japanese" href="/cuisine/japanese"><span class="lbl">Japanese</span><span class="ct">17</span></a><a class="cp-opt" role="option" data-key="korean" href="/cuisine/korean"><span class="lbl">Korean</span><span class="ct">12</span></a><a class="cp-opt" role="option" data-key="kurdish" href="/cuisine/kurdish"><span class="lbl">Kurdish</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="latin" href="/cuisine/latin"><span class="lbl">Latin American</span><span class="ct">2</span></a><a class="cp-opt" role="option" data-key="lebanese" href="/cuisine/lebanese"><span class="lbl">Lebanese</span><span class="ct">6</span></a><a class="cp-opt" role="option" data-key="mexican" href="/cuisine/mexican"><span class="lbl">Mexican</span><span class="ct">19</span></a><a class="cp-opt" role="option" data-key="middle_east" href="/cuisine/middle_east"><span class="lbl">Middle Eastern</span><span class="ct">5</span></a><a class="cp-opt" role="option" data-key="nigerian" href="/cuisine/nigerian"><span class="lbl">Nigerian</span><span class="ct">2</span></a><a class="cp-opt" role="option" data-key="pakistani" href="/cuisine/pakistani"><span class="lbl">Pakistani</span><span class="ct">8</span></a><a class="cp-opt" role="option" data-key="palestinian" href="/cuisine/palestinian"><span class="lbl">Palestinian</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="persian" href="/cuisine/persian"><span class="lbl">Persian</span><span class="ct">6</span></a><a class="cp-opt" role="option" data-key="peruvian" href="/cuisine/peruvian"><span class="lbl">Peruvian</span><span class="ct">2</span></a><a class="cp-opt" role="option" data-key="portuguese" href="/cuisine/portuguese"><span class="lbl">Portuguese</span><span class="ct">2</span></a><a class="cp-opt" role="option" data-key="senegalese" href="/cuisine/senegalese"><span class="lbl">Senegalese</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="singaporean" href="/cuisine/singaporean"><span class="lbl">Singaporean</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="south_asian" href="/cuisine/south_asian"><span class="lbl">South Asian</span><span class="ct">2</span></a><a class="cp-opt" role="option" data-key="spanish" href="/cuisine/spanish"><span class="lbl">Spanish</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="sri_lankan" href="/cuisine/sri_lankan"><span class="lbl">Sri Lankan</span><span class="ct">6</span></a><a class="cp-opt" role="option" data-key="taiwanese" href="/cuisine/taiwanese"><span class="lbl">Taiwanese</span><span class="ct">2</span></a><a class="cp-opt" role="option" data-key="tamil" href="/cuisine/tamil"><span class="lbl">Tamil</span><span class="ct">4</span></a><a class="cp-opt" role="option" data-key="thai" href="/cuisine/thai"><span class="lbl">Thai</span><span class="ct">7</span></a><a class="cp-opt" role="option" data-key="tibetan" href="/cuisine/tibetan"><span class="lbl">Tibetan</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="turkish" href="/cuisine/turkish"><span class="lbl">Turkish</span><span class="ct">11</span></a><a class="cp-opt" role="option" data-key="venezuelan" href="/cuisine/venezuelan"><span class="lbl">Venezuelan</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="vietnamese" href="/cuisine/vietnamese"><span class="lbl">Vietnamese</span><span class="ct">22</span></a><!-- CUISINE-DROPDOWN-END -->
+      </div>
     </div>
     <div class="cuisine-picker region">
       <button id="rp-trigger" class="cp-trigger" aria-haspopup="listbox" aria-expanded="false" aria-label="Filter by district">All Toronto</button>
-      <div id="rp-panel" class="cp-panel" role="listbox" aria-labelledby="rp-trigger" hidden></div>
+      <div id="rp-panel" class="cp-panel" role="listbox" aria-labelledby="rp-trigger" hidden>
+        <!-- DISTRICT-DROPDOWN-START --><a class="cp-opt cp-all" role="option" data-key="__all" href="/"><span class="lbl">All Toronto</span><span class="ct">258</span></a><a class="cp-opt" role="option" data-key="Downtown" href="/district/downtown"><span class="lbl">Downtown</span><span class="ct">53</span></a><a class="cp-opt" role="option" data-key="East Toronto" href="/district/east-toronto"><span class="lbl">East Toronto</span><span class="ct">36</span></a><a class="cp-opt" role="option" data-key="Etobicoke" href="/district/etobicoke"><span class="lbl">Etobicoke</span><span class="ct">24</span></a><a class="cp-opt" role="option" data-key="North York" href="/district/north-york"><span class="lbl">North York</span><span class="ct">30</span></a><a class="cp-opt" role="option" data-key="Scarborough" href="/district/scarborough"><span class="lbl">Scarborough</span><span class="ct">57</span></a><a class="cp-opt" role="option" data-key="West Toronto" href="/district/west-toronto"><span class="lbl">West Toronto</span><span class="ct">58</span></a><!-- DISTRICT-DROPDOWN-END -->
+      </div>
     </div>
     <button id="locate-btn" class="map-btn" type="button" aria-label="Find restaurants near me">📍 Near me</button>
     <button id="saved-toggle" class="map-btn" type="button" aria-label="Show saved restaurants only">♡ Saved</button>
@@ -1168,16 +1549,16 @@
     </div>
     <details class="data-note-tip">
       <summary aria-label="About &quot;First seen&quot; dates"><span class="dnt-icon" aria-hidden="true">ⓘ</span><span class="dnt-label">About "First seen" dates</span></summary>
-      <p>&quot;First seen&quot; reflects when each restaurant first surfaced in our City permit, public-health inspection, and Google Places evidence — usually within a few weeks of opening, but a permit can lead actual opening by months. <a href="/press">How we verify &rsaquo;</a></p>
+      <p>&quot;First seen&quot; reflects when each restaurant first surfaced in our combined evidence — City permit, public-health inspection, social media — usually within a few weeks of opening, but a permit can lead actual opening by months. <a href="/press">How we verify &rsaquo;</a></p>
     </details>
   </div>
   <div class="open-feed" id="open-feed">
     <!-- STATIC-FEED-START - pre-rendered daily by tools/inject_openings.py for crawlers + no-JS visitors. Replaced by interactive JS render on page load. -->
-    <div class="open-row" data-slug="tonton-on-bloor-1005" data-fresh="hot" style="--row-accent: #2f3aa3"><div class="od"><span class="ago">First seen 23d ago</span></div><div class="on"><a href="http://tontonmatcha.com/" target="_blank" rel="noopener">TONTON ON BLOOR<span class="ext-arrow" aria-hidden="true">↗</span></a><span class="oad"><a href="https://maps.google.com/?cid=16456773959645853909" target="_blank" rel="noopener">1005 Bloor St W, Toronto, ON M6H 1M1</a><span class="oad-d"> · West Toronto</span></span></div><div class="oc"><a class="pill" href="/cuisine/japanese" style="background:#2f3aa3" aria-label="See newest Japanese restaurants">Japanese</a></div></div>
+    <div class="open-row" data-slug="tonton-on-bloor-1005" data-fresh="hot" style="--row-accent: #2f3aa3"><div class="od"><span class="ago">25 days</span></div><div class="on"><a href="http://tontonmatcha.com/" target="_blank" rel="noopener">TONTON ON BLOOR<span class="ext-arrow" aria-hidden="true">↗</span></a><span class="oad"><a href="https://maps.google.com/?cid=16456773959645853909" target="_blank" rel="noopener">1005 Bloor St W<span class="oad-rest">, Toronto, ON M6H 1M1</span></a><span class="oad-d"> · West Toronto</span></span></div><div class="oc"><a class="pill" href="/cuisine/japanese" style="background:#2f3aa3" aria-label="See newest Japanese restaurants">Japanese</a></div><p class="row-blurb">A matcha and coffee café that takes its tea seriously, drawing praise for the quality of the matcha itself.</p></div>
     <!-- STATIC-FEED-END -->
   </div>
 
-  <!-- LISTING-EXTRA-START --><section class="listing-extra" aria-label="Listing detail"><div class="lx-card"><p class="lx-evidence">A matcha and coffee café that takes its tea seriously, drawing praise for the quality of the matcha itself. The Japanese seating area creates an intimate setting for sipping the space balances traditional aesthetics with a modern café vibe.</p></div><div class="lx-card lx-owner-cta"><p class="lx-owner-cta-line">Is this your restaurant? <a class="lx-owner-cta-btn" href="mailto:hello@nowservingto.com?subject=Enhance+my+listing%3A+TONTON+ON+BLOOR&amp;body=Hi+Josh%2C%0A%0ARe%3A+TONTON+ON+BLOOR%0AListing%3A+https%3A%2F%2Fnowservingto.com%2Fr%2Ftonton-on-bloor-1005%0A%0AI%27d+like+to+enhance+my+listing+with%3A%0A%0A%E2%80%A2+Photo+%28attach+to+this+email%29%3A%0A%E2%80%A2+What+makes+us+special+%28one+sentence%29%3A%0A%E2%80%A2+Owner%2Fchef+story+%281-2+sentences%29%3A%0A%E2%80%A2+When+we+actually+opened+%28date%29%3A%0A%E2%80%A2+Signature+dishes%3A%0A%E2%80%A2+Anything+incorrect+that+needs+fixing%3A%0A%0AThanks%21%0A">Send a photo, story, or correction <span aria-hidden="true">→</span></a></p></div><div class="lx-card"><h2 class="lx-near-h">Other newly registered Japanese kitchens nearby</h2><div class="lx-near-grid"><div class="lx-near-card"><a class="lx-near-cardlink" href="/r/mottomotto-cafe-300" aria-label="View profile for MOTTOMOTTO CAFE"></a><div class="lx-near-body"><span class="lx-near-when">First seen 6mo ago</span><a class="lx-near-name" href="/r/mottomotto-cafe-300">MOTTOMOTTO CAFE</a><span class="lx-near-where">West Toronto</span></div></div><div class="lx-near-card"><a class="lx-near-cardlink" href="/r/haku-izakaya-168" aria-label="View profile for HAKU IZAKAYA"></a><div class="lx-near-body"><span class="lx-near-when">First seen 7mo ago</span><a class="lx-near-name" href="/r/haku-izakaya-168">HAKU IZAKAYA</a><span class="lx-near-where">Downtown</span></div></div><div class="lx-near-card"><a class="lx-near-cardlink" href="/r/moko-sushi-755" aria-label="View profile for MOKO SUSHI"></a><div class="lx-near-body"><span class="lx-near-when">First seen 9w ago</span><a class="lx-near-name" href="/r/moko-sushi-755">MOKO SUSHI</a><span class="lx-near-where">West Toronto</span></div></div><div class="lx-near-card"><a class="lx-near-cardlink" href="/r/the-onda-750" aria-label="View profile for THE ONDA"></a><div class="lx-near-body"><span class="lx-near-when">First seen 7mo ago</span><a class="lx-near-name" href="/r/the-onda-750">THE ONDA</a><span class="lx-near-where">West Toronto</span></div></div></div></div><p class="lx-report-error">Spot something wrong? <a href="mailto:hello@nowservingto.com?subject=Listing+correction%3A+TONTON+ON+BLOOR&amp;body=Re%3A+TONTON+ON+BLOOR%0AListing%3A+https%3A%2F%2Fnowservingto.com%2Fr%2Ftonton-on-bloor-1005%0A%0AWhat+needs+fixing%3F+%28one+or+more%29%0A%0A%5B+%5D+Wrong+cuisine+%E2%80%94+should+be%3A+%0A%5B+%5D+Wrong+address%0A%5B+%5D+Wrong+photo%0A%5B+%5D+Restaurant+closed%0A%5B+%5D+Other%3A%0A%0ANotes+%28optional%29%3A%0A%0AThanks%21%0A">Report an error &rsaquo;</a></p></section><!-- LISTING-EXTRA-END -->
+  <!-- LISTING-EXTRA-START --><section class="listing-extra" aria-label="Listing detail"><div class="lx-card"><p class="lx-evidence">A matcha and coffee café that takes its tea seriously, drawing praise for the quality of the matcha itself. The Japanese seating area creates an intimate setting for sipping the space balances traditional aesthetics with a modern café vibe.</p></div><div class="lx-card lx-owner-cta"><p class="lx-owner-cta-line">Is this your restaurant? <a class="lx-owner-cta-btn" href="mailto:hello@nowservingto.com?subject=Enhance+my+listing%3A+TONTON+ON+BLOOR&amp;body=Hi+Josh%2C%0A%0ARe%3A+TONTON+ON+BLOOR%0AListing%3A+https%3A%2F%2Fnowservingto.com%2Fr%2Ftonton-on-bloor-1005%0A%0AI%27d+like+to+enhance+my+listing+with%3A%0A%0A%E2%80%A2+Photo+%28attach+to+this+email%29%3A%0A%E2%80%A2+What+makes+us+special+%28one+sentence%29%3A%0A%E2%80%A2+Owner%2Fchef+story+%281-2+sentences%29%3A%0A%E2%80%A2+When+we+actually+opened+%28date%29%3A%0A%E2%80%A2+Signature+dishes%3A%0A%E2%80%A2+Anything+incorrect+that+needs+fixing%3A%0A%0AThanks%21%0A">Send a photo, story, or correction <span aria-hidden="true">→</span></a></p></div><div class="lx-card lx-near-wrap"><h2 class="lx-near-h">Other newly registered Japanese kitchens nearby</h2><div class="lx-near-grid"><div class="lx-near-card"><a class="lx-near-cardlink" href="/r/boru-495" aria-label="View profile for BORU"></a><div class="lx-near-body"><span class="lx-near-when">2 months</span><a class="lx-near-name" href="/r/boru-495">BORU</a><span class="lx-near-where">Downtown</span></div></div><div class="lx-near-card"><a class="lx-near-cardlink" href="/r/koi-jp-sushi-281" aria-label="View profile for KOI JP SUSHI"></a><div class="lx-near-body"><span class="lx-near-when">4 months</span><a class="lx-near-name" href="/r/koi-jp-sushi-281">KOI JP SUSHI</a><span class="lx-near-where">Downtown</span></div></div><div class="lx-near-card"><a class="lx-near-cardlink" href="/r/mottomotto-cafe-300" aria-label="View profile for MOTTOMOTTO CAFE"></a><div class="lx-near-body"><span class="lx-near-when">6 months</span><a class="lx-near-name" href="/r/mottomotto-cafe-300">MOTTOMOTTO CAFE</a><span class="lx-near-where">West Toronto</span></div></div><div class="lx-near-card"><a class="lx-near-cardlink" href="/r/yukimi-donburi-412" aria-label="View profile for YUKIMI DONBURI"></a><div class="lx-near-body"><span class="lx-near-when">7 months</span><a class="lx-near-name" href="/r/yukimi-donburi-412">YUKIMI DONBURI</a><span class="lx-near-where">Downtown</span><span class="lx-near-bare">No website — visit early</span></div></div></div></div><p class="lx-report-error">Spot something wrong? <a href="mailto:hello@nowservingto.com?subject=Listing+correction%3A+TONTON+ON+BLOOR&amp;body=Re%3A+TONTON+ON+BLOOR%0AListing%3A+https%3A%2F%2Fnowservingto.com%2Fr%2Ftonton-on-bloor-1005%0A%0AWhat+needs+fixing%3F+%28one+or+more%29%0A%0A%5B+%5D+Wrong+cuisine+%E2%80%94+should+be%3A+%0A%5B+%5D+Wrong+address%0A%5B+%5D+Wrong+photo%0A%5B+%5D+Restaurant+closed%0A%5B+%5D+Other%3A%0A%0ANotes+%28optional%29%3A%0A%0AThanks%21%0A">Report an error &rsaquo;</a></p></section><!-- LISTING-EXTRA-END -->
 
   <div class="map-view" id="map-view" hidden>
     <div class="map-toolbar">
@@ -1189,1300 +1570,22 @@
   <!-- RELATED-CUISINES-START --><!-- RELATED-CUISINES-END -->
   <section class="newsletter-cta" aria-label="Email alert signup"><div class="nl-pitch"><h2 id="alert-title">Get an email when a new Japanese restaurant opens</h2><p id="alert-blurb">You&#39;ll get one email the moment a new Japanese restaurant is registered with the City of Toronto - typically a handful of times per year. No weekly digest, no spam, one-click unsub.</p></div><form class="alert-form" data-kind="cuisine" data-value="japanese" data-label="Japanese" data-base-kind="cuisine" data-base-value="japanese" data-base-label="Japanese" novalidate><input type="email" required autocomplete="email" placeholder="you@example.com" aria-label="Email address"><button type="submit">Subscribe</button><div class="alert-status" role="status" aria-live="polite"></div><div class="alert-hp" aria-hidden="true"><label>Website (leave blank): <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div></form></section>
 
-  <footer class="site-foot">
-    <a href="/trends">Trends</a>
-    <span class="dot">·</span>
-    <a href="/contribute">Got a tip?</a>
-    <span class="dot">·</span>
-    <a href="/press">Press kit</a>
-    <span class="dot">·</span>
-    <a href="/usage">Sources</a>
-    <span class="dot">·</span>
-    <a href="https://open.toronto.ca/dataset/municipal-licensing-and-standards-business-licences-and-permits/" target="_blank" rel="noopener">City of Toronto Open Data</a> <span class="dot">·</span>
-    Google Places <span class="dot">·</span>
-    Anthropic Claude <span class="dot">·</span>
-    <a href="https://github.com/jopolko/nowservingto" target="_blank" rel="noopener">GitHub</a>
-  </footer>
+  <nav class="all-cuisines" aria-label="Browse all cuisines">
+    <span class="all-cuisines-label">All cuisines:</span>
+    <!-- ALL-CUISINES-START --><a href="/cuisine/afghan">Afghan</a><a href="/cuisine/argentinian">Argentinian</a><a href="/cuisine/armenian">Armenian</a><a href="/cuisine/bangladeshi">Bangladeshi</a><a href="/cuisine/belgian">Belgian</a><a href="/cuisine/caribbean">Caribbean</a><a href="/cuisine/chinese">Chinese</a><a href="/cuisine/colombian">Colombian</a><a href="/cuisine/costa_rican">Costa Rican</a><a href="/cuisine/eritrean">Eritrean</a><a href="/cuisine/ethiopian">Ethiopian</a><a href="/cuisine/filipino">Filipino</a><a href="/cuisine/french">French</a><a href="/cuisine/ghanaian">Ghanaian</a><a href="/cuisine/greek">Greek</a><a href="/cuisine/guatemalan">Guatemalan</a><a href="/cuisine/indian">Indian</a><a href="/cuisine/indonesian">Indonesian</a><a href="/cuisine/italian">Italian</a><a href="/cuisine/jamaican">Jamaican</a><a href="/cuisine/japanese">Japanese</a><a href="/cuisine/korean">Korean</a><a href="/cuisine/kurdish">Kurdish</a><a href="/cuisine/latin">Latin American</a><a href="/cuisine/lebanese">Lebanese</a><a href="/cuisine/mexican">Mexican</a><a href="/cuisine/middle_east">Middle Eastern</a><a href="/cuisine/nigerian">Nigerian</a><a href="/cuisine/pakistani">Pakistani</a><a href="/cuisine/palestinian">Palestinian</a><a href="/cuisine/persian">Persian</a><a href="/cuisine/peruvian">Peruvian</a><a href="/cuisine/portuguese">Portuguese</a><a href="/cuisine/senegalese">Senegalese</a><a href="/cuisine/singaporean">Singaporean</a><a href="/cuisine/south_asian">South Asian</a><a href="/cuisine/spanish">Spanish</a><a href="/cuisine/sri_lankan">Sri Lankan</a><a href="/cuisine/taiwanese">Taiwanese</a><a href="/cuisine/tamil">Tamil</a><a href="/cuisine/thai">Thai</a><a href="/cuisine/tibetan">Tibetan</a><a href="/cuisine/turkish">Turkish</a><a href="/cuisine/venezuelan">Venezuelan</a><a href="/cuisine/vietnamese">Vietnamese</a><!-- ALL-CUISINES-END -->
+  </nav>
+  <nav class="all-districts" aria-label="Browse all districts">
+    <span class="all-cuisines-label">Districts:</span>
+    <!-- ALL-DISTRICTS-START --><a href="/district/downtown">Downtown</a><a href="/district/east-toronto">East Toronto</a><a href="/district/etobicoke">Etobicoke</a><a href="/district/north-york">North York</a><a href="/district/scarborough">Scarborough</a><a href="/district/west-toronto">West Toronto</a><!-- ALL-DISTRICTS-END -->
+  </nav>
+  <nav class="all-neighborhoods" aria-label="Browse all neighbourhoods">
+    <span class="all-cuisines-label">Neighbourhoods:</span>
+    <!-- ALL-NEIGHBORHOODS-START --><a href="/neighborhood/agincourt">Agincourt</a><a href="/neighborhood/bloor-west-village">Bloor West Village</a><a href="/neighborhood/chinatown">Chinatown</a><a href="/neighborhood/corso-italia">Corso Italia</a><a href="/neighborhood/greektown">Greektown</a><a href="/neighborhood/kensington-market">Kensington Market</a><a href="/neighborhood/king-west">King West</a><a href="/neighborhood/koreatown">Koreatown</a><a href="/neighborhood/leslieville">Leslieville</a><a href="/neighborhood/little-italy">Little Italy</a><a href="/neighborhood/little-jamaica">Little Jamaica</a><a href="/neighborhood/little-portugal">Little Portugal</a><a href="/neighborhood/malvern">Malvern</a><a href="/neighborhood/roncesvalles">Roncesvalles</a><a href="/neighborhood/the-beaches">The Beaches</a><a href="/neighborhood/the-junction">The Junction</a><a href="/neighborhood/thorncliffe-park">Thorncliffe Park</a><a href="/neighborhood/west-queen-west">West Queen West</a><a href="/neighborhood/wexford">Wexford</a><a href="/neighborhood/willowdale">Willowdale</a><a href="/neighborhood/yorkville">Yorkville</a><!-- ALL-NEIGHBORHOODS-END -->
+  </nav>
+
 </main>
 
 
-<script>
-const CUISINE_PALETTE = {
-  italian:'var(--c-italian)', caribbean:'var(--c-caribbean)', south_asian:'var(--c-sasian)',
-  chinese:'var(--c-chinese)', vietnamese:'var(--c-vietnam)', japanese:'var(--c-japan)',
-  korean:'var(--c-korean)', filipino:'var(--c-filipino)', tamil:'var(--c-tamil)',
-  tibetan:'var(--c-tibet)', greek:'var(--c-greek)', portuguese:'var(--c-portuguese)',
-  polish:'var(--c-polish)', french:'var(--c-french)', irish_uk:'var(--c-irish_uk)',
-  german:'var(--c-german)', jewish_deli:'var(--c-jewish_deli)', eastern_eu:'var(--c-eastern_eu)',
-  middle_east:'var(--c-mideast)', latin:'var(--c-latin)',
-  african_horn:'var(--c-african_horn)', african_west:'var(--c-african_west)',
-  thai:'#7a8a3a',
-  indian:'#e88e2c', pakistani:'#a06030', afghan:'#7a5d3a', bangladeshi:'#b88820', persian:'#8a4a25',
-  mexican:'#d63d2a', salvadoran:'#c8553a', peruvian:'#b35b50', colombian:'#cc6248', brazilian:'#3d8a47',
-  jamaican:'#1f7a4a', trinidadian:'#2a9560', guyanese:'#3a8060', haitian:'#1a6855',
-  lebanese:'#c89538', turkish:'#a8662a', syrian:'#9b5520',
-  ukrainian:'#6a5a8a', russian:'#7a4a4a', hungarian:'#8a5050',
-  ethiopian:'#a0522d', eritrean:'#8a4528', somali:'#b06530',
-  nigerian:'#4a7a30', ghanaian:'#6a8a40', moroccan:'#b87a2a',
-  indonesian:'#7a6a40', malaysian:'#5a7a55', burmese:'#8a7050',
-  cambodian:'#7a5a3a', laotian:'#8a6a4a',
-  sri_lankan:'#b8702a', nepalese:'#a05a25',
-  cuban:'#2a8a6a', dominican:'#256a8a',
-  spanish:'#c8553a',
-  israeli:'#3a6a8a', egyptian:'#b88a4a', yemeni:'#a05a30', armenian:'#9b3a3a', georgian:'#7a4a8a',
-  argentinian:'#5a8aa0', venezuelan:'#c8a838',
-  senegalese:'#7a8a30',
-};
-const CUISINE_LABEL = {
-  italian:'Italian', chinese:'Chinese', japanese:'Japanese', korean:'Korean',
-  vietnamese:'Vietnamese', filipino:'Filipino', thai:'Thai',
-  indonesian:'Indonesian', malaysian:'Malaysian', burmese:'Burmese',
-  cambodian:'Cambodian', laotian:'Laotian',
-  south_asian:'South Asian', indian:'Indian', pakistani:'Pakistani', afghan:'Afghan',
-  bangladeshi:'Bangladeshi', tamil:'Tamil', tibetan:'Tibetan',
-  sri_lankan:'Sri Lankan', nepalese:'Nepalese',
-  caribbean:'Caribbean', jamaican:'Jamaican', trinidadian:'Trinidadian', guyanese:'Guyanese', haitian:'Haitian',
-  cuban:'Cuban', dominican:'Dominican',
-  greek:'Greek', portuguese:'Portuguese', polish:'Polish', french:'French',
-  irish_uk:'Irish/UK', german:'German', jewish_deli:'Jewish deli', spanish:'Spanish',
-  eastern_eu:'Eastern European', ukrainian:'Ukrainian', russian:'Russian', hungarian:'Hungarian',
-  middle_east:'Middle Eastern', lebanese:'Lebanese', turkish:'Turkish', syrian:'Syrian', persian:'Persian',
-  israeli:'Israeli', egyptian:'Egyptian', yemeni:'Yemeni', armenian:'Armenian', georgian:'Georgian',
-  latin:'Latin American', mexican:'Mexican', salvadoran:'Salvadoran', peruvian:'Peruvian',
-  colombian:'Colombian', brazilian:'Brazilian', argentinian:'Argentinian', venezuelan:'Venezuelan',
-  african_horn:'East African', ethiopian:'Ethiopian', eritrean:'Eritrean', somali:'Somali',
-  african_west:'West African', nigerian:'Nigerian', ghanaian:'Ghanaian', moroccan:'Moroccan', senegalese:'Senegalese',
-};
-
-const NAME_STOP = new Set(['THE','AND','OF','RESTAURANT','CAFE','BAR','GRILL','KITCHEN','TORONTO','INC','LTD','CO','CORP','CUISINE','HOUSE','SHOP','MARKET','STORE','FOOD','FOODS','SUPER','PLACE','SPOT','EATERY','BISTRO','PUB','BAKERY','DELI','DINER','LOUNGE']);
-function nameTokens(s) {
-  if (!s) return new Set();
-  const out = new Set();
-  s.toUpperCase().replace(/[^A-Z0-9 ]/g,' ').split(/\s+/).forEach(w => {
-    if (w.length > 1 && !NAME_STOP.has(w)) out.add(w);
-  });
-  return out;
-}
-function nameJaccard(a, b) {
-  const A = nameTokens(a), B = nameTokens(b);
-  if (!A.size || !B.size) return 0;
-  let inter = 0; A.forEach(x => B.has(x) && inter++);
-  return inter / (A.size + B.size - inter);
-}
-
-function tierLabel(days) {
-  // Single 'First seen' label across all entries — visitor doesn't care
-  // whether the underlying date is licence / DineSafe / review; two
-  // different verbs just confuses ("why does this place have a different
-  // freshness metric?"). Date is still the earliest-evidence swap, label
-  // just stops leaking provenance. Must match Python _tier_label().
-  if (days == null) return '';
-  if (days <= 0)    return 'First seen today';
-  if (days === 1)   return 'First seen yesterday';
-  if (days <= 30)   return 'First seen ' + days + 'd ago';
-  if (days <= 90)   return 'First seen ' + Math.max(5, Math.round(days/7)) + 'w ago';
-  if (days <= 365)  return 'First seen ' + Math.max(3, Math.round(days/30)) + 'mo ago';
-  return '';
-}
-
-// On single-restaurant /r/<slug> pages (.page-listing), monthly
-// dispatch archive pages (.page-dispatch), and trends pages
-// (.page-trends), skip the directory-level fetch entirely. Those
-// pages are pre-rendered with curated/computed static content -
-// hydrating against /data/corridors.json would replace it with the
-// full 280-entry feed and break the editorial scope.
-if (!document.body.classList.contains('page-listing')
-    && !document.body.classList.contains('page-dispatch')
-    && !document.body.classList.contains('page-trends'))
-fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
-  const no = data.newOpenings;
-  // (Subtitle reads "updated daily" - no dynamic date to inject.)
-
-  // Dynamic cuisine taxonomy: corridors.json carries label + color for every
-  // active cuisine (curated palette for seed keys, hash-derived hex for
-  // novel keys auto-registered when Haiku surfaced a new ethnicity). This
-  // map lets the renderer use server-side colors/labels first, falling back
-  // to the legacy JS CUISINE_PALETTE/LABEL only for keys the JSON didn't
-  // ship - typically nothing, since the JSON is the source of truth now.
-  const CUISINE_META = {};
-  (no && no.cuisines || []).forEach(c => {
-    if (c && c.key) CUISINE_META[c.key] = { label: c.label, color: c.color };
-  });
-
-  // Favorites: localStorage-backed set of saved slugs. No accounts, no backend.
-  function getSaved() { try { return new Set(JSON.parse(localStorage.getItem('nsto_saved') || '[]')); } catch { return new Set(); } }
-  function isSaved(slug) { return getSaved().has(slug); }
-  function toggleSaved(slug) {
-    const s = getSaved();
-    if (s.has(slug)) s.delete(slug); else s.add(slug);
-    localStorage.setItem('nsto_saved', JSON.stringify([...s]));
-    return s.has(slug);
-  }
-  let savedOnly = false;
-  function refreshSavedToggle() {
-    const btn = document.getElementById('saved-toggle');
-    if (!btn) return;
-    const n = getSaved().size;
-    btn.textContent = n ? `♥ Saved (${n})` : '♡ Saved';
-    btn.classList.toggle('has-saves', n > 0);
-    btn.classList.toggle('active', savedOnly);
-  }
-
-  if (!no || !no.cuisines || !no.cuisines.length) {
-    document.getElementById('open-feed').innerHTML = '<div class="empty">No new-openings data in feed.</div>';
-    return;
-  }
-
-  const trigger = document.getElementById('cp-trigger');
-  const panel = document.getElementById('cp-panel');
-  const rTrigger = document.getElementById('rp-trigger');
-  const rPanel = document.getElementById('rp-panel');
-  const feed = document.getElementById('open-feed');
-
-  // District list - same 6 derived from FSA mapping in inject_openings.py
-  const DISTRICTS = ['Downtown', 'East Toronto', 'Etobicoke', 'North York', 'Scarborough', 'West Toronto'];
-
-  // Build the custom dropdown options: "All cuisines" pinned top, then alphabetical
-  const totalCount = no.cuisines.reduce((s,c)=>s+c.count365d,0);
-  function makeOpt(key, label, count, allFlag) {
-    const b = document.createElement('button');
-    b.className = 'cp-opt' + (allFlag ? ' cp-all' : '');
-    b.type = 'button';
-    b.role = 'option';
-    b.dataset.key = key;
-    b.innerHTML = `<span class="lbl">${label}</span><span class="ct">${count}</span>`;
-    return b;
-  }
-  panel.appendChild(makeOpt('__all', 'All cuisines', totalCount, true));
-  [...no.cuisines]
-    .sort((a, b) => (a.label || a.key).localeCompare(b.label || b.key))
-    .forEach(c => panel.appendChild(makeOpt(c.key, c.label, c.count365d, false)));
-
-  // Region dropdown - count entries per district from the recent feed
-  const regionCount = {};
-  no.recent.forEach(r => { if (r.district) regionCount[r.district] = (regionCount[r.district]||0)+1; });
-  rPanel.appendChild(makeOpt('__all', 'All Toronto', no.recent.length, true));
-  DISTRICTS.forEach(d => rPanel.appendChild(makeOpt(d, d, regionCount[d] || 0, false)));
-
-  const INITIAL_SHOW = 50, PAGE_SIZE = 50;
-  let currentRows = [], currentShown = INITIAL_SHOW;
-  let currentCuisine = '__all', currentRegion = '__all', singleSlug = null;
-  function buildRowEl(r) {
-    // Multi-cuisine entries render one pill per declared cuisine; legacy single-
-    // cuisine entries fall back to `r.cuisine`.
-    const cuisineKeys = (r.cuisines && r.cuisines.length) ? r.cuisines : [r.cuisine];
-    const pillsHtml = cuisineKeys
-      .map(k => {
-        const meta = CUISINE_META[k];
-        const bg = (meta && meta.color) || CUISINE_PALETTE[k] || '#999';
-        const lab = (meta && meta.label) || CUISINE_LABEL[k] || k;
-        return `<a class="pill" href="/cuisine/${k}" style="background:${bg}" aria-label="See newest ${lab} restaurants">${lab}</a>`;
-      }).join('');
-    const isHot = r.daysOpen <= 30;
-    const isRecent = !isHot && r.daysOpen <= 90;
-    // Primary cuisine colour → left-edge accent strip (mirrors the
-    // server-rendered row builder's --row-accent inline style).
-    const accentKey = cuisineKeys[0];
-    const accentMeta = accentKey ? CUISINE_META[accentKey] : null;
-    const accentBg = (accentMeta && accentMeta.color) || (accentKey && CUISINE_PALETTE[accentKey]) || null;
-    const row = document.createElement('div');
-    if (accentBg) row.style.setProperty('--row-accent', accentBg);
-    row.className = 'open-row';
-    if (r.slug) row.setAttribute('data-slug', r.slug);
-    if (isHot) row.setAttribute('data-fresh', 'hot');
-    else if (isRecent) row.setAttribute('data-fresh', 'recent');
-    else if (r.daysOpen != null && r.daysOpen <= 365) row.setAttribute('data-fresh', 'aged');
-    if (cuisineKeys.length > 1) row.setAttribute('data-multi', '');
-    const trustMatch = !r.matchedName || nameJaccard(r.operatingName, r.matchedName) >= 0.34;
-    // Name link precedence: own website (when trust gate passes) > Places
-    // deep-link > our own /r/<slug> listing page. The listing page is the
-    // always-available fallback - never sends to a wrong business or a
-    // generic-building Maps result, and provides cuisine + address + a
-    // breadcrumb back to the cuisine hub.
-    const internalUrl = r.slug ? `/r/${r.slug}` : null;
-    const link = (trustMatch && r.website) ? r.website : (r.mapsUrl || internalUrl);
-    const linkClass = link ? 'ext' : '';
-    // target=_blank on devices with a mouse / trackpad available (preserve
-    // NowServingTO tab); same-tab on pure-touch so the back button cleanly
-    // returns from Maps. `(any-pointer: fine)` is the correct signal:
-    // it's true on Windows touchscreen laptops where the PRIMARY input is
-    // touch but a mouse is also attached - `(pointer: fine)` returns
-    // false there because it only checks the primary. Phones/tablets
-    // with no mouse return false on both.
-    const desktopUA = window.matchMedia('(any-pointer: fine)').matches;
-    const tgt = desktopUA ? ' target="_blank"' : '';
-    // ↗ arrow only when the name link is the restaurant's OWN website
-    // (not Maps fallback, not our internal /r/ page). Signals to the
-    // visitor that the click leaves NowServingTO for the restaurant's
-    // actual site.
-    const isOwnerSite = trustMatch && r.website && link === r.website;
-    const extArrow = isOwnerSite ? '<span class="ext-arrow" aria-hidden="true">↗</span>' : '';
-    const nameHtml = link
-      ? `<a class="${linkClass}" href="${link}"${tgt} rel="noopener">${r.operatingName}${extArrow}</a>`
-      : r.operatingName;
-    const ratingHtml = (trustMatch && r.rating)
-      ? `<span class="rating">${r.rating.toFixed(1)}<span class="rc">· ${r.reviewCount ? r.reviewCount.toLocaleString() : '?'}</span></span>`
-      : '';
-    // (Was: "unverified" pill rendered when Places' matched name diverges
-    // too far from the licence name. The user-protective behavior - link
-    // suppression - still happens silently via trustMatch. Pill removed
-    // 2026-05-19 because Google's JS-rendering crawl was picking it up
-    // and concatenating it next to the restaurant name in SERP snippets
-    // ("CAFEMIA ITALIAN BAKERYunverified 84 OAKDALE RD"), which read
-    // worse to searchers than the protective behavior was worth.)
-// Address link ladder:
-    //   1) Places CID (mapsUrl) - exact business profile match
-    //   2) coord-pin (?q=lat,lng) - geocoded address, gives map + Street View
-    //      pegman without falsely claiming "this IS the restaurant" the way
-    //      a name+address search would (CAFEMIA-style false positives).
-    //   3) plain text - no Places, no lat/lng (rare; <5% of no-Places).
-    const coordPin = (r.lat != null && r.lng != null)
-      ? `https://www.google.com/maps?q=${r.lat},${r.lng}`
-      : '';
-    const addrUrl = r.mapsUrl || coordPin;
-    const addrText = r.address || '-';
-    const addrLink = addrUrl ? `<a href="${addrUrl}"${tgt} rel="noopener">${addrText}</a>` : addrText;
-    // Suffix the address with either distance (when Near me is active and we
-    // have coords) or the district (when not, and we're showing all-Toronto).
-    // Distance replaces district under near-me - the district is less useful
-    // once the user's already filtered to their own neighbourhood radius.
-    let addrSuffix = '';
-    if (nearMeActive && userLatLng && r.lat && r.lng) {
-      const km = haversineKm(userLatLng, [r.lat, r.lng]);
-      const kmText = km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
-      addrSuffix = `<span class="oad-d oad-dist"> · ${kmText}</span>`;
-    } else if (r.district && currentRegion === '__all') {
-      addrSuffix = `<span class="oad-d"> · ${r.district}</span>`;
-    }
-    const addrLine = `${addrLink}${addrSuffix}`;
-    const saved = r.slug && isSaved(r.slug);
-    const favHtml = r.slug
-      ? `<button class="row-fav ${saved ? 'fav-on' : ''}" type="button" aria-label="${saved ? 'Remove from saved' : 'Save for later'}">${saved ? '♥' : '♡'}</button>`
-      : '';
-    // Material/Android share glyph - 3 dots connected by lines. More universally
-    // recognized as "share" than ↗ (which we already use for external links on
-    // business names).
-    const shareHtml = r.slug
-      ? `<button class="row-share" type="button" aria-label="Share this listing"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg></button>`
-      : '';
-    const thumb = r.thumb || '';
-    // Thumbnail click → Google Places card preferred (Maps has more photos
-    // + reviews + hours than a typical one-page restaurant website). Falls
-    // back to coord-pin, then website, then the internal listing page.
-    // Same ladder as addrUrl above; coordPin slots between Places and the
-    // website because for entries whose thumb is a Street View image (the
-    // photogenic fallback for no-Places entries), tapping the pic should
-    // land the user at the exact same view.
-    // No image slot — photos retired site-wide 2026-06-03. Row carries
-    // cuisine identity via the cuisine-color pill on the right side.
-    const thumbHtml = '';
-    const agoText = tierLabel(r.daysOpen);
-    const agoHtml = agoText
-      ? (r.slug
-        ? `<a class="ago" href="/r/${r.slug}">${agoText}</a>`
-        : `<span class="ago">${agoText}</span>`)
-      : '';
-    row.innerHTML = `${thumbHtml}
-      <div class="od">${agoHtml}</div>
-      <div class="on">${nameHtml}${ratingHtml}<span class="oad">${addrLine}</span></div>
-      <div class="oc">${favHtml}${shareHtml}${pillsHtml}</div>`;
-    const favBtn = row.querySelector('.row-fav');
-    if (favBtn) {
-      favBtn.addEventListener('click', e => {
-        e.preventDefault(); e.stopPropagation();
-        const now = toggleSaved(r.slug);
-        favBtn.classList.toggle('fav-on', now);
-        favBtn.textContent = now ? '♥' : '♡';
-        favBtn.setAttribute('aria-label', now ? 'Remove from saved' : 'Save for later');
-        refreshSavedToggle();
-        if (savedOnly && !now) renderFeed();
-      });
-    }
-    const shareBtn = row.querySelector('.row-share');
-    if (shareBtn) {
-      shareBtn.addEventListener('click', e => {
-        e.preventDefault(); e.stopPropagation();
-        window.__nsShare(r.slug, shareBtn);
-      });
-    }
-    return row;
-  }
-  function paintFeed() {
-    feed.innerHTML = '';
-    if (!currentRows.length) {
-      // Filter-aware empty state. Composes "No newly registered <Cuisine>
-      // restaurants <where>" from whichever filters are active. Vocab is
-      // "registered restaurants" (per the City licence-data framing in
-      // CLAUDE.md - the site knows registration date, not opening date,
-      // and "licensed" implies LLBO/alcohol licensing in Ontario).
-      const c = currentCuisine !== '__all'
-        ? no.cuisines.find(x => x.key === currentCuisine)
-        : null;
-      const cuisineFrag = c ? `${c.label} ` : '';
-      let whereFrag = ' in the last 365 days';
-      if (nearMeActive && userLatLng) {
-        whereFrag = ' near you';
-      } else if (currentRegion !== '__all') {
-        whereFrag = ` in ${currentRegion}`;
-      }
-      let msg = `No newly registered ${cuisineFrag}restaurants${whereFrag}.`;
-      // Bare "No tagged openings..." when both filters are __all (homepage
-      // edge case - shouldn't normally happen, but safe fallback).
-      if (currentCuisine === '__all' && currentRegion === '__all' && !nearMeActive) {
-        msg = 'No newly registered restaurants in the last 365 days.';
-      }
-      const empty = document.createElement('div');
-      empty.className = 'empty';
-      // Offer to clear whichever location filter is active (region OR near-me).
-      let clearBtn = '';
-      if (nearMeActive) {
-        clearBtn = ' <button class="filter-clear" id="clear-region">Clear near-me filter</button>';
-      } else if (currentRegion !== '__all') {
-        clearBtn = ' <button class="filter-clear" id="clear-region">Clear region filter</button>';
-      }
-      empty.innerHTML = msg + clearBtn;
-      feed.appendChild(empty);
-      const clr = document.getElementById('clear-region');
-      if (clr) clr.addEventListener('click', () => {
-        if (nearMeActive) { nearMeActive = false; applyFilters(currentCuisine, currentRegion); }
-        else applyFilters(currentCuisine, '__all');
-      });
-      return;
-    }
-    const visible = currentRows.slice(0, currentShown);
-    visible.forEach(r => feed.appendChild(buildRowEl(r)));
-    if (currentRows.length > currentShown) {
-      const remaining = currentRows.length - currentShown;
-      const more = document.createElement('button');
-      more.className = 'show-more';
-      more.type = 'button';
-      more.textContent = `Show ${Math.min(PAGE_SIZE, remaining)} more`;
-      more.addEventListener('click', () => {
-        currentShown += PAGE_SIZE;
-        paintFeed();
-      });
-      feed.appendChild(more);
-    }
-  }
-  function renderFeed() {
-    // Single-listing mode (/r/<slug>): the user arrived from a shared link
-    // or X card - show ONLY that one entry, with a "Browse all" link at the
-    // top so they can broaden to the full feed.
-    if (singleSlug) {
-      const target = no.recent.find(r => r.slug === singleSlug);
-      currentRows = target ? [target] : [];
-      currentShown = currentRows.length;
-      paintFeed();
-      return;
-    }
-    feed.classList.toggle('single-cuisine', currentCuisine !== '__all');
-    let rows;
-    if (currentCuisine === '__all') {
-      rows = no.recent.slice();
-    } else {
-      // Multi-cuisine entries (e.g. Afghan + Pakistani + Indian) match each cuisine
-      // they claim. Falls back to single `cuisine` for legacy entries.
-      rows = no.recent.filter(r => (r.cuisines || [r.cuisine]).includes(currentCuisine));
-      // pull in cuisine's full curated set (recent5 = top 10 per cuisine)
-      const c = no.cuisines.find(x => x.key === currentCuisine);
-      if (c && c.recent5) {
-        const seen = new Set(rows.map(r => r.operatingName + '|' + r.issuedDate));
-        c.recent5.forEach(r => { const k = r.operatingName+'|'+r.issuedDate; if (!seen.has(k)) { rows.push(r); seen.add(k); } });
-        rows.sort((a,b)=> a.issuedDate < b.issuedDate ? 1 : -1);
-      }
-    }
-    if (savedOnly) {
-      const saved = getSaved();
-      rows = rows.filter(r => saved.has(r.slug));
-    }
-    if (nearMeActive && userLatLng) {
-      rows = rows.filter(r => r.lat && r.lng && haversineKm(userLatLng, [r.lat, r.lng]) <= nearMeRadius);
-      // Near Me overrides the default freshest-first sort with closest-first.
-      // Memoize the distance on the row so we don't haversine twice per row
-      // (sort + later distance label rendering both want it).
-      rows.forEach(r => { r._distKm = haversineKm(userLatLng, [r.lat, r.lng]); });
-      rows.sort((a, b) => a._distKm - b._distKm);
-    } else if (currentRegion !== '__all') {
-      rows = rows.filter(r => r.district === currentRegion);
-    }
-    currentRows = rows;
-    currentShown = INITIAL_SHOW;
-    paintFeed();
-  }
-  // Build the row set that would result from a given (cuisine, region, nearMe) tuple.
-  // Mirrors the logic in renderFeed() so option counts agree with what the user sees.
-  // When nearMe is true (and userLatLng is set), filters to entries within nearMeRadius
-  // of the user - overriding the region argument since they're mutually exclusive.
-  function rowsFor(cuisineKey, regionKey, nearMe) {
-    let rows;
-    if (cuisineKey === '__all') rows = no.recent.slice();
-    else {
-      // Multi-cuisine entries match each of their declared cuisines.
-      rows = no.recent.filter(r => (r.cuisines || [r.cuisine]).includes(cuisineKey));
-      const c = no.cuisines.find(x => x.key === cuisineKey);
-      if (c && c.recent5) {
-        const seen = new Set(rows.map(r => r.operatingName + '|' + r.issuedDate));
-        c.recent5.forEach(r => { const k = r.operatingName+'|'+r.issuedDate; if (!seen.has(k)) { rows.push(r); seen.add(k); } });
-      }
-    }
-    if (savedOnly) {
-      const saved = getSaved();
-      rows = rows.filter(r => saved.has(r.slug));
-    }
-    if (nearMe && userLatLng) {
-      // Entries without coords can't be evaluated for proximity - exclude them.
-      rows = rows.filter(r => r.lat && r.lng && haversineKm(userLatLng, [r.lat, r.lng]) <= nearMeRadius);
-    } else if (regionKey !== '__all') {
-      rows = rows.filter(r => r.district === regionKey);
-    }
-    return rows;
-  }
-  function updateOptionCounts() {
-    // Region counts = entries that survive (currentCuisine, that-region, no near-me).
-    // Region pickers are "if I picked this region" hypotheticals - distinct from near-me.
-    rPanel.querySelectorAll('.cp-opt').forEach(o => {
-      const ct = o.querySelector('.ct'); if (!ct) return;
-      ct.textContent = rowsFor(currentCuisine, o.dataset.key, false).length;
-    });
-    // Cuisine counts = entries that survive (that-cuisine, currentRegion, currentNearMe).
-    // Hide zero-count cuisines when a region/near-me filter is active so
-    // the dropdown shows only what's actually available in the current
-    // slice. The "All cuisines" entry is always visible.
-    const cuisineFilterActive = currentRegion !== '__all' || nearMeActive;
-    panel.querySelectorAll('.cp-opt').forEach(o => {
-      const ct = o.querySelector('.ct'); if (!ct) return;
-      const n = rowsFor(o.dataset.key, currentRegion, nearMeActive).length;
-      ct.textContent = n;
-      const isAll = o.classList.contains('cp-all');
-      o.hidden = (cuisineFilterActive && n === 0 && !isAll);
-    });
-  }
-  // The alert-form at the bottom of /cuisine/* and /district/* pages
-  // morphs as the user narrows: a visitor on /cuisine/argentinian who
-  // picks Scarborough sees the form flip to an "Argentine in Scarborough"
-  // intersection signup without leaving the page. data-base-* on the
-  // form is the page's "primary" identity (what it's about even when
-  // unfiltered); data-kind/value/label is the live state the submit
-  // handler POSTs. Homepage has no .alert-form, so this is a no-op there.
-  function updateAlertForm(cuisineKey, regionKey) {
-    const form = document.querySelector('form.alert-form');
-    if (!form) return;
-    const titleEl = document.getElementById('alert-title');
-    const blurbEl = document.getElementById('alert-blurb');
-    if (!titleEl || !blurbEl) return;
-    const baseKind = form.dataset.baseKind;
-    const baseValue = form.dataset.baseValue;
-    const baseLabel = form.dataset.baseLabel;
-    const cuisineActive = cuisineKey && cuisineKey !== '__all';
-    const regionActive  = regionKey  && regionKey  !== '__all';
-    let kind, value, label, title, blurb;
-    if (baseKind === 'cuisine') {
-      // /cuisine/<X> page - base is the cuisine, region narrows it
-      if (regionActive) {
-        kind = 'intersection';
-        value = baseValue + '|' + districtSlug(regionKey);
-        label = baseLabel + ' in ' + regionKey;
-        title = 'Get an email when a new ' + baseLabel + ' restaurant opens in ' + regionKey;
-        blurb = "You'll get one email the moment a new " + baseLabel + ' restaurant is registered with the City in ' + regionKey + " specifically. Rare - possibly a few times a year at most. No weekly digest, no spam, one-click unsub.";
-      } else {
-        kind = baseKind; value = baseValue; label = baseLabel;
-        title = 'Get an email when a new ' + baseLabel + ' restaurant opens';
-        blurb = "You'll get one email the moment a new " + baseLabel + " restaurant is registered with the City of Toronto - typically a handful of times per year. No weekly digest, no spam, one-click unsub.";
-      }
-    } else if (baseKind === 'district') {
-      // /district/<Y> page - base is the district, cuisine narrows it
-      if (cuisineActive) {
-        const c = no.cuisines.find(x => x.key === cuisineKey);
-        const cLabel = c ? c.label : cuisineKey;
-        kind = 'intersection';
-        value = cuisineKey + '|' + baseValue;
-        label = cLabel + ' in ' + baseLabel;
-        title = 'Get an email when a new ' + cLabel + ' restaurant opens in ' + baseLabel;
-        blurb = "You'll get one email the moment a new " + cLabel + ' restaurant is registered with the City in ' + baseLabel + " specifically. Rare - possibly a few times a year at most. No weekly digest, no spam, one-click unsub.";
-      } else {
-        kind = baseKind; value = baseValue; label = baseLabel;
-        title = 'Get an email when a new restaurant opens in ' + baseLabel;
-        blurb = "You'll get one email the moment a new restaurant is registered with the City in " + baseLabel + ". No weekly digest, no spam, one-click unsub.";
-      }
-    } else {
-      return; // unknown base kind - leave form alone
-    }
-    form.dataset.kind = kind;
-    form.dataset.value = value;
-    form.dataset.label = label;
-    titleEl.textContent = title;
-    blurbEl.textContent = blurb;
-  }
-
-  function applyFilters(cuisineKey, regionKey, updateHash=true) {
-    currentCuisine = cuisineKey;
-    currentRegion = regionKey;
-    // Recompute counts for both dropdowns under the new filter state
-    updateOptionCounts();
-    // Update cuisine trigger - count reflects current region (or near-me) too
-    const cuisineN = rowsFor(cuisineKey, regionKey, nearMeActive).length;
-    const c = cuisineKey === '__all' ? null : no.cuisines.find(x => x.key === cuisineKey);
-    trigger.textContent = c ? `${c.label} (${cuisineN})` : `All cuisines (${cuisineN})`;
-    panel.querySelectorAll('.cp-opt').forEach(o => o.setAttribute('aria-selected', o.dataset.key === cuisineKey ? 'true' : 'false'));
-    // Update region trigger - Near me overrides the region pick.
-    // Near me overrides the region pick. Trigger shows just "Near me" - no
-    // km value, because the dropdown only offers regions and a number in the
-    // trigger misleads users into expecting a km picker inside.
-    rTrigger.textContent = nearMeActive
-      ? 'Near me'
-      : (regionKey === '__all' ? 'All Toronto' : regionKey);
-    rPanel.querySelectorAll('.cp-opt').forEach(o => o.setAttribute('aria-selected', !nearMeActive && o.dataset.key === regionKey ? 'true' : 'false'));
-    renderFeed();
-    renderMapPins();  // no-op if map hasn't been initialized yet
-    updateAlertForm(cuisineKey, regionKey);
-    if (updateHash) {
-      const parts = [];
-      if (cuisineKey !== '__all') parts.push('cuisine=' + cuisineKey);
-      if (regionKey !== '__all') parts.push('region=' + encodeURIComponent(regionKey));
-      const newHash = parts.length ? '#' + parts.join('&') : '';
-      if (location.hash !== newHash) history.replaceState(null, '', location.pathname + location.search + newHash);
-    }
-  }
-  // Initial filter state. Priority:
-  //   1. URL hash (`#cuisine=X&region=Y`) - sticky across refreshes + share-links
-  //   2. URL path (`/cuisine/X`) - SEO landing pages
-  //   3. defaults
-  const pathCuisineMatch  = location.pathname.match(/^\/cuisine\/([a-z_]+)\/?$/);
-  const pathDistrictMatch = location.pathname.match(/^\/district\/([a-z-]+)\/?$/);
-  const pathListingMatch  = location.pathname.match(/^\/r\/([\w-]+)\/?$/);
-  const hashCuisine = (location.hash.match(/cuisine=([a-z_]+)/) || [])[1];
-  const hashRegion = (location.hash.match(/region=([^&]+)/) || [])[1];
-  const cuisineFromUrl = hashCuisine || (pathCuisineMatch && pathCuisineMatch[1]);
-  const initialCuisine = (cuisineFromUrl && no.cuisines.some(c => c.key === cuisineFromUrl)) ? cuisineFromUrl : '__all';
-  const decodedRegion = hashRegion ? decodeURIComponent(hashRegion) : '';
-  // District-from-path: when visiting /district/scarborough directly (no hash),
-  // resolve the slug back to the DISTRICTS label so the in-page filter syncs
-  // with the URL. Without this, the JS hydrates with currentRegion='__all'
-  // and re-renders ALL entries on top of the server-rendered district feed -
-  // visitors see every Toronto restaurant on a page labeled "Scarborough".
-  // Slug logic mirrors `districtSlug` defined later in this script.
-  const _slugize = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-  const pathDistrictRegion = pathDistrictMatch
-    ? (DISTRICTS.find(d => _slugize(d) === pathDistrictMatch[1]) || '')
-    : '';
-  const initialRegion = decodedRegion && DISTRICTS.includes(decodedRegion)
-    ? decodedRegion
-    : (pathDistrictRegion || '__all');
-  applyFilters(initialCuisine, initialRegion, false);
-
-  // -- Gamification: "N new since you last looked" badge ----------------
-  // Compares no.recent[].issuedDate against localStorage 'nsto.lastVisitedAt'.
-  // If there are entries issued since the user's last visit, show a pulsing
-  // accent pill in the masthead. Click jumps to the feed with the new
-  // entries flashed; updates lastVisitedAt to NOW so the badge resets.
-  // First-ever visit: skipped (no baseline to diff against).
-  (function freshSinceLastVisit() {
-    if (singleSlug) return;  // single-listing pages: not relevant
-    const LS_KEY = 'nsto.lastVisitedAt';
-    let lastVisited = null;
-    try { lastVisited = localStorage.getItem(LS_KEY); } catch (_) {}
-    // First visit: stamp now and bail (no "new" to show against an empty baseline)
-    if (!lastVisited) {
-      try { localStorage.setItem(LS_KEY, new Date().toISOString()); } catch (_) {}
-      return;
-    }
-    const fresh = (no.recent || []).filter(r => r.issuedDate && r.issuedDate > lastVisited.slice(0, 10));
-    if (!fresh.length) return;
-    const badge = document.getElementById('fresh-badge');
-    const txt = document.getElementById('fb-text');
-    if (!badge || !txt) return;
-    const n = fresh.length;
-    txt.textContent = n === 1
-      ? `1 new since you last looked - jump to it`
-      : `${n} new since you last looked - jump to them`;
-    badge.classList.add('is-visible');
-    const freshSlugs = new Set(fresh.map(r => r.slug));
-    badge.addEventListener('click', () => {
-      // Stamp now so the badge doesn't re-show on next refresh
-      try { localStorage.setItem(LS_KEY, new Date().toISOString()); } catch (_) {}
-      badge.classList.remove('is-visible');
-      // Scroll to feed + flash the new rows
-      const feed = document.getElementById('open-feed');
-      if (feed) feed.scrollIntoView({behavior: 'smooth', block: 'start'});
-      setTimeout(() => {
-        document.querySelectorAll('.open-row[data-slug]').forEach(row => {
-          if (freshSlugs.has(row.dataset.slug)) {
-            row.classList.add('is-fresh-flash');
-            setTimeout(() => row.classList.remove('is-fresh-flash'), 4000);
-          }
-        });
-      }, 400);
-    });
-  })();
-
-  // -- Gamification: "Surprise me" FAB ---------------------------------
-  // Picks a random restaurant from the freshest cohort (≤30 days). Smooth-
-  // scrolls to its row + flashes it; if not visible in the current feed
-  // (filtered out by current cuisine/region), navigates to /r/<slug>.
-  (function surpriseMe() {
-    const fab = document.getElementById('surprise-fab');
-    if (!fab) return;
-    fab.addEventListener('click', () => {
-      const pool = (no.recent || []).filter(r =>
-        r.slug && (r.daysOpen == null || r.daysOpen <= 30)
-      );
-      if (!pool.length) {
-        // Fall back to whole 365d pool if nothing fresh
-        const broader = (no.recent || []).filter(r => r.slug);
-        if (!broader.length) return;
-        pool.push(...broader);
-      }
-      const pick = pool[Math.floor(Math.random() * pool.length)];
-      // If the pick is already rendered in the current feed, scroll + flash
-      const row = document.querySelector(`.open-row[data-slug="${pick.slug}"]`);
-      if (row) {
-        row.scrollIntoView({behavior: 'smooth', block: 'center'});
-        row.classList.add('is-fresh-flash');
-        setTimeout(() => row.classList.remove('is-fresh-flash'), 4000);
-      } else {
-        // Not in current view: navigate to its listing page
-        window.location.href = `/r/${pick.slug}`;
-      }
-    });
-  })();
-
-  // Cuisine landing pages get a per-cuisine title + description for SEO. Done
-  // post-render since the JS app boots from a single index.html in all cases.
-  if (initialCuisine !== '__all' && pathCuisineMatch) {
-    const c = no.cuisines.find(x => x.key === initialCuisine);
-    if (c) {
-      const n = c.count365d;
-      const yr = new Date().getFullYear();
-      const t = n === 1
-        ? `Toronto's Newest ${c.label} Restaurant (${yr}) · NowServingTO`
-        : `Toronto's ${n} Newest ${c.label} Restaurants (${yr}) · NowServingTO`;
-      document.title = t;
-      const desc = `Every newly registered ${c.label} restaurant in Toronto over the past 365 days, updated daily. ${n} entries tracked, ${c.count30d} from the last 30 days.`;
-      const setMeta = (sel, attr, val) => {
-        const el = document.querySelector(sel);
-        if (el) el.setAttribute(attr, val);
-      };
-      setMeta('meta[name="description"]', 'content', desc);
-      setMeta('meta[property="og:title"]', 'content', t);
-      setMeta('meta[property="og:description"]', 'content', desc);
-      setMeta('meta[name="twitter:title"]', 'content', t);
-      setMeta('meta[name="twitter:description"]', 'content', desc);
-      setMeta('link[rel="canonical"]', 'href', `https://nowservingto.com/cuisine/${c.key}`);
-    }
-  }
-
-  // Per-listing share link `/r/{slug}` - single-listing mode. Show just
-  // this entry, hide the filter row, and add a "Browse all restaurants"
-  // link so the visitor can broaden when they're ready.
-  if (pathListingMatch) {
-    const slug = pathListingMatch[1];
-    const target = no.recent.find(r => r.slug === slug);
-    if (target) {
-      singleSlug = slug;
-      document.title = `${target.operatingName} - NowServingTO`;
-      const link = document.querySelector('link[rel="canonical"]');
-      if (link) link.setAttribute('href', `https://nowservingto.com/r/${slug}`);
-      // Hide filter row (cuisine/region/near-me/saved/view) and inject a
-      // single-listing banner with the "back to all" link.
-      const filters = document.querySelector('.filters');
-      if (filters) filters.style.display = 'none';
-      const feedEl = document.getElementById('open-feed');
-      if (feedEl && !document.getElementById('single-back')) {
-        const back = document.createElement('a');
-        back.id = 'single-back';
-        back.href = '/';
-        back.textContent = '← Browse all newly registered restaurants';
-        back.style.cssText = 'display:inline-block;margin:12px 4px 18px;font:600 14px/1 var(--sans);color:var(--accent);text-decoration:none;';
-        feedEl.parentNode.insertBefore(back, feedEl);
-      }
-      renderFeed();
-    }
-  }
-
-  // Reusable dropdown toggle/close for both pickers. allPickers lets each picker
-  // close the others on open - fixes the "both open at once" overlap bug since
-  // stopPropagation on the trigger click prevents the document-level outside-click
-  // from reaching the other picker's handler.
-  const allPickers = [];
-  function setupPicker(trig, pnl, onSelect) {
-    const close = () => { if (!pnl.hidden) { pnl.hidden = true; trig.setAttribute('aria-expanded', 'false'); } };
-    const open = () => {
-      allPickers.forEach(p => { if (p.trig !== trig) p.close(); });
-      pnl.hidden = false;
-      trig.setAttribute('aria-expanded', 'true');
-      const sel = pnl.querySelector('.cp-opt[aria-selected="true"]');
-      if (sel) sel.scrollIntoView({block: 'nearest'});
-    };
-    trig.addEventListener('click', e => { e.stopPropagation(); pnl.hidden ? open() : close(); });
-    pnl.addEventListener('click', e => {
-      const opt = e.target.closest('.cp-opt'); if (!opt) return;
-      onSelect(opt.dataset.key); close(); trig.focus();
-    });
-    document.addEventListener('click', e => { if (!pnl.hidden && !pnl.contains(e.target) && e.target !== trig) close(); });
-    document.addEventListener('keydown', e => { if (e.key === 'Escape' && !pnl.hidden) { close(); trig.focus(); } });
-    const picker = { trig, pnl, close };
-    allPickers.push(picker);
-    return picker;
-  }
-  // District slug helper - mirrors tools/inject_openings.py _district_slug.
-  // Used to navigate between /district/<slug> landing pages.
-  const districtSlug = label => label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-
-  setupPicker(trigger, panel, key => {
-    // Cuisine pick → navigate to the canonical landing page in most cases.
-    // The cuisine landing page is richer than the homepage filter view
-    // (cuisine-specific h1, FAQ, breadcrumb, JSON-LD CollectionPage,
-    // and the by-district nav strip). Hash-filtering the homepage gave
-    // visitors none of that. Two cases that still in-page filter:
-    //   - "__all" picked while already on homepage: stay (already showing all)
-    //   - Same cuisine picked while already on that cuisine page: no-op
-    if (key === '__all') {
-      if (pathCuisineMatch || pathDistrictMatch) {
-        location.href = '/';
-      } else {
-        applyFilters(key, currentRegion);
-      }
-      return;
-    }
-    if (pathCuisineMatch && key === pathCuisineMatch[1]) {
-      applyFilters(key, currentRegion);
-      return;
-    }
-    // On a district landing page, picking a cuisine should DRILL DOWN
-    // to the intersection ("Argentinian restaurants in Scarborough"),
-    // not navigate away to /cuisine/X and drop the district context.
-    // applyFilters handles both axes; the rich district landing remains.
-    if (pathDistrictMatch) {
-      applyFilters(key, currentRegion);
-      return;
-    }
-    location.href = '/cuisine/' + key;
-  });
-  setupPicker(rTrigger, rPanel, key => {
-    // Picking any region (including "All Toronto") turns Near me off - they're
-    // mutually exclusive spatial filters.
-    if (nearMeActive) {
-      nearMeActive = false;
-      document.getElementById('locate-btn').classList.remove('active');
-      if (mapInstance && userMarker) mapInstance.removeLayer(userMarker);
-    }
-    // Region pick → navigate to the canonical /district/<slug> landing page
-    // in most cases. The landing page is richer than the homepage filter
-    // view (district-specific h1, FAQ, breadcrumb, JSON-LD, and the
-    // by-cuisine nav strip). Two cases that still in-page filter:
-    //   - "__all" picked while already on homepage: stay
-    //   - Same district picked while already on that district page: no-op
-    if (key === '__all') {
-      if (pathCuisineMatch || pathDistrictMatch) {
-        location.href = '/';
-      } else {
-        applyFilters(currentCuisine, key);
-      }
-      return;
-    }
-    if (pathDistrictMatch && districtSlug(key) === pathDistrictMatch[1]) {
-      applyFilters(currentCuisine, key);
-      return;
-    }
-    // On a cuisine landing page, picking a region should DRILL DOWN
-    // to the intersection ("Argentine in Scarborough"), not navigate
-    // away to /district/X and drop the cuisine context.
-    if (pathCuisineMatch) {
-      applyFilters(currentCuisine, key);
-      return;
-    }
-    location.href = '/district/' + districtSlug(key);
-  });
-
-  // Brand-as-home: clicking NowServingTO always navigates to the
-  // root, clearing any cuisine/district path AND any filter hash.
-  // Using location.href = '/' (not location.reload) so we leave the
-  // current per-cuisine/per-district page properly rather than just
-  // refreshing it. assign() pushes history; current behavior matches
-  // the user's "go home" intent.
-  const brandLink = document.getElementById('brand-link');
-  if (brandLink) {
-    brandLink.addEventListener('click', e => {
-      e.preventDefault();
-      if (location.pathname === '/' && !location.hash && !location.search) {
-        location.reload();  // already at root - refresh in place
-      } else {
-        location.href = '/';
-      }
-    });
-  }
-
-
-  // ---- MAP VIEW ----
-  // Leaflet + markercluster. Lazy-inits on first toggle to Map view.
-  // Pins drawn from currentRows (the filtered set) - re-renders on filter change
-  // and on view toggle. Geolocation is user-initiated only.
-  //
-  // `var` (not `let`) so these hoist alongside their function decls. `renderMapPins`
-  // gets called from applyFilters during initial hash-restore, BEFORE control flow
-  // reaches this block - `let` would put these in TDZ and the call would throw.
-  var mapInstance = null;
-  var mapMarkers = null;
-  var userMarker = null;
-  var userLatLng = null;
-  var mapInitialized = false;
-
-
-  // 📱 Send to phone - show a QR code linking to Google Maps with the
-  // destination pre-filled. Phone's camera scans → opens in its native Maps app
-  // (Google on Android, Apple Maps via Safari handoff on iOS) with directions
-  // ready. We let the phone provide its own current location as the origin -
-  // more reliable than passing our (possibly browser-cached) lat/lng across.
-  function sendToPhone(lat, lng, encodedName) {
-    const name = decodeURIComponent(encodedName || '');
-    const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}` +
-                    (name ? `&destination_place_id=&travelmode=walking` : '');
-    if (typeof qrcode !== 'function') { alert('QR library still loading - try again in a moment.'); return; }
-    const qr = qrcode(0, 'M');
-    qr.addData(mapsUrl);
-    qr.make();
-    const imgTag = qr.createImgTag(6, 12);
-
-    const modal = document.createElement('div');
-    modal.className = 'phone-modal';
-    modal.innerHTML = `
-      <div class="pm-card" role="dialog" aria-label="Send to phone">
-        <div class="pm-head">
-          <span class="pm-title">📱 Open on your phone</span>
-          <button class="pm-close" aria-label="Close">×</button>
-        </div>
-        <div class="pm-name">${name || 'Restaurant'}</div>
-        <div class="pm-qr">${imgTag}</div>
-        <div class="pm-hint">Scan with your phone's camera to open directions in Google Maps.</div>
-        <div class="pm-url"><a href="${mapsUrl}" target="_blank" rel="noopener">${mapsUrl}</a></div>
-      </div>`;
-    const close = () => modal.remove();
-    modal.querySelector('.pm-close').addEventListener('click', close);
-    modal.addEventListener('click', e => { if (e.target === modal) close(); });
-    document.body.appendChild(modal);
-  }
-  window.__nsSendToPhone = sendToPhone;
-  // Near-me is a proximity-based spatial filter that REPLACES the region pick.
-  // Once active, all counts/feed/pins constrain to entries within nearMeRadius km
-  // of userLatLng. Selecting any region from the dropdown turns this off.
-  var nearMeActive = false;
-  var nearMeRadius = 5; // km - generous enough that one transit hop (TTC bus or
-                         // streetcar from a typical neighbourhood) lands inside
-                         // the radius, not just walking distance.
-
-  function haversineKm(a, b) {
-    const R = 6371, toRad = x => x * Math.PI / 180;
-    const dLat = toRad(b[0] - a[0]), dLon = toRad(b[1] - a[1]);
-    const A = Math.sin(dLat/2)**2 + Math.sin(dLon/2)**2 * Math.cos(toRad(a[0])) * Math.cos(toRad(b[0]));
-    return 2 * R * Math.asin(Math.sqrt(A));
-  }
-
-  // Lazy-load Leaflet (CSS + JS + MarkerCluster) only when the Map view is
-  // first activated. ~200KB of assets the vast majority of visitors never
-  // need - eager-loading them cost ~700ms LCP for every page load (per
-  // PageSpeed Insights). Returns a Promise that resolves once Leaflet is
-  // ready to use; memoized so subsequent calls return the same Promise.
-  let _leafletLoadPromise = null;
-  function loadLeaflet() {
-    if (_leafletLoadPromise) return _leafletLoadPromise;
-    _leafletLoadPromise = new Promise((resolve, reject) => {
-      // CSS files first - inject all three in parallel
-      [
-        'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-        'https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css',
-        'https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css',
-      ].forEach(href => {
-        const link = document.createElement('link');
-        link.rel = 'stylesheet';
-        link.href = href;
-        link.crossOrigin = '';
-        document.head.appendChild(link);
-      });
-      // Leaflet JS, then MarkerCluster JS (must load after Leaflet's global L is defined)
-      const leafletJs = document.createElement('script');
-      leafletJs.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-      leafletJs.crossOrigin = '';
-      leafletJs.onload = () => {
-        const mcJs = document.createElement('script');
-        mcJs.src = 'https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js';
-        mcJs.onload = resolve;
-        mcJs.onerror = reject;
-        document.head.appendChild(mcJs);
-      };
-      leafletJs.onerror = reject;
-      document.head.appendChild(leafletJs);
-    });
-    return _leafletLoadPromise;
-  }
-  // qrcode-generator is also only used by the map's directions-popup QR
-  // (no map view → no QR usage). Load on demand.
-  let _qrcodeLoadPromise = null;
-  function loadQrcode() {
-    if (_qrcodeLoadPromise) return _qrcodeLoadPromise;
-    _qrcodeLoadPromise = new Promise((resolve, reject) => {
-      const s = document.createElement('script');
-      s.src = 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js';
-      s.onload = resolve;
-      s.onerror = reject;
-      document.head.appendChild(s);
-    });
-    return _qrcodeLoadPromise;
-  }
-
-  function initMap() {
-    if (mapInitialized) return;
-    if (typeof L === 'undefined') {
-      document.getElementById('map').innerHTML = '<div style="padding:20px;color:#7a746a">Map library still loading - try again in a moment.</div>';
-      return;
-    }
-    mapInstance = L.map('map', { preferCanvas: true }).setView([43.6532, -79.3832], 12);
-    // CartoDB Voyager: full-color basemap (parks/water/streets look alive) but
-    // strips most POI icons so our green pins are the only "where to eat" signal.
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-      attribution: '© <a href="https://openstreetmap.org/copyright">OSM</a> · © <a href="https://carto.com/attributions">CARTO</a>',
-      subdomains: 'abcd',
-      maxZoom: 19,
-    }).addTo(mapInstance);
-    mapMarkers = L.markerClusterGroup({ chunkedLoading: true, maxClusterRadius: 50 });
-    mapInstance.addLayer(mapMarkers);
-    mapInitialized = true;
-    renderMapPins();
-    // Frame to actually fit the current pins (downtown-centered default cuts off
-    // West-Toronto/Parkdale and Scarborough). Cap zoom so a sparse set doesn't
-    // over-zoom into a single block.
-    const coords = currentRows.filter(r => r.lat && r.lng).map(r => [r.lat, r.lng]);
-    if (coords.length >= 2) mapInstance.fitBounds(coords, { padding: [30, 30], maxZoom: 13 });
-  }
-
-  function renderMapPins() {
-    if (!mapInitialized) return;
-    mapMarkers.clearLayers();
-    const rows = currentRows.filter(r => r.lat && r.lng);
-    const PIN_COLOR = '#1a7340';  // var(--fresh) - same green as walking route
-    // Permanent name labels are useful when there are few pins (e.g. filtered to
-    // a small cuisine). Above ~25 they crowd the map and we let clicks reveal names.
-    const showLabels = rows.length <= 25;
-    rows.forEach(r => {
-      const m = L.marker([r.lat, r.lng], {
-        icon: L.divIcon({
-          className: 'cuisine-pin',
-          html: `<span style="background:${PIN_COLOR}"></span>`,
-          iconSize: [28, 28],
-          iconAnchor: [14, 14],
-        }),
-      });
-      if (showLabels) {
-        m.bindTooltip(r.operatingName, {
-          permanent: true,
-          direction: 'right',
-          offset: [10, 0],
-          className: 'pin-label',
-        });
-      }
-      m.bindPopup(() => buildPopupHtml(r), { maxWidth: 280 });
-      mapMarkers.addLayer(m);
-    });
-    const total = currentRows.length;
-    const info = document.getElementById('map-info');
-    if (info) {
-      info.textContent = rows.length < total
-        ? `${rows.length.toLocaleString()} of ${total.toLocaleString()} on map · rest geocoding (check back tomorrow)`
-        : `${rows.length.toLocaleString()} on map`;
-    }
-  }
-
-  function buildPopupHtml(r) {
-    const keys = (r.cuisines && r.cuisines.length) ? r.cuisines : [r.cuisine];
-    const cuisineLbl = keys.map(k => (CUISINE_META[k] && CUISINE_META[k].label) || CUISINE_LABEL[k] || k).join(' · ');
-    const dist = userLatLng
-      ? `<div class="pop-dist">${haversineKm(userLatLng, [r.lat, r.lng]).toFixed(1)} km away</div>`
-      : '';
-    const shareLink = r.slug
-      ? `<button class="pop-share" onclick="window.__nsShare('${r.slug}', this)"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true" style="vertical-align:-2px;margin-right:4px"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg>Share</button>`
-      : '';
-    // Always show route buttons. If location isn't granted yet, showRoute() will
-    // prompt for it and auto-route once acquired.
-    // On mobile, the user IS the phone - open Google Maps directly. On desktop,
-    // show a QR for handoff to a separate phone.
-    const onMobile = window.matchMedia('(max-width: 700px)').matches || ('ontouchstart' in window);
-    const encName = encodeURIComponent(r.operatingName||'');
-    // Single Directions button - opens Google Maps' Directions UI where the user
-    // picks walk/drive/transit themselves. Cleaner than duplicating mode selection
-    // here. On desktop, also offer 📱 To phone (QR for handoff).
-    const dirBtn = onMobile
-      ? `<button class="pop-btn" onclick="location.href='https://www.google.com/maps/dir/?api=1&destination=${r.lat},${r.lng}'">🗺️ Directions</button>`
-      : `<button class="pop-btn" onclick="location.href='https://www.google.com/maps/dir/?api=1&destination=${r.lat},${r.lng}'">🗺️ Directions</button>
-         <button class="pop-btn" onclick="window.__nsSendToPhone(${r.lat},${r.lng},'${encName}')">📱 To phone</button>`;
-    const routeBtns = `<div class="pop-routes">${dirBtn}</div>`;
-    return `
-      <div class="pop-name">${r.operatingName}</div>
-      <div class="pop-addr">${r.address || ''}${r.district ? ' · ' + r.district : ''}</div>
-      <div class="pop-cuisine">${cuisineLbl}</div>
-      ${dist}
-      ${routeBtns}
-      ${shareLink}`;
-  }
-  // Native share with full restaurant context. Web Share API opens the OS share
-  // sheet on mobile (Messages, Email, WhatsApp, etc.) and on desktop in supporting
-  // browsers. Falls back to clipboard copy on browsers without navigator.share.
-  window.__nsShare = async (slug, btn) => {
-    const r = no.recent.find(x => x.slug === slug);
-    if (!r) return;
-    const url = `https://nowservingto.com/r/${slug}`;
-    const sKeys = (r.cuisines && r.cuisines.length) ? r.cuisines : [r.cuisine];
-    const cuisineLbl = sKeys.map(k => (CUISINE_META[k] && CUISINE_META[k].label) || CUISINE_LABEL[k] || k).join(' · ');
-    const ago = r.daysOpen <= 1 ? 'today'
-              : r.daysOpen <= 60 ? `${r.daysOpen}d ago`
-              : `${Math.round(r.daysOpen/30)}mo ago`;
-    // "Downtown" alone reads awkwardly - pin it as "Downtown Toronto". Other
-    // districts (Scarborough, Etobicoke, North York) are well-known on their own.
-    const districtPhrase = r.district === 'Downtown' ? 'Downtown Toronto' : r.district;
-    const where = r.address && districtPhrase
-      ? ` at ${r.address} in ${districtPhrase}`
-      : r.address ? ` at ${r.address}`
-      : districtPhrase ? ` in ${districtPhrase}` : '';
-    const text = `${r.operatingName} - newly-registered ${cuisineLbl} kitchen${where}. First seen ${ago}.`;
-    if (navigator.share) {
-      try { await navigator.share({ title: r.operatingName, text, url }); }
-      catch (e) { /* user dismissed */ }
-      return;
-    }
-    // Fallback: copy URL with the pitch text
-    const fallback = text + '\n' + url;
-    try {
-      await navigator.clipboard.writeText(fallback);
-      const orig = btn.textContent;
-      btn.textContent = '✓ Copied';
-      btn.disabled = true;
-      setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 1500);
-    } catch {
-      prompt('Copy this link:', fallback);
-    }
-  };
-
-  function setNearMeActive(on) {
-    nearMeActive = on;
-    const btn = document.getElementById('locate-btn');
-    btn.classList.toggle('active', on);
-    if (mapInstance && userMarker) {
-      if (on) userMarker.addTo(mapInstance);
-      else mapInstance.removeLayer(userMarker);
-    }
-    applyFilters(currentCuisine, '__all', true);
-  }
-
-  function locateUser() {
-    // Already active? Treat the click as a toggle-off.
-    if (nearMeActive) { setNearMeActive(false); return; }
-    const btn = document.getElementById('locate-btn');
-    const originalLabel = btn.textContent;
-    btn.disabled = true;
-
-    // Apply a fix and turn Near Me on. Used for cache hits, ipapi hits,
-    // and (silent background) browser-geolocation upgrades.
-    const applyFix = (latlng, persist) => {
-      const wasActive = nearMeActive;
-      userLatLng = latlng;
-      if (mapInstance) {
-        if (userMarker) mapInstance.removeLayer(userMarker);
-        userMarker = L.marker(userLatLng, {
-          icon: L.divIcon({ className: 'user-pin', html: '<span></span>', iconSize: [22, 22], iconAnchor: [11, 11] }),
-          zIndexOffset: 1000,
-        }).addTo(mapInstance);
-        if (!wasActive) mapInstance.setView(userLatLng, 14);
-      }
-      if (persist) {
-        try {
-          localStorage.setItem('nsto.userLatLng', JSON.stringify({
-            lat: latlng[0], lng: latlng[1], t: Date.now()
-          }));
-        } catch (_) {}
-      }
-      btn.textContent = originalLabel;
-      btn.disabled = false;
-      if (!wasActive) setNearMeActive(true);
-      else applyFilters(currentCuisine, '__all', true);  // silent upgrade - refresh distances
-    };
-
-    // Stage 1: localStorage cache (30-min TTL). Re-clicks are instant.
-    try {
-      const cached = JSON.parse(localStorage.getItem('nsto.userLatLng') || 'null');
-      if (cached && cached.t && Date.now() - cached.t < 30 * 60 * 1000
-          && typeof cached.lat === 'number' && typeof cached.lng === 'number') {
-        applyFix([cached.lat, cached.lng], false);
-        return;
-      }
-    } catch (_) {}
-
-    btn.textContent = 'locating…';
-
-    // Stage 2: ipapi.co - free, ~200ms, city-level accuracy (~5-10km).
-    // No permission prompt, no waiting. Plenty precise for the 5km Near
-    // Me radius. Free tier: 1K req/day per IP, no key, HTTPS. Falls
-    // through to browser geolocation only if ipapi fails.
-    fetch('https://ipapi.co/json/', { credentials: 'omit' })
-      .then(r => r.ok ? r.json() : Promise.reject(new Error('ipapi http ' + r.status)))
-      .then(data => {
-        if (typeof data.latitude !== 'number' || typeof data.longitude !== 'number') {
-          throw new Error('ipapi returned no lat/lng');
-        }
-        applyFix([data.latitude, data.longitude], true);
-
-        // Stage 3 (silent background): browser geolocation. If it returns
-        // a more precise fix (GPS on mobile) replace the pin and refresh
-        // distances. Skipped if the browser doesn't support it or denies.
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            pos => applyFix([pos.coords.latitude, pos.coords.longitude], true),
-            () => {},
-            { enableHighAccuracy: false, timeout: 8000, maximumAge: 30 * 60 * 1000 }
-          );
-        }
-      })
-      .catch(() => {
-        // ipapi unreachable - fall back to native geolocation.
-        if (!navigator.geolocation) {
-          btn.textContent = originalLabel;
-          btn.disabled = false;
-          alert('Could not get your location.');
-          return;
-        }
-        const slowTimer = setTimeout(() => { if (btn.disabled) btn.textContent = 'still locating…'; }, 2500);
-        navigator.geolocation.getCurrentPosition(pos => {
-          clearTimeout(slowTimer);
-          applyFix([pos.coords.latitude, pos.coords.longitude], true);
-        }, err => {
-          clearTimeout(slowTimer);
-          btn.textContent = originalLabel;
-          btn.disabled = false;
-          const msg = err.code === 1 ? 'Permission denied - enable location in your browser to use this.'
-                    : err.code === 2 ? 'Location unavailable right now.'
-                    : err.code === 3 ? 'Timed out - try again.' : 'Could not get location.';
-          alert(msg);
-        }, { enableHighAccuracy: false, timeout: 8000, maximumAge: 30 * 60 * 1000 });
-      });
-  }
-
-  function setView(v) {
-    document.querySelectorAll('.view-toggle .vt-btn').forEach(x => {
-      const active = x.dataset.view === v;
-      x.classList.toggle('vt-active', active);
-      x.setAttribute('aria-selected', active ? 'true' : 'false');
-    });
-    const feed = document.getElementById('open-feed');
-    const mapView = document.getElementById('map-view');
-    if (v === 'map') {
-      feed.hidden = true;
-      mapView.hidden = false;
-      if (!mapInitialized) {
-        // Show a brief "loading…" state while Leaflet downloads on first
-        // map-view toggle. Most visitors never reach this branch.
-        const mapDiv = document.getElementById('map');
-        mapDiv.innerHTML = '<div style="padding:20px;color:#7a746a">Loading map…</div>';
-        loadLeaflet().then(() => {
-          mapDiv.innerHTML = '';
-          initMap();
-          setTimeout(() => mapInstance && mapInstance.invalidateSize(), 60);
-        }).catch(() => {
-          mapDiv.innerHTML = '<div style="padding:20px;color:#7a746a">Map library failed to load. Refresh the page to retry.</div>';
-        });
-        // Also start loading qrcode lib in parallel - it's used inside
-        // pin popups for the directions QR, so likely needed shortly.
-        loadQrcode().catch(() => { /* QR is non-critical; fail silently */ });
-      } else {
-        renderMapPins();
-        setTimeout(() => mapInstance && mapInstance.invalidateSize(), 60);
-      }
-    } else {
-      feed.hidden = false;
-      mapView.hidden = true;
-    }
-  }
-
-  // View toggle wiring
-  document.querySelectorAll('.view-toggle .vt-btn').forEach(b => {
-    b.addEventListener('click', () => setView(b.dataset.view));
-  });
-
-  // 📍 Near me - visible in the filter row regardless of view. Locate-and-filter
-  // works in both list and map view; no auto-switch.
-  document.getElementById('locate-btn').addEventListener('click', locateUser);
-
-  // ♡ Saved toggle - filters list + map to only saved entries
-  refreshSavedToggle();
-  document.getElementById('saved-toggle').addEventListener('click', () => {
-    savedOnly = !savedOnly;
-    refreshSavedToggle();
-    renderFeed();
-    renderMapPins();
-  });
-
-  // Row "white-space" tap → /r/<slug> profile page. The pic, name, and
-  // address keep their existing destinations (Maps / website / Maps);
-  // taps anywhere ELSE in the row navigate to the per-listing profile.
-  // Delegated on #open-feed so it works after every renderFeed().
-  document.getElementById('open-feed').addEventListener('click', (e) => {
-    // Bail if the click landed on an interactive element - let its own
-    // handler / href win.
-    if (e.target.closest('a, button, input, textarea, select, label')) return;
-    const row = e.target.closest('.open-row[data-slug]');
-    if (!row) return;
-    const slug = row.getAttribute('data-slug');
-    if (slug) window.location.href = `/r/${slug}`;
-  });
-
-}).catch(err => {
-  document.getElementById('open-feed').innerHTML = '<div class="empty">error loading data - ' + (err && err.message ? err.message : String(err)) + '</div>';
-  console.error('NSTO load error:', err && err.stack ? err.stack : err);
-});
-
-// Per-cuisine + per-district real-time alert signup. The form's
-// data-kind + data-value attributes are baked in by inject_openings.py
-// when the page is generated; no extra JS bundle needed per page.
-document.querySelectorAll('form.alert-form').forEach(function(form) {
-  var status = form.querySelector('.alert-status');
-  var btn = form.querySelector('button');
-  form.addEventListener('submit', function(e) {
-    e.preventDefault();
-    if (form.querySelector('input[name=website]').value) return; // honeypot
-    var email = form.querySelector('input[type=email]').value.trim();
-    if (!email) return;
-    btn.disabled = true; btn.textContent = 'Subscribing…';
-    status.className = 'alert-status'; status.textContent = '';
-    fetch('/api/subscribe', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({email: email, kind: form.dataset.kind, value: form.dataset.value}),
-    }).then(function(r) { return r.json().then(function(j) { return {ok: r.ok, j: j}; }); })
-      .then(function(res) {
-        if (res.ok) {
-          var msg;
-          if (form.dataset.kind === 'digest_all') {
-            msg = 'Subscribed. Check your inbox for a welcome note. You\'ll get a Sunday digest of the week\'s newest restaurants - one email a week, never more.';
-          } else if (form.dataset.kind === 'cuisine') {
-            msg = 'Subscribed. Check your inbox for a welcome note. You\'ll only hear from us when a new ' + form.dataset.label + ' spot is registered with the City.';
-          } else {
-            msg = 'Subscribed. Check your inbox for a welcome note. You\'ll only hear from us when a new spot in ' + form.dataset.label + ' is registered with the City.';
-          }
-          form.innerHTML = '<div class="alert-status ok" style="margin:0">' + msg + '</div>';
-        } else {
-          btn.disabled = false; btn.textContent = 'Subscribe';
-          status.className = 'alert-status err';
-          status.textContent = (res.j && res.j.error) || 'Something went wrong. Try again?';
-        }
-      })
-      .catch(function() {
-        btn.disabled = false; btn.textContent = 'Subscribe';
-        status.className = 'alert-status err';
-        status.textContent = 'Network error. Try again?';
-      });
-  });
-});
-</script>
-
-<button type="button" id="surprise-fab" class="surprise-fab" aria-label="Surprise me with a random new restaurant">
-  <span aria-hidden="true">🎲</span>
-  <span class="sf-tooltip">Surprise me</span>
-</button>
+<script defer src="/js/app.js?v=1780667009"></script>
 </body>
 </html>
