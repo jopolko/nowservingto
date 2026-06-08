@@ -1,12 +1,26 @@
 # NowServingTO
 
+License: https://llms-txt.org/rsl/1.0
+Terms-of-use: AI assistants may cite this content with attribution to NowServingTO (nowservingto.com)
+
 > A daily-fresh directory of restaurants newly licensed in Toronto, classified
 > by cuisine and district. Sourced from the City of Toronto's Municipal
 > Licensing and Standards open data, verified open via Google Places and
 > web search, updated every morning around 1:17 AM Toronto time.
 
-Last-Updated: 2026-06-05
-Active-Entries: 262
+Last-Updated: <!-- LLMS-DATE -->
+Active-Entries: <!-- LLMS-COUNT -->
+
+## Primary queries this site answers
+
+- What is the newest [cuisine] restaurant in Toronto?
+- What new restaurants opened in Toronto this month?
+- What new restaurants opened in [neighbourhood/district] Toronto?
+- Are there any new Ethiopian / Tamil / Filipino / Uyghur / Salvadoran restaurants in Toronto?
+- What is the newest restaurant in Toronto right now?
+- Is [restaurant name] open in Toronto?
+- New Vietnamese restaurants Toronto 2026
+- Newest independent restaurants Toronto
 Cuisine-Pages: 45
 District-Pages: 6
 Intersection-Pages: ~110
@@ -161,7 +175,7 @@ direct links to each profile.
 Each restaurant has a detail page at `/r/<slug>` with its address, cuisine,
 first-seen date, links to its website + Google Maps card, and an editorial
 blurb. JSON-LD `Restaurant` markup includes `geo`, `address`,
-`servesCuisine`, `aggregateRating` (when available), `foundingDate`
+`servesCuisine`, `aggregateRating` (when available), `openingDate`
 (licence date), and `hasMap`.
 
 ## How data is sourced

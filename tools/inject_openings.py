@@ -707,21 +707,30 @@ KIOSK_CLIENTS = ('ADVANCED FRESH CONCEPTS',)
 # the 365d window) and count distinct Licence No. values per
 # (name, address). When >1, the business has demonstrably been licensed
 # more than once - the row in our window is a renewal / category change
-# / transfer, not a first-time licensing. We use this to drop those
-# rows in the main loop. Cheap (~0.5s walk, no API calls), data-driven,
-# uses the City's own structured signal rather than inferring from
-# downstream evidence.
+# / transfer, not a first-time licensing.
+#
+# Also build a Client Name × address set (2026-06-08): catches category
+# upgrades (takeout→eat-in) where the old licence was purged from the CSV
+# before the new one appeared, making the name+address count look like 1.
+# Same Client Name at same address across ANY food category = prior licence
+# history, regardless of whether the old row is still present.
 LICENCE_NO_COUNT_BY_KEY = {}
+CLIENT_ADDR_CATEGORIES = {}   # (client, addr) → set of categories seen
 with open(CSV_PATH, encoding='utf-8', errors='replace') as f:
     for row in csv.DictReader(f):
         if (row.get('Category') or '').strip() not in FOOD_CATS: continue
         nm = (row.get('Operating Name') or '').strip().upper()
+        cl = (row.get('Client Name') or '').strip().upper()
         ad = (row.get('Licence Address Line 1') or '').strip().upper()
         ln = (row.get('Licence No.') or '').strip()
+        ct = (row.get('Category') or '').strip()
         if not (nm and ad and ln): continue
         LICENCE_NO_COUNT_BY_KEY.setdefault(nm + '||' + ad, set()).add(ln)
+        if cl and ad:
+            CLIENT_ADDR_CATEGORIES.setdefault(cl + '||' + ad, set()).add(ct)
 LICENCE_NO_COUNT_BY_KEY = {k: len(v) for k, v in LICENCE_NO_COUNT_BY_KEY.items()}
-print(f"  pre-pass: {sum(1 for v in LICENCE_NO_COUNT_BY_KEY.values() if v > 1):,} of {len(LICENCE_NO_COUNT_BY_KEY):,} name+address pairs have >1 distinct Licence No. (renewal/re-licence candidates)")
+_multi_cat = sum(1 for v in CLIENT_ADDR_CATEGORIES.values() if len(v) > 1)
+print(f"  pre-pass: {sum(1 for v in LICENCE_NO_COUNT_BY_KEY.values() if v > 1):,} of {len(LICENCE_NO_COUNT_BY_KEY):,} name+address pairs have >1 Licence No.; {_multi_cat:,} client+address pairs span >1 category (category-upgrade candidates)")
 
 with open(CSV_PATH, encoding='utf-8', errors='replace') as f:
     rdr = csv.DictReader(f)
@@ -775,6 +784,13 @@ with open(CSV_PATH, encoding='utf-8', errors='replace') as f:
         # detection: complements the operating-evidence gates above.)
         _lk = op_raw.upper() + '||' + addr1.upper()
         if LICENCE_NO_COUNT_BY_KEY.get(_lk, 0) > 1:
+            n_dropped_multi_licence += 1
+            continue
+        # Category-upgrade gate: same Client Name at same address has licences
+        # across >1 food category → prior operating history, not a new opening.
+        cl_raw = (row.get('Client Name') or '').strip().upper()
+        _ck = cl_raw + '||' + addr1.upper()
+        if cl_raw and len(CLIENT_ADDR_CATEGORIES.get(_ck, set())) > 1:
             n_dropped_multi_licence += 1
             continue
         cuisines, source = get_cuisine(op_raw, address_full)
@@ -1418,8 +1434,18 @@ def _capitalize_proper_nouns(text):
 # pattern-matched phrases (never modifies content the LLM emitted from real
 # evidence). Called from both the row-blurb extractor and the listing-page
 # editorial card path so the cleanup is consistent everywhere.
+_LLM_BLEED_PHRASES = (
+    'i need to flag', 'i appreciate the detailed', 'critical issue with this request',
+    'before proceeding', 'as an ai', 'i cannot', "i can't", '```json', '```',
+    '"blurb":', '{"blurb"',
+)
+
 def _scrub_blurb(text):
     if not text: return text
+    # Guard: reject blurbs containing LLM refusal / raw JSON artefacts.
+    tl = text.lower()
+    if any(p in tl for p in _LLM_BLEED_PHRASES):
+        return ''
     # 1) "<verb> N days/weeks/months/years ago" — time-relative with number.
     text = _re.sub(
         r'\s*\b(opened|registered|licensed|licence\s+issued|operating(?:\s+since)?|launched|established|debuted|inaugurated)\s+\d+\s*(?:d|days?|day|weeks?|wk|months?|mo|years?|yr)\s+ago\b',
@@ -1838,12 +1864,13 @@ def _build_cuisine_graphic_html(entry, *, size='hero'):
     script_class = 'cg-script' + (' cg-script-rtl' if rtl else '')
 
     if size == 'hero':
+        district_html = f'<div class="cg-district">{_esc(district)}</div>' if district else ''
         return (
             f'<div class="cg cg-hero" style="--cg-color:{color}">'
             f'  <span class="{script_class}">{_esc(script)}</span>'
             f'  <div class="cg-eyebrow">{_esc(cuisine_label.upper())}</div>'
             f'  <div class="cg-name">{_esc(name_disp)}</div>'
-            f'  {f"<div class=\"cg-district\">{_esc(district)}</div>" if district else ""}'
+            f'  {district_html}'
             f'</div>'
         )
     if size == 'card':
@@ -2525,7 +2552,7 @@ def build_ld_itemlist(entries, name, description):
             'name': r['operatingName'],
             'address': _addr,
             'servesCuisine': [CUISINE_LABEL.get(k, k) for k in (r.get('cuisines') or [r.get('cuisine')]) if k],
-            'foundingDate': r.get('issuedDate'),
+            'openingDate': r.get('issuedDate'),
             # dateModified: per-entity freshness signal. The daily cron re-verifies
             # every restaurant via the licence + Places gates, so each entity is
             # genuinely "checked today" — distinct from the page-level dateModified
@@ -2550,6 +2577,7 @@ def build_ld_itemlist(entries, name, description):
         'name': name,
         'description': description,
         'numberOfItems': len(items),
+        'itemListOrder': 'https://schema.org/ItemListOrderDescending',
         'itemListElement': items,
     }
 
@@ -2563,9 +2591,14 @@ def build_ld_collectionpage(itemlist, *, url, dateModified, about=None,
     about: optional Thing dict (e.g. cuisine entity with Wikidata sameAs)
     that anchors the page to a known entity. Helps AI crawlers
     disambiguate "Ethiopian" the page topic from "Ethiopian" the name."""
+    # @id anchors the CollectionPage as a named node so Google can form a
+    # reference across the entity graph rather than treating each page as
+    # an anonymous node. Schema audit finding 2026-06-08.
+    _page_id = url.rstrip('/') + '#collection'
     page = {
         '@context': 'https://schema.org',
         '@type': 'CollectionPage',
+        '@id': _page_id,
         'url': url,
         'name': itemlist['name'],
         'description': itemlist['description'],
@@ -2795,6 +2828,7 @@ def build_home_intro(all_entries, freshest, n_week, n30):
     all_entries: full verified-open set in the 365d window (for the total).
     freshest:    the same set sorted freshest-first (top 3 are named).
     Returns '' when there are no entries (the masthead stands alone)."""
+    return ''
     n_total = len(all_entries)
     if not n_total or not freshest:
         return ''
@@ -3419,13 +3453,34 @@ def build_answers_corpus(cuisines_out, opens_365_by_cuisine, by_district,
             f_loc_html = ''
             f_loc_text = ''
         q = "What is the newest restaurant in Toronto right now?"
+        _f0blurb = ''
+        _f0er = EVIDENCE_REWRITE_CACHE.get(f.get('_cacheKey', '')) or {}
+        if _f0er.get('status') == 'ok' and _f0er.get('blurb'):
+            _f0blurb = _f0er['blurb'].strip()[:200]
+        _f0_issued = f.get('issuedDate') or ''
+        _f0_issued_phrase = ''
+        if _f0_issued and len(_f0_issued) >= 7:
+            try:
+                _f0y, _f0m = _f0_issued[:4], int(_f0_issued[5:7])
+                _f0months = ['','January','February','March','April','May','June',
+                             'July','August','September','October','November','December']
+                _f0_issued_phrase = f'{_f0months[_f0m]} {_f0y}'
+            except (ValueError, IndexError):
+                pass
         a_html = (
             f'The most recently registered verified-open restaurant in Toronto is '
             f'<strong>{_esc(f_name)}</strong>'
             f'{f", a <strong>{_esc(f_lbl)}</strong> spot" if f_lbl else ""}'
             f'{f_loc_html}, '
             f'first seen on the City of Toronto licence registry <strong>{_ago_long(f_days)} ago</strong>. '
-            f'Updated daily from the City\'s open licence file, chains excluded. '
+            + (f'{_esc(_f0blurb)} ' if _f0blurb else '')
+            + f'The listing was verified open via Google Places operational status'
+            + (f', with its City licence issued in {_f0_issued_phrase}' if _f0_issued_phrase else '')
+            + f'. '
+            f'NowServingTO tracks restaurants licensed by the City of Toronto in the past 365 days, '
+            f'verified open and independently owned. Data is sourced from the City of Toronto '
+            f'Municipal Licensing and Standards open data and cross-referenced with Toronto Public '
+            f'Health DineSafe inspections and Google Places. Updated daily, chains excluded. '
             f'<a href="/">See the full daily directory →</a>'
         )
         a_text = (
@@ -3434,7 +3489,14 @@ def build_answers_corpus(cuisines_out, opens_365_by_cuisine, by_district,
             f'{f", a {f_lbl} spot" if f_lbl else ""}'
             f'{f_loc_text}, '
             f'first seen on the City of Toronto licence registry {_ago_long(f_days)} ago. '
-            f'Updated daily from the City\'s open licence file, chains excluded.'
+            + (_f0blurb + ' ' if _f0blurb else '')
+            + f'The listing was verified open via Google Places operational status'
+            + (f', with its City licence issued in {_f0_issued_phrase}' if _f0_issued_phrase else '')
+            + f'. '
+            f'NowServingTO tracks restaurants licensed by the City of Toronto in the past 365 days, '
+            f'verified open and independently owned. Data is sourced from the City of Toronto '
+            f'Municipal Licensing and Standards open data and cross-referenced with Toronto Public '
+            f'Health DineSafe inspections and Google Places. Updated daily, chains excluded.'
         )
         _emit(q, a_html, a_text)
 
@@ -3468,19 +3530,48 @@ def build_answers_corpus(cuisines_out, opens_365_by_cuisine, by_district,
             f_loc_html = ''
             f_loc_text = ''
         q = f"What is the newest {label} restaurant in Toronto?"
+        # Blurb from the freshest entry for the differentiating detail sentence.
+        _fblurb = ''
+        _fw = WEB_VERIFY_CACHE.get(freshest.get('_cacheKey', '')) or {}
+        _fer = EVIDENCE_REWRITE_CACHE.get(freshest.get('_cacheKey', '')) or {}
+        if _fer.get('status') == 'ok' and _fer.get('blurb'):
+            _fblurb = _fer['blurb'].strip()[:200]
+        # Issued date for grounding context sentence.
+        _f_issued = freshest.get('issuedDate') or ''
+        _f_issued_phrase = ''
+        if _f_issued and len(_f_issued) >= 7:
+            try:
+                _fy, _fm = _f_issued[:4], int(_f_issued[5:7])
+                _fmonths = ['','January','February','March','April','May','June',
+                            'July','August','September','October','November','December']
+                _f_issued_phrase = f'{_fmonths[_fm]} {_fy}'
+            except (ValueError, IndexError):
+                pass
         a_html = (
             f'The newest verified-open <strong>{_esc(label)}</strong> restaurant in '
             f'Toronto is <strong>{_esc(f_name)}</strong>{f_loc_html}, '
             f'first seen on the City of Toronto licence registry <strong>{_ago_long(f_days)} ago</strong>. '
-            f'<strong>{n365}</strong> {_esc(label)} restaurants are currently tracked, '
-            f'all licensed within the last 365 days and verified open. Chains are excluded. '
+            + (f'{_esc(_fblurb)} ' if _fblurb else '')
+            + f'It was verified open via Google Places operational status'
+            + (f', with its licence issued in {_f_issued_phrase}' if _f_issued_phrase else '')
+            + f'. '
+            f'<strong>{n365}</strong> {_esc(label)} restaurants are currently tracked across Toronto, '
+            f'all licensed within the last 365 days, verified open, and independently owned. Chains are excluded. '
+            f'Data is sourced daily from the City of Toronto Municipal Licensing and Standards open data, '
+            f'cross-referenced with Toronto Public Health DineSafe inspection records and Google Places. '
             f'<a href="/cuisine/{key}">Browse all {_esc(label)} restaurants →</a>'
         )
         a_text = (
             f'The newest verified-open {label} restaurant in Toronto is {f_name}{f_loc_text}, '
             f'first seen on the City of Toronto licence registry {_ago_long(f_days)} ago. '
-            f'{n365} {label} restaurants are currently tracked, '
-            f'all licensed within the last 365 days and verified open. Chains are excluded.'
+            + (_fblurb + ' ' if _fblurb else '')
+            + f'It was verified open via Google Places operational status'
+            + (f', with its licence issued in {_f_issued_phrase}' if _f_issued_phrase else '')
+            + f'. '
+            f'{n365} {label} restaurants are currently tracked across Toronto, '
+            f'all licensed within the last 365 days, verified open, and independently owned. Chains are excluded. '
+            f'Data is sourced daily from the City of Toronto Municipal Licensing and Standards open data, '
+            f'cross-referenced with Toronto Public Health DineSafe inspection records and Google Places.'
         )
         _emit(q, a_html, a_text)
 
@@ -3516,12 +3607,31 @@ def build_answers_corpus(cuisines_out, opens_365_by_cuisine, by_district,
         meta_html = f' ({", ".join(meta_parts_html)})' if meta_parts_html else ''
         meta_text = f' ({", ".join(meta_parts_text)})' if meta_parts_text else ''
         q = f"What is the newest restaurant in {district_label}, Toronto?"
+        _dblurb = ''
+        _der = EVIDENCE_REWRITE_CACHE.get(d_freshest.get('_cacheKey', '')) or {}
+        if _der.get('status') == 'ok' and _der.get('blurb'):
+            _dblurb = _der['blurb'].strip()[:200]
+        _d_issued = d_freshest.get('issuedDate') or ''
+        _d_issued_phrase = ''
+        if _d_issued and len(_d_issued) >= 7:
+            try:
+                _dy, _dm2 = _d_issued[:4], int(_d_issued[5:7])
+                _dmonths = ['','January','February','March','April','May','June',
+                            'July','August','September','October','November','December']
+                _d_issued_phrase = f'{_dmonths[_dm2]} {_dy}'
+            except (ValueError, IndexError):
+                pass
         a_html = (
             f'The newest verified-open restaurant in <strong>{_esc(district_label)}</strong> '
             f'is <strong>{_esc(d_name)}</strong>{meta_html}, '
             f'first seen on the City of Toronto licence registry <strong>{_ago_long(d_days)} ago</strong>. '
+            + (f'{_esc(_dblurb)} ' if _dblurb else '')
+            + f'It was verified open via Google Places operational status'
+            + (f', with its City licence issued in {_d_issued_phrase}' if _d_issued_phrase else '')
+            + f'. '
             f'<strong>{d_count}</strong> restaurants are currently tracked in {_esc(district_label)}, '
-            f'all licensed within the last 365 days. Chains excluded. '
+            f'all licensed within the last 365 days, verified open, and independently owned. Chains excluded. '
+            f'Data sourced daily from the City of Toronto Municipal Licensing and Standards open data. '
             + (f'<a href="/district/{slug}">Browse all restaurants in {_esc(district_label)} →</a>'
                if slug else '')
         )
@@ -3529,8 +3639,13 @@ def build_answers_corpus(cuisines_out, opens_365_by_cuisine, by_district,
             f'The newest verified-open restaurant in {district_label} '
             f'is {d_name}{meta_text}, '
             f'first seen on the City of Toronto licence registry {_ago_long(d_days)} ago. '
+            + (_dblurb + ' ' if _dblurb else '')
+            + f'It was verified open via Google Places operational status'
+            + (f', with its City licence issued in {_d_issued_phrase}' if _d_issued_phrase else '')
+            + f'. '
             f'{d_count} restaurants are currently tracked in {district_label}, '
-            f'all licensed within the last 365 days. Chains excluded.'
+            f'all licensed within the last 365 days, verified open, and independently owned. Chains excluded. '
+            f'Data sourced daily from the City of Toronto Municipal Licensing and Standards open data.'
         )
         _emit(q, a_html, a_text)
 
@@ -3620,20 +3735,43 @@ def build_answers_corpus(cuisines_out, opens_365_by_cuisine, by_district,
         meta_html = f' ({", ".join(meta_html_parts)})' if meta_html_parts else ''
         meta_text = f' ({", ".join(meta_text_parts)})' if meta_text_parts else ''
         q = f"What is the newest restaurant in {n_label}, Toronto?"
+        _nblurb = ''
+        _ner = EVIDENCE_REWRITE_CACHE.get(nbhd_freshest.get('_cacheKey', '')) or {}
+        if _ner.get('status') == 'ok' and _ner.get('blurb'):
+            _nblurb = _ner['blurb'].strip()[:200]
+        _n_issued = nbhd_freshest.get('issuedDate') or ''
+        _n_issued_phrase = ''
+        if _n_issued and len(_n_issued) >= 7:
+            try:
+                _ny, _nm2 = _n_issued[:4], int(_n_issued[5:7])
+                _nmonths = ['','January','February','March','April','May','June',
+                            'July','August','September','October','November','December']
+                _n_issued_phrase = f'{_nmonths[_nm2]} {_ny}'
+            except (ValueError, IndexError):
+                pass
         a_html = (
             f'The newest verified-open restaurant in <strong>{_esc(n_label)}</strong> '
             f'is <strong>{_esc(nf_name)}</strong>{meta_html}, '
             f'first seen on the City of Toronto licence registry '
             f'<strong>{_ago_long(nf_days)} ago</strong>. '
+            + (f'{_esc(_nblurb)} ' if _nblurb else '')
+            + f'It was verified open via Google Places operational status'
+            + (f', with its City licence issued in {_n_issued_phrase}' if _n_issued_phrase else '')
+            + f'. '
             f'<strong>{len(dedup)}</strong> restaurants are currently tracked in '
-            f'{_esc(n_label)}, all licensed within the last 365 days. Chains excluded. '
+            f'{_esc(n_label)}, all licensed within the last 365 days, verified open, '
+            f'and independently owned. Chains excluded. '
             f'<a href="/neighborhood/{nbhd_slug}">Browse all restaurants in {_esc(n_label)} →</a>'
         )
         a_text = (
             f'The newest verified-open restaurant in {n_label} is {nf_name}{meta_text}, '
             f'first seen on the City of Toronto licence registry {_ago_long(nf_days)} ago. '
+            + (_nblurb + ' ' if _nblurb else '')
+            + f'It was verified open via Google Places operational status'
+            + (f', with its City licence issued in {_n_issued_phrase}' if _n_issued_phrase else '')
+            + f'. '
             f'{len(dedup)} restaurants are currently tracked in {n_label}, '
-            f'all licensed within the last 365 days. Chains excluded.'
+            f'all licensed within the last 365 days, verified open, and independently owned. Chains excluded.'
         )
         _emit(q, a_html, a_text)
 
@@ -3656,15 +3794,33 @@ def build_answers_corpus(cuisines_out, opens_365_by_cuisine, by_district,
                                           if ae_street else '')
                     street_clause_text = f' on {ae_street}' if ae_street else ''
                     q2 = f"What is the newest {anchor_lbl} restaurant in {n_label}?"
+                    _a2blurb = ''
+                    _a2er = EVIDENCE_REWRITE_CACHE.get(ae.get('_cacheKey', '')) or {}
+                    if _a2er.get('status') == 'ok' and _a2er.get('blurb'):
+                        _a2blurb = _a2er['blurb'].strip()[:200]
+                    _a2_issued = ae.get('issuedDate') or ''
+                    _a2_issued_phrase = ''
+                    if _a2_issued and len(_a2_issued) >= 7:
+                        try:
+                            _a2y, _a2m = _a2_issued[:4], int(_a2_issued[5:7])
+                            _a2months = ['','January','February','March','April','May','June',
+                                         'July','August','September','October','November','December']
+                            _a2_issued_phrase = f'{_a2months[_a2m]} {_a2y}'
+                        except (ValueError, IndexError):
+                            pass
                     a2_html = (
                         f'The newest verified-open <strong>{_esc(anchor_lbl)}</strong> '
                         f'restaurant in <strong>{_esc(n_label)}</strong> is '
                         f'<strong>{_esc(ae_name)}</strong>{street_clause_html}, '
                         f'first seen on the City of Toronto licence registry '
                         f'<strong>{_ago_long(ae_days)} ago</strong>. '
+                        + (f'{_esc(_a2blurb)} ' if _a2blurb else '')
+                        + f'Verified open via Google Places operational status'
+                        + (f', City licence issued in {_a2_issued_phrase}' if _a2_issued_phrase else '')
+                        + f'. '
                         f'<strong>{len(anchor_entries)}</strong> {_esc(anchor_lbl)} '
-                        f'restaurants are currently tracked in {_esc(n_label)}. '
-                        f'Chains excluded. '
+                        f'restaurants are currently tracked in {_esc(n_label)}, '
+                        f'all independently owned. Chains excluded. '
                         f'<a href="/neighborhood/{nbhd_slug}">Browse all restaurants '
                         f'in {_esc(n_label)} →</a>'
                     )
@@ -3672,9 +3828,13 @@ def build_answers_corpus(cuisines_out, opens_365_by_cuisine, by_district,
                         f'The newest verified-open {anchor_lbl} restaurant in '
                         f'{n_label} is {ae_name}{street_clause_text}, '
                         f'first seen on the City of Toronto licence registry '
-                        f'{_ago_long(ae_days)} ago. {len(anchor_entries)} '
-                        f'{anchor_lbl} restaurants are currently tracked in '
-                        f'{n_label}. Chains excluded.'
+                        f'{_ago_long(ae_days)} ago. '
+                        + (_a2blurb + ' ' if _a2blurb else '')
+                        + f'Verified open via Google Places operational status'
+                        + (f', City licence issued in {_a2_issued_phrase}' if _a2_issued_phrase else '')
+                        + f'. '
+                        f'{len(anchor_entries)} {anchor_lbl} restaurants are currently tracked in '
+                        f'{n_label}, all independently owned. Chains excluded.'
                     )
                     _emit(q2, a2_html, a2_text)
 
@@ -3739,7 +3899,7 @@ def build_answers_corpus(cuisines_out, opens_365_by_cuisine, by_district,
 
     body_html = (
         '<header class="ans-hdr">'
-        '<h1 class="ans-h1">Q&amp;A: Toronto\'s newest restaurants</h1>'
+        '<h2 class="ans-h1">Q&amp;A: Toronto\'s newest restaurants</h2>'
         f'<p class="ans-lede">Common questions about Toronto\'s newest restaurants '
         f'by cuisine and neighbourhood, answered from the live City of Toronto licence '
         f'registry. Updated daily. Last refresh: <strong>{_esc(reference_date_iso)}</strong>.</p>'
@@ -3970,7 +4130,7 @@ for c in cuisines_out:
         desc = (f"{_mf_name}{_mf_loc} — newest of Toronto's {n365} {label} "
                 f"restaurants, first seen {_mf_days_phrase} ago. Daily refresh, "
                 f"chains excluded.")
-        if _title_dishes_str and len(desc) + len(_title_dishes_str) + 3 <= 158:
+        if _title_dishes_str and len(desc) + len(_title_dishes_str) + 3 <= 148:
             desc = (f"{_mf_name}{_mf_loc} — newest of Toronto's {n365} {label} "
                     f"restaurants ({_title_dishes_str}), first seen {_mf_days_phrase} ago. "
                     f"Daily refresh, chains excluded.")
@@ -3983,7 +4143,7 @@ for c in cuisines_out:
     else:
         desc = (f"Every newly registered {label} restaurant in Toronto over the past 365 "
                 f"days, updated daily. {n365} entries tracked, {n30} from the last 30 days.")
-    canonical = f"https://nowservingto.com/cuisine/{key}"
+    canonical = f"https://nowservingto.com/cuisine/{key}/"
 
     page = template
     # Replace meta tags - first occurrence each.
@@ -4020,6 +4180,7 @@ for c in cuisines_out:
     )
     cuisine_collection = build_ld_collectionpage(
         cuisine_itemlist, url=canonical, dateModified=REFERENCE_DATE.isoformat(),
+        datePublished='2026-05-13',
         about=cuisine_about_thing(key, label),
     )
     cuisine_breadcrumb_parts = [
@@ -4101,9 +4262,21 @@ for label, entries in by_district.items():
     title = (f"Newest Restaurant in {place} ({REFERENCE_DATE.year}) · NowServingTO"
              if n365 == 1
              else f"{n365} Newest Restaurants in {place} ({REFERENCE_DATE.year}) · NowServingTO")
-    desc = (f"Every newly registered restaurant in {place}, by cuisine, updated "
-            f"weekly. {n365} entries tracked, {n30} from the last 30 days.")
-    canonical = f"https://nowservingto.com/district/{slug}"
+    # Lead with the newest named entry so the meta isn't "57 entries, 0 this month"
+    _dist_freshest = entries[0] if entries else None
+    _df_name = (_dist_freshest.get('operatingName') or '').strip() if _dist_freshest else ''
+    _df_ck = (_dist_freshest.get('cuisine') or '') if _dist_freshest else ''
+    _df_clbl = CUISINE_LABEL.get(_df_ck, '') if _df_ck else ''
+    _df_street = _street_name_only(_dist_freshest) if _dist_freshest else ''
+    if _df_name and _df_clbl:
+        _df_loc = f' on {_df_street}' if _df_street else ''
+        desc = (f"Newest: {_df_name} ({_df_clbl}{_df_loc}). "
+                f"{n365} newly licensed independent restaurants in {place}, "
+                f"verified open. Daily refresh, chains excluded.")
+    else:
+        desc = (f"{n365} newly registered independent restaurants in {place}. "
+                f"Verified open, chains excluded. Daily refresh from the City of Toronto.")
+    canonical = f"https://nowservingto.com/district/{slug}/"
 
     page = district_template
     # Replace meta tags
@@ -4137,6 +4310,7 @@ for label, entries in by_district.items():
     )
     district_collection = build_ld_collectionpage(
         district_itemlist, url=canonical, dateModified=REFERENCE_DATE.isoformat(),
+        datePublished='2026-05-13',
     )
     district_breadcrumb_parts = [
         ('Home', 'https://nowservingto.com/'),
@@ -4338,6 +4512,7 @@ for nbhd_slug, nbhd_entries in by_nbhd.items():
         nbhd_about['sameAs'] = f'https://www.wikidata.org/wiki/{wikidata_qid}'
     nbhd_collection = build_ld_collectionpage(
         nbhd_itemlist, url=canonical, dateModified=REFERENCE_DATE.isoformat(),
+        datePublished='2026-05-13',
         about=nbhd_about,
     )
     nbhd_breadcrumb_parts = [
@@ -5329,7 +5504,7 @@ for entry in seen_entries.values():
         'servesCuisine': [CUISINE_LABEL.get(k, k) for k in keys if k],
         'url': _entry_website or canonical,
         'image': _image_field,
-        'foundingDate': entry.get('issuedDate'),
+        'openingDate': entry.get('issuedDate'),
         # dateModified: per-entity freshness, refreshed every daily cron.
         'dateModified': REFERENCE_DATE.isoformat(),
     }
@@ -7547,6 +7722,19 @@ sitemap = (
     + '\n'.join(url_blocks) + '\n'
     '</urlset>\n'
 )
+# Update llms.txt dynamic fields (date + entry count) so AI crawlers
+# always see the current state rather than a stale snapshot.
+_llms_path = Path(ROOT) / 'llms.txt'
+if _llms_path.exists():
+    _llms = _llms_path.read_text()
+    import re as _re_llms
+    _llms = _re_llms.sub(r'Last-Updated:.*', f'Last-Updated: {_today_iso}', _llms)
+    _llms = _re_llms.sub(r'Active-Entries:.*', f'Active-Entries: {n_tagged_365}', _llms)
+    _llms = _llms.replace('<!-- LLMS-DATE -->', _today_iso)
+    _llms = _llms.replace('<!-- LLMS-COUNT -->', str(n_tagged_365))
+    _llms_path.write_text(_llms)
+    print(f"  updated llms.txt (date={_today_iso}, entries={n_tagged_365})")
+
 with open(SITEMAP_PATH, 'w') as f: f.write(sitemap)
 print(f"  wrote sitemap.xml ({len(url_blocks)} URLs; "
       f"listing lastmod bumps: {_listing_hash_bumps}, "

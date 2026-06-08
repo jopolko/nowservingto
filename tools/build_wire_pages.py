@@ -806,7 +806,8 @@ def build_wire_page(target, entries):
     else:
         dek = f"{n_total} registered in the past year. From the City of Toronto’s nightly registry."
     today = date.today()
-    updated_str = today.strftime('%B %-d, %Y')
+    updated_str = today.isoformat()
+    updated_human = today.strftime('%B %-d, %Y')
 
     # Hero — photo backdrop retired 2026-06-03 with the rest of the photo
     # pipeline. All wire pages now use the flat cuisine-color gradient hero
@@ -828,7 +829,7 @@ def build_wire_page(target, entries):
     meta_desc = (
         f"{n_7d} licensed this week, {n_total} in the past year. "
         f"Every {label} restaurant the City of Toronto has licensed, "
-        f"tracked nightly. Updated {updated_str}."
+        f"tracked nightly. Updated {updated_human}."
     )
 
     # Per-cuisine field note - hand-written in TARGETS as a template
@@ -859,6 +860,8 @@ def build_wire_page(target, entries):
 <meta name="twitter:card" content="summary_large_image">
 <link rel="canonical" href="https://nowservingto.com/wire/{target['key']}">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<script type="application/ld+json">{{"@context":"https://schema.org","@type":"Article","headline":{json.dumps(headline)},"description":{json.dumps(meta_desc)},"datePublished":{json.dumps(updated_str)},"dateModified":{json.dumps(updated_str)},"url":"https://nowservingto.com/wire/{target['key']}","author":{{"@type":"Organization","@id":"https://nowservingto.com/#organization","name":"NowServingTO","url":"https://nowservingto.com/"}},"publisher":{{"@type":"Organization","@id":"https://nowservingto.com/#organization","name":"NowServingTO","url":"https://nowservingto.com/"}},"about":{{"@type":"Thing","name":{json.dumps(label + " cuisine")}}}}}</script>
+<script type="application/ld+json">{{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{{"@type":"ListItem","position":1,"name":"Home","item":"https://nowservingto.com/"}},{{"@type":"ListItem","position":2,"name":{json.dumps(label + " wire")},"item":"https://nowservingto.com/wire/{target['key']}"}}]}}</script>
 <style>
   :root {{
     --ink: #131516; --ink2: #46494c; --muted: #74787c; --paper: #ffffff;
@@ -946,7 +949,7 @@ def build_wire_page(target, entries):
 </head>
 <body>
 
-{hero_html.replace('<div class="hero', '<div class="topbar"><a class="brand" href="/">NowServingTO</a><span class="updated"><b>This Week in Toronto</b> · ' + updated_str + '</span></div><div class="hero', 1)}
+{hero_html.replace('<div class="hero', '<div class="topbar"><a class="brand" href="/">NowServingTO</a><span class="updated"><b>This Week in Toronto</b> · ' + updated_human + '</span></div><div class="hero', 1)}
 
 <main>
 
