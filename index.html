@@ -883,6 +883,14 @@
   .all-cuisines a + a::before, .all-districts a + a::before, .all-neighborhoods a + a::before { content: ' · '; color: var(--line); }
   .all-districts { margin-top: 8px; }
   .all-neighborhoods { margin-top: 8px; margin-bottom: 32px; }
+  /* Neighbourhood browse section — visible, above the newsletter CTA */
+  .nbhd-browse { margin: 40px auto 0; max-width: 1100px; padding: 24px 24px 0; border-top: 1px solid var(--line); }
+  .nbhd-browse-h { font: 700 15px/1.2 var(--sans); color: var(--ink); margin: 0 0 4px; letter-spacing: -0.01em; }
+  .nbhd-browse-sub { font: 400 12px/1.5 var(--sans); color: var(--muted); margin: 0 0 10px; }
+  .nbhd-browse-nav { font: 400 13px/1.8 var(--sans); }
+  .nbhd-browse-nav a { color: var(--ink2); text-decoration: none; border-bottom: 1px dotted transparent; margin-right: 2px; }
+  .nbhd-browse-nav a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+  .nbhd-browse-nav a + a::before { content: ' · '; color: var(--line); }
   /* Subtle warm grey — neutral/professional, blends with content tier */
   .newsletter-cta { margin: 40px 0 24px; padding: 22px 24px; background: #f1f1ed; border: 1px solid #d9d1ba; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); display: grid; grid-template-columns: 1fr; gap: 16px; align-items: center; }
   .newsletter-cta .nl-pitch h2 { font: 700 17px/1.25 var(--sans); margin: 0 0 6px; color: var(--ink); letter-spacing: -0.005em; }
@@ -1609,6 +1617,15 @@
   </div>
 
   <!-- RELATED-CUISINES-START --><!-- RELATED-CUISINES-END -->
+
+  <section class="nbhd-browse" aria-label="Browse by neighbourhood">
+    <h2 class="nbhd-browse-h">Browse by neighbourhood</h2>
+    <p class="nbhd-browse-sub">21 iconic Toronto food corridors — each with its own page, updated daily.</p>
+    <nav class="nbhd-browse-nav" aria-label="Neighbourhood pages">
+      <!-- ALL-NEIGHBORHOODS-START --><a href="/neighborhood/agincourt">Agincourt</a><a href="/neighborhood/bloor-west-village">Bloor West Village</a><a href="/neighborhood/chinatown">Chinatown</a><a href="/neighborhood/corso-italia">Corso Italia</a><a href="/neighborhood/greektown">Greektown</a><a href="/neighborhood/kensington-market">Kensington Market</a><a href="/neighborhood/king-west">King West</a><a href="/neighborhood/koreatown">Koreatown</a><a href="/neighborhood/leslieville">Leslieville</a><a href="/neighborhood/little-italy">Little Italy</a><a href="/neighborhood/little-jamaica">Little Jamaica</a><a href="/neighborhood/little-portugal">Little Portugal</a><a href="/neighborhood/malvern">Malvern</a><a href="/neighborhood/roncesvalles">Roncesvalles</a><a href="/neighborhood/the-beaches">The Beaches</a><a href="/neighborhood/the-junction">The Junction</a><a href="/neighborhood/thorncliffe-park">Thorncliffe Park</a><a href="/neighborhood/west-queen-west">West Queen West</a><a href="/neighborhood/wexford">Wexford</a><a href="/neighborhood/willowdale">Willowdale</a><a href="/neighborhood/yorkville">Yorkville</a><!-- ALL-NEIGHBORHOODS-END -->
+    </nav>
+  </section>
+
   <section class="newsletter-cta" aria-label="Email alert signup">
     <div class="nl-pitch">
       <h2 id="alert-title">The week's newest Toronto restaurants, in your inbox</h2>

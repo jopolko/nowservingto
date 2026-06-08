@@ -2641,22 +2641,25 @@ def build_ld_breadcrumb(parts):
     """parts: list of (name, url) tuples in trail order. Returns a
     schema.org BreadcrumbList - drives the breadcrumb display Google
     sometimes substitutes for the URL in SERP results, generally lifting CTR."""
+    items = []
+    for i, (name, url) in enumerate(parts, 1):
+        item = {'@type': 'ListItem', 'position': i, 'name': name}
+        if url:
+            item['item'] = url
+        items.append(item)
     return {
         '@context': 'https://schema.org',
         '@type': 'BreadcrumbList',
-        'itemListElement': [
-            {'@type': 'ListItem', 'position': i, 'name': name, 'item': url}
-            for i, (name, url) in enumerate(parts, 1)
-        ],
+        'itemListElement': items,
     }
 
 
-def build_ld_faq(qa_pairs):
+def build_ld_faq(qa_pairs, page_url=None):
     """qa_pairs: list of (question, answer) tuples. Returns FAQPage schema.
     Google has tightened FAQ rich-result eligibility (mostly gov/health now)
     but the structured data still helps the page rank for the underlying
     'how' / 'what' / 'where' query family."""
-    return {
+    ld = {
         '@context': 'https://schema.org',
         '@type': 'FAQPage',
         'mainEntity': [
@@ -2665,6 +2668,9 @@ def build_ld_faq(qa_pairs):
             for q, a in qa_pairs
         ],
     }
+    if page_url:
+        ld['@id'] = page_url.rstrip('/') + '#faq'
+    return ld
 
 
 # slugify: "East Toronto" → "east-toronto" (also used by district page
@@ -3530,6 +3536,23 @@ def build_answers_corpus(cuisines_out, opens_365_by_cuisine, by_district,
             f_loc_html = ''
             f_loc_text = ''
         q = f"What is the newest {label} restaurant in Toronto?"
+        # District distribution for the cuisine — adds 20-25 words to every answer.
+        _dist_counts = {}
+        for _de in entries:
+            _dd = (_de.get('district') or '').strip()
+            if _dd: _dist_counts[_dd] = _dist_counts.get(_dd, 0) + 1
+        _top_dist = max(_dist_counts, key=_dist_counts.get) if _dist_counts else ''
+        _top_dist_n = _dist_counts.get(_top_dist, 0) if _top_dist else 0
+        _dist_html = (
+            f'The largest concentration is in <strong>{_esc(_top_dist)}</strong> '
+            f'({_top_dist_n} of {n365} tracked spots). '
+            if _top_dist and _top_dist_n > 1 and n365 > _top_dist_n else ''
+        )
+        _dist_text = (
+            f'The largest concentration is in {_top_dist} '
+            f'({_top_dist_n} of {n365} tracked spots). '
+            if _top_dist and _top_dist_n > 1 and n365 > _top_dist_n else ''
+        )
         # Blurb from the freshest entry for the differentiating detail sentence.
         _fblurb = ''
         _fw = WEB_VERIFY_CACHE.get(freshest.get('_cacheKey', '')) or {}
@@ -3555,7 +3578,8 @@ def build_answers_corpus(cuisines_out, opens_365_by_cuisine, by_district,
             + f'It was verified open via Google Places operational status'
             + (f', with its licence issued in {_f_issued_phrase}' if _f_issued_phrase else '')
             + f'. '
-            f'<strong>{n365}</strong> {_esc(label)} restaurants are currently tracked across Toronto, '
+            + _dist_html
+            + f'<strong>{n365}</strong> {_esc(label)} restaurants are currently tracked across Toronto, '
             f'all licensed within the last 365 days, verified open, and independently owned. Chains are excluded. '
             f'Data is sourced daily from the City of Toronto Municipal Licensing and Standards open data, '
             f'cross-referenced with Toronto Public Health DineSafe inspection records and Google Places. '
@@ -3568,7 +3592,8 @@ def build_answers_corpus(cuisines_out, opens_365_by_cuisine, by_district,
             + f'It was verified open via Google Places operational status'
             + (f', with its licence issued in {_f_issued_phrase}' if _f_issued_phrase else '')
             + f'. '
-            f'{n365} {label} restaurants are currently tracked across Toronto, '
+            + _dist_text
+            + f'{n365} {label} restaurants are currently tracked across Toronto, '
             f'all licensed within the last 365 days, verified open, and independently owned. Chains are excluded. '
             f'Data is sourced daily from the City of Toronto Municipal Licensing and Standards open data, '
             f'cross-referenced with Toronto Public Health DineSafe inspection records and Google Places.'
@@ -3903,6 +3928,9 @@ def build_answers_corpus(cuisines_out, opens_365_by_cuisine, by_district,
         f'<p class="ans-lede">Common questions about Toronto\'s newest restaurants '
         f'by cuisine and neighbourhood, answered from the live City of Toronto licence '
         f'registry. Updated daily. Last refresh: <strong>{_esc(reference_date_iso)}</strong>.</p>'
+        '<p class="ans-byline">Compiled and maintained by <strong>Josh Opolko</strong>, '
+        'NowServingTO — a daily-refresh independent restaurant directory sourced '
+        'from the City of Toronto open data.</p>'
         '</header>'
         '<main class="ans-main">'
         + '\n'.join(sections) +
@@ -3974,6 +4002,13 @@ def build_page_intro(cuisine_key, entries=None, label=None, n365=None, n30=None)
         if has_wire else ''
     )
     parts = []
+    # Question-form H2: matches AI extractor query patterns and signals
+    # page topic to crawlers without a generic statement heading.
+    if label:
+        parts.append(
+            f'<h2 class="page-intro-q">What is the newest {_esc(label)} '
+            f'restaurant in Toronto right now?</h2>'
+        )
     if intro:
         parts.append(f'<p>{_esc(intro)}{wire_inline}</p>')
     elif has_wire:
@@ -4203,11 +4238,32 @@ for c in cuisines_out:
          f"An AI model (Anthropic Claude) reviews the operating name, website "
          f"content, and any available menu information to determine the cuisine. "
          f"Multi-cuisine spots get tagged with every applicable cuisine."),
-    ])
-    # Cross-axis compound-query nav strip was removed 2026-05-20 - see
-    # build_xaxis_strip for the rationale (UX-redundant with the pickers,
-    # and SEO benefit was nil because every "X in Y" anchor pointed at
-    # the same shared landing URL rather than a unique compound page).
+    ], page_url=canonical)
+    # Cross-axis district nav strip: links to /cuisine/{key}/{district-slug}
+    # pages for each district that has at least one entry. Each target is a
+    # unique compound page (not a shared filter URL), so this passes the
+    # SEO test that killed the previous version.
+    _x_district_links = []
+    for _xe in entries:
+        _xd = (_xe.get('district') or '').strip()
+        if _xd:
+            _xds = _district_slug(_xd)
+            _xpath = f'/cuisine/{key}/{_xds}'
+            if _xpath not in [_l[1] for _l in _x_district_links]:
+                _x_district_links.append((_xd, _xpath))
+    _x_district_links.sort(key=lambda t: t[0])
+    _x_strip = ''
+    if _x_district_links:
+        _x_items = ''.join(
+            f'<a href="{_esc(p)}">{_esc(d)}</a>'
+            for d, p in _x_district_links
+        )
+        _x_strip = (
+            f'<nav class="related-cuisines" aria-label="{_esc(label)} by district">'
+            f'<span class="rc-label">{_esc(label)} in</span>'
+            f'{_x_items}'
+            f'</nav>'
+        )
     page = inject_into_html(
         page,
         static_block=cuisine_static,
@@ -4216,6 +4272,7 @@ for c in cuisines_out:
         page_intro_html=build_page_intro(key, entries=entries, label=label,
                                          n365=n365, n30=n30),
         related_html=(build_how_we_track(label)
+                      + _x_strip
                       + build_related_cuisines(key)
                       + build_community_partners(key)),
         lcp_preload_url=(entries[0].get('thumb') or '') if entries else '',
@@ -4333,7 +4390,7 @@ for label, entries in by_district.items():
          f"dataset of active business licences, cross-checked against "
          f"DineSafe inspections and social media signals to confirm "
          f"operating status."),
-    ])
+    ], page_url=canonical)
     # Cross-axis compound-query nav strip removed 2026-05-20 (same reason
     # as the cuisine-page version above - UX-redundant, SEO inert).
     page = inject_into_html(
@@ -4440,6 +4497,11 @@ for nbhd_slug, nbhd_entries in by_nbhd.items():
 
     # Editorial intro: cultural blurb + data sidecar (Block 1 style).
     nbhd_intro_parts = []
+    # Question-form H2 matches AI extractor query patterns for this corridor.
+    nbhd_intro_parts.append(
+        f'<h2 class="page-intro-q">What is the newest restaurant in '
+        f'{_esc(label)}, Toronto right now?</h2>'
+    )
     if blurb:
         nbhd_intro_parts.append(f'<p>{_esc(blurb)}</p>')
     # Data sidecar: count + freshest entry.
@@ -4546,7 +4608,7 @@ for nbhd_slug, nbhd_entries in by_nbhd.items():
             f"corridors. Other cuisines also operate in the area; this directory "
             f"surfaces every cuisine, not only the dominant one."
         ))
-    nbhd_faq = build_ld_faq(faq_pairs)
+    nbhd_faq = build_ld_faq(faq_pairs, page_url=canonical)
 
     # Block 3 + Adjacent corridors land in the RELATED-CUISINES marker —
     # mirrors the cuisine-page layout where build_how_we_track + related
@@ -4701,7 +4763,7 @@ for (cuisine_key, district), x_entries in intersection_data.items():
          f"Where DineSafe inspection data exists, "
          f"the earlier of the two dates is shown as 'first seen.' Closed and permanently-closed "
          f"places are filtered out."),
-    ])
+    ], page_url=f'https://nowservingto.com/cuisine/{cuisine_key}/{district_slug}')
     page = inject_into_html(
         page,
         static_block=x_static,
@@ -5639,7 +5701,7 @@ for entry in seen_entries.values():
     listing_breadcrumb_parts = [('Home', 'https://nowservingto.com/')]
     listing_breadcrumb_ld_parts = [('Home', 'https://nowservingto.com/')]
     if cuisine_slug:
-        cu_url = f'https://nowservingto.com/cuisine/{cuisine_slug}'
+        cu_url = f'https://nowservingto.com/cuisine/{cuisine_slug}/'
         listing_breadcrumb_parts.append((f'{primary_lbl} restaurants', cu_url))
         listing_breadcrumb_ld_parts.append((f'{primary_lbl} restaurants', cu_url))
     listing_breadcrumb_parts.append((name, None))
@@ -6789,6 +6851,8 @@ _lede_html = (
     '\'hood, updated daily. '
     '<a class="trends-lede-cta" href="/">Browse the full directory &rsaquo;</a>'
     '</p>'
+    '<p class="trends-byline">By <strong>Josh Opolko</strong> &middot; '
+    'NowServingTO &middot; Updated daily from the City of Toronto open data</p>'
     '</div>'
 )
 
@@ -7179,13 +7243,10 @@ _trends_article_ld = {
     "description": _trends_desc,
     "datePublished": REFERENCE_DATE.isoformat(),
     "dateModified": REFERENCE_DATE.isoformat(),
-    "author": {"@type": "Organization", "name": "NowServingTO",
-               "url": "https://nowservingto.com/"},
-    "publisher": {"@type": "Organization", "name": "NowServingTO",
-                  "url": "https://nowservingto.com/",
-                  "logo": {"@type": "ImageObject",
-                           "url": "https://nowservingto.com/favicon.svg"}},
-    "mainEntityOfPage": _trends_canonical,
+    "@id": _trends_canonical.rstrip('/') + '#article',
+    "author": {"@id": "https://nowservingto.com/#organization"},
+    "publisher": {"@id": "https://nowservingto.com/#organization"},
+    "mainEntityOfPage": {"@id": _trends_canonical},
     "isBasedOn": {
         "@type": "Dataset",
         "name": "Municipal Licensing and Standards - Business Licences and Permits",
