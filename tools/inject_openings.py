@@ -258,6 +258,12 @@ try:
     _CUISINE_INTROS.pop('_doc', None)
 except FileNotFoundError:
     _CUISINE_INTROS = {}
+
+_WIRE_EDITORIAL_PATH = Path(__file__).resolve().parent / 'data' / 'wire_editorial.json'
+try:
+    _WIRE_EDITORIAL = json.loads(_WIRE_EDITORIAL_PATH.read_text())
+except FileNotFoundError:
+    _WIRE_EDITORIAL = {}
 FOOD_CATS = {
     'EATING OR DRINKING ESTABLISHMENT',
     'TAKE-OUT OR RETAIL FOOD ESTABLISHMENT',
@@ -2454,6 +2460,7 @@ def build_static_rows(entries, link_to_listing=False, group_by_date=False):
         # restaurant's "own site" - fall through to mapsUrl / internal.
         site = r.get('website')
         if _is_aggregator_url(site): site = None
+        if site and not url_is_alive(site): site = None  # ECONNREFUSED/dead → fall back to mapsUrl
         link = site or r.get('mapsUrl') or internal_url
         name_ext_tgt = ' target="_blank" rel="noopener"' if link and not link.startswith('/r/') else ' rel="noopener"'
         # Diagonal-arrow indicator (↗) only when the name link goes to the
@@ -3978,48 +3985,34 @@ def build_page_intro(cuisine_key, entries=None, label=None, n365=None, n30=None)
     (any non-cuisine callers + backward compat)."""
     rec = _CUISINE_INTROS.get(cuisine_key) or {}
     intro = (rec.get('intro') or '').strip()
-    from pathlib import Path as _PathLib
-    has_wire = (_PathLib(ROOT) / 'wire' / f'{cuisine_key}.html').exists()
-    # Data sidecar renders when caller passes entry data.
-    data_blurb = (_data_blurb_sentence(label, entries, n365 or 0, n30 or 0)
-                  if (entries and label) else '')
-    # Block 2 ("Three most recent <cuisine> openings") is INTENTIONALLY
-    # omitted across all page types. The static feed below already shows
-    # those same 3 entries as the top 3 rows (it's freshness-sorted), so
-    # the named-list at top is visible duplication on every page type.
-    # Block 1 (data sidecar) already names the freshest entry — that's
-    # the AI-citation honeypot. AI extractors don't care about visual
-    # position; the feed + JSON-LD ItemList + meta description all carry
-    # the same passage signal without restating it in the page intro.
-    whats_new = ''
-    if not intro and not has_wire and not data_blurb: return ''
-    # Wire link rides INLINE at the end of the cultural-intro paragraph
-    # so the editorial reads as one continuous thought, not two stacked
-    # blocks. Falls back to standalone block when there's no intro text
-    # to ride on (cuisine with a wire page but no intro entry yet).
-    wire_inline = (
-        f' <a class="page-intro-wire" href="/wire/{cuisine_key}">Read the editorial brief →</a>'
-        if has_wire else ''
-    )
-    parts = []
-    # Question-form H2: matches AI extractor query patterns and signals
-    # page topic to crawlers without a generic statement heading.
-    if label:
-        parts.append(
+    _we_raw = _WIRE_EDITORIAL.get(cuisine_key, '')
+    # New format: list of {q, a} dicts — render as H2+answer pairs.
+    # Legacy format: raw HTML string — render as-is with a generic H2.
+    if isinstance(_we_raw, list) and _we_raw:
+        editorial_html = ''.join(
+            f'<h2 class="page-intro-q">{_esc(item["q"])}</h2>{item["a"]}'
+            for item in _we_raw
+        )
+        q_html = ''  # questions are embedded in editorial_html
+    else:
+        editorial_html = (_we_raw or '').strip()
+        q_html = (
             f'<h2 class="page-intro-q">What is the newest {_esc(label)} '
             f'restaurant in Toronto right now?</h2>'
+            if label else ''
         )
-    if intro:
-        parts.append(f'<p>{_esc(intro)}{wire_inline}</p>')
-    elif has_wire:
-        parts.append(
-            f'<p class="page-intro-wire">'
-            f'<a href="/wire/{cuisine_key}">Read the editorial brief →</a>'
-            f'</p>'
-        )
-    if data_blurb: parts.append(data_blurb)
-    if whats_new: parts.append(whats_new)
-    return f'<div class="page-intro">{"".join(parts)}</div>'
+    if not intro and not editorial_html: return ''
+    lede = f'<p>{_esc(intro)}</p>' if intro else ''
+    body = editorial_html
+    summary_label = _esc(label) if label else 'this cuisine'
+    return (
+        f'<div class="page-intro">'
+        f'<details class="intro-details">'
+        f'<summary>{summary_label}</summary>'
+        f'{q_html}{lede}{body}'
+        f'</details>'
+        f'</div>'
+    )
 
 
 def build_related_cuisines(cuisine_key):
@@ -4226,19 +4219,31 @@ for c in cuisines_out:
         ('Home', 'https://nowservingto.com/'),
         (f'{label} restaurants', canonical),
     ])
-    cuisine_faq = build_ld_faq([
-        (f"How often is the {label} restaurant list updated?",
-         f"Daily. Every morning we pull the latest City of Toronto business "
-         f"licences open data and re-classify any new entries."),
-        (f"Where does the {label} restaurant data come from?",
-         f"The City of Toronto's Municipal Licensing and Standards open dataset "
-         f"of active business licences, cross-checked against DineSafe inspections "
-         f"and social media signals to confirm the business is currently operating."),
-        (f"How is a restaurant classified as {label}?",
-         f"An AI model (Anthropic Claude) reviews the operating name, website "
-         f"content, and any available menu information to determine the cuisine. "
-         f"Multi-cuisine spots get tagged with every applicable cuisine."),
-    ], page_url=canonical)
+    # FAQ schema: prefer cuisine-specific Q+A from wire_editorial.json (new list
+    # format) over the generic boilerplate, which answers methodology questions
+    # nobody asks LLMs and dilutes the cuisine-specific citation signal.
+    _we_faq_raw = _WIRE_EDITORIAL.get(key, '')
+    if isinstance(_we_faq_raw, list) and _we_faq_raw:
+        import re as _re_faq
+        _faq_pairs = [
+            (item['q'], _re_faq.sub(r'<[^>]+>', ' ', item.get('a', '')).strip())
+            for item in _we_faq_raw
+        ]
+    else:
+        _faq_pairs = [
+            (f"How often is the {label} restaurant list updated?",
+             f"Daily. Every morning we pull the latest City of Toronto business "
+             f"licences open data and re-classify any new entries."),
+            (f"Where does the {label} restaurant data come from?",
+             f"The City of Toronto's Municipal Licensing and Standards open dataset "
+             f"of active business licences, cross-checked against DineSafe inspections "
+             f"and social media signals to confirm the business is currently operating."),
+            (f"How is a restaurant classified as {label}?",
+             f"An AI model (Anthropic Claude) reviews the operating name, website "
+             f"content, and any available menu information to determine the cuisine. "
+             f"Multi-cuisine spots get tagged with every applicable cuisine."),
+        ]
+    cuisine_faq = build_ld_faq(_faq_pairs, page_url=canonical)
     # Cross-axis district nav strip: links to /cuisine/{key}/{district-slug}
     # pages for each district that has at least one entry. Each target is a
     # unique compound page (not a shared filter URL), so this passes the
@@ -4503,39 +4508,15 @@ for nbhd_slug, nbhd_entries in by_nbhd.items():
         f'{_esc(label)}, Toronto right now?</h2>'
     )
     if blurb:
-        nbhd_intro_parts.append(f'<p>{_esc(blurb)}</p>')
-    # Data sidecar: count + freshest entry.
-    freshest = nbhd_entries[0]
-    fn = (freshest.get('operatingName') or '').strip()
-    fs = _street_name_only(freshest)
-    fd = freshest.get('daysOpen')
-    fck = freshest.get('cuisine') or ''
-    flbl = CUISINE_LABEL.get(fck, '')
-    if fn and fd is not None:
-        days_phrase = _ago_long(fd)
-        if n365 == 1:
-            data_blurb = (
-                f'<p class="page-intro-data">Toronto currently has <b>{n365}</b> '
-                f'verified-open restaurant in <b>{_esc(label)}</b> licensed in the '
-                f'last 365 days: <b>{_esc(fn)}</b>'
-                + (f' ({_esc(flbl)})' if flbl else '')
-                + (f' on <b>{_esc(fs)}</b>' if fs else '')
-                + f', first seen <b>{days_phrase} ago</b>. Chains are excluded. '
-                f'Data refreshed daily from the City of Toronto licence file.</p>'
-            )
-        else:
-            last_30 = f' <b>{n30}</b> opened in the last 30 days.' if n30 else ''
-            data_blurb = (
-                f'<p class="page-intro-data">Toronto currently has <b>{n365}</b> '
-                f'verified-open restaurants in <b>{_esc(label)}</b> licensed in '
-                f'the last 365 days.{last_30} '
-                f'The newest is <b>{_esc(fn)}</b>'
-                + (f' ({_esc(flbl)})' if flbl else '')
-                + (f' on <b>{_esc(fs)}</b>' if fs else '')
-                + f', first seen <b>{days_phrase} ago</b>. Chains are excluded. '
-                f'Data refreshed daily from the City of Toronto licence file.</p>'
-            )
-        nbhd_intro_parts.append(data_blurb)
+        nbhd_intro_parts.append(
+            f'<div class="intro-body"><p>{_esc(blurb)}</p></div>'
+            f'<button class="intro-toggle" aria-expanded="false" '
+            f'onclick="var b=this.previousElementSibling,o=b.classList.toggle(\'open\');'
+            f'this.textContent=o?\'▴ Collapse\':\'▾ Neighbourhood note\';">'
+            f'▾ Neighbourhood note</button>'
+        )
+    # data_blurb ("Toronto currently has N verified-open...") removed:
+    # redundant with the filter dropdown count.
     # Block 2 (the "Three most recent openings" list) is INTENTIONALLY
     # omitted on neighborhood pages. On cuisine pages with 20+ entries it
     # surfaces a top-3 summary that's genuinely distinct from the full
