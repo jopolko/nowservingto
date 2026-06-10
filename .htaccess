@@ -84,7 +84,7 @@ RewriteRule ^(.*)$ https://nowservingto.com/$1 [R=301,L]
 # lists below. No fallback to /index.html for unknown keys - Apache returns
 # a real 404, which Google de-indexes cleanly.
 RewriteCond %{DOCUMENT_ROOT}/cuisine/$1.html -f
-RewriteRule ^cuisine/([a-z_]+)/?$ /cuisine/$1.html [L]
+RewriteRule ^cuisine/([a-z_-]+)/?$ /cuisine/$1.html [L]
 
 # A-Z restaurant index: /all → /all.html
 RewriteRule ^all/?$ /all.html [L]
@@ -92,7 +92,7 @@ RewriteRule ^all/?$ /all.html [L]
 # Cuisine × district intersection pages — /cuisine/<key>/<district-slug>
 # rewrites to the static file at /cuisine/<key>/<district-slug>.html
 RewriteCond %{DOCUMENT_ROOT}/cuisine/$1/$2.html -f
-RewriteRule ^cuisine/([a-z_]+)/([a-z-]+)/?$ /cuisine/$1/$2.html [L]
+RewriteRule ^cuisine/([a-z_-]+)/([a-z-]+)/?$ /cuisine/$1/$2.html [L]
 
 # Canonical-alias redirects. Mirrors _CANONICAL_ALIASES in tools/cuisines.py
 # (validator collapses these slugs to the seed canonical form). Preserves
@@ -143,12 +143,40 @@ RewriteRule ^trends/?$ /trends.html [L]
 RewriteCond %{DOCUMENT_ROOT}/trends/$1.html -f
 RewriteRule ^trends/([0-9]{4}-[0-9]{2})/?$ /trends/$1.html [L]
 
-# /wire/{cuisine} → wire/{cuisine}.html. Diaspora media pitch pages -
-# self-contained editorial briefs (inline SVG charts, no JS) generated
-# by tools/build_wire_pages.py from corridors.json. Same no-fallback
-# pattern as /cuisine/{key} - unknown wire keys return a real 404.
+# /wire/{cuisine} — editorial content merged into cuisine pages.
+# All wire pages 301 to their cuisine equivalent. monica-lewis is a
+# tribute page with its own identity; it keeps serving normally.
+RewriteRule ^wire/afghan/?$ /cuisine/afghan [R=301,L]
+RewriteRule ^wire/bangladeshi/?$ /cuisine/bangladeshi [R=301,L]
+RewriteRule ^wire/caribbean/?$ /cuisine/caribbean [R=301,L]
+RewriteRule ^wire/chinese/?$ /cuisine/chinese [R=301,L]
+RewriteRule ^wire/colombian/?$ /cuisine/colombian [R=301,L]
+RewriteRule ^wire/ethiopian/?$ /cuisine/ethiopian [R=301,L]
+RewriteRule ^wire/filipino/?$ /cuisine/filipino [R=301,L]
+RewriteRule ^wire/french/?$ /cuisine/french [R=301,L]
+RewriteRule ^wire/greek/?$ /cuisine/greek [R=301,L]
+RewriteRule ^wire/indian/?$ /cuisine/indian [R=301,L]
+RewriteRule ^wire/italian/?$ /cuisine/italian [R=301,L]
+RewriteRule ^wire/jamaican/?$ /cuisine/jamaican [R=301,L]
+RewriteRule ^wire/japanese/?$ /cuisine/japanese [R=301,L]
+RewriteRule ^wire/korean/?$ /cuisine/korean [R=301,L]
+RewriteRule ^wire/lebanese/?$ /cuisine/lebanese [R=301,L]
+RewriteRule ^wire/mexican/?$ /cuisine/mexican [R=301,L]
+RewriteRule ^wire/middle_east/?$ /cuisine/middle_east [R=301,L]
+RewriteRule ^wire/nepalese/?$ /cuisine/south_asian [R=301,L]
+RewriteRule ^wire/nigerian/?$ /cuisine/nigerian [R=301,L]
+RewriteRule ^wire/pakistani/?$ /cuisine/pakistani [R=301,L]
+RewriteRule ^wire/persian/?$ /cuisine/persian [R=301,L]
+RewriteRule ^wire/portuguese/?$ /cuisine/portuguese [R=301,L]
+RewriteRule ^wire/sri_lankan/?$ /cuisine/sri_lankan [R=301,L]
+RewriteRule ^wire/tamil/?$ /cuisine/tamil [R=301,L]
+RewriteRule ^wire/thai/?$ /cuisine/thai [R=301,L]
+RewriteRule ^wire/trinidadian/?$ /cuisine/caribbean [R=301,L]
+RewriteRule ^wire/turkish/?$ /cuisine/turkish [R=301,L]
+RewriteRule ^wire/vietnamese/?$ /cuisine/vietnamese [R=301,L]
+# monica-lewis is a tribute page — served as-is, no redirect
 RewriteCond %{DOCUMENT_ROOT}/wire/$1.html -f
-RewriteRule ^wire/([a-z_]+)/?$ /wire/$1.html [L]
+RewriteRule ^wire/([a-z_-]+)/?$ /wire/$1.html [L]
 
 # Per-district SEO landing pages: /district/{slug} → district/{slug}.html
 RewriteCond %{DOCUMENT_ROOT}/district/$1.html -f

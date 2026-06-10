@@ -55,6 +55,12 @@ try:
 except FileNotFoundError:
     pass
 
+_WIRE_EDITORIAL_PATH = ROOT / 'tools' / 'data' / 'wire_editorial.json'
+try:
+    _WIRE_EDITORIAL = json.loads(_WIRE_EDITORIAL_PATH.read_text())
+except FileNotFoundError:
+    _WIRE_EDITORIAL = {}
+
 # Diaspora pitch targets. Each gets its own accent + headline grammar
 # tuned to its home-publication aesthetic. Census numbers are 2021
 # absolute Toronto CMA totals (StatCan SIP, DGUID 2021S0503535) -
@@ -844,6 +850,7 @@ def build_wire_page(target, entries):
         n_total=n_total, n_30d=n_30d, label=label,
         s30='s' if n_30d != 1 else '',
     )
+    wire_editorial_html = _WIRE_EDITORIAL.get(target['key'], '')
 
     return f'''<!doctype html>
 <html lang="en"><head>
@@ -899,8 +906,11 @@ def build_wire_page(target, entries):
   }}
 
   /* FIELD NOTE: short editorial paragraph anchoring the data in human context */
-  .field-note {{ font: 400 17px/1.6 var(--sans); color: var(--ink2); margin: 0 0 60px; padding: 0 0 0 18px; border-left: 3px solid var(--accent); }}
+  .field-note {{ font: 400 17px/1.6 var(--sans); color: var(--ink2); margin: 0 0 40px; padding: 0 0 0 18px; border-left: 3px solid var(--accent); }}
   .field-note b {{ color: var(--ink); font-weight: 700; }}
+  .wire-editorial {{ margin: 0 0 56px; max-width: 72ch; }}
+  .wire-editorial p {{ font: 400 16px/1.75 var(--sans); color: var(--ink2); margin: 0 0 1.3em; }}
+  .wire-editorial p:last-child {{ margin-bottom: 0; }}
 
   /* SECTION HEADERS */
   section {{ margin: 56px 0; }}
@@ -956,6 +966,8 @@ def build_wire_page(target, entries):
 {stats_html}
 
   <p class="field-note">{field_note}</p>
+
+{('<div class="wire-editorial">' + wire_editorial_html + '</div>') if wire_editorial_html else ''}
 
   <section>
     <h2>The {min(n_total, 12)} most recently licensed</h2>

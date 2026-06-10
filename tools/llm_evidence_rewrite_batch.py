@@ -112,30 +112,73 @@ def _scrub_timebombs(text):
 SYSTEM_PROMPT = """You're writing editorial blurbs for a Toronto
 restaurant directory. Each blurb reads like a directory entry from a
 careful neighbourhood guide — factual, specific, and grounded in the
-operating reality of the kitchen.
+operating reality of the kitchen. The blurbs are indexed by AI
+assistants (ChatGPT, Perplexity, Google AI Overviews), so each one
+must be long enough to be cited as a complete answer — not a teaser.
 
 You'll be given the restaurant's name, cuisine, address+district, prior
 tenant (if the storefront had one), and a verification note containing
-what we know about the operation. Write a blurb of **70-110 words**
-following this structure:
+what we know about the operation. Write a blurb of **130-160 words**
+following this four-sentence structure:
 
   Sentence 1 — WHAT + WHERE: identify the cuisine/format and the
-  specific neighbourhood + street it sits on. Reference the prior
-  tenant if one is provided ("taking over from X" / "in a unit most
-  recently held by X").
+  specific neighbourhood + street it sits on.
 
-  Sentence 2-4 — WHO + DIFFERENTIATOR: name the signature dishes,
-  the regional cuisine sub-style (Hyderabadi vs. Punjabi, Cantonese
-  vs. Sichuan, Tamil vs. Sinhalese, etc.) when the note supports it,
-  the operating format (counter, sit-down, family-run, halal, etc.),
-  and what distinguishes the kitchen. End on a factual closer about
-  the operation — neighbourhood corridor, online ordering presence,
-  hours format, sit-down vs takeout, etc.
+  Sentence 2 — THE DIFFERENTIATOR: what makes THIS kitchen distinct
+  from the generic version of this cuisine. The reader has 20 tabs open.
+  Give them one fact that closes the tab. In order of preference:
+    • A city or region of origin: if the evidence names Duhok, Hyderabad,
+      Lahore, Guangzhou, Oaxaca, Addis Ababa — use that name. "Kurdish
+      shawarma rooted in Duhok" is more useful than "Kurdish diaspora
+      tradition." The city IS the differentiator.
+    • A specific dish or technique not shared by every restaurant of
+      this cuisine: Hủ Tiếu Nam Vang is not Pho. Makgeolli brewing is
+      not Korean BBQ. Name the specific thing.
+    • An operating format that changes who should go: counter-only
+      takeout, full sit-down with bar, 24-hour, halal-certified,
+      family-run with <30 seats.
+
+  Sentence 3 — DEPTH: expand on the differentiator. Who does this
+  kitchen serve — which community, which diaspora, which occasion?
+  What is the dining experience actually like: counter-only, full
+  sit-down, market stall, shared plates, BYOB? What does a first
+  visit look like in practice? One concrete detail the evidence
+  supports, written as a fact rather than a recommendation.
+
+  Sentence 4 — THE ANSWER HOOK: a standalone, extractable claim
+  that directly answers "what should I order" or "why is this
+  worth going to" for someone who has never been. Write it as an
+  assertion that can be lifted out of the blurb and cited alone.
+  Examples of the register: "The lamb Mandi is slow-roasted whole
+  and carved tableside — the kitchen's calling card since day one."
+  "The counter runs a rotating selection of Oaxacan tlayudas not
+  found elsewhere in the city." If the evidence supports no specific
+  dish claim, make the hook about the format or the community need
+  it fills: "The kitchen is one of the few halal-certified Ethiopian
+  spots in Scarborough, making it the go-to for the local community."
+  Never invent dishes; only name what the evidence explicitly supports.
 
   DO NOT add a source-attribution sentence ("Verified open via the
   City of Toronto licence registry" or similar). The site-wide
   methodology line on every page already attributes the source —
   repeating it per-entry is redundant boilerplate.
+
+**FILLER BAN** — these phrases are forbidden because they apply to
+every restaurant and therefore say nothing:
+  • "time-honored techniques" / "time-honoured"
+  • "passed through generations" / "generational recipes"
+  • "bold, aromatic cooking that defines the cuisine"
+  • "authentic preparations of traditional fare"
+  • "authentic flavors" / "authentic taste"
+  • "the cuisine in general terms"
+  • "a kitchen that takes classic techniques seriously"
+  • "drawing on the rich culinary tradition"
+  • "vibrant" / "diverse" / "rich tapestry"
+  • "inviting atmosphere" / "warm atmosphere"
+  • any sentence that would be equally true of every other
+    restaurant of the same cuisine in the directory.
+If you reach for one of these, stop and ask: what specific fact
+from the evidence replaces this? If there is none, end earlier.
 
 Hard rules:
   - First letter of the blurb MUST be capitalized (full sentence case).
@@ -189,7 +232,7 @@ Hard rules:
   - Return PURE JSON ONLY — no ```json fences, no markdown wrapper.
 
 Return JSON on one line:
-  {"blurb": "<your 70-110 word blurb, no source-attribution closing>"}
+  {"blurb": "<your 40-90 word blurb, no source-attribution closing>"}
 """
 
 
@@ -225,8 +268,9 @@ def http_request(method, url, data=None):
 
 
 def main():
+    force = '--force' in sys.argv
     cache = json.loads(CACHE_PATH.read_text()) if CACHE_PATH.exists() else {}
-    print(f"cache state: total={len(cache)}")
+    print(f"cache state: total={len(cache)}{' (--force: regenerating all)' if force else ''}")
 
     if not DATA_PATH.exists():
         sys.exit(f"{DATA_PATH} missing")
@@ -245,7 +289,7 @@ def main():
     targets = []   # list of (cache_key, name, cuisine_label, address, district, prior, evidence)
     for r in recent:
         ck = r.get('_cacheKey', '')
-        if not ck or ck in cache: continue
+        if not ck or (ck in cache and not force): continue
         wv_e = wv.get(ck) or {}
         ev = (wv_e.get('validator_evidence') or wv_e.get('evidence') or '').strip()
         if not ev: continue
@@ -271,21 +315,21 @@ def main():
             f"Cuisine: {cuisine}",
             f"Address: {addr}" + (f" ({district})" if district else ''),
         ]
-        if prior:
-            prompt_lines.append(f"Prior tenant at this address: {prior}")
+        # prior tenant intentionally omitted — "taking over from X" implies
+        # closure which we can't verify; DineSafe address matching is imprecise.
         prompt_lines.append(f"Verification note: {ev}")
         prompt_lines.append("")
         prompt_lines.append(
-            "Write an 80-120 word editorial blurb following the structure "
-            "in the system prompt. End with the verbatim source-assertion "
-            "sentence."
+            "Write a 130-160 word editorial blurb following the "
+            "four-sentence structure in the system prompt. Do not add a "
+            "source-attribution closing sentence."
         )
         prompt = '\n'.join(prompt_lines)
         requests.append({
             'custom_id': custom_id,
             'params': {
                 'model': MODEL,
-                'max_tokens': 400,
+                'max_tokens': 600,
                 'system': SYSTEM_PROMPT,
                 'messages': [{'role': 'user', 'content': prompt}],
             },
@@ -384,7 +428,7 @@ def main():
             'raw': text_out[:280],
             'in_tok': usage.get('input_tokens', 0),
             'out_tok': usage.get('output_tokens', 0),
-            'via': 'haiku_editorial_v2',
+            'via': 'haiku_editorial_v3_geo',
             'rewrote_at': rewrote_at,
         }
         n_ok += 1

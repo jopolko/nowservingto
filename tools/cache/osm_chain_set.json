@@ -35,15 +35,10 @@
    "wikidata": "Q104844862",
    "osmCount": 14
   },
-  "BASIL BOX": {
-   "display": "Basil Box",
-   "wikidata": "Q112966056",
-   "osmCount": 3
-  },
   "BASKIN-ROBBINS": {
    "display": "Baskin-Robbins",
    "wikidata": "Q584601",
-   "osmCount": 36
+   "osmCount": 37
   },
   "BB.Q CHICKEN": {
    "display": "bb.q Chicken",
@@ -60,15 +55,10 @@
    "wikidata": "Q138763371",
    "osmCount": 2
   },
-  "BLAZE PIZZA": {
-   "display": "Blaze Pizza",
-   "wikidata": "Q23016666",
-   "osmCount": 2
-  },
   "BOOSTER JUICE": {
    "display": "Booster Juice",
    "wikidata": "Q4943796",
-   "osmCount": 49
+   "osmCount": 50
   },
   "BOSTON PIZZA": {
    "display": "Boston Pizza",
@@ -113,7 +103,7 @@
   "CHIPOTLE": {
    "display": "Chipotle",
    "wikidata": "Q465751",
-   "osmCount": 22
+   "osmCount": 23
   },
   "CHUCK E. CHEESE": {
    "display": "Chuck E. Cheese",
@@ -168,7 +158,7 @@
   "DAIRY QUEEN": {
    "display": "Dairy Queen",
    "wikidata": "Q1141226",
-   "osmCount": 21
+   "osmCount": 20
   },
   "DENNY'S": {
    "display": "Denny's",
@@ -183,12 +173,12 @@
   "DQ GRILL & CHILL": {
    "display": "DQ Grill & Chill",
    "wikidata": "Q1141226",
-   "osmCount": 5
+   "osmCount": 6
   },
   "EARLS": {
    "display": "Earls",
    "wikidata": "Q5326525",
-   "osmCount": 5
+   "osmCount": 6
   },
   "EAST SIDE MARIO'S": {
    "display": "East Side Mario's",
@@ -228,7 +218,7 @@
   "FRESHII": {
    "display": "Freshii",
    "wikidata": "Q5503051",
-   "osmCount": 36
+   "osmCount": 35
   },
   "FRESHLY SQUEEZED": {
    "display": "Freshly Squeezed",
@@ -290,6 +280,11 @@
    "wikidata": "Q6111066",
    "osmCount": 10
   },
+  "JERSEY MIKE'S SUBS": {
+   "display": "Jersey Mike's Subs",
+   "wikidata": "Q6184897",
+   "osmCount": 2
+  },
   "JIMMY THE GREEK": {
    "display": "Jimmy the Greek",
    "wikidata": "Q17077817",
@@ -318,7 +313,7 @@
   "KERNELS POPCORN": {
    "display": "Kernels Popcorn",
    "wikidata": "Q64876684",
-   "osmCount": 9
+   "osmCount": 10
   },
   "KFC": {
    "display": "KFC",
@@ -368,7 +363,7 @@
   "MARY BROWN'S": {
    "display": "Mary Brown's",
    "wikidata": "Q6779125",
-   "osmCount": 15
+   "osmCount": 16
   },
   "MCDONALD'S": {
    "display": "McDonald's",
@@ -433,12 +428,12 @@
   "NEW YORK FRIES": {
    "display": "New York Fries",
    "wikidata": "Q7013558",
-   "osmCount": 12
+   "osmCount": 13
   },
   "OSMOW'S": {
    "display": "Osmow's",
    "wikidata": "Q115048716",
-   "osmCount": 36
+   "osmCount": 37
   },
   "PANAGO": {
    "display": "Panago",
@@ -483,7 +478,7 @@
   "PIZZA PIZZA": {
    "display": "Pizza Pizza",
    "wikidata": "Q1194143",
-   "osmCount": 125
+   "osmCount": 124
   },
   "PIZZAIOLO": {
    "display": "Pizzaiolo",
@@ -543,12 +538,12 @@
   "SECOND CUP": {
    "display": "Second Cup",
    "wikidata": "Q862180",
-   "osmCount": 41
+   "osmCount": 40
   },
   "SHAKE SHACK": {
    "display": "Shake Shack",
    "wikidata": "Q1058722",
-   "osmCount": 5
+   "osmCount": 6
   },
   "SHANGHAI 360": {
    "display": "Shanghai 360",
@@ -623,7 +618,7 @@
   "TACO BELL": {
    "display": "Taco Bell",
    "wikidata": "Q752941",
-   "osmCount": 26
+   "osmCount": 27
   },
   "TAHINI'S": {
    "display": "Tahini's",
@@ -668,7 +663,7 @@
   "TIM HORTONS": {
    "display": "Tim Hortons",
    "wikidata": "Q175106",
-   "osmCount": 445
+   "osmCount": 446
   },
   "TIMOTHY'S": {
    "display": "Timothy's",
@@ -726,7 +721,7 @@
    "osmCount": 5
   }
  },
- "generatedAt": "2026-05-23T05:17:06Z",
+ "generatedAt": "2026-06-01T05:17:08Z",
  "source": "OpenStreetMap (Overpass API)",
  "bbox": [
   43.58,

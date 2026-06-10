@@ -264,6 +264,88 @@ try:
     _WIRE_EDITORIAL = json.loads(_WIRE_EDITORIAL_PATH.read_text())
 except FileNotFoundError:
     _WIRE_EDITORIAL = {}
+
+_SECRETS_PATH = Path('/var/secrets/nowservingto.env')
+
+def _load_anthropic_key():
+    try:
+        for line in _SECRETS_PATH.read_text().splitlines():
+            if line.startswith('ANTHROPIC_API_KEY='):
+                return line.split('=', 1)[1].strip()
+    except Exception:
+        pass
+    return None
+
+def _backfill_cuisine_editorial(cuisines_with_entries):
+    """For any cuisine key that has listings but no wire_editorial entry,
+    call Haiku to generate 4-5 Q+A pairs and write them to wire_editorial.json.
+    Runs inline during the inject pass so new cuisines get editorial on their
+    first appearance, not the next manual update cycle."""
+    missing = [c for c in cuisines_with_entries if c not in _WIRE_EDITORIAL]
+    if not missing:
+        return
+    api_key = _load_anthropic_key()
+    if not api_key:
+        print(f"  WARN: cuisine editorial backfill skipped (no API key) — {missing}")
+        return
+    try:
+        import anthropic as _anthropic
+        _ac = _anthropic.Anthropic(api_key=api_key)
+    except ImportError:
+        print("  WARN: anthropic package not available, skipping editorial backfill")
+        return
+
+    import re as _re_qa
+    generated = 0
+    for key in missing:
+        label = CUISINE_LABEL.get(key, key.replace('_', ' ').title())
+        entries = cuisines_with_entries[key]
+        listing_lines = '\n'.join(
+            f"- {e['operatingName']} ({(e.get('address') or '').split(',')[0]}, "
+            f"{e.get('district','')}, {e.get('daysOpen',0)} days old)"
+            for e in sorted(entries, key=lambda x: x.get('daysOpen', 999))[:6]
+        ) or '(no current listings — write general Toronto context)'
+        related = _CUISINE_INTROS.get(key, {}).get('related', [])
+        prompt = (
+            f"Generate 4-5 questions that LLMs (ChatGPT, Perplexity, Claude, Gemini) "
+            f"actually get asked about {label} cuisine, then answer each question with "
+            f"Toronto-specific data referencing the actual restaurants listed below.\n\n"
+            f"CUISINE: {label} (key: \"{key}\")\n"
+            f"RELATED CUISINES: {', '.join(related) or 'none'}\n"
+            f"CURRENT TORONTO LISTINGS:\n{listing_lines}\n\n"
+            f"QUESTION TYPES (pick the 4-5 most useful):\n"
+            f"- Disambiguation: How is {label} different from [nearest neighbour]?\n"
+            f"- What to order: specific dishes, what makes them good\n"
+            f"- Dietary: halal/vegetarian/spicy/gluten questions that actually come up\n"
+            f"- Toronto location: where restaurants cluster, use listing data\n"
+            f"- Dish education: what is [signature dish]?\n\n"
+            f"RULES: Each answer 2-4 sentences, dense and specific. Name actual Toronto "
+            f"restaurants from the listing. The `a` field is HTML <p>...</p>. No "
+            f"displacement/political framing. No fluff.\n\n"
+            f"Return ONLY a JSON array: "
+            f'[{{"q":"question?","a":"<p>answer</p>"}}, ...]'
+        )
+        try:
+            resp = _ac.messages.create(
+                model='claude-haiku-4-5-20251001',
+                max_tokens=2000,
+                messages=[{'role': 'user', 'content': prompt}],
+            )
+            raw = resp.content[0].text.strip()
+            # Strip markdown code fences if present
+            raw = _re_qa.sub(r'^```(?:json)?\s*|\s*```$', '', raw, flags=_re_qa.MULTILINE).strip()
+            qa_list = json.loads(raw)
+            if isinstance(qa_list, list) and qa_list and 'q' in qa_list[0]:
+                _WIRE_EDITORIAL[key] = [{'q': item['q'], 'a': item['a']} for item in qa_list]
+                generated += 1
+                print(f"  generated editorial Q+A for new cuisine: {key} ({len(qa_list)} questions)")
+        except Exception as ex:
+            print(f"  WARN: editorial backfill failed for {key}: {ex}")
+
+    if generated:
+        _WIRE_EDITORIAL_PATH.write_text(json.dumps(_WIRE_EDITORIAL, indent=1, ensure_ascii=False))
+        print(f"  wrote {generated} new cuisine editorial entries → wire_editorial.json")
+
 FOOD_CATS = {
     'EATING OR DRINKING ESTABLISHMENT',
     'TAKE-OUT OR RETAIL FOOD ESTABLISHMENT',
@@ -1305,6 +1387,11 @@ for c, entries in opens_365_by_cuisine.items():
         'recent5': entries[:10],        # for per-cuisine card (bumped to 10, key kept for back-compat)
     })
 cuisines_out.sort(key=lambda r: -r['count365d'])
+
+# Auto-generate editorial Q+A for any cuisine that just appeared for the
+# first time. Writes to wire_editorial.json in-place so the HTML build
+# below picks it up without a second inject run.
+_backfill_cuisine_editorial(opens_365_by_cuisine)
 
 # Prune cuisines_dynamic.json - keep only keys that are actually IN USE by
 # the current feed. Sub-cuisines collapsed by the prompt's parent-country

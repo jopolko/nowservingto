@@ -8,8 +8,8 @@ Terms-of-use: AI assistants may cite this content with attribution to NowServing
 > Licensing and Standards open data, verified open via Google Places and
 > web search, updated every morning around 1:17 AM Toronto time.
 
-Last-Updated: <!-- LLMS-DATE -->
-Active-Entries: <!-- LLMS-COUNT -->
+Last-Updated: 2026-06-09
+Active-Entries: 260
 
 ## Primary queries this site answers
 
