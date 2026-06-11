@@ -151,20 +151,14 @@ def _neighborhood_for_entry(entry):
     return {'slug': None, 'label': official, 'official_area': official}
 
 
-# Per-listing content-hash cache. Powers the /r/<slug> sitemap <lastmod>
-# field. Schema: {slug: {"hash": "<sha1-hex>", "lastmod": "YYYY-MM-DD"}}.
-# Each cron run: compute a fresh hash of the entry's SEO-relevant fields
-# (name, address, cuisine, rating, website, dishes, blurb). If the hash
-# differs from the cached one, bump `lastmod` to today and store the new
-# hash. If unchanged, keep the prior lastmod. The result: Google sees a
-# stable lastmod when nothing meaningfully changed, and a fresh one the
-# moment a rating, website, dish list, or editorial blurb gets updated.
-LISTING_HASH_CACHE_PATH = f'{ROOT}/tools/cache/listing_content_hash.json'
-try:
-    LISTING_HASH_CACHE = json.load(open(LISTING_HASH_CACHE_PATH))
-    LISTING_HASH_CACHE.pop('_doc', None)
-except FileNotFoundError:
-    LISTING_HASH_CACHE = {}
+# NOTE: /r/<slug> listing pages are intentionally OMITTED from sitemap.xml
+# (2026-06-11). They are thin/templated per-listing surfaces that Bing in
+# particular files under "crawled — not indexed," which drags down whole-site
+# crawl trust when 260 of ~480 sitemap URLs sit unindexed. The pages stay live
+# and internally linked (from /all, cuisine, district, neighborhood pages) so
+# they remain crawlable for both search and AI/GEO; we just stop advertising
+# them as priority-index targets. The former per-listing content-hash cache
+# (which only ever powered the /r/ sitemap <lastmod>) was removed with them.
 
 # OSM-derived chain brand set, built daily by tools/build_osm_chain_set.py
 # from OpenStreetMap. Keys are UPPER-CASED brand names ("241 PIZZA", "A&W")
@@ -4346,7 +4340,7 @@ for c in cuisines_out:
     _x_district_links.sort(key=lambda t: t[0])
     _x_strip = ''
     if _x_district_links:
-        _x_items = ''.join(
+        _x_items = ', '.join(
             f'<a href="{_esc(p)}">{_esc(d)}</a>'
             for d, p in _x_district_links
         )
@@ -5078,6 +5072,10 @@ _nav_subs = [
     (r'(<!-- ALL-NEIGHBORHOODS-START -->).*?(<!-- ALL-NEIGHBORHOODS-END -->)', _all_neighborhoods_html),
     (r'(<!-- CUISINE-DROPDOWN-START -->).*?(<!-- CUISINE-DROPDOWN-END -->)', _cuisine_picker_html),
     (r'(<!-- DISTRICT-DROPDOWN-START -->).*?(<!-- DISTRICT-DROPDOWN-END -->)', _district_picker_html),
+    # /all was orphaned (sitemap-only) until 2026-06-11; every page now links
+    # the A-Z index so its 260 static /r/ links pass crawl-priority signals.
+    (r'(<!-- ALL-INDEX-START -->).*?(<!-- ALL-INDEX-END -->)',
+     f'<a href="/all">All {len(alpha_entries)} restaurants A&ndash;Z</a>'),
 ]
 for _pat, _html in _nav_subs:
     listing_template = re.sub(_pat,
@@ -7605,51 +7603,11 @@ except Exception as ex:
 # and `/dispatch/latest` (canonicals to /dispatch/<ym>) are intentionally
 # omitted. <changefreq> and <priority> are intentionally omitted; Google has
 # ignored both since ~2017 and they're file weight without signal value.
-import hashlib as _hashlib
 
 def _sitemap_url(loc, lastmod):
     """Minimal <url> block — <loc> + <lastmod> only, per Google's current
     sitemap protocol recommendations."""
     return f'  <url>\n    <loc>{loc}</loc>\n    <lastmod>{lastmod}</lastmod>\n  </url>'
-
-def _listing_content_hash(entry):
-    """Hash the SEO-relevant fields of a listing. Any change to a field a
-    visitor or AI extractor would notice → fresh hash → lastmod bump.
-
-    Fields are pulled from the source-of-truth caches (PLACES_CACHE,
-    MENU_HIGHLIGHTS_CACHE, EVIDENCE_REWRITE_CACHE) keyed by _cacheKey,
-    so the hash mirrors what gets rendered onto /r/<slug>.html. Volatile
-    internal metadata (timestamps, token counts, raw API payloads) is
-    excluded so the hash only flips when render output actually changes."""
-    website = _validator_best_website(entry.get('validator_judgment'))
-    if not website: website = entry.get('website') or ''
-    ck = entry.get('_cacheKey') or ''
-    pl = PLACES_CACHE.get(ck) or {}
-    mh = MENU_HIGHLIGHTS_CACHE.get(ck) or {}
-    er = EVIDENCE_REWRITE_CACHE.get(ck) or {}
-    payload = {
-        'name': (entry.get('operatingName') or '').strip(),
-        'address': (entry.get('address') or '').strip(),
-        'district': (entry.get('district') or '').strip(),
-        'cuisine': entry.get('cuisine') or '',
-        'cuisines': sorted(entry.get('cuisines') or []),
-        'website': website,
-        # Places-derived signals visible on the listing page.
-        'rating': pl.get('rating'),
-        'reviewCount': pl.get('reviewCount'),
-        'matchedName': pl.get('matchedName') or '',
-        'matchedAddress': pl.get('matchedAddress') or '',
-        'editorialSummary': pl.get('editorialSummary') or '',
-        # Dish list from menu_highlights.
-        'dishes': sorted(mh.get('dishes') or []) if mh.get('status') == 'ok' else [],
-        # Editorial blurb (validator-evidence rewrite).
-        'blurb': (er.get('blurb') or '').strip() if er.get('status') == 'ok' else '',
-        # Prior-tenant signal — visible on listing pages.
-        'priorTenant': entry.get('priorTenant') or None,
-        'firstSeen': entry.get('firstSeen') or '',
-    }
-    blob = json.dumps(payload, sort_keys=True, separators=(',', ':'))
-    return _hashlib.sha1(blob.encode('utf-8')).hexdigest()
 
 _today_iso = REFERENCE_DATE.isoformat()
 
@@ -7751,7 +7709,7 @@ print(f"  wrote /answers.html ({_answers_n} Q&A pairs)")
 url_blocks = [
     _sitemap_url(f'{SITE_BASE}/',           _today_iso),
     _sitemap_url(f'{SITE_BASE}/answers',    _today_iso),
-    _sitemap_url(f'{SITE_BASE}/press',      _today_iso),
+    _sitemap_url(f'{SITE_BASE}/press/',     _today_iso),
     _sitemap_url(f'{SITE_BASE}/all',        _today_iso),
     _sitemap_url(f'{SITE_BASE}/usage',      _today_iso),
     _sitemap_url(f'{SITE_BASE}/contribute', _today_iso),
@@ -7781,10 +7739,23 @@ if TRENDS_DIR_PATH.exists():
 # Diaspora-pitch wire pages - whatever build_wire_pages.py actually wrote
 # is what we surface. Filesystem-driven so the two scripts can evolve
 # independently.
+# Wire pages whose editorial was merged into the cuisine pages 301 to
+# /cuisine/<key> (see the RewriteRules in .htaccess). A redirecting URL in
+# the sitemap wastes crawl budget and Google drops it anyway, so parse the
+# canonical source of truth — .htaccess — and skip every wire key that has a
+# 301 rule. monica-lewis (and any future self-canonical wire page) survives.
+_wire_redirected = set()
+try:
+    _ht_txt = (Path(ROOT) / '.htaccess').read_text()
+    _wire_redirected = set(re.findall(r'RewriteRule\s+\^wire/([\w-]+)/\?\$', _ht_txt))
+except Exception:
+    pass
 WIRE_DIR_PATH = Path(ROOT) / 'wire'
 if WIRE_DIR_PATH.exists():
     for wire_file in sorted(WIRE_DIR_PATH.glob('*.html')):
         wkey = wire_file.stem
+        if wkey in _wire_redirected:
+            continue  # 301s to /cuisine/<wkey> — non-canonical
         url_blocks.append(_sitemap_url(f'{SITE_BASE}/wire/{wkey}', _today_iso))
 for c in cuisines_out:
     # Sitemap every cuisine with at least 1 verified opening. Smaller cuisines
@@ -7792,7 +7763,11 @@ for c in cuisines_out:
     # almost no competing content), and excluding under-represented communities
     # would contradict the project ethos.
     if c.get('count365d', 0) < 1: continue
-    url_blocks.append(_sitemap_url(f'{SITE_BASE}/cuisine/{c["key"]}', _today_iso))
+    # Trailing slash: /cuisine/<key>/ is the canonical form. Once intersection
+    # pages (/cuisine/<key>/<district>) exist, /cuisine/<key> is a real
+    # directory and Apache DirectorySlash 301s the slashless form. Match the
+    # canonical so the sitemap lists the 200 URL directly.
+    url_blocks.append(_sitemap_url(f'{SITE_BASE}/cuisine/{c["key"]}/', _today_iso))
 # Per-district landing pages.
 for label in by_district:
     if not by_district[label]: continue
@@ -7807,43 +7782,10 @@ for _nslug in sorted(by_nbhd.keys()):
 for (cuisine_key, district_slug) in intersection_urls:
     url_blocks.append(_sitemap_url(
         f'{SITE_BASE}/cuisine/{cuisine_key}/{district_slug}', _today_iso))
-# Per-listing pages — every kept entry. lastmod tracks ACTUAL content
-# change via a per-entry content hash (see LISTING_HASH_CACHE setup at
-# the top of this file). When rating, website, dishes, or editorial
-# blurb changes, the hash differs → lastmod bumps to today. When nothing
-# meaningful changed, lastmod stays pinned to the last-change date so
-# Google doesn't burn crawl budget revisiting stable pages.
-_listing_hash_bumps = 0
-_listing_hash_seeded = 0
-for entry in seen_entries.values():
-    slug = entry.get('slug')
-    if not slug: continue
-    h_new = _listing_content_hash(entry)
-    cached = LISTING_HASH_CACHE.get(slug) or {}
-    h_old = cached.get('hash')
-    if h_new == h_old and cached.get('lastmod'):
-        # Content unchanged — keep prior lastmod, no Google re-crawl signal.
-        lastmod = cached['lastmod']
-    elif h_old is None:
-        # First sight (empty cache). Seed lastmod = issuedDate so the
-        # baseline matches the prior pre-hash-cache behavior. Avoids a
-        # one-time spurious re-crawl wave the first cron after deploy.
-        lastmod = entry.get('issuedDate', _today_iso)
-        LISTING_HASH_CACHE[slug] = {'hash': h_new, 'lastmod': lastmod}
-        _listing_hash_seeded += 1
-    else:
-        # Content actually changed → mark today.
-        lastmod = _today_iso
-        LISTING_HASH_CACHE[slug] = {'hash': h_new, 'lastmod': _today_iso}
-        _listing_hash_bumps += 1
-    url_blocks.append(_sitemap_url(f'{SITE_BASE}/r/{slug}', lastmod))
-
-# Persist the hash cache for the next cron tick.
-try:
-    with open(LISTING_HASH_CACHE_PATH, 'w') as f:
-        json.dump(LISTING_HASH_CACHE, f, separators=(',', ':'), sort_keys=True)
-except Exception as ex:
-    print(f"  WARN: listing_content_hash cache save failed: {ex}")
+# Per-listing /r/<slug> pages are intentionally NOT added to the sitemap —
+# see the note near the top of this file. They stay live and internally
+# linked, but advertising 260 thin detail pages here tanked Bing's
+# whole-site index ratio (most filed as "crawled — not indexed").
 
 sitemap = (
     '<?xml version="1.0" encoding="UTF-8"?>\n'
@@ -7865,9 +7807,7 @@ if _llms_path.exists():
     print(f"  updated llms.txt (date={_today_iso}, entries={n_tagged_365})")
 
 with open(SITEMAP_PATH, 'w') as f: f.write(sitemap)
-print(f"  wrote sitemap.xml ({len(url_blocks)} URLs; "
-      f"listing lastmod bumps: {_listing_hash_bumps}, "
-      f"seeded: {_listing_hash_seeded})")
+print(f"  wrote sitemap.xml ({len(url_blocks)} URLs; /r/ listing pages omitted)")
 
 print(f"Injected newOpenings into {DATA_PATH}")
 print(f"  {n_food_active_365:,} active food licences issued in last 365d")
