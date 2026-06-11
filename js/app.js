@@ -83,7 +83,11 @@ function tierLabel(days) {
 if (!document.body.classList.contains('page-listing')
     && !document.body.classList.contains('page-dispatch')
     && !document.body.classList.contains('page-trends'))
-fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
+// Low priority: the feed is pre-rendered server-side, so this 119KB hydration
+// payload is only needed for the interactive layer (filtering/search/full list),
+// never for first paint. Deprioritizing it frees the throttled pipe for the LCP
+// font instead of competing with it.
+fetch('/data/corridors.json?v=' + Date.now(), { priority: 'low' }).then(r => r.json()).then(data => {
   const no = data.newOpenings;
   // (Subtitle reads "updated daily" - no dynamic date to inject.)
 
