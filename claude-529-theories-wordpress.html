@@ -1,0 +1,99 @@
+<!-- wp:heading {"level":1} -->
+<h1 class="wp-block-heading">Claude Fable 5 Launched. The Next Day It Started Returning 529s. Here Are My Theories.</h1>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p><em>June 10, 2026</em></p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p>Yesterday I watched Claude Code retry the same web fetch seven times. Then I asked it a plain-English question — no tools, no tricks — and got this back:</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:code -->
+<pre class="wp-block-code"><code>529 Overloaded</code></pre>
+<!-- /wp:code -->
+
+<!-- wp:paragraph -->
+<p>For the uninitiated: 529 is Anthropic's non-standard HTTP status for "our servers are at capacity and we are load-shedding your request." It's not a rate limit on your account. It's not a bug in your code. It's the API equivalent of a restaurant host looking at the line out the door and quietly locking the front door for ten minutes.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p>The timing is suspicious. Claude Fable 5 — Anthropic's new flagship, the first "Mythos-class" model released to the general public — launched on <strong>June 9</strong>. The API started buckling on <strong>June 10</strong>. One day. As a recovering conspiracy enjoyer, I felt obligated to investigate. Here are the theories, ranked from most cinematic to most true.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading -->
+<h2 class="wp-block-heading">Theory 1: The Glasswing partners get the GPUs, you get the busy signal</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>Fable 5 and Mythos 5 are the same underlying model. Mythos goes to a short list of approved organizations through something called Project Glasswing, with certain safeguards lifted; Fable is what the rest of us get, with safety classifiers bolted on top. The theory writes itself: the approved partners get reserved compute, and when supply runs short, the public API is the shock absorber.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p><strong>Why it falls apart:</strong> there's no evidence for the priority queue, and the economics point the other way. Anthropic priced Fable at $10/$50 per million tokens — less than half what the restricted Mythos Preview cost — and shipped it on four clouds simultaneously. That's not the behavior of a company rationing its flagship for insiders. That's a company trying to sell as much of it as physically possible and running into physics.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading -->
+<h2 class="wp-block-heading">Theory 2: The throttling is theater for the June 23 paywall</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>This is the spicy one. Fable 5 is included free on Pro, Max, Team, and Enterprise plans — but only through June 22. After that, it goes credits-only "until capacity allows." So: what if the 529s are manufactured scarcity? Let everyone taste the model, let the API groan theatrically, and by the 23rd the credit system feels like a reasonable response to a crisis instead of a price increase.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p><strong>Why it falls apart:</strong> Anthropic announced the whole sequence <em>in the launch post, in advance</em>. "We expect demand for Fable 5 to be very high, and difficult to predict" — their words, published before the first 529 ever fired. A conspiracy you pre-announce in a press release isn't a conspiracy. It's a roadmap with good expectation management. The scheme requires the conspirators to have <em>not told everyone the plan</em>, and they told everyone the plan.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading -->
+<h2 class="wp-block-heading">Theory 3: Every AI lab on Earth is strip-mining it right now</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>Here's the one with an actual kernel of documented truth. Among Fable 5's safety classifiers — alongside the cybersecurity and biology ones — is a classifier for prompts that look like <strong>attempts to extract model capabilities for use in rival AI systems</strong>. Distillation detection. Anthropic did not build that classifier for fun. You only install a lock like that when you expect someone to try the door.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p>So is some meaningful slice of launch-week traffic competitors and researchers hammering the new frontier model with synthetic-data pipelines? Almost certainly some. Is it why <em>my</em> fetch failed? No — because it doesn't need to be.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading -->
+<h2 class="wp-block-heading">The true theory, which is boring, which is why nobody posts it</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>Anthropic released the most capable model the public has ever had access to, made it <strong>free for thirteen days</strong> to millions of existing subscribers, wired it into Claude Code and GitHub Copilot on day one, gave it a 1M-token context window that practically begs you to dump entire codebases into it, and counted it as 2x usage — meaning every session burns double the normal compute.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p>Then the entire internet showed up on day two. I was the entire internet. So were you.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p>There's no shadowy reason the API went down after launch. The API went down after launch because that's what launches do, and this was the biggest one Anthropic has ever attempted. The company said demand would be "very high and difficult to predict," demand was very high, and — here's the part that breaks the conspiracy brain — <em>it was apparently still hard to fully provision for even when predicted</em>, because the constraint is physical GPUs, not intent.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p>The skeptic's razor applies: never attribute to a scheme what is adequately explained by everyone wanting the same thing at the same time.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading -->
+<h2 class="wp-block-heading">What I actually did about it</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>Dropped my Claude Code session to Sonnet with <code>/model sonnet</code>, finished the analysis (it did not require a frontier model to read a JSON file, and neither does yours), and saved Fable for the work that earns it. The 529s are load-shedding, not a verdict. Retry with backoff, fall back a model tier, and stop refreshing the status page like it owes you money.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p>The machines are fine. They're just popular.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:separator -->
+<hr class="wp-block-separator has-alpha-channel-opacity"/>
+<!-- /wp:separator -->
+
+<!-- wp:paragraph -->
+<p><em>Josh runs <a href="https://nowservingto.com">nowservingto.com</a>, a daily-fresh directory of Toronto's newest restaurants, which is powered by a much smaller Claude that has never once been too busy for him.</em></p>
+<!-- /wp:paragraph -->

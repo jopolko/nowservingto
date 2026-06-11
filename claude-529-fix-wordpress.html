@@ -1,0 +1,197 @@
+<!-- wp:heading {"level":1} -->
+<h1 class="wp-block-heading">How to Use Claude Fable 5 Without Getting 529 Overloaded Errors</h1>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p><em>June 10, 2026</em></p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p>Claude Fable 5 launched, and the next day half the people who tried it watched their requests bounce off a <code>529 Overloaded</code>. Here is the short version: a 529 is not your fault, not a rate limit, and not a bug in your code — it is Anthropic load-shedding because demand outran GPUs. You do not fix it by refreshing the status page. You fix it with three things, in order: <strong>let the SDK retry, add your own backoff, and fall back a model tier when Fable itself is the bottleneck.</strong> The rest of this page is exactly how.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading -->
+<h2 class="wp-block-heading">What a 529 actually is</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>In Anthropic's error table, <code>529</code> is <code>overloaded_error</code>: "the service is temporarily overloaded." It is <strong>retryable</strong>. Crucially, it is a different animal from the codes people confuse it with:</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:list -->
+<ul>
+<li><strong>429 <code>rate_limit_error</code></strong> — <em>you</em> sent too much. Tied to your account's per-minute token/request limits. Carries a <code>retry-after</code> header.</li>
+<li><strong>500 <code>api_error</code></strong> — something broke on Anthropic's side. Retryable.</li>
+<li><strong>529 <code>overloaded_error</code></strong> — nothing is wrong with your request <em>or</em> your account. The whole front door is at capacity and Anthropic is shedding load to stay up.</li>
+</ul>
+<!-- /wp:list -->
+
+<!-- wp:paragraph -->
+<p>The reason you see 529s clustered around a launch is boring and physical: a brand-new flagship, made free to millions of existing subscribers for a couple of weeks, wired into coding tools on day one, with a 1M-token context window that invites people to dump entire codebases in. Everyone shows up at once; capacity is finite. The fix is not to out-argue the conspiracy — it is to build a client that rides out the spike.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading -->
+<h2 class="wp-block-heading">Fix 1: Let the SDK retry — then turn it up</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>The official Anthropic SDKs <strong>already retry</strong> 429s and every 5xx (529 included) with exponential backoff. The default is only 2 retries, which is too few during a launch-week spike. Raise it:</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:code -->
+<pre class="wp-block-code"><code>import anthropic
+
+# Bump retries globally — the SDK handles 429/500/529 backoff for you
+client = anthropic.Anthropic(max_retries=8)
+
+resp = client.messages.create(
+    model="claude-fable-5",
+    max_tokens=16000,
+    output_config={"effort": "high"},   # Fable's thinking is always on; tune depth here
+    messages=[{"role": "user", "content": "..."}],
+)</code></pre>
+<!-- /wp:code -->
+
+<!-- wp:paragraph -->
+<p>One Fable-5-specific gotcha: do <strong>not</strong> pass <code>thinking={"type": "enabled", "budget_tokens": N}</code>, <code>temperature</code>, <code>top_p</code>, or <code>top_k</code>. They all return a <code>400</code> on Fable 5. Thinking is always on — omit the parameter entirely and control depth with <code>output_config={"effort": "low"|"medium"|"high"|"xhigh"|"max"}</code>.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p>Need it per-call instead of per-client? Use <code>with_options</code>:</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:code -->
+<pre class="wp-block-code"><code>resp = client.with_options(max_retries=8).messages.create(
+    model="claude-fable-5",
+    max_tokens=16000,
+    messages=[{"role": "user", "content": "..."}],
+)</code></pre>
+<!-- /wp:code -->
+
+<!-- wp:heading -->
+<h2 class="wp-block-heading">Fix 2: Add explicit backoff for the stubborn spikes</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>When you want full control — logging, jitter, a hard ceiling on attempts — catch the typed exceptions and back off yourself. Use the SDK's exception classes; never string-match the error text.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:code -->
+<pre class="wp-block-code"><code>import time, random, anthropic
+
+client = anthropic.Anthropic()
+
+def call_fable(messages, max_retries=6, base=1.0, cap=60.0):
+    for attempt in range(max_retries):
+        try:
+            return client.messages.create(
+                model="claude-fable-5",
+                max_tokens=16000,
+                output_config={"effort": "high"},
+                messages=messages,
+            )
+        except (anthropic.OverloadedError, anthropic.RateLimitError) as e:
+            if attempt == max_retries - 1:
+                raise
+            # Exponential backoff with jitter so a fleet doesn't retry in lockstep
+            delay = min(base * (2 ** attempt) + random.uniform(0, 1), cap)
+            time.sleep(delay)</code></pre>
+<!-- /wp:code -->
+
+<!-- wp:paragraph -->
+<p>The jitter matters more than it looks: if a hundred workers all hit a 529 at the same instant and all retry after exactly 2 seconds, you have just rebuilt the stampede. The random offset spreads them out.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading -->
+<h2 class="wp-block-heading">Fix 3: Fall back a model tier — this is the big one</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>Backoff only helps if capacity frees up while you wait. During a sustained launch surge it may not. The move that actually keeps your app alive is to <strong>drop to a less-contended model</strong> when Fable refuses to clear. Opus 4.8 is enormously capable and far less crowded; most workloads never needed the frontier model to begin with.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:code -->
+<pre class="wp-block-code"><code>import anthropic
+
+client = anthropic.Anthropic()
+
+def call_with_fallback(messages):
+    try:
+        # Give Fable a few backed-off retries first
+        return client.with_options(max_retries=4).messages.create(
+            model="claude-fable-5",
+            max_tokens=16000,
+            output_config={"effort": "high"},
+            messages=messages,
+        )
+    except anthropic.OverloadedError:
+        # Fable's capacity is the constraint, not your request — drop a tier.
+        # Opus 4.8 accepts adaptive thinking; it does NOT need a frontier model
+        # to read a JSON file, and neither does your workload.
+        return client.messages.create(
+            model="claude-opus-4-8",
+            max_tokens=16000,
+            thinking={"type": "adaptive"},
+            output_config={"effort": "high"},
+            messages=messages,
+        )</code></pre>
+<!-- /wp:code -->
+
+<!-- wp:paragraph -->
+<p><strong>The trap to avoid:</strong> Fable 5 ships a server-side <code>fallbacks</code> parameter, and it is tempting to reach for it here. Don't — it won't help. That parameter only triggers on <em>policy refusals</em> (the safety classifiers declining a request). Rate limits, overloads, and server errors are returned as-is and <strong>never</strong> fall back. For 529s you must do the fallback client-side, exactly as above.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p>Doing it interactively in Claude Code? Same idea, one command: <code>/model sonnet</code> (or <code>/model opus</code>) drops you off the contended model so you can keep working, and you switch back to Fable for the work that actually earns it.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading -->
+<h2 class="wp-block-heading">Fix 4: Stop sending so much in the first place</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>The cheapest 529 is the request you never had to send. Three levers cut your load on the contended endpoint:</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:list -->
+<ul>
+<li><strong>Prompt caching.</strong> If you reuse a big system prompt or document across calls, mark it with <code>cache_control={"type": "ephemeral"}</code>. Cache reads cost roughly a tenth of full input price and skip re-processing the prefix — fewer tokens through the door, less pressure on the overloaded path.</li>
+<li><strong>Lower the effort.</strong> <code>effort: "low"</code> or <code>"medium"</code> on Fable 5 still beats older models' top settings on many tasks, and burns a fraction of the tokens. Reserve <code>"xhigh"</code>/<code>"max"</code> for work that genuinely needs it.</li>
+<li><strong>Batch the non-urgent stuff.</strong> Anything that isn't latency-sensitive — overnight reports, bulk classification — belongs in the <strong>Batches API</strong>. It runs async at 50% of standard price, and because Anthropic schedules it around available capacity, you effectively stop competing for the real-time front door.</li>
+</ul>
+<!-- /wp:list -->
+
+<!-- wp:heading -->
+<h2 class="wp-block-heading">Two Fable-5 quirks that aren't 529s but look adjacent</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>While you're hardening the client, handle these so you don't misdiagnose them as overload:</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:list -->
+<ul>
+<li><strong>The <code>refusal</code> stop reason.</strong> Fable runs safety classifiers (cybersecurity, biology, and one that blocks attempts to extract its own internal reasoning). A declined request comes back as a <em>successful</em> HTTP 200 with <code>stop_reason: "refusal"</code> — not a 529. Check <code>stop_reason</code> before you read <code>response.content[0]</code>, or you'll throw an index error on refused calls.</li>
+<li><strong>Stream long outputs.</strong> Above roughly 16K <code>max_tokens</code>, a non-streaming request can hit an HTTP timeout that looks like flakiness. Use <code>client.messages.stream(...)</code> and <code>.get_final_message()</code> for big generations. (Unrelated to 529, but it's the other "why did my call die" culprit this week.)</li>
+</ul>
+<!-- /wp:list -->
+
+<!-- wp:paragraph -->
+<p>One more setup note worth knowing before you debug a phantom failure: Fable 5 requires <strong>30-day data retention</strong>. If your org is configured for zero data retention, <em>every</em> Fable request returns a <code>400</code> regardless of payload. That's a config problem, not a capacity one.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading -->
+<h2 class="wp-block-heading">The whole thing, in one paragraph</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>A 529 means Anthropic is full, not that you did anything wrong. Turn up <code>max_retries</code> so the SDK rides out short spikes. Add exponential backoff with jitter for longer ones. When Fable simply won't clear, fall back to Opus 4.8 in your own code — the server-side <code>fallbacks</code> parameter won't do it for you, because it's for refusals, not overload. And shrink your footprint with caching, lower effort, and the Batches API so you're not fighting for the busy door in the first place. The machines are fine. They're just popular — so build for popular.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:separator -->
+<hr class="wp-block-separator has-alpha-channel-opacity"/>
+<!-- /wp:separator -->
+
+<!-- wp:paragraph -->
+<p><em>Josh runs <a href="https://nowservingto.com">nowservingto.com</a>, a daily-fresh directory of Toronto's newest restaurants, powered by a much smaller Claude that has never once been too busy for him.</em></p>
+<!-- /wp:paragraph -->
