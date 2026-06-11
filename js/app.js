@@ -621,6 +621,10 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
   //   2. URL path (`/cuisine/X`) - SEO landing pages
   //   3. defaults
   const pathCuisineMatch  = location.pathname.match(/^\/cuisine\/([a-z_]+)(?:\.html)?\/?$/);
+  // Cuisine × district intersection landing (e.g. /cuisine/colombian/west-toronto):
+  // recognise it so the app hydrates with BOTH filters instead of falling through
+  // to the all-Toronto feed (which read as a redirect to the homepage).
+  const pathIntersectionMatch = location.pathname.match(/^\/cuisine\/([a-z_]+)\/([a-z-]+)(?:\.html)?\/?$/);
   const pathDistrictMatch = location.pathname.match(/^\/district\/([a-z-]+)(?:\.html)?\/?$/);
   const pathNeighborhoodMatch = location.pathname.match(/^\/neighborhood\/([a-z-]+)(?:\.html)?\/?$/);
   const pathListingMatch  = location.pathname.match(/^\/r\/([\w-]+)\/?$/);
@@ -638,7 +642,7 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
   }
   const hashCuisine = (location.hash.match(/cuisine=([a-z_]+)/) || [])[1];
   const hashRegion = (location.hash.match(/region=([^&]+)/) || [])[1];
-  const cuisineFromUrl = hashCuisine || (pathCuisineMatch && pathCuisineMatch[1]);
+  const cuisineFromUrl = hashCuisine || (pathCuisineMatch && pathCuisineMatch[1]) || (pathIntersectionMatch && pathIntersectionMatch[1]);
   const initialCuisine = (cuisineFromUrl && no.cuisines.some(c => c.key === cuisineFromUrl)) ? cuisineFromUrl : '__all';
   const decodedRegion = hashRegion ? decodeURIComponent(hashRegion) : '';
   // District-from-path: when visiting /district/scarborough directly (no hash),
@@ -650,7 +654,9 @@ fetch('/data/corridors.json?v=' + Date.now()).then(r => r.json()).then(data => {
   const _slugize = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   const pathDistrictRegion = pathDistrictMatch
     ? (DISTRICTS.find(d => _slugize(d) === pathDistrictMatch[1]) || '')
-    : '';
+    : (pathIntersectionMatch
+        ? (DISTRICTS.find(d => _slugize(d) === pathIntersectionMatch[2]) || '')
+        : '');
   const initialRegion = decodedRegion && DISTRICTS.includes(decodedRegion)
     ? decodedRegion
     : (pathDistrictRegion || '__all');
