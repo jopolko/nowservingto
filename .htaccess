@@ -14,7 +14,7 @@
 #     bandwidth when nothing changed, in exchange for self-healing.
 <IfModule mod_headers.c>
     <FilesMatch "\.(html|json)$">
-        Header set Cache-Control "public, max-age=3600, must-revalidate"
+        Header set Cache-Control "public, max-age=300, must-revalidate"
     </FilesMatch>
     <FilesMatch "\.(svg|png|jpg|jpeg|webp|ico)$">
         Header set Cache-Control "public, max-age=604800"
@@ -60,6 +60,12 @@
         # changed files propagate without manual purges.
         Header set Cache-Control "public, max-age=2592000"
     </If>
+    # og.png is the site-wide social share image. It changes rarely
+    # (only when the OG card design is updated) so 30-day cache is safe.
+    # Unlike thumbnails, we can cache-bust via a query string if needed.
+    <If "%{REQUEST_URI} =~ m#^/og\.png$#">
+        Header set Cache-Control "public, max-age=2592000"
+    </If>
 </IfModule>
 
 RewriteEngine On
@@ -83,6 +89,10 @@ RewriteRule ^(.*)$ https://nowservingto.com/$1 [R=301,L]
 # generated page automatically, even if it appears in the historical-redirect
 # lists below. No fallback to /index.html for unknown keys - Apache returns
 # a real 404, which Google de-indexes cleanly.
+# Canonicalize to slash form first (/cuisine/key → /cuisine/key/) so the
+# canonical declaration in HTML, sitemap, and HTTP URL all agree.
+RewriteCond %{DOCUMENT_ROOT}/cuisine/$1.html -f
+RewriteRule ^cuisine/([a-z_-]+)$ /cuisine/$1/ [R=301,L]
 RewriteCond %{DOCUMENT_ROOT}/cuisine/$1.html -f
 RewriteRule ^cuisine/([a-z_-]+)/?$ /cuisine/$1.html [L]
 
@@ -104,12 +114,15 @@ RewriteRule ^cuisine/jewish/?$ /cuisine/jewish_deli [R=301,L]
 RewriteRule ^cuisine/latin_american/?$ /cuisine/latin [R=301,L]
 RewriteRule ^cuisine/middle_eastern/?$ /cuisine/middle_east [R=301,L]
 RewriteRule ^cuisine/(gujarati|hyderabadi|maharashtrian|south_indian|north_indian|punjabi)/?$ /cuisine/indian [R=301,L]
-RewriteRule ^cuisine/(hakka|indian_hakka|sichuan|southern_chinese)/?$ /cuisine/chinese [R=301,L]
-RewriteRule ^cuisine/southern_italian/?$ /cuisine/italian [R=301,L]
+RewriteRule ^cuisine/(hakka|indian_hakka|sichuan|southern_chinese|yunnan_chinese|indian_chinese|cantonese|hong_kong)/?$ /cuisine/chinese [R=301,L]
+RewriteRule ^cuisine/(southern_italian|sicilian)/?$ /cuisine/italian [R=301,L]
+RewriteRule ^cuisine/nepali/?$ /cuisine/nepalese [R=301,L]
+RewriteRule ^cuisine/kurdish/?$ /cuisine/middle_east [R=301,L]
+RewriteRule ^cuisine/ecuadorian/?$ /cuisine/latin [R=301,L]
 
 # Banned labels (validator prompt forbids these as cuisine identities) - 301
 # to home. Stale Google index entries from before the bans were enforced.
-RewriteRule ^cuisine/(cajun|canadian|european|hawaiian|mediterranean)/?$ / [R=301,L]
+RewriteRule ^cuisine/(cajun|canadian|european|hawaiian|mediterranean|belgian)/?$ / [R=301,L]
 
 # /usage → usage.html (one-pager showing per-provider API spend)
 RewriteRule ^usage/?$ /usage.html [L]
@@ -179,15 +192,20 @@ RewriteCond %{DOCUMENT_ROOT}/wire/$1.html -f
 RewriteRule ^wire/([a-z_-]+)/?$ /wire/$1.html [L]
 
 # Per-district SEO landing pages: /district/{slug} → district/{slug}.html
+# Canonicalize to slash form first so the canonical in HTML, sitemap, and
+# HTTP URL all agree (mirrors the same two-step pattern used for /cuisine/).
+RewriteCond %{DOCUMENT_ROOT}/district/$1.html -f
+RewriteRule ^district/([a-z-]+)$ /district/$1/ [R=301,L]
 RewriteCond %{DOCUMENT_ROOT}/district/$1.html -f
 RewriteRule ^district/([a-z-]+)/?$ /district/$1.html [L]
 
-# Monthly dispatch archive: /dispatch/{yyyy-mm} → dispatch/{yyyy-mm}.html
-# Plus /dispatch/latest → dispatch/latest.html as the always-current alias.
+# /dispatch/latest retired 2026-06-13 — 301 the indexed alias + bare /dispatch
+# to home so neither 404s. Must precede the generic dated-archive rule below.
+RewriteRule ^dispatch/latest/?$ / [R=301,L]
+RewriteRule ^dispatch/?$ / [R=301,L]
+# Dated monthly dispatch archive: /dispatch/{yyyy-mm} → dispatch/{yyyy-mm}.html
 RewriteCond %{DOCUMENT_ROOT}/dispatch/$1.html -f
 RewriteRule ^dispatch/([a-z0-9-]+)/?$ /dispatch/$1.html [L]
-# Bare /dispatch redirects to latest
-RewriteRule ^dispatch/?$ /dispatch/latest [R=302,L]
 
 # Per-listing share links: /r/{slug} → r/{slug}.html when present
 # (pre-rendered with per-listing title/og:image so X / FB / iMessage

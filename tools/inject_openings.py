@@ -2452,7 +2452,7 @@ def _section_header_html(label, count):
     )
 
 
-def build_static_rows(entries, link_to_listing=False, group_by_date=False):
+def build_static_rows(entries, link_to_listing=False, group_by_date=False, show_cta=True):
     """Pre-rendered HTML rows for the top-N feed. Same markup the JS renderer
     produces so visitors / crawlers see real content before JS hydrates.
 
@@ -2604,13 +2604,39 @@ def build_static_rows(entries, link_to_listing=False, group_by_date=False):
             _bare_tag = ('<span class="row-fresh"> · No website yet.</span>'
                          if _bare else '')
             _blurb_html = f'<p class="row-blurb">{_esc(_blurb)}{_bare_tag}</p>'
+        # Ticket card — matches the demo aesthetic.
+        _cuisine_label_str = _esc(CUISINE_LABEL.get(primary_key, (primary_key or '').replace('_', ' ').title()))
+        _badge_bg = row_accent or '#888888'
+        _nbhd_data = r.get('neighborhood')
+        _nbhd_label = (_nbhd_data.get('label', '') if isinstance(_nbhd_data, dict) else '') or ''
+        if _nbhd_label and district:
+            _nbhd_html = f'<span class="nbhd">{_esc(_nbhd_label)} · {district}</span>'
+        elif district:
+            _nbhd_html = f'<span class="nbhd">{district}</span>'
+        else:
+            _nbhd_html = ''
+        _days = r.get('daysOpen')
+        _days_html = f'<span class="days">{_days}</span>' if isinstance(_days, int) else '<span class="days">?</span>'
+        _bare_note = ' · No website yet.' if _bare else ''
+        _blurb_body = f'<p class="tk-blurb">{_esc(_blurb)}{_bare_note}</p>' if _blurb else ''
+        _cta_html = (f'<a class="tk-cta" href="/r/{_esc(slug)}">Full listing →</a>'
+                     if slug and show_cta else '')
         out.append(
-            f'<div class="open-row"{slug_attr}{fresh_attr}{multi_attr}{_bare_attr}{accent_style}>'
-            f'<div class="od">{ago_html}</div>'
-            f'<div class="on">{name_html}<span class="oad">{addr_html}</span></div>'
-            f'<div class="oc">{pills}</div>'
-            f'{_blurb_html}'
+            f'<article class="ticket"{slug_attr}{fresh_attr}{multi_attr}{_bare_attr}>'
+            f'<div class="tk-head">'
+            f'<span class="tk-badge" style="background:{_badge_bg}">{_cuisine_label_str}</span>'
+            f'<span class="tk-freshness">{_days_html} days ago</span>'
             f'</div>'
+            f'<div class="tk-body">'
+            f'<h2 class="tk-name">{name_html}</h2>'
+            f'{_blurb_body}'
+            f'</div>'
+            f'<div class="tear"></div>'
+            f'<div class="tk-foot">'
+            f'<div class="tk-addr">{_nbhd_html}{addr_inner}</div>'
+            f'{_cta_html}'
+            f'</div>'
+            f'</article>'
         )
     return '\n    '.join(out)
 
@@ -2966,10 +2992,132 @@ def build_home_intro(all_entries, freshest, n_week, n30):
 
 
 # ---------------------------------------------------------------------------
+# Homepage friendly layout: streak bar → 3 ranked hero cards → ranked list.
+# Mirrors the JS renderer in js/app.js (nsRenderHome) so first paint / no-JS /
+# crawlers see the same thing the interactive layer hydrates to.
+# ---------------------------------------------------------------------------
+_NS_EMOJI = {
+    'indian':'🍛','chinese':'🥡','vietnamese':'🍜','italian':'🍕','mexican':'🌮',
+    'japanese':'🍣','korean':'🍲','turkish':'🥙','thai':'🍜','pakistani':'🍛',
+    'sri_lankan':'🍛','lebanese':'🥙','tamil':'🍛','persian':'🍢','middle_east':'🥙',
+    'filipino':'🍢','greek':'🥙','french':'🥐','bangladeshi':'🍛','argentinian':'🥩',
+    'jamaican':'🍢','afghan':'🍢','taiwanese':'🧋','south_asian':'🍛','caribbean':'🍹',
+    'latin':'🌮','eritrean':'🍲','ethiopian':'🍲','portuguese':'🥐','peruvian':'🐟',
+    'nigerian':'🍲','tibetan':'🥟','armenian':'🥙','belgian':'🧇','venezuelan':'🫓',
+    'palestinian':'🥙','ghanaian':'🍲','senegalese':'🍲','costa_rican':'🍤',
+    'singaporean':'🍜','kurdish':'🥙','guatemalan':'🌮','spanish':'🥘',
+    'indonesian':'🍜','colombian':'🫓',
+}
+_NS_MONTHS = ['January','February','March','April','May','June','July','August',
+              'September','October','November','December']
+
+def _ns_icon_tint(hexcol):
+    h = (hexcol or '').lstrip('#')
+    if len(h) != 6:
+        return '#f0ece3'
+    try:
+        r, g, b = int(h[0:2],16), int(h[2:4],16), int(h[4:6],16)
+    except ValueError:
+        return '#f0ece3'
+    return f'rgba({r},{g},{b},0.16)'
+
+def _ns_title(s):
+    return re.sub(r'\b([a-z])', lambda m: m.group(1).upper(), (s or '').lower())
+
+def _ns_ago(d):
+    # Days under a month; months once it's over a month. Mirrors nsAgo() in app.js.
+    if not isinstance(d, int):
+        return ''
+    if d < 30:
+        return f"{d} day ago" if d == 1 else f"{d} days ago"
+    m = d // 30
+    return f"{m} month ago" if m == 1 else f"{m} months ago"
+
+# Below this many listings a page keeps the ticket feed (mirrors HERO_MIN in app.js).
+HERO_MIN = 10
+
+def build_home_feed(rows, scope_label='new spots · last 30 days', limit=30):
+    def keys(r):
+        return r.get('cuisines') or ([r['cuisine']] if r.get('cuisine') else [])
+    def lab(k):
+        return CUISINE_LABEL.get(k, (k or '').replace('_',' ').title())
+    def hood(r):
+        nb = r.get('neighborhood')
+        return (nb.get('label') if isinstance(nb, dict) else '') or r.get('district') or ''
+    # Streak bar — accurate count of listings first seen in the last 30 days.
+    count = sum(1 for r in rows if isinstance(r.get('daysOpen'), int) and r['daysOpen'] <= 30)
+    dots = ''.join('<div class="ns-dot on"></div>' for _ in range(7))
+    streak = (f'<div class="ns-streak-bar"><span class="ns-flame">🔥</span>'
+              f'<div><div class="ns-count">{count}</div><div class="ns-label">{_esc(scope_label)}</div></div>'
+              f'<div class="ns-dots" aria-label="updated every day this week">{dots}</div>'
+              f'<span class="ns-updated">updated daily</span></div>')
+    # Hero cards (top 3)
+    cards = []
+    for i, r in enumerate(rows[:3]):
+        ks = keys(r); k = ks[0] if ks else ''
+        emoji = _NS_EMOJI.get(k, '🍴')
+        badge = ['r1','r2','r3'][i]; blbl = ['🏆 Newest','2nd newest','3rd newest'][i]
+        href = f"/r/{r['slug']}" if r.get('slug') else '#'
+        dist = r.get('district') or ''
+        disttag = f'<span class="ns-tag hood">{_esc(dist)}</span>' if dist else ''
+        hh = hood(r)
+        blurb = f'<p class="ns-card-blurb">{_esc(r.get("blurb"))}</p>' if r.get('blurb') else ''
+        cards.append(
+            f'<a href="{href}" class="ns-hero-card{" rank-1" if i == 0 else ""}" data-slug="{_esc(r.get("slug") or "")}">'
+            f'<div class="ns-card-rank"><span class="ns-rank-badge {badge}">{blbl}</span><span class="ns-days-ago">{_ns_ago(r.get("daysOpen"))}</span></div>'
+            f'<div class="ns-card-icon">{emoji}</div>'
+            f'<div class="ns-card-body"><p class="ns-card-name">{_esc(_ns_title(r.get("operatingName")))}</p>'
+            f'<p class="ns-card-sub">{_esc(lab(k))}{(" · " + _esc(hh)) if hh else ""}</p>'
+            f'{blurb}'
+            f'<span class="ns-tag cuisine">{_esc(lab(k))}</span>{disttag}<br>'
+            f'<button class="ns-save-btn" type="button" data-slug="{_esc(r.get("slug") or "")}">♡ Save</button>'
+            f'</div></a>'
+        )
+    hero = '<div class="ns-hero-grid">' + ''.join(cards) + '</div>'
+    # Ranked list (4+), capped at `limit`, grouped by registration month.
+    # The month bucket = floor(daysOpen/30) months before today, matching the
+    # "X months ago" age label (so a "1 month ago" row sits under "May"). The
+    # month label is right-aligned (line then label) on every divider so they
+    # line up; no year (redundant).
+    def _month_label(b):
+        t = REFERENCE_DATE.year * 12 + (REFERENCE_DATE.month - 1) - b
+        y = t // 12
+        return _NS_MONTHS[t % 12] + (f' {y}' if y != REFERENCE_DATE.year else '')
+    list_html = ''
+    prev_b = None
+    for idx, r in enumerate(rows[3:limit], start=4):
+        d = r.get('daysOpen')
+        b = (d // 30) if isinstance(d, int) else 0
+        if b != prev_b:
+            if prev_b is None:
+                list_html += (f'<div class="ns-section-head"><span class="ns-section-head-label">Also registered recently</span>'
+                              f'<div class="ns-section-head-line"></div>'
+                              f'<span class="ns-section-head-label">{_month_label(b)}</span></div>')
+            else:
+                list_html += (f'<div class="ns-section-head"><div class="ns-section-head-line"></div>'
+                              f'<span class="ns-section-head-label">{_month_label(b)}</span></div>')
+            prev_b = b
+        ks = keys(r); k = ks[0] if ks else ''
+        emoji = _NS_EMOJI.get(k, '🍴')
+        color = PALETTE_HEX.get(k) or cuisine_color(k) or '#888888'
+        href = f"/r/{r['slug']}" if r.get('slug') else '#'
+        hh = hood(r)
+        blurb = f'<p class="ns-list-blurb">{_esc(r.get("blurb"))}</p>' if r.get('blurb') else ''
+        list_html += (
+            f'<a href="{href}" class="ns-list-item" data-slug="{_esc(r.get("slug") or "")}">'
+            f'<span class="ns-list-num">{idx}</span>'
+            f'<div class="ns-list-icon" style="background:{_ns_icon_tint(color)}">{emoji}</div>'
+            f'<div class="ns-list-info"><p class="ns-list-name">{_esc(_ns_title(r.get("operatingName")))}</p>'
+            f'<p class="ns-list-meta">{_esc(lab(k))}{(" · " + _esc(hh)) if hh else ""}</p>{blurb}</div>'
+            f'<span class="ns-list-age">{_ns_ago(r.get("daysOpen"))}</span></a>'
+        )
+    return streak + hero + list_html
+
+# ---------------------------------------------------------------------------
 # Inject into the HOMEPAGE (index.html).
 # ---------------------------------------------------------------------------
 top_for_static = all_recent[:30]
-static_block = build_static_rows(top_for_static, link_to_listing=True, group_by_date=True)
+static_block = build_home_feed(all_recent, scope_label='new spots · last 30 days')
 home_url = 'https://nowservingto.com/'
 
 
@@ -3076,20 +3224,16 @@ try:
         rf'\g<1>{_mast_date_iso}\g<2>',
         home_html, count=1,
     )
-    # Masthead dispatch chip — points at /dispatch/latest. Label includes
-    # the most-recently-completed month so visitors see what they'll get.
-    # Computed inline here (REFERENCE_DATE-only arithmetic) so it lands in
-    # the homepage template that cuisine + district pages inherit.
-    import calendar as _mast_cal
-    if REFERENCE_DATE.month == 1:
-        _mast_dm_y, _mast_dm_m = REFERENCE_DATE.year - 1, 12
-    else:
-        _mast_dm_y, _mast_dm_m = REFERENCE_DATE.year, REFERENCE_DATE.month - 1
-    _mast_dispatch_lbl = f'{_mast_cal.month_name[_mast_dm_m]} Dispatch &rsaquo;'
+    # Masthead dispatch chip retired 2026-06-13 — the "<Month> Dispatch ›"
+    # button and the /dispatch/latest page it pointed at were removed.
+
+    # District-cards section retired 2026-06-13. Clear the placeholder so any
+    # previously-injected cards are wiped from index.html and every page-type
+    # that inherits this template (cuisine / district / /r/ listing).
     home_html = re.sub(
-        r'(<a class="mast-dispatch" id="mast-dispatch"[^>]*>)[^<]*(</a>)',
-        rf'\g<1>{_mast_dispatch_lbl}\g<2>',
-        home_html, count=1,
+        r'(<!-- DISTRICT-CARDS-START -->).*?(<!-- DISTRICT-CARDS-END -->)',
+        lambda m: m.group(1) + m.group(2),
+        home_html, count=1, flags=re.DOTALL,
     )
 
     open(INDEX_PATH, 'w').write(home_html)
@@ -4169,10 +4313,17 @@ def build_community_partners(cuisine_key):
 #   - JSON-LD ItemList scoped to this cuisine
 # Apache .htaccess rewrites /cuisine/<key> → /cuisine/<key>.html when the file
 # exists (added in this same commit).
+def _strip_home_methodology(html):
+    """Drop the homepage 'Permits sourced from…' methodology line. It's generic
+    boilerplate that only belongs on the homepage; every sub-page (cuisine,
+    district, neighborhood, intersection, all, listing) inherits the template
+    and strips it so the same paragraph isn't repeated site-wide."""
+    return re.sub(r'\s*<p class="home-methodology">.*?</p>', '', html, count=1, flags=re.S)
+
 CUISINE_DIR = Path(ROOT) / 'cuisine'
 CUISINE_DIR.mkdir(exist_ok=True)
 cuisine_pages_written = 0
-template = open(INDEX_PATH).read()   # post-homepage-inject - has the fresh JS bundle
+template = _strip_home_methodology(open(INDEX_PATH).read())   # post-homepage-inject - has the fresh JS bundle
 for c in cuisines_out:
     key = c['key']; label = c['label']; n365 = c['count365d']; n30 = c['count30d']
     all_for_cuisine = opens_365_by_cuisine.get(key, [])
@@ -4281,7 +4432,9 @@ for c in cuisines_out:
                   lambda m: cuisine_h1, page, count=1)
 
     # Replace STATIC-FEED + LD-ITEMLIST with cuisine-scoped versions.
-    cuisine_static = build_static_rows(entries, link_to_listing=True, group_by_date=True)
+    cuisine_static = (build_home_feed(entries, scope_label=f'new {label} spots · last 30 days')
+                      if len(entries) >= HERO_MIN
+                      else build_static_rows(entries, link_to_listing=True, group_by_date=True))
     cuisine_itemlist = build_ld_itemlist(
         entries,
         name=f"Newest {label} restaurants in Toronto",
@@ -4366,7 +4519,7 @@ for c in cuisines_out:
     page = swap_newsletter_cta(page, build_alert_section('cuisine', key, label))
     # Body class lets CSS lay out the cuisine-page masthead differently
     # from the homepage (compact horizontal brand+h1 instead of stacked).
-    page = page.replace('<body>', '<body class="page-cuisine">', 1)
+    page = page.replace('<body class="page-home">', '<body class="page-cuisine">', 1)
 
     (CUISINE_DIR / f'{key}.html').write_text(page)
     cuisine_pages_written += 1
@@ -4392,7 +4545,7 @@ for d in by_district:
 
 # (_district_slug defined earlier near build_xaxis_strip)
 
-district_template = open(INDEX_PATH).read()
+district_template = _strip_home_methodology(open(INDEX_PATH).read())
 district_pages_written = 0
 for label, entries in by_district.items():
     if not entries: continue
@@ -4445,7 +4598,9 @@ for label, entries in by_district.items():
                   lambda m: district_h1, page, count=1)
 
     # District-scoped static feed (top 30) + structured data set
-    district_static = build_static_rows(entries[:30], link_to_listing=True, group_by_date=True)
+    district_static = (build_home_feed(entries, scope_label=f'new spots in {label} · last 30 days')
+                       if len(entries) >= HERO_MIN
+                       else build_static_rows(entries[:30], link_to_listing=True, group_by_date=True))
     district_itemlist = build_ld_itemlist(
         entries[:30],
         name=f"Newest restaurants in {place}",
@@ -4488,7 +4643,7 @@ for label, entries in by_district.items():
     )
     page = swap_newsletter_cta(page, build_alert_section('district', slug, label))
     # Body class - same horizontal-masthead treatment as cuisine pages.
-    page = page.replace('<body>', '<body class="page-district">', 1)
+    page = page.replace('<body class="page-home">', '<body class="page-district">', 1)
 
     (DISTRICT_DIR / f'{slug}.html').write_text(page)
     district_pages_written += 1
@@ -4512,7 +4667,7 @@ for entry in seen_entries.values():
 for _ns in by_nbhd:
     by_nbhd[_ns].sort(key=lambda r: r['issuedDate'], reverse=True)
 
-neighborhood_template = open(INDEX_PATH).read()
+neighborhood_template = _strip_home_methodology(open(INDEX_PATH).read())
 neighborhood_pages_written = 0
 live_neighborhoods = set()
 # (label, slug) for every neighborhood that actually gets a page — feeds the
@@ -4695,7 +4850,10 @@ for nbhd_slug, nbhd_entries in by_nbhd.items():
     # the alert pitch reads "new restaurant opens in Greektown".
     page = swap_newsletter_cta(page, build_alert_section(
         'district', nbhd_slug, label))
-    page = page.replace('<body>', '<body class="page-district">', 1)
+    page = page.replace('<body class="page-home">', '<body class="page-district">', 1)
+
+    if n365 < 10:
+        page = page.replace('</head>', '<meta name="robots" content="noindex, follow">\n</head>', 1)
 
     (NEIGHBORHOOD_DIR / f'{nbhd_slug}.html').write_text(page)
     neighborhood_pages_written += 1
@@ -4711,7 +4869,7 @@ print(f"  wrote {neighborhood_pages_written} per-neighborhood SEO landing pages 
 # scarborough", "new indonesian danforth ave", "uyghur xinjiang etobicoke").
 # Only render combos with at least 1 entry — empty pages would be thin
 # content and hurt the site's overall ranking signal.
-intersection_template = open(INDEX_PATH).read()
+intersection_template = _strip_home_methodology(open(INDEX_PATH).read())
 intersection_data = defaultdict(list)
 for entry in seen_entries.values():
     district = (entry.get('district') or '').strip()
@@ -4834,7 +4992,7 @@ for (cuisine_key, district), x_entries in intersection_data.items():
         lcp_preload_url='',
     )
     page = swap_newsletter_cta(page, build_alert_section('cuisine', cuisine_key, label))
-    page = page.replace('<body>', '<body class="page-cuisine">', 1)
+    page = page.replace('<body class="page-home">', '<body class="page-cuisine">', 1)
 
     intersection_subdir = CUISINE_DIR / cuisine_key
     intersection_subdir.mkdir(exist_ok=True)
@@ -4852,7 +5010,7 @@ print(f"  wrote {intersection_pages_written} cuisine×district intersection page
 # from one crawlable page) + captures "Toronto restaurant directory" /
 # "all newly registered restaurants" queries.
 all_index_path = Path(ROOT) / 'all.html'
-all_template = open(INDEX_PATH).read()
+all_template = _strip_home_methodology(open(INDEX_PATH).read())
 
 # Build alphabetical list, grouped by first letter
 alpha_entries = sorted(
@@ -4883,7 +5041,7 @@ for letter in sorted(_groups.keys()):
         rows_html.append(
             f'<li class="all-row">'
             f'<a class="all-name" href="/r/{_esc(e["slug"])}">{_esc(e["operatingName"])}</a>'
-            f'<span class="all-meta">'
+            f' <span class="all-meta">'
             f'{_esc(_clbl) if _clbl else ""}'
             f'{" · " + _esc(_addr_street) if _addr_street else ""}'
             f'{" · " + _esc(_district) if _district else ""}'
@@ -4940,7 +5098,7 @@ all_page = re.sub(
 if 'all-page-body' not in all_page:
     all_page = all_page.replace('<!-- OPEN-FEED-START -->', f'<div class="all-page-body">{all_body}</div><!-- OPEN-FEED-START -->', 1)
 
-all_page = all_page.replace('<body>', '<body class="page-all">', 1)
+all_page = all_page.replace('<body class="page-home">', '<body class="page-all">', 1)
 all_index_path.write_text(all_page)
 print(f"  wrote /all.html — alphabetical index of {len(alpha_entries)} restaurants")
 
@@ -5002,7 +5160,7 @@ OG_DIR      = Path(ROOT) / 'og'
 LISTING_DIR.mkdir(exist_ok=True)
 OG_DIR.mkdir(exist_ok=True)
 
-listing_template = open(INDEX_PATH).read()
+listing_template = _strip_home_methodology(open(INDEX_PATH).read()).replace('<h1 class="sub">', '<h1 class="sub" style="display:none">', 1)
 
 # Pre-render the "All cuisines" + "All districts" static nav blocks into
 # the in-memory template. Without this, the cuisine + district dropdowns
@@ -5343,12 +5501,32 @@ def build_listing_extra(entry, all_entries, cuisines_index):
         # row treatment so the signal is consistent across surfaces.
         _bare_tag_lx = ('<span class="row-fresh"> · No website yet.</span>'
                         if entry.get('bare') else '')
-        blocks.append(
-            '<div class="lx-card">'
-            f'<p class="lx-evidence">{_esc(blurb_text)}{_bare_tag_lx}</p>'
-            f'{dishes_paragraph_html}'
-            '</div>'
-        )
+        # De-dup: the ticket card above already prints the first sentence
+        # (entry['blurb']). Strip that opening sentence from the editorial
+        # card so the identical text isn't shown twice; if the editorial is
+        # nothing but that sentence, drop the card entirely.
+        # BUT only when the ticket shows the sentence IN FULL. If the ticket
+        # blurb is truncated (ends with …), keep the complete editorial below
+        # so the cut-off remainder stays readable somewhere on the page.
+        _ticket_blurb = (entry.get('blurb') or '').strip()
+        if _ticket_blurb and not _ticket_blurb.endswith('…'):
+            def _norm_b(s):
+                return re.sub(r'\s+', ' ', s or '').strip().rstrip('.!?…').lower()
+            _nt = _norm_b(_ticket_blurb)
+            _mf = re.match(r'\s*(.+?[.!?])\s+(.+)', blurb_text, re.S)
+            if _mf and (_norm_b(_mf.group(1)) == _nt or _norm_b(_mf.group(1)).startswith(_nt)):
+                blurb_text = _mf.group(2).strip()
+            elif _norm_b(blurb_text) == _nt:
+                blurb_text = ''
+        if blurb_text:
+            blocks.append(
+                '<div class="lx-card">'
+                f'<p class="lx-evidence">{_esc(blurb_text)}{_bare_tag_lx}</p>'
+                f'{dishes_paragraph_html}'
+                '</div>'
+            )
+        elif dishes_paragraph_html:
+            blocks.append(f'<div class="lx-card">{dishes_paragraph_html}</div>')
     elif dishes_paragraph_html:
         # No editorial blurb but we DO have dishes — still surface them
         # inside an lx-card so they don't float alone on the page.
@@ -5592,7 +5770,7 @@ for entry in seen_entries.values():
                   lambda m: listing_h1, page, count=1)
 
     # Single-entry static feed + single-Restaurant JSON-LD.
-    one_row = build_static_rows([entry])
+    one_row = build_static_rows([entry], show_cta=False)  # already on the listing; no self-link CTA
     # image: pass an array containing both the 1200x630 OG card and the
     # 196x196 thumb. AI crawlers ingest schema.org `image` as an entity-
     # photo signal; multiple resolutions raise citation confidence.
@@ -5786,7 +5964,7 @@ for entry in seen_entries.values():
     # hides the directory-level filter row + map toggle. /r/<slug>.html
     # is a SINGLE-restaurant view; browsing chrome belongs on the home
     # / cuisine / district pages, not here.
-    page = page.replace('<body>', '<body class="page-listing">', 1)
+    page = page.replace('<body class="page-home">', '<body class="page-listing">', 1)
 
     # 2026-06-03: standalone bottom-of-page newsletter section RESTORED
     # on /r/<slug> pages with the listing's primary cuisine, replacing
@@ -6006,7 +6184,7 @@ for _sel, _val in _dispatch_meta_subs:
                                 _dispatch_page, count=1)
 _dispatch_page = re.sub(r'<h1 class="sub">[\s\S]*?</h1>(?:<div class="listing-lede">[\s\S]*?</div>)?',
                         lambda m: _dispatch_h1, _dispatch_page, count=1)
-_dispatch_page = _dispatch_page.replace('<body>', '<body class="page-dispatch">', 1)
+_dispatch_page = _dispatch_page.replace('<body class="page-home">', '<body class="page-dispatch">', 1)
 # Drop the chrome that doesn't belong on a dispatch archive page:
 # filter dropdowns, cuisine picker, map toggle, fresh-since badge.
 # Body class .page-dispatch hides them via CSS (reusing the existing
@@ -6016,8 +6194,12 @@ _dispatch_page = _dispatch_page.replace('<body>', '<body class="page-dispatch">'
 # the month's actual long-tail picks pre-filled.
 _dispatch_page = _dispatch_page.replace('</main>', _dispatch_share_html + '\n</main>', 1)
 (DISPATCH_DIR / f'{_dispatch_month}.html').write_text(_dispatch_page)
-(DISPATCH_DIR / 'latest.html').write_text(_dispatch_page)
-print(f"  wrote /dispatch/{_dispatch_month}.html + /dispatch/latest.html ({len(_this_month_picks)} entries)")
+# /dispatch/latest.html retired 2026-06-13 — the masthead chip that linked it
+# was removed; .htaccess now 301s /dispatch/latest → /. Sweep any stale copy.
+_latest_stale = DISPATCH_DIR / 'latest.html'
+if _latest_stale.exists():
+    _latest_stale.unlink()
+print(f"  wrote /dispatch/{_dispatch_month}.html ({len(_this_month_picks)} entries)")
 
 # ─────────────────────────────────────────────────────────────────────
 # /trends page (2026-06-01): cuisine-velocity chart, monthly. Built as
@@ -7370,14 +7552,14 @@ for _sel, _val in _trends_meta_subs:
                               _trends_page, count=1)
 _trends_page = re.sub(r'<h1 class="sub">[\s\S]*?</h1>(?:<div class="listing-lede">[\s\S]*?</div>)?',
                       lambda m: _trends_h1, _trends_page, count=1)
-_trends_page = _trends_page.replace('<body>', '<body class="page-trends">', 1)
+_trends_page = _trends_page.replace('<body class="page-home">', '<body class="page-trends">', 1)
 # Insert trends body BEFORE the open-feed div; CSS hides the feed on
 # .page-trends so the chart fully occupies the content area. (Tried to
 # replace the feed div via regex but the nested .open-row divs make
 # matching the closing </div> brittle — sibling-insert + CSS hide is
 # both simpler and more robust.)
 _trends_page = re.sub(
-    r'(<div class="open-feed")',
+    r'(<div[^>]*id="open-feed")',
     _trends_body + '\n  \\1', _trends_page, count=1)
 (Path(ROOT) / 'trends.html').write_text(_trends_page)
 # Monthly snapshot at /trends/<yyyy-mm>.html. Overwrites within the
@@ -7584,8 +7766,8 @@ for _sel, _val in [
         _pro_page = re.sub(_sel, lambda m, v=_val: m.group(1) + v + m.group(2), _pro_page, count=1)
 _pro_page = re.sub(r'<h1 class="sub">[\s\S]*?</h1>(?:<div class="listing-lede">[\s\S]*?</div>)?',
                    lambda m: '<h1 class="pro-h1">CUISINE.VELOCITY</h1>', _pro_page, count=1)
-_pro_page = _pro_page.replace('<body>', '<body class="page-data">', 1)
-_pro_page = re.sub(r'(<div class="open-feed")', _pro_body + '\n  \\1', _pro_page, count=1)
+_pro_page = _pro_page.replace('<body class="page-home">', '<body class="page-data">', 1)
+_pro_page = re.sub(r'(<div[^>]*id="open-feed")', _pro_body + '\n  \\1', _pro_page, count=1)
 
 (Path(ROOT) / 'press').mkdir(exist_ok=True)
 (Path(ROOT) / 'press' / 'data.html').write_text(_pro_page)
@@ -7698,11 +7880,11 @@ _answers_page = re.sub(
 # Inject the Q&A body before the open-feed div; .page-answers CSS hides
 # the directory feed + filter row so the page is pure-text Q&A surface.
 _answers_page = re.sub(
-    r'(<div class="open-feed")',
+    r'(<div[^>]*id="open-feed")',
     '<div class="answers-corpus">' + _answers_body + '</div>\n  \\1',
     _answers_page, count=1,
 )
-_answers_page = _answers_page.replace('<body>', '<body class="page-answers">', 1)
+_answers_page = _answers_page.replace('<body class="page-home">', '<body class="page-answers">', 1)
 (Path(ROOT) / 'answers.html').write_text(_answers_page)
 print(f"  wrote /answers.html ({_answers_n} Q&A pairs)")
 
@@ -7772,20 +7954,29 @@ for c in cuisines_out:
 for label in by_district:
     if not by_district[label]: continue
     slug = _district_slug(label)
-    url_blocks.append(_sitemap_url(f'{SITE_BASE}/district/{slug}', _today_iso))
-# Per-neighborhood iconic-corridor landing pages.
+    url_blocks.append(_sitemap_url(f'{SITE_BASE}/district/{slug}/', _today_iso))
+# Per-neighborhood iconic-corridor landing pages (noindexed corridors omitted).
 for _nslug in sorted(by_nbhd.keys()):
     if not by_nbhd[_nslug]: continue
+    if len(by_nbhd[_nslug]) < 10: continue  # noindexed below threshold — skip sitemap
     url_blocks.append(_sitemap_url(f'{SITE_BASE}/neighborhood/{_nslug}', _today_iso))
 # Cuisine × district intersection pages — captures long-tail compound
 # queries ("filipino restaurant scarborough", etc.).
 for (cuisine_key, district_slug) in intersection_urls:
     url_blocks.append(_sitemap_url(
         f'{SITE_BASE}/cuisine/{cuisine_key}/{district_slug}', _today_iso))
-# Per-listing /r/<slug> pages are intentionally NOT added to the sitemap —
-# see the note near the top of this file. They stay live and internally
-# linked, but advertising 260 thin detail pages here tanked Bing's
-# whole-site index ratio (most filed as "crawled — not indexed").
+# Per-listing /r/<slug> pages — included so Google can discover all 260+.
+# GSC shows 109 already indexed via internal links; explicit sitemap entries
+# signal priority and surface the remaining ~150 that haven't been crawled.
+_r_dir = Path(ROOT) / 'r'
+if _r_dir.exists():
+    import re as _re_r
+    for _rfile in sorted(_r_dir.glob('*.html')):
+        _rslug = _rfile.stem
+        _rcontent = _rfile.read_text(errors='replace')
+        _rdm = _re_r.search(r'"dateModified"\s*:\s*"([0-9]{4}-[0-9]{2}-[0-9]{2})', _rcontent)
+        _rlastmod = _rdm.group(1) if _rdm else _today_iso
+        url_blocks.append(_sitemap_url(f'{SITE_BASE}/r/{_rslug}', _rlastmod))
 
 sitemap = (
     '<?xml version="1.0" encoding="UTF-8"?>\n'
@@ -7807,7 +7998,7 @@ if _llms_path.exists():
     print(f"  updated llms.txt (date={_today_iso}, entries={n_tagged_365})")
 
 with open(SITEMAP_PATH, 'w') as f: f.write(sitemap)
-print(f"  wrote sitemap.xml ({len(url_blocks)} URLs; /r/ listing pages omitted)")
+print(f"  wrote sitemap.xml ({len(url_blocks)} URLs; incl. {sum(1 for u in url_blocks if '/r/' in u)} /r/ listing pages)")
 
 print(f"Injected newOpenings into {DATA_PATH}")
 print(f"  {n_food_active_365:,} active food licences issued in last 365d")

@@ -82,7 +82,10 @@ function tierLabel(days) {
 // full 280-entry feed and break the editorial scope.
 if (!document.body.classList.contains('page-listing')
     && !document.body.classList.contains('page-dispatch')
-    && !document.body.classList.contains('page-trends'))
+    && !document.body.classList.contains('page-trends')
+    && !document.body.classList.contains('page-all')
+    && !document.body.classList.contains('page-data')
+    && !document.body.classList.contains('page-answers'))
 // Low priority: the feed is pre-rendered server-side, so this 119KB hydration
 // payload is only needed for the interactive layer (filtering/search/full list),
 // never for first paint. Deprioritizing it frees the throttled pipe for the LCP
@@ -190,9 +193,8 @@ fetch('/data/corridors.json?v=' + Date.now(), { priority: 'low' }).then(r => r.j
     const accentKey = cuisineKeys[0];
     const accentMeta = accentKey ? CUISINE_META[accentKey] : null;
     const accentBg = (accentMeta && accentMeta.color) || (accentKey && CUISINE_PALETTE[accentKey]) || null;
-    const row = document.createElement('div');
-    if (accentBg) row.style.setProperty('--row-accent', accentBg);
-    row.className = 'open-row';
+    const row = document.createElement('article');
+    row.className = 'ticket';
     if (r.slug) row.setAttribute('data-slug', r.slug);
     if (isHot) row.setAttribute('data-fresh', 'hot');
     else if (isRecent) row.setAttribute('data-fresh', 'recent');
@@ -308,11 +310,38 @@ fetch('/data/corridors.json?v=' + Date.now(), { priority: 'low' }).then(r => r.j
     const blurbHtml = (r.blurb || bare)
       ? `<p class="row-blurb">${escHtml(r.blurb || '')}${bareTag}</p>`
       : '';
-    row.innerHTML = `${thumbHtml}
-      <div class="od">${agoHtml}</div>
-      <div class="on">${nameHtml}${ratingHtml}<span class="oad">${addrLine}</span></div>
-      <div class="oc">${favHtml}${shareHtml}${pillsHtml}</div>
-      ${blurbHtml}`;
+    // Primary cuisine badge for ticket header
+    const primaryKey = cuisineKeys[0];
+    const primaryMeta = primaryKey ? CUISINE_META[primaryKey] : null;
+    const badgeBg = (primaryMeta && primaryMeta.color) || (primaryKey && CUISINE_PALETTE[primaryKey]) || '#888';
+    const badgeLabel = (primaryMeta && primaryMeta.label) || CUISINE_LABEL[primaryKey] || primaryKey || '';
+    const daysNum = r.daysOpen != null ? r.daysOpen : '?';
+    // Neighborhood label from entry data
+    const nbhd = (r.neighborhood && r.neighborhood.label) ? r.neighborhood.label : '';
+    const nbhdHtml = nbhd && r.district
+      ? `<span class="nbhd">${escHtml(nbhd)} · ${escHtml(r.district)}</span>`
+      : (r.district ? `<span class="nbhd">${escHtml(r.district)}</span>` : '');
+    const bareNote = bare ? ' · No website yet.' : '';
+    const blurbBody = (r.blurb || bare)
+      ? `<p class="tk-blurb">${escHtml(r.blurb || '')}${bareNote}</p>` : '';
+    // No "Full listing" CTA when we're already on that listing page (/r/…) —
+    // it would just self-link. Mirrors show_cta=False in the server renderer.
+    const onListingPage = location.pathname.startsWith('/r/');
+    const ctaHtml = (r.slug && !onListingPage) ? `<a class="tk-cta" href="/r/${r.slug}">Full listing →</a>` : '';
+    row.innerHTML = `
+      <div class="tk-head">
+        <span class="tk-badge" style="background:${badgeBg}">${badgeLabel}</span>
+        <span class="tk-freshness"><span class="days">${daysNum}</span> days ago</span>
+      </div>
+      <div class="tk-body">
+        <h2 class="tk-name">${nameHtml}</h2>
+        ${blurbBody}
+      </div>
+      <div class="tear"></div>
+      <div class="tk-foot">
+        <div class="tk-addr">${nbhdHtml}${addrLink}${addrSuffix}</div>
+        <div class="tk-actions">${favHtml}${shareHtml}${ctaHtml}</div>
+      </div>`;
     const favBtn = row.querySelector('.row-fav');
     if (favBtn) {
       favBtn.addEventListener('click', e => {
@@ -334,7 +363,152 @@ fetch('/data/corridors.json?v=' + Date.now(), { priority: 'low' }).then(r => r.j
     }
     return row;
   }
+  // ── Cuisine emoji (homepage friendly layout). Falls back to 🍴. ──
+  const EMOJI = {
+    indian:'🍛', chinese:'🥡', vietnamese:'🍜', italian:'🍕', mexican:'🌮',
+    japanese:'🍣', korean:'🍲', turkish:'🥙', thai:'🍜', pakistani:'🍛',
+    sri_lankan:'🍛', lebanese:'🥙', tamil:'🍛', persian:'🍢', middle_east:'🥙',
+    filipino:'🍢', greek:'🥙', french:'🥐', bangladeshi:'🍛', argentinian:'🥩',
+    jamaican:'🍢', afghan:'🍢', taiwanese:'🧋', south_asian:'🍛', caribbean:'🍹',
+    latin:'🌮', eritrean:'🍲', ethiopian:'🍲', portuguese:'🥐', peruvian:'🐟',
+    nigerian:'🍲', tibetan:'🥟', armenian:'🥙', belgian:'🧇', venezuelan:'🫓',
+    palestinian:'🥙', ghanaian:'🍲', senegalese:'🍲', costa_rican:'🍤',
+    singaporean:'🍜', kurdish:'🥙', guatemalan:'🌮', spanish:'🥘',
+    indonesian:'🍜', colombian:'🫓'
+  };
+  const esc = (s) => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  // Licence data is ALL-CAPS; title-case it for the friendly layout.
+  const titleCase = (s) => String(s==null?'':s).toLowerCase().replace(/\b([a-z])/g, (m,c) => c.toUpperCase());
+  // Cuisine colour → soft pastel tile background for list icons.
+  function iconTint(hex) {
+    const m = /^#?([0-9a-f]{6})$/i.exec(hex || '');
+    if (!m) return '#f0ece3';
+    const n = parseInt(m[1], 16);
+    return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},0.16)`;
+  }
+  const nsLabel = (k) => (CUISINE_META[k] && CUISINE_META[k].label) || CUISINE_LABEL[k] || k;
+  const nsKeys = (r) => (r.cuisines && r.cuisines.length) ? r.cuisines : [r.cuisine];
+  const nsHood = (r) => (r.neighborhood && r.neighborhood.label) || r.district || '';
+  // Age label: days under a month, months once it's over a month.
+  function nsAgo(d) {
+    if (typeof d !== 'number') return '';
+    if (d < 30) return d + (d === 1 ? ' day ago' : ' days ago');
+    const m = Math.floor(d / 30);
+    return m + (m === 1 ? ' month ago' : ' months ago');
+  }
+  // Below this many listings a page keeps the ticket list — a ranked
+  // "Newest / 2nd / 3rd" hero + streak looks silly for one or two spots.
+  const HERO_MIN = 10;
+  function nsHeroCard(r, rank) {
+    const k = nsKeys(r)[0], lab = nsLabel(k), emoji = EMOJI[k] || '🍴';
+    const badge = ['r1','r2','r3'][rank-1];
+    const badgeLbl = rank === 1 ? '🏆 Newest' : (rank === 2 ? '2nd newest' : '3rd newest');
+    const href = r.slug ? `/r/${r.slug}` : '#';
+    const saved = r.slug && isSaved(r.slug);
+    const distTag = r.district ? `<span class="ns-tag hood">${esc(r.district)}</span>` : '';
+    const blurb = r.blurb ? `<p class="ns-card-blurb">${esc(r.blurb)}</p>` : '';
+    return `<a href="${href}" class="ns-hero-card${rank===1?' rank-1':''}" data-slug="${esc(r.slug||'')}">`
+      + `<div class="ns-card-rank"><span class="ns-rank-badge ${badge}">${badgeLbl}</span><span class="ns-days-ago">${nsAgo(r.daysOpen)}</span></div>`
+      + `<div class="ns-card-icon">${emoji}</div>`
+      + `<div class="ns-card-body"><p class="ns-card-name">${esc(titleCase(r.operatingName))}</p>`
+      + `<p class="ns-card-sub">${esc(lab)}${nsHood(r)?' · '+esc(nsHood(r)):''}</p>`
+      + blurb
+      + `<span class="ns-tag cuisine">${esc(lab)}</span>${distTag}<br>`
+      + `<button class="ns-save-btn${saved?' saved':''}" type="button" data-slug="${esc(r.slug||'')}">${saved?'♥ Saved':'♡ Save'}</button>`
+      + `</div></a>`;
+  }
+  function nsListItem(r, num) {
+    const k = nsKeys(r)[0], lab = nsLabel(k), emoji = EMOJI[k] || '🍴';
+    const color = (CUISINE_META[k] && CUISINE_META[k].color) || CUISINE_PALETTE[k] || '#888';
+    const href = r.slug ? `/r/${r.slug}` : '#';
+    const blurb = r.blurb ? `<p class="ns-list-blurb">${esc(r.blurb)}</p>` : '';
+    return `<a href="${href}" class="ns-list-item" data-slug="${esc(r.slug||'')}">`
+      + `<span class="ns-list-num">${num}</span>`
+      + `<div class="ns-list-icon" style="background:${iconTint(color)}">${emoji}</div>`
+      + `<div class="ns-list-info"><p class="ns-list-name">${esc(titleCase(r.operatingName))}</p>`
+      + `<p class="ns-list-meta">${esc(lab)}${nsHood(r)?' · '+esc(nsHood(r)):''}</p>${blurb}</div>`
+      + `<span class="ns-list-age">${nsAgo(r.daysOpen)}</span></a>`;
+  }
+  // Accurate: count of listings first seen in the last 30 days (real data,
+  // not a calendar month — the licence feed lags, so the current month is
+  // often empty). `label` is scoped to the page (cuisine / district).
+  function nsStreak(rows, label) {
+    const count = rows.filter(r => typeof r.daysOpen === 'number' && r.daysOpen <= 30).length;
+    let dots = '';
+    for (let i = 0; i < 7; i++) dots += `<div class="ns-dot on"></div>`;
+    return `<div class="ns-streak-bar"><span class="ns-flame">🔥</span>`
+      + `<div><div class="ns-count">${count}</div><div class="ns-label">${label}</div></div>`
+      + `<div class="ns-dots" aria-label="updated every day this week">${dots}</div>`
+      + `<span class="ns-updated">updated daily</span></div>`;
+  }
+  // Friendly layout: streak → 3 ranked hero cards → ranked list (with blurbs).
+  function nsRenderHome() {
+    const MN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const now = new Date();
+    const rows = currentRows;
+    let scopeNoun = 'spots';
+    if (currentCuisine !== '__all') scopeNoun = nsLabel(currentCuisine) + ' spots';
+    const scopeWhere = (currentRegion !== '__all') ? ' in ' + currentRegion : '';
+    const label = `new ${scopeNoun}${scopeWhere} · last 30 days`;
+    let html = nsStreak(rows, label);
+    const heroes = rows.slice(0, 3);
+    html += '<div class="ns-hero-grid">' + heroes.map((r,i) => nsHeroCard(r, i+1)).join('') + '</div>';
+    const rest = rows.slice(3, currentShown);
+    if (rest.length) {
+      // Group the list by registration month. "Months ago" uses the same
+      // floor(daysOpen/30) bucket as the age label, so a "1 month ago" row
+      // sits under "May", "2 months ago" under "April", etc. Month label is
+      // right-aligned (line then label) so every divider lines up; no year.
+      const monthLabel = (b) => {
+        const t = now.getFullYear() * 12 + now.getMonth() - b;
+        const y = Math.floor(t / 12);
+        return MN[((t % 12) + 12) % 12] + (y !== now.getFullYear() ? ' ' + y : '');
+      };
+      let prevB = null;
+      rest.forEach((r, i) => {
+        const b = (typeof r.daysOpen === 'number') ? Math.floor(r.daysOpen / 30) : 0;
+        if (b !== prevB) {
+          html += (prevB === null)
+            ? `<div class="ns-section-head"><span class="ns-section-head-label">Also registered recently</span><div class="ns-section-head-line"></div><span class="ns-section-head-label">${monthLabel(b)}</span></div>`
+            : `<div class="ns-section-head"><div class="ns-section-head-line"></div><span class="ns-section-head-label">${monthLabel(b)}</span></div>`;
+          prevB = b;
+        }
+        html += nsListItem(r, i + 4);
+      });
+    }
+    feed.innerHTML = html;
+    if (rows.length > currentShown) {
+      const remaining = rows.length - currentShown;
+      const more = document.createElement('button');
+      more.className = 'show-more'; more.type = 'button';
+      more.textContent = `Show ${Math.min(PAGE_SIZE, remaining)} more`;
+      more.addEventListener('click', () => { currentShown += PAGE_SIZE; paintFeed(); });
+      feed.appendChild(more);
+    }
+    feed.querySelectorAll('.ns-save-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.preventDefault(); e.stopPropagation();
+        const slug = btn.getAttribute('data-slug'); if (!slug) return;
+        const nowSaved = toggleSaved(slug);
+        btn.classList.toggle('saved', nowSaved);
+        btn.textContent = nowSaved ? '♥ Saved' : '♡ Save';
+        refreshSavedToggle();
+      });
+    });
+  }
   function paintFeed() {
+    // Friendly streak/hero/list layout on the homepage + single cuisine/district
+    // pages that have enough listings (HERO_MIN). Thin cuisines, cuisine×district
+    // intersections, /r/ listings, and other page types keep the ticket feed —
+    // a ranked hero + streak is meaningless for one or two spots.
+    const p = location.pathname;
+    const heroPath = p === '/' || p === '/index.html'
+      || /^\/cuisine\/[a-z_]+(?:\.html)?\/?$/.test(p)
+      || /^\/district\/[a-z-]+(?:\.html)?\/?$/.test(p);
+    if (heroPath && currentRows.length >= HERO_MIN) {
+      nsRenderHome();
+      return;
+    }
     feed.innerHTML = '';
     if (!currentRows.length) {
       // Filter-aware empty state. Composes "No newly registered <Cuisine>
@@ -1281,7 +1455,7 @@ fetch('/data/corridors.json?v=' + Date.now(), { priority: 'low' }).then(r => r.j
     // Bail if the click landed on an interactive element - let its own
     // handler / href win.
     if (e.target.closest('a, button, input, textarea, select, label')) return;
-    const row = e.target.closest('.open-row[data-slug]');
+    const row = e.target.closest('.ticket[data-slug]');
     if (!row) return;
     const slug = row.getAttribute('data-slug');
     if (slug) window.location.href = `/r/${slug}`;
