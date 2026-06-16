@@ -10,6 +10,18 @@ from collections import defaultdict
 from pathlib import Path
 
 REFERENCE_DATE = date.today()  # use real today; build_corridors.py uses its own TODAY constant
+
+# Per-URL <lastmod> AND schema dateModified derive from each entity's real
+# first-seen date, so the sitemap and the page tell ONE story. Google discounts
+# lastmod/dateModified that is always "today" or contradicts on-page signals —
+# re-verifying that nothing changed is NOT a modification.
+def _norm_lastmod(s):
+    s = s or ''
+    return s[:10] if (isinstance(s, str) and len(s) >= 10 and s[4:5] == '-' and s[7:8] == '-') else None
+
+def _bucket_lastmod(entries):
+    ds = [d for d in (_norm_lastmod(e.get('firstSeen')) for e in (entries or [])) if d]
+    return max(ds) if ds else REFERENCE_DATE.isoformat()
 import os
 # Derive repo root from this script's location so the same code works on dev (WSL) and prod (VPS).
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -2703,7 +2715,7 @@ def build_ld_itemlist(entries, name, description):
             # every restaurant via the licence + Places gates, so each entity is
             # genuinely "checked today" — distinct from the page-level dateModified
             # that just tracks the index refresh.
-            'dateModified': REFERENCE_DATE.isoformat(),
+            'dateModified': _norm_lastmod(r.get('firstSeen')) or REFERENCE_DATE.isoformat(),
         }
         if not rest['@id']: del rest['@id']
         if _site: rest['url'] = _site
@@ -4515,7 +4527,7 @@ for c in cuisines_out:
         description=desc,
     )
     cuisine_collection = build_ld_collectionpage(
-        cuisine_itemlist, url=canonical, dateModified=REFERENCE_DATE.isoformat(),
+        cuisine_itemlist, url=canonical, dateModified=_bucket_lastmod(entries),
         datePublished='2026-05-13',
         about=cuisine_about_thing(key, label),
     )
@@ -4681,7 +4693,7 @@ for label, entries in by_district.items():
         description=desc,
     )
     district_collection = build_ld_collectionpage(
-        district_itemlist, url=canonical, dateModified=REFERENCE_DATE.isoformat(),
+        district_itemlist, url=canonical, dateModified=_bucket_lastmod(entries),
         datePublished='2026-05-13',
     )
     district_breadcrumb_parts = [
@@ -4864,7 +4876,7 @@ for nbhd_slug, nbhd_entries in by_nbhd.items():
     if wikidata_qid:
         nbhd_about['sameAs'] = f'https://www.wikidata.org/wiki/{wikidata_qid}'
     nbhd_collection = build_ld_collectionpage(
-        nbhd_itemlist, url=canonical, dateModified=REFERENCE_DATE.isoformat(),
+        nbhd_itemlist, url=canonical, dateModified=_bucket_lastmod(nbhd_entries),
         datePublished='2026-05-13',
         about=nbhd_about,
     )
@@ -5023,7 +5035,7 @@ for (cuisine_key, district), x_entries in intersection_data.items():
         description=x_desc,
     )
     x_collection = build_ld_collectionpage(
-        x_itemlist, url=x_canonical, dateModified=REFERENCE_DATE.isoformat(),
+        x_itemlist, url=x_canonical, dateModified=_bucket_lastmod(x_entries_sorted),
         about=cuisine_about_thing(cuisine_key, label),
     )
     x_breadcrumb_parts = [
@@ -5885,8 +5897,8 @@ for entry in seen_entries.values():
         'url': _entry_website or canonical,
         'image': _image_field,
         'openingDate': entry.get('issuedDate'),
-        # dateModified: per-entity freshness, refreshed every daily cron.
-        'dateModified': REFERENCE_DATE.isoformat(),
+        # dateModified: per-entity last CHANGE (first-seen); matches sitemap lastmod.
+        'dateModified': _norm_lastmod(entry.get('firstSeen')) or REFERENCE_DATE.isoformat(),
     }
     # verifiedBy: authoritative sourcing for the operating-status claim.
     # All visible entries are gated as operationally-verified (the policy
@@ -7867,17 +7879,7 @@ def _sitemap_url(loc, lastmod):
 
 _today_iso = REFERENCE_DATE.isoformat()
 
-# Per-URL <lastmod>: each entity's real first-seen date, not a flat build-date
-# stamp (Google discounts lastmod when every URL is always "today"). Collection
-# pages take the freshest member's first-seen = when the page last gained a listing.
-def _norm_lastmod(s):
-    s = s or ''
-    return s[:10] if (isinstance(s, str) and len(s) >= 10 and s[4:5] == '-' and s[7:8] == '-') else None
-
-def _bucket_lastmod(entries):
-    ds = [d for d in (_norm_lastmod(e.get('firstSeen')) for e in (entries or [])) if d]
-    return max(ds) if ds else _today_iso
-
+# Per-URL <lastmod> uses each entity's first-seen date (helpers hoisted near top).
 _slug_lastmod = {}
 for _es_lm in opens_365_by_cuisine.values():
     for _e_lm in _es_lm:
