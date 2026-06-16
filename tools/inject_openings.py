@@ -7867,6 +7867,24 @@ def _sitemap_url(loc, lastmod):
 
 _today_iso = REFERENCE_DATE.isoformat()
 
+# Per-URL <lastmod>: each entity's real first-seen date, not a flat build-date
+# stamp (Google discounts lastmod when every URL is always "today"). Collection
+# pages take the freshest member's first-seen = when the page last gained a listing.
+def _norm_lastmod(s):
+    s = s or ''
+    return s[:10] if (isinstance(s, str) and len(s) >= 10 and s[4:5] == '-' and s[7:8] == '-') else None
+
+def _bucket_lastmod(entries):
+    ds = [d for d in (_norm_lastmod(e.get('firstSeen')) for e in (entries or [])) if d]
+    return max(ds) if ds else _today_iso
+
+_slug_lastmod = {}
+for _es_lm in opens_365_by_cuisine.values():
+    for _e_lm in _es_lm:
+        _sg_lm, _fs_lm = _e_lm.get('slug'), _norm_lastmod(_e_lm.get('firstSeen'))
+        if _sg_lm and _fs_lm:
+            _slug_lastmod[_sg_lm] = _fs_lm
+
 # ── /answers.html — Q&A corpus for AI assistant citation ────────────────
 # A pure-text passage-citable surface. Each Q&A is the exact shape
 # Perplexity/ChatGPT/Claude/Gemini extract from when answering recency
@@ -8023,33 +8041,31 @@ for c in cuisines_out:
     # pages (/cuisine/<key>/<district>) exist, /cuisine/<key> is a real
     # directory and Apache DirectorySlash 301s the slashless form. Match the
     # canonical so the sitemap lists the 200 URL directly.
-    url_blocks.append(_sitemap_url(f'{SITE_BASE}/cuisine/{c["key"]}/', _today_iso))
+    url_blocks.append(_sitemap_url(f'{SITE_BASE}/cuisine/{c["key"]}/', _bucket_lastmod(opens_365_by_cuisine.get(c["key"]))))
 # Per-district landing pages.
 for label in by_district:
     if not by_district[label]: continue
     slug = _district_slug(label)
-    url_blocks.append(_sitemap_url(f'{SITE_BASE}/district/{slug}/', _today_iso))
+    url_blocks.append(_sitemap_url(f'{SITE_BASE}/district/{slug}/', _bucket_lastmod(by_district[label])))
 # Per-neighborhood iconic-corridor landing pages (noindexed corridors omitted).
 for _nslug in sorted(by_nbhd.keys()):
     if not by_nbhd[_nslug]: continue
     if len(by_nbhd[_nslug]) < 10: continue  # noindexed below threshold — skip sitemap
-    url_blocks.append(_sitemap_url(f'{SITE_BASE}/neighborhood/{_nslug}', _today_iso))
+    url_blocks.append(_sitemap_url(f'{SITE_BASE}/neighborhood/{_nslug}', _bucket_lastmod(by_nbhd[_nslug])))
 # Cuisine × district intersection pages — captures long-tail compound
 # queries ("filipino restaurant scarborough", etc.).
 for (cuisine_key, district_slug) in intersection_urls:
     url_blocks.append(_sitemap_url(
-        f'{SITE_BASE}/cuisine/{cuisine_key}/{district_slug}', _today_iso))
+        f'{SITE_BASE}/cuisine/{cuisine_key}/{district_slug}',
+        _bucket_lastmod(opens_365_by_cuisine.get(cuisine_key))))
 # Per-listing /r/<slug> pages — included so Google can discover all 260+.
 # GSC shows 109 already indexed via internal links; explicit sitemap entries
 # signal priority and surface the remaining ~150 that haven't been crawled.
 _r_dir = Path(ROOT) / 'r'
 if _r_dir.exists():
-    import re as _re_r
     for _rfile in sorted(_r_dir.glob('*.html')):
         _rslug = _rfile.stem
-        _rcontent = _rfile.read_text(errors='replace')
-        _rdm = _re_r.search(r'"dateModified"\s*:\s*"([0-9]{4}-[0-9]{2}-[0-9]{2})', _rcontent)
-        _rlastmod = _rdm.group(1) if _rdm else _today_iso
+        _rlastmod = _slug_lastmod.get(_rslug, _today_iso)
         url_blocks.append(_sitemap_url(f'{SITE_BASE}/r/{_rslug}', _rlastmod))
 
 sitemap = (
