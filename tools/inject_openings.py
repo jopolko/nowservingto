@@ -1495,10 +1495,23 @@ _STREET_SUFFIX_MAP = {
 }
 # Sort longest-first so "sri lankan" matches before "lankan".
 _CUISINE_PROPER_SORTED = sorted(_CUISINE_PROPER, key=len, reverse=True)
+# Words that are NOT street names even when they precede a street-suffix word.
+# Without this guard the capitalizer mangles ordinary prose: "served the
+# traditional way" → "Traditional Way", "facing the street" → "The Street".
+_STREET_STOPWORDS = {
+    'the','a','an','this','that','these','those','each','every','any','some',
+    'no','another','same','their','our','your','my','his','her','its','one',
+    'own','on','of','to','in','by','at','for','with','from',
+    'traditional','only','old','new','first','last','best','right','long',
+    'short','full','real','true','whole','single','classic','signature',
+    'authentic','modern','simple','main',
+}
+# Words that, when they follow a suffix, signal the suffix is a common noun
+# rather than a street type: "street food", "street-side", "food court".
 _STREET_SUFFIX_PATTERN = _re.compile(
     r'\b([a-z][a-z\']{1,20})\s+(' +
     '|'.join(_re.escape(k) for k in _STREET_SUFFIX_MAP) +
-    r')\b\.?', _re.I)
+    r')\b(?![\s-]?(?:food|foods|vendor|vendors|side|style|market|cart|carts|eats|wear|smart)\b)\.?', _re.I)
 
 
 def _capitalize_proper_nouns(text):
@@ -1511,7 +1524,14 @@ def _capitalize_proper_nouns(text):
         text = _re.sub(pat, w.title(), text, flags=_re.I)
     # Street names: "davenport rd" → "Davenport Rd", "queen st w" → "Queen St W".
     def _street_repl(m):
-        return m.group(1).title() + ' ' + _STREET_SUFFIX_MAP[m.group(2).lower()]
+        name = m.group(1)
+        # Don't touch ordinary prose ("the way", "traditional way").
+        if name.lower() in _STREET_STOPWORDS:
+            return m.group(0)
+        # Capitalize the first letter only — str.title() breaks possessives
+        # ("kong's" → "Kong'S"), so cap manually.
+        name = name[:1].upper() + name[1:]
+        return name + ' ' + _STREET_SUFFIX_MAP[m.group(2).lower()]
     text = _STREET_SUFFIX_PATTERN.sub(_street_repl, text)
     return text
 
@@ -1593,6 +1613,9 @@ def _scrub_blurb(text):
     # 11) Em/en-dashes → comma (we don't ship them).
     text = _re.sub(r'\s*[—–]\s*', ', ', text)
     # 12) Cleanup: stranded punctuation, dangling connectives, sentence joins.
+    # Haiku frequently omits the space after a comma/semicolon ("birria,beef");
+    # insert one when the next char is a letter (not a digit, so "1,000" is safe).
+    text = _re.sub(r'([,;])(?=[^\s\d])', r'\1 ', text)
     text = _re.sub(r'\s{2,}', ' ', text)
     text = _re.sub(r'\s+([,.;:])', r'\1', text)
     text = _re.sub(r',\s*(?:with|but|and|;)\s+', ' ', text)
@@ -2542,7 +2565,7 @@ def build_static_rows(entries, link_to_listing=False, group_by_date=False, show_
         site = r.get('website')
         if _is_aggregator_url(site): site = None
         if site and not url_is_alive(site): site = None  # ECONNREFUSED/dead → fall back to mapsUrl
-        link = site or r.get('mapsUrl') or internal_url
+        link = r.get('mapsUrl') or site or internal_url
         name_ext_tgt = ' target="_blank" rel="noopener"' if link and not link.startswith('/r/') else ' rel="noopener"'
         # Diagonal-arrow indicator (↗) only when the name link goes to the
         # restaurant's OWN website - not Maps fallback, not internal /r/ page.
@@ -2616,8 +2639,17 @@ def build_static_rows(entries, link_to_listing=False, group_by_date=False, show_
         else:
             _nbhd_html = ''
         _days = r.get('daysOpen')
-        _days_html = f'<span class="days">{_days}</span>' if isinstance(_days, int) else '<span class="days">?</span>'
-        _bare_note = ' · No website yet.' if _bare else ''
+        # Freshness: days under a month, months once it's over (matches nsAgo).
+        if isinstance(_days, int):
+            if _days < 30:
+                _fresh_n, _fresh_u = _days, ('day' if _days == 1 else 'days')
+            else:
+                _mo = _days // 30
+                _fresh_n, _fresh_u = _mo, ('month' if _mo == 1 else 'months')
+        else:
+            _fresh_n, _fresh_u = '?', 'days'
+        _days_html = f'<span class="days">{_fresh_n}</span>'
+        _bare_note = ' <span class="row-fresh">· No website yet.</span>' if _bare else ''
         _blurb_body = f'<p class="tk-blurb">{_esc(_blurb)}{_bare_note}</p>' if _blurb else ''
         _cta_html = (f'<a class="tk-cta" href="/r/{_esc(slug)}">Full listing →</a>'
                      if slug and show_cta else '')
@@ -2625,7 +2657,7 @@ def build_static_rows(entries, link_to_listing=False, group_by_date=False, show_
             f'<article class="ticket"{slug_attr}{fresh_attr}{multi_attr}{_bare_attr}>'
             f'<div class="tk-head">'
             f'<span class="tk-badge" style="background:{_badge_bg}">{_cuisine_label_str}</span>'
-            f'<span class="tk-freshness">{_days_html} days ago</span>'
+            f'<span class="tk-freshness">{_days_html} {_fresh_u} ago</span>'
             f'</div>'
             f'<div class="tk-body">'
             f'<h2 class="tk-name">{name_html}</h2>'
@@ -3036,7 +3068,7 @@ def _ns_ago(d):
 # Below this many listings a page keeps the ticket feed (mirrors HERO_MIN in app.js).
 HERO_MIN = 10
 
-def build_home_feed(rows, scope_label='new spots · last 30 days', limit=30):
+def build_home_feed(rows, scope_label='new spots', scoped=False, limit=30):
     def keys(r):
         return r.get('cuisines') or ([r['cuisine']] if r.get('cuisine') else [])
     def lab(k):
@@ -3044,13 +3076,33 @@ def build_home_feed(rows, scope_label='new spots · last 30 days', limit=30):
     def hood(r):
         nb = r.get('neighborhood')
         return (nb.get('label') if isinstance(nb, dict) else '') or r.get('district') or ''
-    # Streak bar — accurate count of listings first seen in the last 30 days.
-    count = sum(1 for r in rows if isinstance(r.get('daysOpen'), int) and r['daysOpen'] <= 30)
-    dots = ''.join('<div class="ns-dot on"></div>' for _ in range(7))
+    # Scoped "new entrants" window — mirrors js/app.js nsStreak. The all-Toronto
+    # homepage stays a strict 30 days, but a single hood/cuisine is often empty
+    # in the last 30 days, so when scoped we widen 30→90→180→365 until a few
+    # recent entrants surface and relabel to the real span (a 3-months-ago spot
+    # is still new to someone). Keeps 30 days when the hood has a fresh entrant.
+    NS_SPAN = {30: 'last 30 days', 90: 'last 3 months', 180: 'last 6 months', 365: 'last year'}
+    WINDOWS = [30, 90, 180, 365] if scoped else [30]
+    win, count = 30, 0
+    for i, w in enumerate(WINDOWS):
+        win = w
+        count = sum(1 for r in rows if isinstance(r.get('daysOpen'), int) and r['daysOpen'] <= w)
+        # Narrowest window that holds any entrant: keeps 30d when fresh, else
+        # expands to the true span of the most recent newcomers (never overstates).
+        if count >= 1 or i == len(WINDOWS) - 1:
+            break
+    span = NS_SPAN[win]
+    total = len(rows)
+    # Heat meter: 5 flame pips lit by how active the window is (independent of total).
+    heat = 1 if count <= 1 else 2 if count <= 3 else 3 if count <= 6 else 4 if count <= 10 else 5
+    heat_word = ['', 'Quiet', 'Warm', 'Toasty', 'Hot', 'Blazing'][heat]
+    pips = ''.join(f'<div class="ns-dot{" on" if i <= heat else ""}"></div>' for i in range(1, 6))
+    _lbl = 'new this month' if win == 30 else f'new · {span}'
     streak = (f'<div class="ns-streak-bar"><span class="ns-flame">🔥</span>'
-              f'<div><div class="ns-count">{count}</div><div class="ns-label">{_esc(scope_label)}</div></div>'
-              f'<div class="ns-dots" aria-label="updated every day this week">{dots}</div>'
-              f'<span class="ns-updated">updated daily</span></div>')
+              f'<div><div class="ns-count">{count}</div><div class="ns-label">{_lbl} · '
+              f'<span style="color:#c0532a;font-weight:600">{heat_word}</span></div></div>'
+              f'<div class="ns-dots" aria-label="activity heat {heat} of 5" title="How active the {span} are">{pips}</div>'
+              f'<span class="ns-updated">of {total} tracked</span></div>')
     # Hero cards (top 3)
     cards = []
     for i, r in enumerate(rows[:3]):
@@ -3111,13 +3163,13 @@ def build_home_feed(rows, scope_label='new spots · last 30 days', limit=30):
             f'<p class="ns-list-meta">{_esc(lab(k))}{(" · " + _esc(hh)) if hh else ""}</p>{blurb}</div>'
             f'<span class="ns-list-age">{_ns_ago(r.get("daysOpen"))}</span></a>'
         )
-    return streak + hero + list_html
+    return ('' if scoped else streak) + hero + list_html
 
 # ---------------------------------------------------------------------------
 # Inject into the HOMEPAGE (index.html).
 # ---------------------------------------------------------------------------
 top_for_static = all_recent[:30]
-static_block = build_home_feed(all_recent, scope_label='new spots · last 30 days')
+static_block = build_home_feed(all_recent, scope_label='new spots')
 home_url = 'https://nowservingto.com/'
 
 
@@ -3541,7 +3593,7 @@ def build_how_we_track_neighborhood(label, meta):
         f'filed within the last 365 days, with an address inside {_esc(label)}. '
         f'We verify each location is currently open by cross-checking the registry, '
         f'DineSafe inspections, social media, and the operator\'s own website. '
-        f'Chains are excluded. First-seen dates are exact.</p>'
+        f'Chains are excluded. First-seen dates are estimates.</p>'
         f'</aside>'
     )
 
@@ -3600,7 +3652,7 @@ def build_adjacent_corridors(slug, meta, available_slugs):
     return (
         f'<nav class="related-cuisines" aria-label="Adjacent corridors">'
         f'<span class="rc-label">Also try</span>'
-        + ', '.join(links) +
+        + ''.join(links) +
         f'</nav>'
     )
 
@@ -3619,7 +3671,7 @@ def build_how_we_track(label):
         f'target="_blank" rel="noopener">City of Toronto business licence registry</a>, '
         f'filed within the last 365 days. We verify each location is currently open by '
         f'cross-checking the registry, DineSafe inspections, social media, and the '
-        f'operator\'s own website. Chains are excluded. First-seen dates are exact.</p>'
+        f'operator\'s own website. Chains are excluded. First-seen dates are estimates.</p>'
         f'</aside>'
     )
 
@@ -4229,12 +4281,30 @@ def build_page_intro(cuisine_key, entries=None, label=None, n365=None, n30=None)
     if not intro and not editorial_html: return ''
     lede = f'<p>{_esc(intro)}</p>' if intro else ''
     body = editorial_html
+    # Answer-first data passage (docstring element 2) — leads with the
+    # "[cuisine] restaurants in Toronto" category phrasing + the freshest
+    # named entity, so the page is citable for "new <cuisine> restaurants
+    # Toronto" queries rather than only the editorial framing.
+    data_lede = ''
+    if label and n365:
+        _fresh = entries[0] if entries else None
+        _fn = (_fresh.get('operatingName') or '').strip() if _fresh else ''
+        _fdays = _ago_long(_fresh.get('daysOpen')) if _fresh else ''
+        _recent = f' ({n30} in the last 30 days)' if n30 else ''
+        _newest = (f' The most recent is {_esc(_fn)}, first seen {_fdays} ago.'
+                   if _fn and _fdays else '')
+        data_lede = (
+            f'<p class="page-intro-data"><strong>New {_esc(label)} restaurants in '
+            f'Toronto:</strong> {n365} have been licensed in the past year{_recent}, '
+            f'tracked daily from the City of Toronto business-licence registry '
+            f'(chains excluded).{_newest}</p>'
+        )
     summary_label = _esc(label) if label else 'this cuisine'
     return (
         f'<div class="page-intro">'
         f'<details class="intro-details">'
         f'<summary>{summary_label}</summary>'
-        f'{q_html}{lede}{body}'
+        f'{q_html}{data_lede}{lede}{body}'
         f'</details>'
         f'</div>'
     )
@@ -4246,9 +4316,13 @@ def build_related_cuisines(cuisine_key):
     doesn't have a label (i.e. isn't in the canonical taxonomy) so dead links
     can't slip in. Returns '' when no related set is on file."""
     rec = _CUISINE_INTROS.get(cuisine_key) or {}
-    related = [k for k in (rec.get('related') or []) if k in CUISINE_LABEL]
+    # Only link cuisines that actually have a live page — a key can be valid
+    # taxonomy (in CUISINE_LABEL) yet have 0 current restaurants (e.g. brazilian),
+    # in which case /cuisine/<key> 404s. Filter against the pages we're writing.
+    _live = {c['key'] for c in cuisines_out}
+    related = [k for k in (rec.get('related') or []) if k in CUISINE_LABEL and k in _live]
     if not related: return ''
-    links = ', '.join(
+    links = ''.join(
         f'<a href="/cuisine/{k}">{_esc(CUISINE_LABEL[k])}</a>'
         for k in related[:3]
     )
@@ -4432,7 +4506,7 @@ for c in cuisines_out:
                   lambda m: cuisine_h1, page, count=1)
 
     # Replace STATIC-FEED + LD-ITEMLIST with cuisine-scoped versions.
-    cuisine_static = (build_home_feed(entries, scope_label=f'new {label} spots · last 30 days')
+    cuisine_static = (build_home_feed(entries, scope_label=f'new {label} spots', scoped=True)
                       if len(entries) >= HERO_MIN
                       else build_static_rows(entries, link_to_listing=True, group_by_date=True))
     cuisine_itemlist = build_ld_itemlist(
@@ -4493,7 +4567,7 @@ for c in cuisines_out:
     _x_district_links.sort(key=lambda t: t[0])
     _x_strip = ''
     if _x_district_links:
-        _x_items = ', '.join(
+        _x_items = ''.join(
             f'<a href="{_esc(p)}">{_esc(d)}</a>'
             for d, p in _x_district_links
         )
@@ -4598,7 +4672,7 @@ for label, entries in by_district.items():
                   lambda m: district_h1, page, count=1)
 
     # District-scoped static feed (top 30) + structured data set
-    district_static = (build_home_feed(entries, scope_label=f'new spots in {label} · last 30 days')
+    district_static = (build_home_feed(entries, scope_label=f'new spots in {label}', scoped=True)
                        if len(entries) >= HERO_MIN
                        else build_static_rows(entries[:30], link_to_listing=True, group_by_date=True))
     district_itemlist = build_ld_itemlist(
@@ -5520,18 +5594,18 @@ def build_listing_extra(entry, all_entries, cuisines_index):
                 blurb_text = ''
         if blurb_text:
             blocks.append(
-                '<div class="lx-card">'
+                '<div class="lx-card lx-story">'
                 f'<p class="lx-evidence">{_esc(blurb_text)}{_bare_tag_lx}</p>'
                 f'{dishes_paragraph_html}'
                 '</div>'
             )
         elif dishes_paragraph_html:
-            blocks.append(f'<div class="lx-card">{dishes_paragraph_html}</div>')
+            blocks.append(f'<div class="lx-card lx-story">{dishes_paragraph_html}</div>')
     elif dishes_paragraph_html:
         # No editorial blurb but we DO have dishes — still surface them
         # inside an lx-card so they don't float alone on the page.
         blocks.append(
-            f'<div class="lx-card">{dishes_paragraph_html}</div>'
+            f'<div class="lx-card lx-story">{dishes_paragraph_html}</div>'
         )
 
     # 3) Featured in: Toronto food-press citations (BlogTO, Toronto Life,
