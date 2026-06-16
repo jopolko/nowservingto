@@ -4322,6 +4322,25 @@ def build_page_intro(cuisine_key, entries=None, label=None, n365=None, n30=None)
     )
 
 
+def _area_data_lede(label, entries):
+    """Answer-first data passage for district/neighborhood pages — mirrors the
+    cuisine build_page_intro data lede. Leads with 'New restaurants in <Area>,
+    Toronto' for category-query + AI-citation lift."""
+    if not (label and entries):
+        return ''
+    n365 = len(entries)
+    n30 = sum(1 for e in entries
+              if isinstance(e.get('daysOpen'), (int, float)) and e['daysOpen'] <= 30)
+    fresh = min(entries, key=lambda e: e.get('daysOpen', 99999))
+    fn = (fresh.get('operatingName') or '').strip()
+    fdays = _ago_long(fresh.get('daysOpen')) if fresh.get('daysOpen') is not None else ''
+    recent = f' ({n30} in the last 30 days)' if n30 else ''
+    newest = f' The most recent is {_esc(fn)}, first seen {fdays} ago.' if (fn and fdays) else ''
+    return (f'<p class="page-intro-data"><strong>New restaurants in {_esc(label)}, Toronto:'
+            f'</strong> {n365} licensed in the past year{recent}, tracked daily from the City '
+            f'of Toronto business-licence registry (chains excluded).{newest}</p>')
+
+
 def build_related_cuisines(cuisine_key):
     """Three sibling-cuisine links at the bottom of a cuisine page. Pulls from
     cuisine_intros.json's 'related' list - filters out any related key that
@@ -4720,11 +4739,13 @@ for label, entries in by_district.items():
     ], page_url=canonical)
     # Cross-axis compound-query nav strip removed 2026-05-20 (same reason
     # as the cuisine-page version above - UX-redundant, SEO inert).
+    _district_lede = _area_data_lede(label, entries)
     page = inject_into_html(
         page,
         static_block=district_static,
         ld_payloads=[district_collection, district_breadcrumb_ld, district_faq],
         breadcrumb_html=build_breadcrumb_html(district_breadcrumb_parts),
+        page_intro_html=(f'<div class="page-intro">{_district_lede}</div>' if _district_lede else ''),
         lcp_preload_url=(entries[0].get('thumb') or '') if entries else '',
     )
     page = swap_newsletter_cta(page, build_alert_section('district', slug, label))
@@ -4855,8 +4876,9 @@ for nbhd_slug, nbhd_entries in by_nbhd.items():
     if not cuisine_anchor:
         mix_callout = build_cuisine_mix_callout(label, nbhd_entries)
         if mix_callout: nbhd_intro_parts.append(mix_callout)
-    nbhd_intro_html = (f'<div class="page-intro">{"".join(nbhd_intro_parts)}</div>'
-                       if nbhd_intro_parts else '')
+    _nbhd_lede = _area_data_lede(label, nbhd_entries)
+    nbhd_intro_html = (f'<div class="page-intro">{_nbhd_lede}{"".join(nbhd_intro_parts)}</div>'
+                       if (nbhd_intro_parts or _nbhd_lede) else '')
 
     # Static feed (top 30) + JSON-LD stack.
     entries_for_feed = nbhd_entries[:30]
