@@ -118,6 +118,24 @@ AI_BOTS = [
     ('YouBot',           'YouBot'),           # You.com
 ]
 
+# Canonical type per known bot. Four buckets, mirrored in usage.html.
+#   search      search-engine HTML index crawler
+#   ai-search   builds an AI search / answer index (you get cited live)
+#   ai-training scrapes to train a model (background, no live user)
+#   live-user   on-demand fetch triggered by a real user's prompt (a live citation)
+BOT_TYPE = {
+    'Googlebot': 'search', 'Bingbot': 'search', 'YandexBot': 'search',
+    'Baiduspider': 'search', 'DuckDuckBot': 'search', 'NaverBot': 'search',
+    'Applebot': 'search',
+    'OAI-SearchBot': 'ai-search', 'PerplexityBot': 'ai-search',
+    'GPTBot': 'ai-training', 'ClaudeBot': 'ai-training', 'claude-web': 'ai-training',
+    'Google-Extended': 'ai-training', 'Applebot-Extended': 'ai-training',
+    'Meta-ExternalAgent': 'ai-training', 'Bytespider': 'ai-training',
+    'Amazonbot': 'ai-training', 'cohere-ai': 'ai-training', 'CCBot': 'ai-training',
+    'DiffBot': 'ai-training', 'YouBot': 'ai-training',
+    'ChatGPT-User': 'live-user', 'Perplexity-User': 'live-user', 'Claude-User': 'live-user',
+}
+
 LOG_LINE_RE = re.compile(
     r'(?P<ip>\S+) \S+ \S+ \[(?P<time>[^\]]+)\] '
     r'"(?P<method>\S+) (?P<path>\S+)[^"]*" '
@@ -127,6 +145,13 @@ LOG_LINE_RE = re.compile(
 
 REVERSE_DNS_CACHE_PATH = ROOT / 'tools' / 'cache' / 'ip_reverse_dns.json'
 IP_ORG_CACHE_PATH     = ROOT / 'tools' / 'cache' / 'ip_org.json'
+# Haiku-classified types for bots NOT in BOT_TYPE (new entrants). One call
+# per new bot, cached forever, keyed by normalized bot name.
+BOT_TYPES_CACHE_PATH  = ROOT / 'tools' / 'cache' / 'bot_types.json'
+SECRETS = Path('/var/secrets/nowservingto.env')
+HAIKU_MODEL = 'claude-haiku-4-5-20251001'
+MAX_NEW_BOT_CLASSIFY = 12   # cap Haiku calls per run; the rest wait for next run
+MIN_HITS_TO_CLASSIFY = 2    # ignore one-off UA-spoof garbage
 # ip-api.com batch endpoint: 100 IPs per POST, free, no key, HTTP only.
 # Returns org / ISP / ASN / country per IP. Slower than rDNS but works
 # on IPs without PTR records (most bot-farm hosts).
@@ -309,6 +334,77 @@ def identify_bot(ua):
     return None, None
 
 
+# UA looks like a crawler we don't yet know: carries a bot keyword or the
+# "+http(s)://info" self-identification convention, and isn't a plain browser.
+# Conservative on purpose - a false positive costs one Haiku call.
+UNKNOWN_BOT_RE = re.compile(r'bot\b|crawler|spider|scraper|\+https?://|\bGPT|\bLLM\b|\bAI\b', re.I)
+BROWSERISH_RE  = re.compile(r'Mozilla.*(Chrome|Safari|Firefox|Edg)/', re.I)
+
+
+def extract_bot_name(ua):
+    """Best-effort name for an unknown crawler UA, or None if it's not bot-like."""
+    if not UNKNOWN_BOT_RE.search(ua):
+        return None
+    if BROWSERISH_RE.search(ua) and not re.search(r'bot|crawler|spider', ua, re.I):
+        return None  # ordinary browser
+    m = re.search(r'([A-Za-z][\w.-]*(?:bot|crawler|spider|AI|GPT)[\w.-]*)', ua, re.I)
+    if m:
+        return m.group(1).strip('/-.')
+    m = re.match(r'\s*([A-Za-z][\w.-]{2,40})/', ua)
+    if m and m.group(1) not in ('Mozilla', 'AppleWebKit', 'Gecko', 'Chrome',
+                                'Safari', 'Opera', 'Version', 'Edg', 'OPR'):
+        return m.group(1)
+    return None
+
+
+def _read_secret(key):
+    try:
+        for line in SECRETS.read_text().splitlines():
+            if line.startswith(key + '='):
+                return line.split('=', 1)[1].strip().strip('"').strip("'")
+    except OSError:
+        pass
+    return None
+
+
+def classify_unknown_bot(name, sample_ua, cache):
+    """{'type','operator'} for an unknown bot via Haiku, cached by name.
+    type in search|ai-search|ai-training|live-user|other. Degrades to
+    {'type':'other','operator':''} on any failure (never raises)."""
+    if name in cache:
+        return cache[name]
+    key = _read_secret('ANTHROPIC_API_KEY')
+    out = {'type': 'other', 'operator': ''}
+    if key:
+        import urllib.request as U, urllib.error as E
+        prompt = (
+            "Classify this web crawler by its User-Agent. Reply with ONLY a compact "
+            'JSON object: {"type":"...","operator":"..."}.\n'
+            "type is exactly one of: search (search-engine index crawler), ai-search "
+            "(builds an AI search/answer index), ai-training (scrapes to train an AI "
+            "model), live-user (on-demand fetch triggered by a real user's prompt), "
+            "other (unsure).\noperator is the company (e.g. Google, ByteDance, OpenAI) "
+            'or "".\n\n'
+            f"User-Agent: {sample_ua[:400]}"
+        )
+        body = json.dumps({'model': HAIKU_MODEL, 'max_tokens': 80,
+                           'messages': [{'role': 'user', 'content': prompt}]}).encode()
+        req = U.Request('https://api.anthropic.com/v1/messages', data=body, method='POST',
+                        headers={'content-type': 'application/json', 'x-api-key': key,
+                                 'anthropic-version': '2023-06-01'})
+        try:
+            with U.urlopen(req, timeout=20) as r:
+                txt = json.loads(r.read())['content'][0]['text']
+            obj = json.loads(re.search(r'\{.*\}', txt, re.S).group(0))
+            t = str(obj.get('type', 'other')).lower().strip()
+            out = {'type': t if t in ('search', 'ai-search', 'ai-training', 'live-user', 'other') else 'other',
+                   'operator': str(obj.get('operator', '')).strip()[:40]}
+        except (E.URLError, E.HTTPError, OSError, KeyError, ValueError, AttributeError, IndexError):
+            pass
+    cache[name] = out
+    return out
+
+
 def parse_apache_time(s):
     # 27/May/2026:00:55:30 +0000
     return datetime.strptime(s, '%d/%b/%Y:%H:%M:%S %z')
@@ -391,6 +487,7 @@ def main():
     # can show "20 hits from Hetzner" instead of just "10 unique paths."
     bot_ips = defaultdict(lambda: defaultdict(int))   # bot -> ip -> hits
     exploit_ips = defaultdict(int)                    # ip -> hits
+    other_sample_ua = {}                              # unknown bot name -> a sample UA
 
     # Reverse-DNS lookup cache (one-shot per IP across all runs).
     try:
@@ -443,7 +540,11 @@ def main():
                 continue
             bot, tier = identify_bot(ua)
             if not bot:
-                continue
+                bot = extract_bot_name(ua)
+                if not bot:
+                    continue
+                tier = 'other'
+                other_sample_ua.setdefault(bot, ua)
             day = t.date().isoformat()
             day_counts[bot][day] += 1
             unique_paths[bot].add(path)
@@ -472,6 +573,7 @@ def main():
                 continue
             rows.append({
                 'bot': bot,
+                'type': BOT_TYPE.get(bot),
                 'hits30d': hits_30d,
                 'hits7d': hits_7d,
                 'uniquePaths30d': len(unique_paths.get(bot, ())),
@@ -548,6 +650,25 @@ def main():
     search_rows = attach_verification(serialize([n for n, _ in SEARCH_ENGINE_BOTS]))
     ai_rows = attach_verification(serialize([n for n, _ in AI_BOTS]))
 
+    # Bots we don't recognize (new entrants): Haiku-classify once each, cached.
+    try:
+        bot_types_cache = json.loads(BOT_TYPES_CACHE_PATH.read_text())
+    except (FileNotFoundError, json.JSONDecodeError):
+        bot_types_cache = {}
+    other_rows = serialize([n for n, tr in tiers.items() if tr == 'other'])
+    _classified = 0
+    for r in other_rows:
+        known = r['bot'] in bot_types_cache
+        if not known and (r['hits30d'] < MIN_HITS_TO_CLASSIFY or _classified >= MAX_NEW_BOT_CLASSIFY):
+            r['type'], r['operator'] = 'other', ''
+            continue
+        info = classify_unknown_bot(r['bot'], other_sample_ua.get(r['bot'], r['bot']), bot_types_cache)
+        if not known:
+            _classified += 1
+        r['type'], r['operator'] = info['type'], info.get('operator', '')
+    BOT_TYPES_CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    BOT_TYPES_CACHE_PATH.write_text(json.dumps(bot_types_cache, indent=2, sort_keys=True))
+
     # Aggregate exploit source IPs into "<Org> (<Country>)" buckets.
     # Only works for logs captured after the combined_cf format went
     # live; older lines have no real IP and don't contribute.
@@ -586,6 +707,7 @@ def main():
         'logSource': 'vhost' if not filter_by_path else 'shared',
         'searchEngines': search_rows,
         'aiBots': ai_rows,
+        'otherBots': other_rows,
         'exploitScanners': {
             'hits30d': exploit_hits_30d,
             'hits7d': exploit_hits_7d,
