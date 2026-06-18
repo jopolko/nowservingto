@@ -22,6 +22,7 @@ so the /usage page can render a "permissions needed" hint instead of
 silently showing zeros.
 """
 import gzip
+import ipaddress
 import json
 import re
 import sys
@@ -152,6 +153,25 @@ SECRETS = Path('/var/secrets/nowservingto.env')
 HAIKU_MODEL = 'claude-haiku-4-5-20251001'
 MAX_NEW_BOT_CLASSIFY = 12   # cap Haiku calls per run; the rest wait for next run
 MIN_HITS_TO_CLASSIFY = 2    # ignore one-off UA-spoof garbage
+
+# Operator-published crawler IP ranges (the authoritative way to verify bots
+# that run on cloud infra and so don't reverse-DNS to their own domain, e.g.
+# OpenAI on Azure). Standard Google "prefixes" JSON format. Cached RANGE_TTL_DAYS.
+RANGES_CACHE_PATH = ROOT / 'tools' / 'cache' / 'bot_ip_ranges.json'
+RANGE_TTL_DAYS = 7
+IP_RANGE_SOURCES = {
+    'Googlebot':       ['https://developers.google.com/search/apis/ipranges/googlebot.json',
+                        'https://developers.google.com/search/apis/ipranges/special-crawlers.json'],
+    'Google-Extended': ['https://developers.google.com/search/apis/ipranges/googlebot.json',
+                        'https://developers.google.com/search/apis/ipranges/special-crawlers.json'],
+    # Bing/Anthropic publish no machine-readable list - they verify via reverse-DNS
+    # (search.msn.com / anthropic.com), which the rDNS path already handles.
+    'GPTBot':          ['https://openai.com/gptbot.json'],
+    'OAI-SearchBot':   ['https://openai.com/searchbot.json'],
+    'ChatGPT-User':    ['https://openai.com/chatgpt-user.json'],
+    'PerplexityBot':   ['https://www.perplexity.ai/perplexitybot.json'],
+    'Perplexity-User': ['https://www.perplexity.ai/perplexity-user.json'],
+}
 # ip-api.com batch endpoint: 100 IPs per POST, free, no key, HTTP only.
 # Returns org / ISP / ASN / country per IP. Slower than rDNS but works
 # on IPs without PTR records (most bot-farm hosts).
@@ -405,6 +425,54 @@ def classify_unknown_bot(name, sample_ua, cache):
     return out
 
 
+def _fetch_prefixes(url):
+    """Fetch one operator IP-range JSON, return a list of CIDR strings.
+    utf-8-sig tolerates the BOM Bing prepends."""
+    from urllib.request import urlopen
+    with urlopen(url, timeout=20) as r:
+        d = json.loads(r.read().decode('utf-8-sig', 'replace'))
+    out = []
+    for p in d.get('prefixes', []) or d.get('Prefixes', []):
+        c = p.get('ipv4Prefix') or p.get('ipv6Prefix') or p.get('ipv4') or p.get('ipv6')
+        if c:
+            out.append(c)
+    return out
+
+
+def load_bot_ranges():
+    """{bot_name: [ip_network,...]} from operator-published ranges, cached
+    RANGE_TTL_DAYS. Network failure falls back to cache; never raises."""
+    try:
+        cache = json.loads(RANGES_CACHE_PATH.read_text())
+    except (FileNotFoundError, json.JSONDecodeError):
+        cache = {}
+    now = datetime.now(timezone.utc)
+    for url in {u for urls in IP_RANGE_SOURCES.values() for u in urls}:
+        entry = cache.get(url)
+        fresh = bool(entry and entry.get('fetched') and
+                     now - datetime.fromisoformat(entry['fetched']) < timedelta(days=RANGE_TTL_DAYS))
+        if fresh:
+            continue
+        try:
+            cache[url] = {'fetched': now.isoformat(), 'prefixes': _fetch_prefixes(url)}
+        except Exception as e:
+            print(f'  ip-range fetch failed {url}: {e}')
+            cache.setdefault(url, {'fetched': now.isoformat(), 'prefixes': []})
+    RANGES_CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    RANGES_CACHE_PATH.write_text(json.dumps(cache, indent=2, sort_keys=True))
+    nets = {}
+    for bot, srcs in IP_RANGE_SOURCES.items():
+        lst = []
+        for u in srcs:
+            for c in (cache.get(u) or {}).get('prefixes', []):
+                try:
+                    lst.append(ipaddress.ip_network(c, strict=False))
+                except ValueError:
+                    pass
+        nets[bot] = lst
+    return nets
+
+
 def parse_apache_time(s):
     # 27/May/2026:00:55:30 +0000
     return datetime.strptime(s, '%d/%b/%Y:%H:%M:%S %z')
@@ -609,31 +677,50 @@ def main():
         all_ips.update(ip_dict.keys())
     enrich_ips_via_ipapi(all_ips, ip_org_cache)
 
+    bot_networks = load_bot_ranges()
+
+    def _ip_in_ranges(ip, bot):
+        nets = bot_networks.get(bot)
+        if not nets:
+            return False
+        try:
+            a = ipaddress.ip_address(ip)
+        except ValueError:
+            return False
+        return any(a in n for n in nets)
+
     def verify_bot(bot):
-        """Sample top IPs under this bot's UA, do rDNS+org lookup, and
-        return (verified_hits, total_hits_with_ip) so the dashboard can
-        show "X% from verified <provider>" or flag spoofing."""
+        """Verify the IPs claiming this UA. An IP counts as verified if it's in
+        the operator's published crawler ranges (authoritative; catches OpenAI /
+        Perplexity on cloud infra) OR its reverse-DNS / IP-org resolves to the
+        expected operator. Returns the verified share so the dashboard can flag
+        spoofing (a 'Googlebot' outside Google's published range + wrong rDNS)."""
         ips = bot_ips.get(bot, {})
         if not ips:
             return None
         expected = EXPECTED_HOST.get(bot)
-        if not expected:
+        has_ranges = bool(bot_networks.get(bot))
+        if not expected and not has_ranges:
             return None
         verified_hits = 0
         total = 0
+        by_range = 0
         for ip, hits in sorted(ips.items(), key=lambda kv: -kv[1])[:20]:
-            host = reverse_dns(ip, rdns_cache)
-            label = host_label(host, ip, ip_org_cache.get(ip))
             total += hits
-            # Org name from ip-api can also confirm the bot - "Google LLC"
-            # matches expected="Google" via substring.
-            if label == expected or expected.lower() in label.lower():
+            if has_ranges and _ip_in_ranges(ip, bot):
                 verified_hits += hits
+                by_range += hits
+            elif expected:
+                host = reverse_dns(ip, rdns_cache)
+                label = host_label(host, ip, ip_org_cache.get(ip))
+                if label == expected or expected.lower() in label.lower():
+                    verified_hits += hits
         return {
             'expected': expected,
             'verified': verified_hits,
             'sampled': total,
             'rate': round(verified_hits / total, 3) if total else 0.0,
+            'method': 'ip-range' if by_range > (verified_hits - by_range) else 'rdns',
         }
 
     # Decorate bot rows with verification stats. None until CF-IP data
