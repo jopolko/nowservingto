@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Toronto Dinner Lottery 🎰 Draw Tonight's Newest Restaurant · NowServingTO</title>
+<meta name="description" content="Pull a ticket. Win a table. The Toronto Dinner Lottery draws a real, just-opened restaurant from the City of Toronto licence feed — the fresher the spot, the bigger the jackpot. Chains excluded.">
+<link rel="canonical" href="https://nowservingto.com/game">
+<meta name="robots" content="index,follow">
+<meta name="theme-color" content="#070b08">
+<link rel="manifest" href="/manifest-game.json">
+<!-- iOS PWA -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Dinner?">
+<link rel="apple-touch-icon" href="/icons/game-192.png">
+
+<!-- Social card -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="NowServingTO">
+<meta property="og:url" content="https://nowservingto.com/game">
+<meta property="og:title" content="🎰 The Toronto Dinner Lottery — draw tonight's newest restaurant">
+<meta property="og:description" content="Pull a ticket. Win a table. Every draw is a real Toronto restaurant that opened in the last 365 days. The fresher it is, the bigger the jackpot.">
+<meta property="og:image" content="https://nowservingto.com/og/default.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="🎰 The Toronto Dinner Lottery">
+<meta name="twitter:description" content="Pull a ticket. Win a table. Draw a real, just-opened Toronto restaurant.">
+<meta name="twitter:image" content="https://nowservingto.com/og/default.png">
+
+<style>
+  :root{
+    --paper:#f7f1e1;        /* aged ticket cream */
+    --paper-2:#efe6cf;      /* slightly darker cream for insets */
+    --ink:#16140f;          /* near-black warm ink */
+    --ink-soft:#4a4334;     /* muted brown-grey */
+    --line:#d8cba6;         /* tan hairline */
+    --green:#2da55c;        /* the leaf / freshness green */
+    --green-deep:#15301d;   /* deep forest */
+    --green-glow:#5fe39a;   /* bright leaf highlight */
+    --gold:#caa53d;
+    --gold-lite:#f5dd86;
+    --red:#b5252e;          /* brand editorial red */
+    --bg:#070b08;
+    --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+    --serif:'Newsreader','Iowan Old Style',Charter,Georgia,'Times New Roman',serif;
+    --sans:system-ui,-apple-system,'Helvetica Neue',sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    min-height:100dvh;
+    font-family:var(--serif);
+    color:var(--ink);
+    background:
+      radial-gradient(1100px 680px at 50% -8%, #15311e 0%, #0c1710 38%, var(--bg) 78%),
+      var(--bg);
+    background-attachment:fixed;
+    display:flex; flex-direction:column; align-items:center;
+    padding:clamp(16px,4vw,44px) 16px 60px;
+    overflow-x:hidden;
+  }
+  /* faint film grain */
+  body::before{
+    content:""; position:fixed; inset:0; pointer-events:none; z-index:0; opacity:.05;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .stage{position:relative; z-index:1; width:100%; max-width:460px; display:flex; flex-direction:column; align-items:center}
+
+  .kicker{
+    font-family:var(--sans); font-weight:800; font-size:11px; letter-spacing:.34em;
+    text-transform:uppercase; color:#bfe6cd; opacity:.85; margin:0 0 14px; text-align:center;
+  }
+  .kicker b{color:var(--green-glow)}
+
+  /* ===================== THE TICKET ===================== */
+  .ticket{
+    position:relative; width:100%; background:var(--paper);
+    border-radius:18px;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.5) inset,
+      0 28px 60px -20px rgba(0,0,0,.7),
+      0 0 0 1px rgba(0,0,0,.35),
+      0 0 0 7px rgba(202,165,61,.16);
+    padding:20px 22px 16px;
+    overflow:hidden;
+    background-image:
+      radial-gradient(circle at 18% 12%, rgba(202,165,61,.07), transparent 40%),
+      repeating-linear-gradient(45deg, rgba(122,92,30,.045) 0 2px, transparent 2px 9px),
+      repeating-linear-gradient(-45deg, rgba(122,92,30,.045) 0 2px, transparent 2px 9px);
+    transition:transform .25s ease, box-shadow .25s ease;
+  }
+  .ticket.jackpot{ box-shadow:
+      0 1px 0 rgba(255,255,255,.5) inset,
+      0 28px 70px -18px rgba(0,0,0,.75),
+      0 0 0 1px rgba(0,0,0,.35),
+      0 0 0 7px rgba(95,227,154,.45),
+      0 0 50px -6px rgba(95,227,154,.35);}
+
+  /* guilloché security border */
+  .ticket::after{
+    content:""; position:absolute; inset:9px; border-radius:11px; pointer-events:none;
+    border:1.5px solid rgba(122,92,30,.32);
+    box-shadow:0 0 0 1px rgba(255,255,255,.4) inset;
+  }
+
+  .tk-head{display:flex; align-items:center; justify-content:space-between; gap:10px; position:relative; z-index:2}
+  .tk-brand{display:flex; align-items:center; gap:7px; font-family:var(--sans); font-weight:800; font-size:12.5px; letter-spacing:.02em; color:var(--ink)}
+  .tk-brand .leaf{width:16px; height:16px; color:var(--green); filter:drop-shadow(0 1px 1px rgba(45,165,92,.4))}
+  .tk-serial{font-family:var(--mono); font-size:10px; letter-spacing:.06em; color:var(--ink-soft); text-align:right}
+  .tk-official{
+    font-family:var(--sans); font-weight:800; font-size:9px; letter-spacing:.26em; text-transform:uppercase;
+    color:#fff; background:var(--red); padding:3px 8px; border-radius:3px; display:inline-block; margin-top:2px;
+  }
+
+  .tk-rule{height:1px; margin:13px 0 4px; background:linear-gradient(90deg,transparent,var(--line) 12%,var(--line) 88%,transparent); position:relative; z-index:2}
+
+  .eyebrow{
+    text-align:center; font-family:var(--sans); font-weight:800; font-size:10.5px;
+    letter-spacing:.3em; text-transform:uppercase; margin:10px 0 2px; position:relative; z-index:2;
+    background:linear-gradient(100deg,#9a7b21,var(--gold),#fff3c4,var(--gold),#9a7b21);
+    background-size:220% auto; -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shine 3.6s linear infinite;
+  }
+  @keyframes shine{to{background-position:-220% center}}
+
+  .name{
+    text-align:center; font-family:var(--serif); font-weight:800;
+    font-size:clamp(25px,7.2vw,36px); line-height:1.04; letter-spacing:-.01em;
+    color:var(--ink); margin:5px 6px 6px; text-wrap:balance; position:relative; z-index:2;
+  }
+  .meta-line{text-align:center; font-family:var(--sans); font-size:12px; color:var(--ink-soft); margin:0 0 4px; position:relative; z-index:2}
+  .meta-line .dot{opacity:.5; margin:0 6px}
+  .blurb{
+    text-align:center; font-size:13.5px; line-height:1.45; font-style:italic; color:#5a5340;
+    margin:6px 12px 2px; min-height:38px; position:relative; z-index:2; text-wrap:pretty;
+  }
+  .razz{
+    text-align:center; font-family:var(--sans); font-weight:700; font-size:11.5px; line-height:1.35;
+    color:#b5256a; background:rgba(181,37,106,.07); border:1px dashed rgba(181,37,106,.35);
+    border-radius:9px; margin:4px 10px 0; padding:6px 10px; position:relative; z-index:2;
+    transform:rotate(-.6deg); text-wrap:pretty;
+  }
+
+  /* ---- JACKPOT NUMBER PANEL ---- */
+  .jp{
+    position:relative; z-index:2; margin:14px 2px 4px; border-radius:13px;
+    background:radial-gradient(120% 130% at 50% -10%, #1d3f29, var(--green-deep) 70%);
+    color:#eafff1; padding:16px 14px 13px; text-align:center;
+    box-shadow:0 0 0 1px rgba(95,227,154,.18) inset, 0 10px 24px -14px #000;
+    overflow:hidden;
+  }
+  .jp::before{ /* sweep sheen */
+    content:""; position:absolute; top:0; left:-40%; width:40%; height:100%;
+    background:linear-gradient(100deg,transparent,rgba(255,255,255,.14),transparent); transform:skewX(-18deg);
+    animation:sweep 4.5s ease-in-out infinite;
+  }
+  @keyframes sweep{0%,60%{left:-45%}100%{left:135%}}
+  .jp-label{font-family:var(--sans); font-weight:700; font-size:9.5px; letter-spacing:.24em; text-transform:uppercase; color:#9fe7bd; margin-bottom:2px}
+  .jp-num{font-family:var(--mono); font-weight:700; font-size:clamp(46px,15vw,72px); line-height:.92; letter-spacing:-.02em; color:#fff; text-shadow:0 0 22px rgba(95,227,154,.5); font-variant-numeric:tabular-nums}
+  .jp-unit{font-family:var(--sans); font-weight:700; font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:#bdeccf; margin-top:1px}
+  .leaves{display:flex; justify-content:center; gap:5px; margin-top:9px}
+  .leaves svg{width:19px; height:19px; transition:transform .2s}
+  .leaves .on{color:var(--green-glow); filter:drop-shadow(0 0 5px rgba(95,227,154,.8))}
+  .leaves .off{color:#2f5a3e}
+  .heat-tag{display:inline-block; margin-top:8px; font-family:var(--sans); font-weight:800; font-size:9.5px; letter-spacing:.2em; text-transform:uppercase; color:var(--green-deep); background:var(--green-glow); padding:3px 9px; border-radius:999px}
+
+  /* tear line */
+  .tear{position:relative; height:24px; margin:6px -22px 2px; z-index:2}
+  .tear::before{content:""; position:absolute; top:50%; left:18px; right:18px; border-top:2px dashed var(--line)}
+  .tear .notch{position:absolute; top:50%; width:22px; height:22px; border-radius:50%; background:var(--bg); transform:translateY(-50%); box-shadow:0 0 0 1px rgba(0,0,0,.25) inset}
+  .tear .l{left:-11px} .tear .r{right:-11px}
+
+  /* ---- STAT TILES ---- */
+  .stats{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:6px 2px 2px; position:relative; z-index:2}
+  .stat{background:var(--paper-2); border:1px solid var(--line); border-radius:10px; padding:9px 11px}
+  .stat .k{font-family:var(--sans); font-weight:800; font-size:8.5px; letter-spacing:.18em; text-transform:uppercase; color:#8a7c55}
+  .stat .v{font-family:var(--mono); font-weight:700; font-size:20px; color:var(--ink); line-height:1.05; margin-top:2px; font-variant-numeric:tabular-nums}
+  .stat .v small{font-size:12px; color:var(--green); font-family:var(--mono)}
+  .stat .s{font-family:var(--sans); font-size:10px; color:var(--ink-soft); margin-top:1px}
+
+  /* ---- CTA ---- */
+  .claim{
+    display:flex; align-items:center; justify-content:center; gap:8px; width:100%; margin:14px 0 9px; position:relative; z-index:2;
+    font-family:var(--sans); font-weight:800; font-size:15px; letter-spacing:.02em;
+    color:#0e2417; text-decoration:none; padding:14px 16px; border-radius:11px;
+    background:linear-gradient(180deg,#7df0ae,var(--green) 60%,#1f8b4a);
+    box-shadow:0 1px 0 rgba(255,255,255,.5) inset, 0 10px 22px -10px rgba(45,165,92,.8);
+    transition:transform .12s, box-shadow .12s;
+  }
+  .claim:hover{transform:translateY(-1px); box-shadow:0 1px 0 rgba(255,255,255,.6) inset, 0 14px 26px -10px rgba(45,165,92,.9)}
+  .claim:active{transform:translateY(0)}
+  .chips{display:flex; flex-wrap:wrap; justify-content:center; gap:6px; margin:2px 0 4px; position:relative; z-index:2}
+  .chip{font-family:var(--sans); font-weight:700; font-size:11px; color:var(--ink-soft); text-decoration:none; background:#fff; border:1px solid var(--line); padding:5px 10px; border-radius:999px; transition:border-color .12s,color .12s}
+  .chip:hover{color:var(--green); border-color:var(--green)}
+  .chip .sw{display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:5px; vertical-align:middle}
+
+  /* barcode stub */
+  .stub{display:flex; align-items:flex-end; justify-content:space-between; gap:12px; margin:12px 2px 2px; position:relative; z-index:2}
+  .barcode{display:flex; align-items:flex-end; gap:2px; height:34px}
+  .barcode i{display:block; width:2px; height:100%; background:var(--ink)}
+  .stub .meta{font-family:var(--mono); font-size:9.5px; letter-spacing:.04em; color:var(--ink-soft); text-align:right; line-height:1.5}
+
+  /* ===================== PLAY BUTTON ===================== */
+  .play{
+    margin:26px 0 6px; font-family:var(--sans); font-weight:800; font-size:17px; letter-spacing:.02em;
+    color:#06140c; border:0; cursor:pointer; padding:16px 30px; border-radius:999px;
+    background:linear-gradient(180deg,var(--gold-lite),var(--gold) 55%,#a87f1f);
+    box-shadow:0 1px 0 rgba(255,255,255,.6) inset, 0 14px 30px -10px rgba(202,165,61,.7);
+    display:inline-flex; align-items:center; gap:10px; transition:transform .12s, box-shadow .12s, filter .12s;
+    animation:pulse 2.6s ease-in-out infinite;
+  }
+  .play:hover{transform:translateY(-2px) scale(1.015); filter:saturate(1.1)}
+  .play:active{transform:translateY(0) scale(.99)}
+  .play[disabled]{opacity:.7; cursor:wait; animation:none}
+  .play .dice{font-size:19px; animation:wob 2.6s ease-in-out infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 1px 0 rgba(255,255,255,.6) inset, 0 14px 30px -10px rgba(202,165,61,.55)}50%{box-shadow:0 1px 0 rgba(255,255,255,.6) inset, 0 14px 38px -8px rgba(202,165,61,.95)}}
+  @keyframes wob{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
+
+  .tools{display:flex; gap:14px; margin-top:4px}
+  .tool{background:none; border:0; cursor:pointer; font-family:var(--sans); font-weight:700; font-size:12px; letter-spacing:.04em; color:#9fc6ad; padding:6px 4px; transition:color .12s}
+  .tool:hover{color:var(--green-glow)}
+  .toast{height:16px; margin-top:6px; font-family:var(--sans); font-size:11px; color:var(--green-glow); opacity:0; transition:opacity .2s}
+  .toast.show{opacity:1}
+
+  .foot{margin-top:22px; text-align:center; font-family:var(--sans); font-size:11.5px; line-height:1.6; color:#7f9a89; max-width:380px}
+  .foot a{color:#bfe6cd; text-decoration:none; border-bottom:1px dotted #4f6b59}
+  .foot a:hover{color:#fff}
+
+  .reduced .jp::before,.reduced .eyebrow,.reduced .play,.reduced .play .dice{animation:none}
+
+  @media (max-width:380px){ .ticket{padding:18px 16px 14px} .tear{margin-left:-16px;margin-right:-16px} }
+  @media (hover:hover){ #swipe-hint{display:none} }
+</style>
+</head>
+<body>
+<main class="stage" id="stage">
+  <p class="kicker">🎰 The Toronto Dinner <b>Lottery</b></p>
+
+  <!-- TICKET -->
+  <article class="ticket" id="ticket" aria-live="polite">
+    <div class="tk-head">
+      <span class="tk-brand">
+        <svg class="leaf" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5 19c0-7 5.5-13 14-14-1 8.5-7 14-14 14Zm0 0c0-4 1.7-7 4.5-9"/></svg>
+        NowServing<span style="color:var(--red)">TO</span>
+      </span>
+      <span class="tk-serial">No. <b id="serial">TO-0000-0000</b><br><span class="tk-official">Official Entry</span></span>
+    </div>
+
+    <div class="tk-rule"></div>
+    <p class="eyebrow">★ &nbsp;Tonight's Winning Pick&nbsp; ★</p>
+
+    <h1 class="name" id="name">DRAWING…</h1>
+    <p class="meta-line" id="metaline">&nbsp;</p>
+    <p class="blurb" id="blurb">Pull the handle.</p>
+    <p class="razz" id="razz" hidden></p>
+
+    <!-- JACKPOT -->
+    <div class="jp">
+      <div class="jp-label">★ Jackpot · Freshness ★</div>
+      <div class="jp-num" id="days">—</div>
+      <div class="jp-unit">days since first seen</div>
+      <div class="leaves" id="leaves" aria-label="freshness rating"></div>
+      <span class="heat-tag" id="heat">FRESH</span>
+    </div>
+
+    <div class="tear"><span class="notch l"></span><span class="notch r"></span></div>
+
+    <!-- STATS -->
+    <div class="stats">
+      <div class="stat"><div class="k">In the Draw</div><div class="v"><span id="odds">258</span><small> spots</small></div><div class="s">verified open, chains out</div></div>
+      <div class="stat"><div class="k">City-Wide</div><div class="v" id="pool">2,020</div><div class="s">new openings this year</div></div>
+      <div class="stat"><div class="k">Cuisine Rank</div><div class="v">#<span id="rank">1</span><small id="ranktot"> of 45</small></div><div class="s" id="ranklbl">in Toronto</div></div>
+      <div class="stat"><div class="k">Times Pulled</div><div class="v" id="plays">0</div><div class="s">keep going 🎲</div></div>
+    </div>
+
+    <!-- CTA -->
+    <a class="claim" id="claim" href="/" target="_blank" rel="noopener">Claim your table&nbsp;→</a>
+    <div class="chips" id="chips"></div>
+
+    <!-- STUB -->
+    <div class="stub">
+      <div class="barcode" id="barcode" aria-hidden="true"></div>
+      <div class="meta">DRAW <b id="drawno">001</b><br><span id="drawdate">2026-06-05</span></div>
+    </div>
+  </article>
+
+  <p id="swipe-hint" style="font:700 11px/1 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:#4a6e56;margin:18px 0 -10px;text-align:center;opacity:.7">↕ swipe anywhere to draw</p>
+  <button class="play" id="play"><span class="dice">🎲</span> Draw again</button>
+  <div class="tools">
+    <button class="tool" id="share">🔗 Share my ticket</button>
+    <button class="tool" id="surprise">🍀 Feeling lucky</button>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <p class="foot">
+    Every ticket is a <b>real</b> Toronto restaurant licensed in the last 365 days — verified open, chains excluded, drawn live from the City of Toronto feed.
+    The fresher the spot, the bigger the jackpot.<br>
+    <a href="/">← Back to NowServingTO</a> &nbsp;·&nbsp; <a href="/all">Browse all 258</a>
+  </p>
+</main>
+
+<canvas id="confetti" style="position:fixed;inset:0;pointer-events:none;z-index:50;display:none"></canvas>
+
+<script>
+(function(){
+  "use strict";
+  var REDUCED = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(REDUCED) document.body.classList.add('reduced');
+
+  // Tiny offline fallback so the ticket never looks broken (e.g. file://).
+  var FALLBACK = {
+    newOpenings:{ asOf:"2026-06-05", totalNewActive365d:2020,
+      cuisines:[{key:"indian",label:"Indian",color:"#e88e2c",count365d:48},{key:"vietnamese",label:"Vietnamese",color:"#3aa6a0",count365d:22},{key:"chinese",label:"Chinese",color:"#c0432f",count365d:20}],
+      recent:[
+        {operatingName:"AND BANH MI",cuisine:"vietnamese",daysOpen:7,district:"Downtown",slug:"and-banh-mi-13",mapsUrl:"https://maps.google.com/?cid=5444596893559943545",neighborhood:{slug:null,label:"Yonge-Bay Corridor"},address:"13 Elm St",blurb:"This Vietnamese banh mi specialist bakes all their bread fresh in-house using authentic sourcing practices."},
+        {operatingName:"DULZURA MEXICAN DESSERTS",cuisine:"mexican",daysOpen:14,district:"Downtown",slug:"dulzura-mexican-desserts-260",mapsUrl:"",neighborhood:{slug:null,label:"Annex"},address:"260 Dupont St",blurb:"This Yucatecan dessert specialist focuses on marquesitas, esquites and tres leches."},
+        {operatingName:"GYOPO BREWERY",cuisine:"korean",daysOpen:39,district:"West Toronto",slug:"gyopo-brewery-1456",mapsUrl:"",neighborhood:{slug:"little-portugal",label:"Little Portugal"},address:"1456 Dundas St W",blurb:"This craft makgeolli brewery pairs house-made Korean rice wine with traditional Korean cuisine."}
+      ]}
+  };
+
+  var $ = function(id){ return document.getElementById(id); };
+  var S = { entries:[], byKey:{}, rankByKey:{}, totalCuisines:45, pool:2020, odds:258, asOf:"", draws:0, locked:false, busy:false };
+
+  function commaNum(n){ return (n||0).toString().replace(/\B(?=(\d{3})+(?!\d))/g,","); }
+  function hash(str){ var h=2166136261; for(var i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=(h*16777619)>>>0; } return h>>>0; }
+  function serialFor(slug){ var h=hash(slug||"x"); var a=(h%9000+1000), b=(Math.floor(h/9000)%9000+1000); return "TO-"+a+"-"+b; }
+
+  function leafSVG(on){ return '<svg viewBox="0 0 24 24" fill="currentColor" class="'+(on?'on':'off')+'"><path d="M5 19c0-7 5.5-13 14-14-1 8.5-7 14-14 14Zm0 0c0-4 1.7-7 4.5-9"/></svg>'; }
+  function freshness(d){
+    if(d<=7)  return {n:5, tag:"JUST DROPPED 🔥"};
+    if(d<=21) return {n:4, tag:"RED HOT"};
+    if(d<=60) return {n:3, tag:"FRESH"};
+    if(d<=120)return {n:2, tag:"STILL NEW"};
+    return {n:1, tag:"ESTABLISHED"};
+  }
+  function districtSlug(d){ return (d||"").toLowerCase().replace(/\s+/g,"-"); }
+
+  function pickWeighted(){
+    // bias toward fresher (lower daysOpen) so "wins" feel new
+    var tot=0,i,w=[];
+    for(i=0;i<S.entries.length;i++){ var wt=1/((S.entries[i].daysOpen||30)+4); w.push(wt); tot+=wt; }
+    var r=Math.random()*tot;
+    for(i=0;i<w.length;i++){ r-=w[i]; if(r<=0) return S.entries[i]; }
+    return S.entries[S.entries.length-1];
+  }
+  // Playful razz: tease cuisines that went cold this month, crown the ones on a tear.
+  var RAZZ=[
+    "🍓 Pffft — not ONE new {c} spot opened all month. Slacking, {c}.",
+    "🍓 Thbbbt! Zero new {c} joints in 30 days. {c} fell asleep.",
+    "🍓 Dead quiet month for {c}… until this one showed up.",
+    "🍓 A whole month, no new {c}. Somebody poke {c} and tell it to cook."
+  ];
+  var SOLE=[
+    "🍀 Only {c} spot to open this month — you found the needle.",
+    "🍀 Quiet month for {c}. This one's flying solo.",
+    "🍀 Dead quiet month for {c}… until this one showed up.",
+    "🍀 One {c} opener all month. Lucky draw."
+  ];
+  function razzFor(cz, clabel, isDrawn){
+    if(!cz) return "";
+    if((cz.count30d||0)===0 && (cz.count365d||0)>0){
+      if(isDrawn) return SOLE[hash(clabel)%SOLE.length].replace(/\{c\}/g, clabel);
+      return RAZZ[hash(clabel)%RAZZ.length].replace(/\{c\}/g, clabel);
+    }
+    if(S.rankByKey[cz.key]===1) return "👑 "+clabel+" is on an absolute tear — #1 in the city this year.";
+    if((cz.count30d||0)>=3) return "🔥 "+clabel+" is having a month — "+cz.count30d+" new spots in 30 days.";
+    return "";
+  }
+
+  function setBarcode(seed){
+    var bc=$('barcode'), h=hash(seed), html="";
+    for(var i=0;i<34;i++){ var on=((h>>(i%30))&1); var hgt= on? (60+ (h>>i)%40) : (40+(h>>(i+3))%30); html+='<i style="height:'+hgt+'%;width:'+(on?2:1)+'px"></i>'; }
+    bc.innerHTML=html;
+  }
+
+  function rollNumber(el, to, cb){
+    if(REDUCED){ el.textContent=to; cb&&cb(); return; }
+    var start=performance.now(), dur=720;
+    function frame(t){
+      var p=Math.min(1,(t-start)/dur);
+      if(p<1){ el.textContent=Math.floor(Math.random()*( to>40?80:40 )); requestAnimationFrame(frame); }
+      else { el.textContent=to; cb&&cb(); }
+    }
+    requestAnimationFrame(frame);
+  }
+  function flickerText(el, finals){
+    if(REDUCED){ el.textContent=finals; return; }
+    var pool=S.entries, start=performance.now(), dur=560;
+    function frame(t){
+      var p=(t-start)/dur;
+      if(p<1){ el.textContent=pool[Math.floor(Math.random()*pool.length)].operatingName; requestAnimationFrame(frame); }
+      else el.textContent=finals;
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function render(e, animate){
+    var fk = e.cuisine||"", cz = S.byKey[fk]||{}, clabel = cz.label || (fk? fk.replace(/_/g," ").replace(/\b\w/g,function(c){return c.toUpperCase();}) : "Restaurant");
+    var color = cz.color || "#2da55c";
+    var nb = e.neighborhood||{}, area = nb.label || e.district || "Toronto";
+    var fr = freshness(e.daysOpen||0);
+
+    // text
+    if(animate) flickerText($('name'), e.operatingName); else $('name').textContent=e.operatingName;
+    $('metaline').innerHTML = '<span style="color:'+color+';font-weight:700">'+esc(clabel)+'</span><span class="dot">•</span>'+esc(area)+'<span class="dot">•</span>'+esc(e.district||"Toronto");
+    $('blurb').textContent = e.blurb || "A brand-new Toronto kitchen, just licensed.";
+
+    // playful razz / crown
+    var rz = razzFor(cz, clabel, true), rzEl=$('razz');
+    if(rz){ rzEl.textContent=rz; rzEl.hidden=false; } else rzEl.hidden=true;
+
+    // jackpot number + leaves
+    if(animate) rollNumber($('days'), e.daysOpen||0); else $('days').textContent=e.daysOpen||0;
+    var lv=""; for(var i=0;i<5;i++) lv+=leafSVG(i<fr.n); $('leaves').innerHTML=lv;
+    $('heat').textContent=fr.tag;
+
+    // cuisine rank
+    var rank = S.rankByKey[fk] || S.totalCuisines;
+    $('rank').textContent=rank; $('ranktot').textContent="/"+S.totalCuisines;
+    $('ranklbl').textContent = clabel+" of "+S.totalCuisines;
+
+    // serial + barcode + stub
+    $('serial').textContent = serialFor(e.slug);
+    setBarcode(e.slug||e.operatingName);
+    $('drawno').textContent = ("00"+S.draws).slice(-3);
+    $('drawdate').textContent = S.asOf || "";
+
+    // CTA + chips
+    var dest = e.mapsUrl || e.website || (e.slug ? ("/r/"+e.slug) : "/");
+    $('claim').href = dest;
+    $('claim').target = (dest.startsWith('http') ? '_blank' : '_self');
+    $('claim').innerHTML = (e.mapsUrl ? '📍 Find it on Google Maps&nbsp;→' : e.website ? '🌐 Visit their site&nbsp;→' : 'See full listing&nbsp;→');
+    var chips="";
+    if(fk) chips+='<a class="chip" href="/cuisine/'+esc(fk)+'"><span class="sw" style="background:'+color+'"></span>'+esc(clabel)+'</a>';
+    if(nb.slug) chips+='<a class="chip" href="/neighborhood/'+esc(nb.slug)+'">📍 '+esc(nb.label)+'</a>';
+    if(e.district) chips+='<a class="chip" href="/district/'+esc(districtSlug(e.district))+'">'+esc(e.district)+'</a>';
+    if(e.mapsUrl) chips+='<a class="chip" href="'+esc(e.mapsUrl)+'" target="_blank" rel="noopener">🗺 Map</a>';
+    $('chips').innerHTML=chips;
+
+    // jackpot glow + confetti for ultra-fresh
+    var tk=$('ticket');
+    if((e.daysOpen||99)<=7){ tk.classList.add('jackpot'); if(animate) burst(); }
+    else tk.classList.remove('jackpot');
+
+    S.current=e;
+    try{ history.replaceState(null,"", "?pick="+encodeURIComponent(e.slug||"")); }catch(_){}
+  }
+
+  function esc(s){ return (""+s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+  function draw(specific){
+    if(S.busy || !S.entries.length) return;
+    S.busy=true; var btn=$('play'); btn.disabled=true;
+    S.draws++; $('plays').textContent=S.draws;
+    var e = specific || pickWeighted();
+    render(e, true);
+    setTimeout(function(){ S.busy=false; btn.disabled=false; }, REDUCED?60:760);
+  }
+
+  // ---- confetti (lightweight) ----
+  var cv=$('confetti'), ctx, parts=[];
+  function burst(){
+    if(REDUCED) return;
+    cv.style.display='block'; ctx=ctx||cv.getContext('2d');
+    cv.width=innerWidth; cv.height=innerHeight; parts=[];
+    var cols=['#5fe39a','#2da55c','#f5dd86','#caa53d','#ffffff'];
+    for(var i=0;i<90;i++) parts.push({x:innerWidth/2,y:innerHeight*0.32,vx:(Math.random()-.5)*9,vy:Math.random()*-9-3,g:.28+Math.random()*.2,s:5+Math.random()*6,c:cols[i%cols.length],r:Math.random()*6,vr:(Math.random()-.5)*.4,life:0});
+    requestAnimationFrame(tick);
+  }
+  function tick(){
+    ctx.clearRect(0,0,cv.width,cv.height); var alive=false;
+    for(var i=0;i<parts.length;i++){ var p=parts[i]; p.vy+=p.g; p.x+=p.vx; p.y+=p.vy; p.r+=p.vr; p.life++;
+      if(p.y<cv.height+20){ alive=true; ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r); ctx.fillStyle=p.c; ctx.globalAlpha=Math.max(0,1-p.life/90); ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s*0.5); ctx.restore(); } }
+    if(alive) requestAnimationFrame(tick); else cv.style.display='none';
+  }
+
+  function toast(msg){ var t=$('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(function(){t.classList.remove('show');},1900); }
+
+  // ---- wire data ----
+  function boot(data){
+    var no = (data&&data.newOpenings)||{};
+    S.entries = (no.recent||[]).filter(function(e){return e&&e.operatingName;});
+    var cz = (no.cuisines||[]).slice();
+    S.totalCuisines = cz.length||45;
+    cz.forEach(function(c){ S.byKey[c.key]=c; });
+    cz.slice().sort(function(a,b){return (b.count365d||0)-(a.count365d||0);}).forEach(function(c,i){ S.rankByKey[c.key]=i+1; });
+    S.pool = no.totalNewActive365d || 2020;
+    S.odds = S.entries.length || 258;
+    S.asOf = no.asOf || "";
+    $('pool').textContent = commaNum(S.pool);
+    $('odds').textContent = commaNum(S.odds);
+    $('drawdate').textContent = S.asOf;
+
+    if(!S.entries.length){ $('name').textContent="No tickets left tonight"; $('play').disabled=true; return; }
+
+    // shared ticket? ?pick=slug → render that one, no animation
+    var m=/[?&]pick=([^&]+)/.exec(location.search);
+    if(m){ var want=decodeURIComponent(m[1]); var hit=S.entries.filter(function(e){return e.slug===want;})[0];
+      if(hit){ S.draws=1; $('plays').textContent=1; render(hit,false); return; } }
+    draw();
+  }
+
+  fetch('/data/corridors.json',{cache:'no-store'})
+    .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+    .then(boot).catch(function(){ boot(FALLBACK); });
+
+  // ---- controls ----
+  $('play').addEventListener('click', function(){ draw(); });
+  $('surprise').addEventListener('click', function(){ draw(); });
+  $('share').addEventListener('click', function(){
+    var url = location.origin+location.pathname+(S.current?("?pick="+encodeURIComponent(S.current.slug)):"");
+    var title = S.current? ("I drew "+S.current.operatingName+" 🎰 Toronto Dinner Lottery") : "Toronto Dinner Lottery";
+    if(navigator.share){ navigator.share({title:title,url:url}).catch(function(){}); }
+    else if(navigator.clipboard){ navigator.clipboard.writeText(url).then(function(){toast("Ticket link copied ✓");},function(){toast(url);}); }
+    else toast(url);
+  });
+  document.addEventListener('keydown', function(ev){
+    if(ev.code==='Space'||ev.code==='Enter'){ if(document.activeElement&&document.activeElement.tagName==='A')return; ev.preventDefault(); draw(); }
+  });
+  // ---- haptic ----
+  function haptic(ms){ try{ navigator.vibrate && navigator.vibrate(ms||40); }catch(_){} }
+
+  // ---- swipe to draw (any direction, 40px threshold) ----
+  (function(){
+    var t0x, t0y;
+    document.addEventListener('touchstart', function(e){
+      t0x=e.touches[0].clientX; t0y=e.touches[0].clientY;
+    }, {passive:true});
+    document.addEventListener('touchend', function(e){
+      if(t0x==null) return;
+      var dx=e.changedTouches[0].clientX-t0x, dy=e.changedTouches[0].clientY-t0y;
+      if(Math.sqrt(dx*dx+dy*dy)>44){ haptic(40); draw(); }
+      t0x=null;
+    }, {passive:true});
+  })();
+
+  // ---- patch haptic into play button ----
+  $('play').addEventListener('click', function(){ haptic(40); }, {capture:true});
+
+  // ---- service worker ----
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('/sw-game.js').catch(function(){});
+  }
+})();
+</script>
+</body>
+</html>

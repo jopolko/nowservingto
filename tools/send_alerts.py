@@ -173,8 +173,8 @@ def _entry_email(entry, sub):
             f' <span style="color:#74787c">·</span> '
             f'<span style="color:#46494c;white-space:nowrap">'
             f'<span style="color:#e8a01a">★</span> {rating:.1f}'
-            f'{f" <span style=\"color:#a8acb0\">({review_count:,})</span>" if review_count else ""}'
-            f'</span>'
+            + (f' <span style="color:#a8acb0">({review_count:,})</span>' if review_count else '')
+            + f'</span>'
         )
 
     addr_html = ''

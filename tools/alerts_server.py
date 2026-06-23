@@ -268,7 +268,7 @@ You&rsquo;re subscribed. From now on you&rsquo;ll get {you_will}.
           <a href="{unsub_link}" style="color:#74787c;text-decoration:underline">Unsubscribe</a> - one click, no questions.
         </p>
         <p style="margin:10px 0 0;color:#a8acb0;font:11px/1.5 -apple-system,sans-serif">
-          NowServingTO pulls newly registered restaurants from City of Toronto Open Data, classifies cuisine with Anthropic Claude, and verifies operating status via Google Places.
+          NowServingTO pulls newly registered restaurants from City of Toronto Open Data, classifies cuisine with Anthropic Claude, and verifies operating status against each restaurant's website and social media.
         </p>
       </td></tr>
 

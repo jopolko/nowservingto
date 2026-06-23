@@ -1,0 +1,15 @@
+# nowservingto.com — AEO target queries (Toronto restaurant openings).
+# The demand we want AI answer engines (ChatGPT, Perplexity, AI Overviews) to
+# cite us for. One query per line; blanks and #-comments ignored.
+# Re-run after edits:  .venv-seo/bin/python tools/seo_pull.py --aeo --site nowservingto.com
+
+new restaurants in toronto
+new restaurant openings toronto
+restaurants opening soon toronto
+what restaurants just opened in toronto
+newly opened restaurants toronto
+new restaurants toronto 2026
+new restaurants opening this month toronto
+new restaurants downtown toronto
+best new restaurants toronto
+toronto restaurant openings this week

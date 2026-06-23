@@ -850,7 +850,14 @@ def build_wire_page(target, entries):
         n_total=n_total, n_30d=n_30d, label=label,
         s30='s' if n_30d != 1 else '',
     )
-    wire_editorial_html = _WIRE_EDITORIAL.get(target['key'], '')
+    _wire_raw = _WIRE_EDITORIAL.get(target['key'], '')
+    if isinstance(_wire_raw, list):
+        wire_editorial_html = ''.join(
+            f'<div class="wire-qa"><h3>{item["q"]}</h3>{item["a"]}</div>'
+            for item in _wire_raw if isinstance(item, dict)
+        )
+    else:
+        wire_editorial_html = _wire_raw
 
     return f'''<!doctype html>
 <html lang="en"><head>
@@ -986,7 +993,7 @@ def build_wire_page(target, entries):
   </section>
 
   <footer class="foot">
-    <p><b style="color:var(--ink)">About <em style="font-style:italic">This Week in Toronto</em>.</b> A weekly dispatch tracking every restaurant the City of Toronto licenses. Cuisine is verified against Google Places, owner websites, and food-press coverage. Every restaurant above appears on the live site at <a href="https://nowservingto.com/cuisine/{target['key']}">nowservingto.com/cuisine/{target['key']}</a>.</p>
+    <p><b style="color:var(--ink)">About <em style="font-style:italic">This Week in Toronto</em>.</b> A weekly dispatch tracking every restaurant the City of Toronto licenses. Cuisine is verified against owner websites, social media, and food-press coverage. Every restaurant above appears on the live site at <a href="https://nowservingto.com/cuisine/{target['key']}">nowservingto.com/cuisine/{target['key']}</a>.</p>
     <p>Editorial use: lift the numbers, screenshot the cards, link the brief. If you&apos;d like the wire delivered weekly to your inbox - or want a custom cut for {country} - drop a line via the site footer.</p>
     <a href="https://nowservingto.com/cuisine/{target['key']}" class="cta">Browse the live {label} feed &rarr;</a>
   </footer>

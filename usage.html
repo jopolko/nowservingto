@@ -152,46 +152,9 @@
 </header>
 
 <main class="wrap">
- <h1 style="font-size: 32px; margin-bottom: 14px">API Calls</h1>
+ <h1 style="font-size: 32px; margin-bottom: 14px">Who's actually reading us</h1>
 
- <div class="totals" style="margin-top: 24px">
- <div class="card">
- <div class="lbl">Total spent</div>
- <div class="num" id="all-cost">-</div>
- <div class="calls" id="all-calls">- calls since <span id="first-day">-</span></div>
- </div>
- <div class="card">
- <div class="lbl">Today</div>
- <div class="num" id="today-cost">-</div>
- <div class="calls" id="today-calls">- calls</div>
- </div>
- </div>
-
- <div class="chart-card">
- <h3 class="ch-title">Daily spend, last 30 days</h3>
- <svg id="ch-daily" class="ch-svg" viewBox="0 0 600 140" preserveAspectRatio="none" aria-label="Daily API spend sparkline"></svg>
- <div class="ch-foot">
- <span id="ch-daily-range">-</span>
- <span id="ch-daily-stats">-</span>
- </div>
- </div>
-
- <h2 style="margin-top: 36px">Where the money goes</h2>
- <p style="color: var(--ink2); margin: 0 0 4px">
- Anthropic Haiku classifies cuisine from operating names and web-search
- snippets. Operating status is confirmed against each restaurant's own website
- and social media, the check that keeps closed restaurants off the site. Jina
- renders the rare SPA-only website that Haiku needs to read.
- </p>
- <div class="chart-card">
- <h3 class="ch-title">Cost share</h3>
- <div class="donut-wrap">
- <svg id="ch-donut" class="ch-svg" viewBox="0 0 200 200" style="max-width: 180px" aria-label="Provider cost-share donut chart"></svg>
- <div id="ch-donut-legend" class="donut-legend"></div>
- </div>
- </div>
-
- <h2 style="margin-top: 48px">Who's actually reading us</h2>
+ <h2 id="crawlers" style="margin-top: 0; border: none; display: none"></h2>
  <p style="color: var(--ink2); margin: 0 0 4px">
  Parsed from Apache's access log: every search engine and AI crawler that has
  fetched a page in the last 30 days. The shape of this list is the entire
@@ -240,6 +203,18 @@
  <div class="ch-foot"><span id="ch-farms-foot">-</span></div>
  </div>
  <p class="stamp" style="margin-top: 36px">Snapshot: <span id="stamp">-</span></p>
+
+ <section style="margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--line);">
+ <p style="font: 700 11px/1 var(--sans); color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin: 0 0 14px;">API running costs</p>
+ <div style="display: flex; gap: 28px; flex-wrap: wrap; margin-bottom: 18px; align-items: flex-end;">
+ <div><span style="font: 700 11px/1 var(--sans); color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 4px;">Today</span><span id="today-cost" style="font: 700 22px/1 var(--sans); font-variant-numeric: tabular-nums;">-</span>&ensp;<span id="today-calls" style="font: 500 12px/1 var(--mono); color: var(--muted);">-</span></div>
+ <div><span style="font: 700 11px/1 var(--sans); color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 4px;">All time</span><span id="all-cost" style="font: 700 22px/1 var(--sans); font-variant-numeric: tabular-nums;">-</span>&ensp;<span id="all-calls" style="font: 500 12px/1 var(--mono); color: var(--muted);">-</span></div>
+ </div>
+ <div style="display: grid; grid-template-columns: minmax(120px, 140px) 1fr; gap: 18px; align-items: center; max-width: 480px;">
+ <svg id="ch-donut" class="ch-svg" viewBox="0 0 200 200" style="max-width: 130px" aria-label="API cost share by provider"></svg>
+ <div id="ch-donut-legend" class="donut-legend"></div>
+ </div>
+ </section>
 </main>
 
 <!-- JSON-LD: Article schema so search + AI engines can categorize this
@@ -303,6 +278,8 @@ fetch('/data/usage.json?v=' + Date.now()).then(r => r.json()).then(data => {
  const days = data.byDay || [];
  const byDayProv = data.byDayProvider || [];
  if (!days.length) return;
+ const svg = document.getElementById('ch-daily');
+ if (!svg) return;
  const W = 600, H = 180, PAD_L = 32, PAD_R = 8, PAD_T = 10, PAD_B = 22;
  const innerW = W - PAD_L - PAD_R, innerH = H - PAD_T - PAD_B;
  const last30 = days.slice(-30);
@@ -344,7 +321,6 @@ fetch('/data/usage.json?v=' + Date.now()).then(r => r.json()).then(data => {
  const dd = last30[i].day.slice(5);
  return `<text class="ch-axis" x="${ptX(i).toFixed(1)}" y="${H-6}" text-anchor="${i===0?'start':i===last30.length-1?'end':'middle'}">${dd}</text>`;
  }).join('');
- const svg = document.getElementById('ch-daily');
  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
  svg.innerHTML = yTicks + lines + dots + xTicks;
  // Provider legend swatches inline above the chart's footer

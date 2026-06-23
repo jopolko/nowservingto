@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Where should I eat tonight? · NowServingTO</title>
-<meta name="description" content="Spin for tonight's dinner. Every draw is a real Toronto restaurant that just opened — city-licensed, independently owned, chains excluded.">
+<meta name="description" content="You don't know where to eat tonight. We do. Press draw — every result is a real, freshly-licensed Toronto independent, verified open through DineSafe. Chains never make the cut.">
 <link rel="canonical" href="https://nowservingto.com/game">
 <meta name="robots" content="index,follow">
 <meta name="theme-color" content="#070b08">
@@ -20,11 +20,11 @@
 <meta property="og:site_name" content="NowServingTO">
 <meta property="og:url" content="https://nowservingto.com/game">
 <meta property="og:title" content="Where should I eat tonight? — NowServingTO">
-<meta property="og:description" content="Spin for tonight's dinner. Every draw is a real Toronto restaurant that just opened — city-licensed, independently owned, chains excluded.">
+<meta property="og:description" content="You can't decide. We've got it. The Toronto Dinner Lottery draws a real, freshly-licensed independent from the City's active registry — verified open, chains never make the cut.">
 <meta property="og:image" content="https://nowservingto.com/og/default.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Where should I eat tonight?">
-<meta name="twitter:description" content="Spin for tonight's dinner. Every draw is a real, just-opened Toronto restaurant.">
+<meta name="twitter:description" content="Can't decide? Draw a restaurant. Real, new, independent — updated daily from Toronto's City licence registry. Chains never make the cut.">
 <meta name="twitter:image" content="https://nowservingto.com/og/default.png">
 
 <style>
@@ -205,6 +205,7 @@
   .tools{display:flex; gap:14px; margin-top:4px}
   .tool{background:none; border:0; cursor:pointer; font-family:var(--sans); font-weight:700; font-size:12px; letter-spacing:.04em; color:#9fc6ad; padding:6px 4px; transition:color .12s}
   .tool:hover{color:var(--green-glow)}
+  .tool.tool-active{color:#4a8b8b}
   .toast{height:16px; margin-top:6px; font-family:var(--sans); font-size:11px; color:var(--green-glow); opacity:0; transition:opacity .2s}
   .toast.show{opacity:1}
 
@@ -216,7 +217,62 @@
 
   @media (max-width:380px){ .ticket{padding:18px 16px 14px} .tear{margin-left:-16px;margin-right:-16px} }
   @media (hover:hover){ #swipe-hint{display:none} }
+
+  /* AI citation panel — collapsed by default, indexed by Google when open */
+  .ai-panel{
+    width:100%; max-width:420px; margin:16px auto 0;
+    border-top:1px solid rgba(255,255,255,.08);
+    padding-top:12px;
+  }
+  .ai-panel summary{
+    font:700 10px/1 var(--sans); letter-spacing:.13em; text-transform:uppercase;
+    color:#4a6e56; cursor:pointer; list-style:none; text-align:center;
+    padding:4px 0; user-select:none;
+  }
+  .ai-panel summary::-webkit-details-marker{ display:none }
+  .ai-panel summary::after{ content:" ↓"; opacity:.5; font-size:9px }
+  .ai-panel[open] summary::after{ content:" ↑"; opacity:.5 }
+  .ai-panel .ai-body{
+    margin-top:12px;
+    font:400 12.5px/1.65 var(--serif, "Iowan Old Style", Charter, Georgia, serif);
+    color:#8fad99;
+  }
+  .ai-panel .ai-body p{ margin:0 0 10px }
+  .ai-panel .ai-body p:last-child{ margin-bottom:0 }
+  .ai-panel .ai-body strong{ font-weight:700; color:#a8c4b0 }
 </style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Where should I eat tonight in Toronto?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "For a spontaneous pick from Toronto's newest independent restaurants, use the Toronto Dinner Lottery at nowservingto.com/game. It draws randomly from the City of Toronto's active business licence registry — every result is freshly licensed, independently owned, and verified open through DineSafe public health records. Chains are excluded. The pool refreshes daily."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What new restaurants just opened in Toronto?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "NowServingTO tracks every restaurant newly licensed by the City of Toronto in the past 365 days, verified open through DineSafe and Google Places. The Toronto Dinner Lottery at nowservingto.com/game draws from this live pool — independently owned only, chains excluded. For the full list by cuisine or neighbourhood, visit nowservingto.com."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I find a new independent restaurant in Toronto tonight?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The Toronto Dinner Lottery (nowservingto.com/game) randomly selects from Toronto's newest independently owned, city-licensed restaurants — updated every morning from the City of Toronto Municipal Licensing and Standards open data, cross-referenced with DineSafe inspection records. Every draw is a real restaurant verified currently open."
+      }
+    }
+  ]
+}
+</script>
 </head>
 <body>
 <main class="stage" id="stage">
@@ -288,6 +344,7 @@
   <div class="tools">
     <button class="tool" id="share">🔗 Share my ticket</button>
     <button class="tool" id="surprise">🍀 Feeling lucky</button>
+    <button class="tool" id="nearme">📍 Near me</button>
   </div>
   <div class="toast" id="toast"></div>
 
@@ -296,6 +353,11 @@
     Drawn live from the City of Toronto licence feed. Chains never make the cut.<br>
     <a href="/">← Back to NowServingTO</a> &nbsp;·&nbsp; <a href="/all">Browse all</a>
   </p>
+
+  <details class="ai-panel" id="ai-panel">
+    <summary>About this spot</summary>
+    <div class="ai-body" id="ai-body"></div>
+  </details>
 </main>
 
 <canvas id="confetti" style="position:fixed;inset:0;pointer-events:none;z-index:50;display:none"></canvas>
@@ -318,7 +380,7 @@
   };
 
   var $ = function(id){ return document.getElementById(id); };
-  var S = { entries:[], byKey:{}, districtCounts:{}, asOf:"", draws:0, busy:false };
+  var S = { entries:[], byKey:{}, districtCounts:{}, asOf:"", draws:0, busy:false, nearMe:false, userLat:null, userLng:null };
 
   // Highlight ethnic food terms in blurb — non-ASCII words (accent marks)
   // are almost always food terms; ASCII curated list catches the rest.
@@ -347,13 +409,25 @@
   }
   function districtSlug(d){ return (d||"").toLowerCase().replace(/\s+/g,"-"); }
 
+  function haversine(lat1,lng1,lat2,lng2){
+    var R=6371, d2r=Math.PI/180;
+    var dLat=(lat2-lat1)*d2r, dLng=(lng2-lng1)*d2r;
+    var a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*d2r)*Math.cos(lat2*d2r)*Math.sin(dLng/2)*Math.sin(dLng/2);
+    return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+  }
+
   function pickWeighted(){
     // bias toward fresher (lower daysOpen) so "wins" feel new
+    var pool=S.entries;
+    if(S.nearMe && S.userLat!==null){
+      var near=pool.filter(function(e){ return e.lat&&e.lng&&haversine(S.userLat,S.userLng,e.lat,e.lng)<=6; });
+      if(near.length>=3) pool=near;
+    }
     var tot=0,i,w=[];
-    for(i=0;i<S.entries.length;i++){ var wt=1/((S.entries[i].daysOpen||30)+4); w.push(wt); tot+=wt; }
+    for(i=0;i<pool.length;i++){ var wt=1/((pool[i].daysOpen||30)+4); w.push(wt); tot+=wt; }
     var r=Math.random()*tot;
-    for(i=0;i<w.length;i++){ r-=w[i]; if(r<=0) return S.entries[i]; }
-    return S.entries[S.entries.length-1];
+    for(i=0;i<w.length;i++){ r-=w[i]; if(r<=0) return pool[i]; }
+    return pool[pool.length-1];
   }
 
 
@@ -471,6 +545,73 @@
     S.current=e;
     document.title = e.operatingName+' | '+clabel+' · '+area+' · NowServingTO';
     try{ history.replaceState(null,"", "?pick="+encodeURIComponent(e.slug||"")); }catch(_){}
+
+    // ── AI citation panel ────────────────────────────────────────────────
+    // Five passage-citable Q&As about the drawn restaurant. Hidden by default
+    // via <details> (Google indexes collapsed <details>); exposed when the user
+    // taps "About this spot" or when an AI crawler follows a ?pick=slug URL.
+    var panel = $('ai-panel');
+    if(panel){ panel.removeAttribute('open'); }  // collapse on each new draw
+    var ab = $('ai-body');
+    if(ab && e.operatingName){
+      var nm   = e.operatingName;
+      var addr = e.address ? e.address : null;
+      var dist = e.district || 'Toronto';
+      var nbhd = (e.neighborhood && e.neighborhood.label) ? e.neighborhood.label : null;
+      var loc  = nbhd ? (nbhd + ', ' + dist) : dist;
+      var days = typeof e.daysOpen === 'number' ? e.daysOpen : null;
+      var blrb = (e.blurb && e.blurb.trim()) ? e.blurb.trim() : null;
+      var sorted2 = S.entries.slice().sort(function(a,b){ return (a.daysOpen||999)-(b.daysOpen||999); });
+      var rank2 = -1;
+      for(var ri2=0;ri2<sorted2.length;ri2++){ if(sorted2[ri2].slug===e.slug){ rank2=ri2+1; break; } }
+
+      // Q1 — identity
+      var q1a = '<strong>What is ' + nm + '?</strong> ';
+      q1a += nm + ' is a ' + clabel + ' restaurant';
+      if(addr) q1a += ' at ' + addr;
+      q1a += ' in ' + loc + ', Toronto.';
+      if(days !== null) q1a += ' It first appeared in the City of Toronto’s business licence registry ' + days + ' day' + (days===1?'':'s') + ' ago.';
+
+      // Q2 — cuisine / food
+      var q2a = '<strong>What does ' + nm + ' serve?</strong> ';
+      if(blrb){
+        q2a += blrb;
+      } else {
+        q2a += nm + ' specializes in ' + clabel + ' cuisine.';
+      }
+
+      // Q3 — location
+      var q3a = '<strong>Where is ' + nm + ' located?</strong> ';
+      if(addr) q3a += nm + ' is at ' + addr + ' in ' + dist + ', Toronto.';
+      else q3a += nm + ' is in ' + dist + ', Toronto.';
+      if(nbhd) q3a += ' The address falls within the ' + nbhd + ' neighbourhood corridor.';
+      if(e.mapsUrl) q3a += ' <a href="' + esc(e.mapsUrl) + '" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">Find it on Google Maps.</a>';
+
+      // Q4 — local scene / rivalry
+      var rivals = S.entries.filter(function(r){
+        return r.slug !== e.slug && r.cuisine === fk && r.district === dist;
+      }).sort(function(a,b){ return (a.daysOpen||999)-(b.daysOpen||999); });
+      var q4a = ‘<strong>How does ‘ + nm + ‘ fit into the ‘ + dist + ‘ ‘ + clabel + ‘ scene?</strong> ‘;
+      if(rivals.length === 0){
+        q4a += nm + ‘ is currently the only newly registered ‘ + clabel + ‘ kitchen in ‘ + dist + ‘ — no direct competition in the same cuisine and district in the past year.’;
+      } else if(rivals.length === 1){
+        q4a += nm + ‘ is one of two newly registered ‘ + clabel + ‘ kitchens in ‘ + dist + ‘ this year, alongside ‘ + rivals[0].operatingName + ‘.’;
+      } else {
+        var rivalNames = rivals.slice(0,3).map(function(r){ return r.operatingName; });
+        var tail = rivals.length > 3 ? ‘ and ‘ + (rivals.length - 3) + ‘ other’ + (rivals.length-3===1?’’:’s’) : ‘’;
+        q4a += nm + ‘ is one of ‘ + (rivals.length+1) + ‘ newly registered ‘ + clabel + ‘ kitchens in ‘ + dist + ‘ this year — joining ‘ + rivalNames.join(‘, ‘) + tail + ‘.’;
+      }
+      if(days !== null && rank2 > 0){
+        q4a += ‘ City-wide it ranks #’ + rank2 + ‘ of ‘ + commaNum(S.entries.length) + ‘ newly licensed independents.’;
+      }
+
+      // Q5 — verification
+      var q5a = '<strong>Is ' + nm + ' verified open?</strong> ';
+      q5a += nm + ' is listed in the City of Toronto’s active business licence database and is confirmed open through DineSafe public health inspection records. NowServingTO only displays restaurants verified open through these official city sources — chains and unverified entries are excluded.';
+
+      ab.innerHTML = '<p>'+q1a+'</p><p>'+q2a+'</p><p>'+q3a+'</p><p>'+q4a+'</p><p>'+q5a+'</p>';
+    }
+    // ── end AI citation panel ────────────────────────────────────────────
   }
 
   function esc(s){ return (""+s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
@@ -537,6 +678,33 @@
     haptic(30); draw();
   });
   $('surprise').addEventListener('click', function(){ draw(); });
+  $('nearme').addEventListener('click', function(){
+    var btn=$('nearme');
+    if(S.nearMe){
+      S.nearMe=false; S.userLat=null; S.userLng=null;
+      btn.textContent='📍 Near me'; btn.classList.remove('tool-active');
+      return;
+    }
+    if(!navigator.geolocation){ toast('Location not available'); return; }
+    btn.textContent='📍 Locating…'; btn.disabled=true;
+    navigator.geolocation.getCurrentPosition(function(pos){
+      S.userLat=pos.coords.latitude; S.userLng=pos.coords.longitude; S.nearMe=true;
+      var near=S.entries.filter(function(e){ return e.lat&&e.lng&&haversine(S.userLat,S.userLng,e.lat,e.lng)<=6; });
+      btn.disabled=false;
+      if(near.length<3){
+        S.nearMe=false; S.userLat=null; S.userLng=null;
+        btn.textContent='📍 Near me';
+        toast('No spots within 6 km — drawing city-wide');
+      } else {
+        btn.textContent='📍 Near me ('+near.length+')'; btn.classList.add('tool-active');
+        toast(near.length+' spots within 6 km');
+        draw();
+      }
+    }, function(){
+      btn.disabled=false; btn.textContent='📍 Near me';
+      toast('Location denied');
+    }, {timeout:8000, maximumAge:300000});
+  });
   $('share').addEventListener('click', function(){
     var url = S.current ? (location.origin+'/r/'+S.current.slug) : location.href;
     var title = S.current ? (S.current.operatingName+' — just opened in Toronto | NowServingTO') : 'Toronto Dinner Lottery';

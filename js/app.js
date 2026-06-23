@@ -61,6 +61,20 @@ function nameJaccard(a, b) {
   return inter / (A.size + B.size - inter);
 }
 
+const _SOCIAL_HOSTS = new Set([
+  'instagram.com','www.instagram.com',
+  'facebook.com','www.facebook.com','m.facebook.com',
+  'tiktok.com','www.tiktok.com',
+  'twitter.com','www.twitter.com',
+  'x.com','www.x.com',
+  'linkedin.com','www.linkedin.com',
+  'youtube.com','www.youtube.com',
+]);
+function isSocialUrl(url) {
+  if (!url) return false;
+  try { return _SOCIAL_HOSTS.has(new URL(url).hostname); } catch(e) { return false; }
+}
+
 function tierLabel(days) {
   // Compact freshness label for row contexts. Drops "First seen" + "ago"
   // — repetitive on every row, no info value. Must match Python _tier_label().
@@ -108,6 +122,24 @@ fetch('/data/corridors.json?v=' + Date.now(), { priority: 'low' }).then(r => r.j
   // Favorites: localStorage-backed set of saved slugs. No accounts, no backend.
   function getSaved() { try { return new Set(JSON.parse(localStorage.getItem('nsto_saved') || '[]')); } catch { return new Set(); } }
   function isSaved(slug) { return getSaved().has(slug); }
+  // A friendly micro-burst of sparkles at an element's centre (fires on save).
+  function nsSparkle(el) {
+    if (!el || !el.getBoundingClientRect) return;
+    if (matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const r = el.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const glyphs = ['✨', '⭐', '💫', '✦'];
+    for (let i = 0; i < 6; i++) {
+      const s = document.createElement('span');
+      s.className = 'ns-spark'; s.textContent = glyphs[i % glyphs.length];
+      s.style.left = cx + 'px'; s.style.top = cy + 'px';
+      const a = Math.PI * 2 * (i / 6) + Math.random() * 0.6, d = 18 + Math.random() * 22;
+      s.style.setProperty('--dx', (Math.cos(a) * d).toFixed(1) + 'px');
+      s.style.setProperty('--dy', (Math.sin(a) * d - 10).toFixed(1) + 'px');
+      document.body.appendChild(s);
+      setTimeout(() => s.remove(), 760);
+    }
+  }
   function toggleSaved(slug) {
     const s = getSaved();
     if (s.has(slug)) s.delete(slug); else s.add(slug);
@@ -152,7 +184,7 @@ fetch('/data/corridors.json?v=' + Date.now(), { priority: 'low' }).then(r => r.j
     return b;
   }
   if (!panel.querySelector('.cp-opt')) {
-    panel.appendChild(makeOpt('__all', 'All cuisines', totalCount, true));
+    panel.appendChild(makeOpt('__all', 'Show all', totalCount, true));
     [...no.cuisines]
       .sort((a, b) => (a.label || a.key).localeCompare(b.label || b.key))
       .forEach(c => panel.appendChild(makeOpt(c.key, c.label, c.count365d, false)));
@@ -161,13 +193,16 @@ fetch('/data/corridors.json?v=' + Date.now(), { priority: 'low' }).then(r => r.j
   const regionCount = {};
   no.recent.forEach(r => { if (r.district) regionCount[r.district] = (regionCount[r.district]||0)+1; });
   if (!rPanel.querySelector('.cp-opt')) {
-    rPanel.appendChild(makeOpt('__all', 'All Toronto', no.recent.length, true));
+    rPanel.appendChild(makeOpt('__all', 'Show all', no.recent.length, true));
     DISTRICTS.forEach(d => rPanel.appendChild(makeOpt(d, d, regionCount[d] || 0, false)));
   }
 
   const INITIAL_SHOW = 50, PAGE_SIZE = 50;
   let currentRows = [], currentShown = INITIAL_SHOW;
   let currentCuisine = '__all', currentRegion = '__all', singleSlug = null;
+  // Heat-bar drill-down: when true, the home feed shows only the new-this-month
+  // entries. Reset whenever the cuisine/region scope changes (see applyFilters).
+  let freshOnly = false;
   // currentNeighborhood: iconic-corridor filter set from /neighborhood/<slug>
   // URLs. Compounds with cuisine + region filters so visitors can narrow to
   // e.g. "Italian restaurants in Greektown" by selecting cuisine on a
@@ -207,7 +242,8 @@ fetch('/data/corridors.json?v=' + Date.now(), { priority: 'low' }).then(r => r.j
     // generic-building Maps result, and provides cuisine + address + a
     // breadcrumb back to the cuisine hub.
     const internalUrl = r.slug ? `/r/${r.slug}` : null;
-    const link = (trustMatch && r.website) ? r.website : (r.mapsUrl || internalUrl);
+    const ownSite = (trustMatch && r.website && !isSocialUrl(r.website)) ? r.website : null;
+    const link = ownSite || r.mapsUrl || internalUrl;
     const linkClass = link ? 'ext' : '';
     // target=_blank on devices with a mouse / trackpad available (preserve
     // NowServingTO tab); same-tab on pure-touch so the back button cleanly
@@ -222,7 +258,7 @@ fetch('/data/corridors.json?v=' + Date.now(), { priority: 'low' }).then(r => r.j
     // (not Maps fallback, not our internal /r/ page). Signals to the
     // visitor that the click leaves NowServingTO for the restaurant's
     // actual site.
-    const isOwnerSite = trustMatch && r.website && link === r.website;
+    const isOwnerSite = !!ownSite;
     const extArrow = isOwnerSite ? '<span class="ext-arrow" aria-hidden="true">↗</span>' : '';
     const nameHtml = link
       ? `<a class="${linkClass}" href="${link}"${tgt} rel="noopener">${r.operatingName}${extArrow}</a>`
@@ -316,12 +352,18 @@ fetch('/data/corridors.json?v=' + Date.now(), { priority: 'low' }).then(r => r.j
     const badgeBg = (primaryMeta && primaryMeta.color) || (primaryKey && CUISINE_PALETTE[primaryKey]) || '#888';
     const badgeLabel = (primaryMeta && primaryMeta.label) || CUISINE_LABEL[primaryKey] || primaryKey || '';
     const daysNum = r.daysOpen != null ? r.daysOpen : '?';
+    // Freshness: days under a month, months once it's over (matches nsAgo).
+    const _fd = r.daysOpen;
+    const freshN = (typeof _fd === 'number' && _fd >= 30) ? Math.floor(_fd / 30) : daysNum;
+    const freshU = (typeof _fd !== 'number') ? 'days'
+                 : _fd < 30 ? (_fd === 1 ? 'day' : 'days')
+                 : (Math.floor(_fd / 30) === 1 ? 'month' : 'months');
     // Neighborhood label from entry data
     const nbhd = (r.neighborhood && r.neighborhood.label) ? r.neighborhood.label : '';
     const nbhdHtml = nbhd && r.district
       ? `<span class="nbhd">${escHtml(nbhd)} · ${escHtml(r.district)}</span>`
       : (r.district ? `<span class="nbhd">${escHtml(r.district)}</span>` : '');
-    const bareNote = bare ? ' · No website yet.' : '';
+    const bareNote = bare ? ' <span class="row-fresh">· No website yet.</span>' : '';
     const blurbBody = (r.blurb || bare)
       ? `<p class="tk-blurb">${escHtml(r.blurb || '')}${bareNote}</p>` : '';
     // No "Full listing" CTA when we're already on that listing page (/r/…) —
@@ -331,7 +373,7 @@ fetch('/data/corridors.json?v=' + Date.now(), { priority: 'low' }).then(r => r.j
     row.innerHTML = `
       <div class="tk-head">
         <span class="tk-badge" style="background:${badgeBg}">${badgeLabel}</span>
-        <span class="tk-freshness"><span class="days">${daysNum}</span> days ago</span>
+        <span class="tk-freshness"><span class="days">${freshN}</span> ${freshU} ago</span>
       </div>
       <div class="tk-body">
         <h2 class="tk-name">${nameHtml}</h2>
@@ -348,6 +390,7 @@ fetch('/data/corridors.json?v=' + Date.now(), { priority: 'low' }).then(r => r.j
         e.preventDefault(); e.stopPropagation();
         const now = toggleSaved(r.slug);
         favBtn.classList.toggle('fav-on', now);
+        if (now) nsSparkle(favBtn);
         favBtn.textContent = now ? '♥' : '♡';
         favBtn.setAttribute('aria-label', now ? 'Remove from saved' : 'Save for later');
         refreshSavedToggle();
@@ -378,7 +421,7 @@ fetch('/data/corridors.json?v=' + Date.now(), { priority: 'low' }).then(r => r.j
   };
   const esc = (s) => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   // Licence data is ALL-CAPS; title-case it for the friendly layout.
-  const titleCase = (s) => String(s==null?'':s).toLowerCase().replace(/\b([a-z])/g, (m,c) => c.toUpperCase());
+  const titleCase = (s) => String(s==null?'':s).toLowerCase().replace(/\b([a-z])/g, (m,c) => c.toUpperCase()).replace(/([A-Za-z])'S\b/g, "$1's");
   // Cuisine colour → soft pastel tile background for list icons.
   function iconTint(hex) {
     const m = /^#?([0-9a-f]{6})$/i.exec(hex || '');
@@ -389,96 +432,224 @@ fetch('/data/corridors.json?v=' + Date.now(), { priority: 'low' }).then(r => r.j
   const nsLabel = (k) => (CUISINE_META[k] && CUISINE_META[k].label) || CUISINE_LABEL[k] || k;
   const nsKeys = (r) => (r.cuisines && r.cuisines.length) ? r.cuisines : [r.cuisine];
   const nsHood = (r) => (r.neighborhood && r.neighborhood.label) || r.district || '';
-  // Age label: days under a month, months once it's over a month.
+  // Field-synthesized fallback so brand-new spots (editorial blurb not yet
+  // generated) never render blank. Mirrors _fallback_blurb() in inject.
+  function nsBlurbText(r) {
+    if (r.blurb) return r.blurb.replace(/\s+—\s+/g, ', ').replace(/—/g, '-');
+    const name = titleCase(r.operatingName || '');
+    if (!name) return '';
+    const lab = nsLabel(nsKeys(r)[0]) || '';
+    const hood = nsHood(r);
+    const street = (r.address || '').split(',')[0].replace(/^\s*\d+\s*/, '').trim();
+    let where = '';
+    if (street) where += ' on ' + street;
+    if (hood) where += ' in ' + hood;
+    return name + ' is a ' + (lab ? lab + ' ' : '') + 'spot' + where + '.';
+  }
+  // Own website, only when the Places name actually matches (don't ship a
+  // visitor to a wrong business's site). Aggregator/dead/ghost sites are
+  // already stripped upstream by inject, so r.website here is clean.
+  function nsSite(r) {
+    if (!r.website) return null;
+    const trust = !r.matchedName || nameJaccard(r.operatingName, r.matchedName) >= 0.34;
+    return trust ? r.website : null;
+  }
+  // Direct-out action buttons (website ↗ / Map) surfaced on the card itself,
+  // so visitors don't have to hop through /r/ to reach the restaurant. Buttons
+  // (not <a>) because the card is already one big <a> to /r/ — nested anchors
+  // are invalid; click handlers wired after render open data-url in a new tab.
+  function nsActions(r) {
+    const site = nsSite(r);
+    let h = '';
+    if (site) h += `<button class="ns-act web" type="button" data-url="${esc(site)}">Visit site <span class="ext-arrow" aria-hidden="true">↗</span></button>`;
+    if (r.mapsUrl) h += `<button class="ns-act map" type="button" data-url="${esc(r.mapsUrl)}">Map</button>`;
+    return h;
+  }
+  // Recency label — no "ago" (the masthead lede already frames it). today /
+  // yesterday / N days / N months.
   function nsAgo(d) {
     if (typeof d !== 'number') return '';
-    if (d < 30) return d + (d === 1 ? ' day ago' : ' days ago');
+    if (d <= 0) return 'today';
+    if (d === 1) return 'yesterday';
+    if (d < 30) return d + ' days';
     const m = Math.floor(d / 30);
-    return m + (m === 1 ? ' month ago' : ' months ago');
+    return m + (m === 1 ? ' month' : ' months');
   }
-  // Below this many listings a page keeps the ticket list — a ranked
-  // "Newest / 2nd / 3rd" hero + streak looks silly for one or two spots.
-  const HERO_MIN = 10;
+  // Recency chip — the gamified hook. Fresh (≤7 days) pops in accent; older is
+  // muted. One colored chip carries the "ooh, new" signal, no clutter.
+  function nsChip(r) {
+    const d = r.daysOpen;
+    const fresh = (typeof d === 'number' && d <= 7);
+    return `<span class="ns-when${fresh ? ' fresh' : ''}">${nsAgo(d)}</span>`;
+  }
+  // "First seen" explainer — one info disclosure for the whole feed (the dates
+  // on each listing are first-seen dates). Native <details> so it needs no JS
+  // handler and works in the static render too. Mirrors _NS_FIRSTSEEN in inject.
+  const NS_FIRSTSEEN = '<details class="ns-firstseen"><summary>First seen <span class="ns-i" aria-hidden="true">i</span></summary>'
+    + "<p>Each listing's date is when the spot was <strong>first seen in official Toronto records</strong>: its Toronto Public Health (DineSafe) inspection date when there is one (the most reliable sign it was actually serving), otherwise the City of Toronto business-licence date. Every listing is also confirmed open via its website or social media.</p></details>";
+  // Tag labels the DATE we show, not open/closed — every listing already
+  // passed the Places OPERATIONAL gate, so all are open. dateSource 'dinesafe'
+  // means the shown date is a Toronto Public Health inspection ("Operating" —
+  // confirmed serving then); otherwise it's the City licence date
+  // ("Registered" — paperwork date). The swap in inject_openings.py already
+  // shows whichever date is the better signal; this just names which it is.
+  function nsStatus(r) {
+    return (r && r.dateSource === 'dinesafe')
+      ? '<span class="ns-status operating" title="Operating date — confirmed by a Toronto Public Health (DineSafe) inspection">Operating</span>'
+      : '<span class="ns-status registered" title="Registered date — City of Toronto business licence">Registered</span>';
+  }
+  function nsLegend() {
+    return '<p class="ns-legend">'
+      + '<span class="ns-status operating">Operating</span> date confirmed by a Toronto Public Health inspection'
+      + ' · <span class="ns-status registered">Registered</span> date from the City licence'
+      + ' · every listing is open &amp; verified</p>';
+  }
+  // Best destination for a listing: its own trusted website, else its Places/
+  // Maps page, else the internal /r/ profile as fallback. The whole card links
+  // here (no separate buttons); a small name ↗ signals it opens out.
+  function nsBestLink(r) {
+    const site = nsSite(r);
+    if (site) return site;
+    if (r.mapsUrl) return r.mapsUrl;
+    return r.slug ? `/r/${r.slug}` : '#';
+  }
+  function nsExt(r) { const l = nsBestLink(r); return !!l && l !== '#' && !l.startsWith('/r/'); }
+  // Split tap targets (card is a container, not one big <a>, so each zone is a
+  // real link — nested <a> is invalid HTML): name+↗ → own site / Places;
+  // location line → Google Maps; blurb + glyph → /r/ full editorial profile.
+  function nsRLink(r) { return r.slug ? `/r/${r.slug}` : nsBestLink(r); }
+  function nsSubLine(r, lab, cls) {
+    const inner = `${esc(lab)}${nsHood(r)?' · '+esc(nsHood(r)):''}`;
+    return r.mapsUrl
+      ? `<a class="${cls} ns-maplink" href="${esc(r.mapsUrl)}" target="_blank" rel="noopener"><span class="ns-pin" aria-hidden="true">📍</span>${inner}</a>`
+      : `<p class="${cls}">${inner}</p>`;
+  }
   function nsHeroCard(r, rank) {
-    const k = nsKeys(r)[0], lab = nsLabel(k), emoji = EMOJI[k] || '🍴';
-    const badge = ['r1','r2','r3'][rank-1];
-    const badgeLbl = rank === 1 ? '🏆 Newest' : (rank === 2 ? '2nd newest' : '3rd newest');
-    const href = r.slug ? `/r/${r.slug}` : '#';
+    const k = nsKeys(r)[0], lab = nsLabel(k);
+    const href = nsBestLink(r), ext = nsExt(r), rHref = nsRLink(r);
     const saved = r.slug && isSaved(r.slug);
     const distTag = r.district ? `<span class="ns-tag hood">${esc(r.district)}</span>` : '';
-    const blurb = r.blurb ? `<p class="ns-card-blurb">${esc(r.blurb)}</p>` : '';
-    return `<a href="${href}" class="ns-hero-card${rank===1?' rank-1':''}" data-slug="${esc(r.slug||'')}">`
-      + `<div class="ns-card-rank"><span class="ns-rank-badge ${badge}">${badgeLbl}</span><span class="ns-days-ago">${nsAgo(r.daysOpen)}</span></div>`
-      + `<div class="ns-card-icon">${emoji}</div>`
-      + `<div class="ns-card-body"><p class="ns-card-name">${esc(titleCase(r.operatingName))}</p>`
-      + `<p class="ns-card-sub">${esc(lab)}${nsHood(r)?' · '+esc(nsHood(r)):''}</p>`
+    const bt = nsBlurbText(r);
+    const blurb = bt ? `<a class="ns-card-blurb" href="${esc(rHref)}">${esc(bt)}</a>` : '';
+    const crown = rank === 1 ? '<span class="ns-crown">Newest</span>' : '';
+    const arr = ext ? '<span class="ext-arrow" aria-hidden="true">↗</span>' : '';
+    return `<article class="ns-hero-card${rank===1?' rank-1':''}" data-slug="${esc(r.slug||'')}">`
+      + `<div class="ns-card-top">${crown}${nsChip(r)}</div>`
+      + `<div class="ns-card-body"><a class="ns-card-name" href="${esc(href)}"${ext?' target="_blank" rel="noopener"':''}>${esc(titleCase(r.operatingName))}${arr}</a>`
+      + nsSubLine(r, lab, 'ns-card-sub')
       + blurb
-      + `<span class="ns-tag cuisine">${esc(lab)}</span>${distTag}<br>`
-      + `<button class="ns-save-btn${saved?' saved':''}" type="button" data-slug="${esc(r.slug||'')}">${saved?'♥ Saved':'♡ Save'}</button>`
-      + `</div></a>`;
+      + `<span class="ns-tag cuisine">${esc(lab)}</span>${distTag}`
+      + `<div class="ns-card-actions"><button class="ns-save-btn${saved?' saved':''}" type="button" data-slug="${esc(r.slug||'')}">${saved?'♥ Saved':'♡ Save'}</button></div>`
+      + `</div></article>`;
   }
-  function nsListItem(r, num) {
-    const k = nsKeys(r)[0], lab = nsLabel(k), emoji = EMOJI[k] || '🍴';
-    const color = (CUISINE_META[k] && CUISINE_META[k].color) || CUISINE_PALETTE[k] || '#888';
-    const href = r.slug ? `/r/${r.slug}` : '#';
-    const blurb = r.blurb ? `<p class="ns-list-blurb">${esc(r.blurb)}</p>` : '';
-    return `<a href="${href}" class="ns-list-item" data-slug="${esc(r.slug||'')}">`
-      + `<span class="ns-list-num">${num}</span>`
-      + `<div class="ns-list-icon" style="background:${iconTint(color)}">${emoji}</div>`
-      + `<div class="ns-list-info"><p class="ns-list-name">${esc(titleCase(r.operatingName))}</p>`
-      + `<p class="ns-list-meta">${esc(lab)}${nsHood(r)?' · '+esc(nsHood(r)):''}</p>${blurb}</div>`
-      + `<span class="ns-list-age">${nsAgo(r.daysOpen)}</span></a>`;
+  function nsGridCard(r) {
+    const k = nsKeys(r)[0], lab = nsLabel(k);
+    const href = nsBestLink(r), ext = nsExt(r), rHref = nsRLink(r);
+    const bt = nsBlurbText(r);
+    const nm = esc(titleCase(r.operatingName));
+    const blurb = bt ? `<a class="ns-gc-blurb" href="${esc(rHref)}">${esc(bt)}</a>` : '';
+    const arr = ext ? '<span class="ext-arrow" aria-hidden="true">↗</span>' : '';
+    const color = (CUISINE_META[k] && CUISINE_META[k].color) || CUISINE_PALETTE[k] || '#b06a2c';
+    const emoji = EMOJI[k] || '🍴';
+    return `<div class="ns-gc" data-slug="${esc(r.slug||'')}">`
+      + `<a class="ns-gc-ico" href="${esc(rHref)}" style="background:${iconTint(color)};border-color:${color}33" aria-label="${nm} — full profile">${emoji}</a>`
+      + `<div class="ns-gc-main">`
+      + `<div class="ns-gc-top"><a class="ns-gc-name" href="${esc(href)}"${ext?' target="_blank" rel="noopener"':''}>${nm}${arr}</a>${nsChip(r)}</div>`
+      + nsSubLine(r, lab, 'ns-gc-meta')
+      + blurb
+      + `</div></div>`;
   }
-  // Accurate: count of listings first seen in the last 30 days (real data,
-  // not a calendar month — the licence feed lags, so the current month is
-  // often empty). `label` is scoped to the page (cuisine / district).
-  function nsStreak(rows, label) {
-    const count = rows.filter(r => typeof r.daysOpen === 'number' && r.daysOpen <= 30).length;
-    let dots = '';
-    for (let i = 0; i < 7; i++) dots += `<div class="ns-dot on"></div>`;
-    return `<div class="ns-streak-bar"><span class="ns-flame">🔥</span>`
-      + `<div><div class="ns-count">${count}</div><div class="ns-label">${label}</div></div>`
-      + `<div class="ns-dots" aria-label="updated every day this week">${dots}</div>`
-      + `<span class="ns-updated">updated daily</span></div>`;
+  // Scoped "new entrants" window. The all-Toronto homepage stays a strict
+  // 30 days (it's always populated), but a single hood/cuisine often has
+  // nothing in the last 30 days. When scoped, widen the window step-by-step
+  // (30→90→180→365 days) until a few recent entrants surface, and relabel to
+  // the real span — a North York spot from 3 months ago is still new to
+  // someone who can't always pay attention. Keeps 30 days whenever the hood
+  // does have a fresh-this-month entrant.
+  const NS_SPAN = { 30: 'last 30 days', 90: 'last 3 months', 180: 'last 6 months', 365: 'last year' };
+  function nsStreakWindow(rows, scoped) {
+    const WINDOWS = scoped ? [30, 90, 180, 365] : [30];
+    let win = 30, count = 0;
+    for (let i = 0; i < WINDOWS.length; i++) {
+      win = WINDOWS[i];
+      count = rows.filter(r => typeof r.daysOpen === 'number' && r.daysOpen <= win).length;
+      // Narrowest window that holds any entrant: keeps 30d when fresh, else
+      // expands to the true span of the most recent newcomers (never overstates).
+      if (count >= 1 || i === WINDOWS.length - 1) break;
+    }
+    return { win, count };
+  }
+  function nsStreak(rows, scopePrefix, scoped, freshOnly) {
+    const { win, count } = nsStreakWindow(rows, scoped);
+    const span = NS_SPAN[win];
+    const total = rows.length;
+    // Activity gauge: 5 dots lit by how active the window is. It's a heat meter
+    // bound to the word ("Blazing"), NOT a fraction of the total beside it.
+    const heat = count <= 1 ? 1 : count <= 3 ? 2 : count <= 6 ? 3 : count <= 10 ? 4 : 5;
+    const heatWord = ['', 'Quiet', 'Warm', 'Toasty', 'Hot', 'Blazing'][heat];
+    let pips = '';
+    for (let i = 1; i <= 5; i++) pips += `<div class="ns-dot${i <= heat ? ' on' : ''}"></div>`;
+    const lbl = win === 30 ? 'new this month' : `new · ${span}`;
+    // Tappable only on the unscoped home view, and only when there's something
+    // to drill into. Tapping filters the feed below to those entries.
+    const tappable = !scoped && count > 0;
+    const cta = !tappable ? ''
+      : (freshOnly ? '<span class="ns-streak-cta">✕ show all</span>'
+                   : `<span class="ns-streak-cta">view ${count} ›</span>`);
+    return `<div class="ns-streak-bar${tappable ? ' ns-tappable' : ''}${freshOnly ? ' ns-active' : ''}"`
+      + (tappable ? ` role="button" tabindex="0" aria-pressed="${!!freshOnly}" aria-label="Show the ${count} ${lbl}"` : '')
+      + `><span class="ns-flame">🔥</span>`
+      + `<div class="ns-streak-main"><div class="ns-count">${count}</div><div class="ns-label">${lbl}</div></div>`
+      + `<div class="ns-heat" title="How active the ${span} are"><div class="ns-dots" aria-label="activity ${heat} of 5">${pips}</div><div class="ns-heat-word">${heatWord}</div></div>`
+      + `<span class="ns-updated">${total} tracked</span>`
+      + cta
+      + `</div>`;
   }
   // Friendly layout: streak → 3 ranked hero cards → ranked list (with blurbs).
   function nsRenderHome() {
-    const MN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-    const now = new Date();
     const rows = currentRows;
     let scopeNoun = 'spots';
     if (currentCuisine !== '__all') scopeNoun = nsLabel(currentCuisine) + ' spots';
     const scopeWhere = (currentRegion !== '__all') ? ' in ' + currentRegion : '';
-    const label = `new ${scopeNoun}${scopeWhere} · last 30 days`;
-    let html = nsStreak(rows, label);
-    const heroes = rows.slice(0, 3);
-    html += '<div class="ns-hero-grid">' + heroes.map((r,i) => nsHeroCard(r, i+1)).join('') + '</div>';
-    const rest = rows.slice(3, currentShown);
+    const scoped = (currentCuisine !== '__all') || (currentRegion !== '__all') || (nearMeActive && userLatLng);
+    feed.classList.add('ns-feed-wide');
+    // Streak bar is a home-only flourish; on scoped views it's redundant. It
+    // summarizes the FULL scope (count + "N tracked" total). freshOnly is a tap
+    // drill-down that filters only the feed below — so the bar's total stays
+    // honest even while the list shows just the new-this-month entries.
+    let html = scoped ? '' : nsStreak(rows, `new ${scopeNoun}${scopeWhere}`, scoped, freshOnly);
+    html += scoped ? '' : NS_FIRSTSEEN;
+    const displayRows = (!scoped && freshOnly)
+      ? rows.filter(r => typeof r.daysOpen === 'number' && r.daysOpen <= 30)
+      : rows;
+    // Tier 1 — freshest as big feature cards (this week if there are ≥2, else
+    // the top 3 so the tier is never empty). Tier 2 — the rest as a responsive
+    // compact grid. Recency is the organizing principle, not month dividers.
+    const fresh = displayRows.filter(r => typeof r.daysOpen === 'number' && r.daysOpen <= 7);
+    const featured = (fresh.length >= 2 ? fresh.slice(0, 4) : displayRows.slice(0, 3));
+    const featSet = new Set(featured);
+    const tierHead = freshOnly ? `${displayRows.length} new this month`
+                               : (fresh.length >= 2 ? 'Just landed this week' : 'Newest');
+    html += `<div class="ns-tier-head">${tierHead}</div>`;
+    html += '<div class="ns-feature-grid">' + featured.map((r,i) => nsHeroCard(r, i+1)).join('') + '</div>';
+    const rest = displayRows.filter(r => !featSet.has(r)).slice(0, currentShown);
     if (rest.length) {
-      // Group the list by registration month. "Months ago" uses the same
-      // floor(daysOpen/30) bucket as the age label, so a "1 month ago" row
-      // sits under "May", "2 months ago" under "April", etc. Month label is
-      // right-aligned (line then label) so every divider lines up; no year.
-      const monthLabel = (b) => {
-        const t = now.getFullYear() * 12 + now.getMonth() - b;
-        const y = Math.floor(t / 12);
-        return MN[((t % 12) + 12) % 12] + (y !== now.getFullYear() ? ' ' + y : '');
-      };
-      let prevB = null;
-      rest.forEach((r, i) => {
-        const b = (typeof r.daysOpen === 'number') ? Math.floor(r.daysOpen / 30) : 0;
-        if (b !== prevB) {
-          html += (prevB === null)
-            ? `<div class="ns-section-head"><span class="ns-section-head-label">Also registered recently</span><div class="ns-section-head-line"></div><span class="ns-section-head-label">${monthLabel(b)}</span></div>`
-            : `<div class="ns-section-head"><div class="ns-section-head-line"></div><span class="ns-section-head-label">${monthLabel(b)}</span></div>`;
-          prevB = b;
-        }
-        html += nsListItem(r, i + 4);
-      });
+      html += `<div class="ns-tier-head">More recent openings</div>`;
+      html += '<div class="ns-grid">' + rest.map(r => nsGridCard(r)).join('') + '</div>';
     }
     feed.innerHTML = html;
-    if (rows.length > currentShown) {
-      const remaining = rows.length - currentShown;
+    // Tap the heat bar → filter the feed to the new-this-month spots (toggle).
+    const sbar = feed.querySelector('.ns-streak-bar.ns-tappable');
+    if (sbar) {
+      const toggle = () => { freshOnly = !freshOnly; currentShown = INITIAL_SHOW; nsRenderHome(); };
+      sbar.addEventListener('click', toggle);
+      sbar.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+      });
+    }
+    const shownTotal = featured.length + rest.length;
+    if (displayRows.length > shownTotal) {
+      const remaining = displayRows.length - shownTotal;
       const more = document.createElement('button');
       more.className = 'show-more'; more.type = 'button';
       more.textContent = `Show ${Math.min(PAGE_SIZE, remaining)} more`;
@@ -491,24 +662,22 @@ fetch('/data/corridors.json?v=' + Date.now(), { priority: 'low' }).then(r => r.j
         const slug = btn.getAttribute('data-slug'); if (!slug) return;
         const nowSaved = toggleSaved(slug);
         btn.classList.toggle('saved', nowSaved);
+        if (nowSaved) nsSparkle(btn);
         btn.textContent = nowSaved ? '♥ Saved' : '♡ Save';
         refreshSavedToggle();
       });
     });
+    // Direct-out actions (Visit site ↗ / Map). Buttons, not <a>, so they can
+    // live inside the card's /r/ anchor — open the target in a new tab.
+    feed.querySelectorAll('.ns-act').forEach(b => {
+      b.addEventListener('click', e => {
+        e.preventDefault(); e.stopPropagation();
+        if (b.dataset.url) window.open(b.dataset.url, '_blank', 'noopener');
+      });
+    });
   }
   function paintFeed() {
-    // Friendly streak/hero/list layout on the homepage + single cuisine/district
-    // pages that have enough listings (HERO_MIN). Thin cuisines, cuisine×district
-    // intersections, /r/ listings, and other page types keep the ticket feed —
-    // a ranked hero + streak is meaningless for one or two spots.
-    const p = location.pathname;
-    const heroPath = p === '/' || p === '/index.html'
-      || /^\/cuisine\/[a-z_]+(?:\.html)?\/?$/.test(p)
-      || /^\/district\/[a-z-]+(?:\.html)?\/?$/.test(p);
-    if (heroPath && currentRows.length >= HERO_MIN) {
-      nsRenderHome();
-      return;
-    }
+    feed.classList.remove('ns-feed-wide');
     feed.innerHTML = '';
     if (!currentRows.length) {
       // Filter-aware empty state. Composes "No newly registered <Cuisine>
@@ -526,11 +695,11 @@ fetch('/data/corridors.json?v=' + Date.now(), { priority: 'low' }).then(r => r.j
       } else if (currentRegion !== '__all') {
         whereFrag = ` in ${currentRegion}`;
       }
-      let msg = `No newly registered ${cuisineFrag}restaurants${whereFrag}.`;
-      // Bare "No tagged openings..." when both filters are __all (homepage
-      // edge case - shouldn't normally happen, but safe fallback).
+      const emptyHead = '<div style="font:700 17px/1.3 var(--ui,system-ui,sans-serif);color:var(--ink);margin-bottom:6px;">Nothing here yet 🍽️</div>';
+      let msg = emptyHead + `No newly registered ${cuisineFrag}restaurants${whereFrag} — yet. Try clearing the filter or browsing another neighbourhood.`;
+      // Bare fallback when both filters are __all (homepage edge case).
       if (currentCuisine === '__all' && currentRegion === '__all' && !nearMeActive) {
-        msg = 'No newly registered restaurants in the last 365 days.';
+        msg = emptyHead + 'No newly registered restaurants in the last 365 days.';
       }
       const empty = document.createElement('div');
       empty.className = 'empty';
@@ -768,6 +937,7 @@ fetch('/data/corridors.json?v=' + Date.now(), { priority: 'low' }).then(r => r.j
   function applyFilters(cuisineKey, regionKey, updateHash=true) {
     currentCuisine = cuisineKey;
     currentRegion = regionKey;
+    freshOnly = false;  // a scope change exits the heat-bar drill-down
     // Recompute counts for both dropdowns under the new filter state
     updateOptionCounts();
     // Update cuisine trigger - count reflects current region (or near-me) too
@@ -1116,25 +1286,21 @@ fetch('/data/corridors.json?v=' + Date.now(), { priority: 'low' }).then(r => r.j
   function loadLeaflet() {
     if (_leafletLoadPromise) return _leafletLoadPromise;
     _leafletLoadPromise = new Promise((resolve, reject) => {
-      // CSS files first - inject all three in parallel
       [
-        'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-        'https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css',
-        'https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css',
+        '/js/lib/leaflet.css',
+        '/js/lib/MarkerCluster.css',
+        '/js/lib/MarkerCluster.Default.css',
       ].forEach(href => {
         const link = document.createElement('link');
         link.rel = 'stylesheet';
         link.href = href;
-        link.crossOrigin = '';
         document.head.appendChild(link);
       });
-      // Leaflet JS, then MarkerCluster JS (must load after Leaflet's global L is defined)
       const leafletJs = document.createElement('script');
-      leafletJs.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-      leafletJs.crossOrigin = '';
+      leafletJs.src = '/js/lib/leaflet.js';
       leafletJs.onload = () => {
         const mcJs = document.createElement('script');
-        mcJs.src = 'https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js';
+        mcJs.src = '/js/lib/leaflet.markercluster.js';
         mcJs.onload = resolve;
         mcJs.onerror = reject;
         document.head.appendChild(mcJs);
@@ -1385,9 +1551,10 @@ fetch('/data/corridors.json?v=' + Date.now(), { priority: 'low' }).then(r => r.j
           clearTimeout(slowTimer);
           btn.textContent = originalLabel;
           btn.disabled = false;
-          const msg = err.code === 1 ? 'Permission denied - enable location in your browser to use this.'
-                    : err.code === 2 ? 'Location unavailable right now.'
-                    : err.code === 3 ? 'Timed out - try again.' : 'Could not get location.';
+          const msg = err.code === 1
+            ? 'Location blocked for this site. Click the lock icon in your address bar, set Location to "Allow", then try again.'
+            : err.code === 2 ? 'Location unavailable right now.'
+            : err.code === 3 ? 'Timed out - try again.' : 'Could not get location.';
           alert(msg);
         }, { enableHighAccuracy: false, timeout: 8000, maximumAge: 30 * 60 * 1000 });
       });
@@ -1508,3 +1675,17 @@ document.querySelectorAll('form.alert-form').forEach(function(form) {
       });
   });
 });
+
+// Sticky header: pin the filter bar (+ a compact wordmark) once the masthead scrolls past.
+(function () {
+  let ticking = false;
+  function upd() {
+    const y = window.scrollY || document.documentElement.scrollTop || 0;
+    document.body.classList.toggle('sticky-on', y > 120);
+    ticking = false;
+  }
+  window.addEventListener('scroll', function () {
+    if (!ticking) { ticking = true; requestAnimationFrame(upd); }
+  }, { passive: true });
+  upd();
+})();

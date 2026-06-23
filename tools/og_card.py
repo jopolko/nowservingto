@@ -300,7 +300,7 @@ def _build_trends_card_svg_OLD_design_A(dispatch_label, total_licences, hero_ent
     if hero_dishes:
         hero_blurb = 'Try the ' + ', '.join(hero_dishes[:3]) + '.'
     else:
-        hero_blurb = 'Just registered with the City. Verified open via Google Places.'
+        hero_blurb = 'Just registered with the City. Verified open via its website or social media.'
     blurb_lines = _wrap_text(hero_blurb, 56)[:2]
 
     hero_svg = []

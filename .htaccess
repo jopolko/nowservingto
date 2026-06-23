@@ -14,7 +14,7 @@
 #     bandwidth when nothing changed, in exchange for self-healing.
 <IfModule mod_headers.c>
     <FilesMatch "\.(html|json)$">
-        Header set Cache-Control "public, max-age=300, must-revalidate"
+        Header set Cache-Control "public, max-age=300, s-maxage=60, must-revalidate"
     </FilesMatch>
     <FilesMatch "\.(svg|png|jpg|jpeg|webp|ico)$">
         Header set Cache-Control "public, max-age=604800"
@@ -214,3 +214,10 @@ RewriteRule ^dispatch/([a-z0-9-]+)/?$ /dispatch/$1.html [L]
 # Google de-indexes it instead of treating it as a homepage duplicate.
 RewriteCond %{DOCUMENT_ROOT}/r/$1.html -f
 RewriteRule ^r/([\w-]+)/?$ /r/$1.html [L]
+# A /r/{slug} whose .html no longer exists is a listing that cycled out of the
+# 365-day window — intentionally, permanently removed. Return 410 Gone instead
+# of the default 404 so Google de-indexes it fast and stops re-crawling it for
+# months. The -f serve rule above already handled live listings ([L]), and the
+# !-f guard guarantees this can never fire for a page that exists.
+RewriteCond %{DOCUMENT_ROOT}/r/$1.html !-f
+RewriteRule ^r/([\w-]+)/?$ - [R=410,L]

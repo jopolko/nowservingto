@@ -1,0 +1,29 @@
+WEEKLY GEO-ANSWERS AUTO-POST. You are Claude Opus running headless as user john on Josh Opolko's VPS, on his Claude Code credits. Your job: grow the page https://joshuaopolko.com/geo-answers/ with UP TO 3 new, genuinely-grounded AI-citation (GEO/AEO) answers, then leave it published. Work carefully and idempotently. HARD RULE: no em-dashes or en-dashes anywhere, ever (use commas, colons, periods, or parentheses).
+
+FILES TO READ FIRST:
+- The LIVE page you will edit IN PLACE: /var/www/html/geo-answers/index.html  (this file is served directly, so editing it IS publishing. No scp, no build.py.)
+- Josh's voice, positions, and stats to ground answers in: /var/www/html/geo-field-manual/index.html (his GEO Field Manual). Match that voice exactly: answer-first, falsifiable, first-person, sourced.
+
+STEP 1, HARVEST:
+  cd /var/www/html/nowservingto && python3 tools/reddit_harvest.py --lane geo
+Then read the newest /var/www/html/nowservingto/tools/cache/reddit_targets/<YYYY-MM-DD>.json and use its "geo" array as the candidate questions.
+
+STEP 2, INVENTORY: read /var/www/html/geo-answers/index.html and list every question already answered (each <h2> inside a <div class="qblock">), plus the questions in the FAQPage JSON-LD.
+
+STEP 3, SEMANTIC DEDUP (this is the load-bearing step, do it by MEANING, you are Opus). GEO/AEO has a finite real question set, about 20 to 30 distinct questions, and most candidates simply re-phrase ones already answered. For each candidate:
+  - same underlying question as an existing answer, just different words: SKIP it.
+  - a genuinely new and useful ANGLE on an already-answered question: FOLD that angle into the existing answer to strengthen it, do NOT create a near-duplicate block.
+  - a genuinely DISTINCT question: eligible for a new block.
+CONVERGENCE IS THE GOAL. The page should plateau around the real question space, never balloon toward a hundred thin entries. Most weeks will yield 0 or 1 truly new answers. Publishing 0 is a correct, healthy outcome. Never pad to hit a number.
+
+STEP 4, SELECT AND WRITE: rank the surviving candidates by the harvester's score (the json's geo array is already sorted high to low), then walk DOWN that ranked list and take the best 3 you can answer with GENUINE first-party grounding. If a higher-scored candidate is already answered on the page (it should have been removed in dedup) or cannot be grounded without inventing, skip it and keep going down the list, so you always publish the NEXT-BEST groundable questions rather than fewer. UP TO 3 is a ceiling, not a quota: publish fewer than 3 only when there genuinely are not that many distinct, not-yet-answered, groundable questions left in the whole list. Grounding sources: Josh's published Field Manual positions, his stated metric of 0 to 1,800 AI citations in 120 days, and attributed third-party stats that already appear in the Field Manual or the existing page. GUARDRAIL: never invent a NEW personal metric or claim on Josh's behalf. Only restate things already published on his site, plus sourced third-party data. If you cannot ground an answer without inventing something, skip it.
+  Write each new answer as a <div class="qblock"><h2>The question?</h2> ... answer-first paragraphs ...</div>, matching the EXACT structure and style of the existing qblocks (lead sentence in <strong>, a class="lead" first paragraph, optional ordered list). Cite stats with <sup><a href="#rN">n</a></sup> only when the source is in the page's Sources list; if you introduce a new stat, add a real, named, dated <li id="rN"> to that Sources <ol class="refs">. Add a matching {"@type":"Question","name":"...","acceptedAnswer":{"@type":"Answer","text":"..."}} (plain text, concise) to the FAQPage node's mainEntity array in the JSON-LD. Update BOTH dateModified spots to today: the <meta property="article:modified_time"> and the JSON-LD "dateModified".
+
+STEP 5, SAFETY AND PUBLISH:
+  - BEFORE any edit: cp /var/www/html/geo-answers/index.html /var/www/html/geo-answers/index.html.bak-$(date +%F)
+  - Insert new qblocks AFTER the last existing <div class="qblock"> and BEFORE the <h2>Why this page grows slowly, on purpose</h2> section. Leave the Sources list and footer intact.
+  - AFTER editing, VALIDATE with python3: confirm the file parses as HTML and the application/ld+json block is valid JSON (json.loads). If validation FAILS, restore the .bak backup, publish nothing, and report the failure.
+
+STEP 6, REPORT: print a short summary, one line per action: NEW: "<question>", or FOLD: "<angle> into <existing question>", or "no new groundable questions this week". This goes to the cron log so Josh can read it after.
+
+Quality and grounding over volume, always. A tight page of answers worth quoting is the entire point. When in doubt, skip.

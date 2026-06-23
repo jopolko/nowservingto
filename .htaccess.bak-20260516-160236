@@ -1,0 +1,26 @@
+# Redirect old joshuaopolko.com/rootedto/* visitors to the new canonical domain.
+# Apache must serve the same DocumentRoot for both hosts; this .htaccess fires
+# only when the requested Host is joshuaopolko, leaving nowservingto unaffected.
+RewriteEngine On
+RewriteCond %{HTTP_HOST} ^(www\.)?joshuaopolko\.com$ [NC]
+RewriteRule ^(.*)$ https://nowservingto.com/$1 [R=301,L]
+
+# Cache policy — must run apache2 mod_headers + mod_expires (enabled on this box).
+# index.html and corridors.json are touched daily by cron; keep them short and
+# revalidating so visitors pick up new openings within ~5 min, no hard-refresh
+# required. ETag/Last-Modified make the revalidate a cheap 304 when unchanged.
+<IfModule mod_headers.c>
+    <FilesMatch "\.(html|json)$">
+        Header set Cache-Control "public, max-age=3600, must-revalidate"
+    </FilesMatch>
+    # Static assets that rarely change can sit in the browser cache for a day.
+    <FilesMatch "\.(svg|png|jpg|jpeg|ico|woff2?)$">
+        Header set Cache-Control "public, max-age=86400"
+    </FilesMatch>
+</IfModule>
+
+# SEO landing pages: /cuisine/{key} → index.html (JS picks up the path)
+RewriteRule ^cuisine/([a-z_]+)/?$ /index.html [L]
+
+# Per-listing share links: /r/{slug} → index.html
+RewriteRule ^r/([\w-]+)/?$ /index.html [L]

@@ -35,6 +35,7 @@ import re as _re
 ROOT = Path(__file__).resolve().parent.parent
 DATA_PATH      = ROOT / 'data' / 'corridors.json'
 WV_CACHE_PATH  = ROOT / 'tools' / 'cache' / 'web_verify_cache.json'
+WT_CACHE_PATH  = ROOT / 'tools' / 'cache' / 'website_text_cache.json'
 CACHE_PATH     = ROOT / 'tools' / 'cache' / 'evidence_rewrite_cache.json'
 SECRETS        = Path('/var/secrets/nowservingto.env')
 MODEL          = 'claude-haiku-4-5-20251001'
@@ -118,11 +119,20 @@ must be long enough to be cited as a complete answer — not a teaser.
 
 You'll be given the restaurant's name, cuisine, address+district, prior
 tenant (if the storefront had one), and a verification note containing
-what we know about the operation. Write a blurb of **130-160 words**
+what we know about the operation. Write a blurb of **120-160 words**
 following this four-sentence structure:
 
+**TARGET REGISTER.** A food writer at Toronto Life or The Globe and
+Mail spotting this listing should feel the directory understands the
+city's culinary geography: specific, unsentimental, and genuinely
+useful to someone deciding whether to make the trip. Not a capsule
+review, not a press release. A precise answer to "what is this place
+and why does it matter."
+
   Sentence 1 — WHAT + WHERE: identify the cuisine/format and the
-  specific neighbourhood + street it sits on.
+  specific neighbourhood + street it sits on. The neighbourhood is
+  cultural context, not just geography. A Tamil kitchen in Malvern
+  and a Tamil kitchen in Midtown serve different roles — say which.
 
   Sentence 2 — THE DIFFERENTIATOR: what makes THIS kitchen distinct
   from the generic version of this cuisine. The reader has 20 tabs open.
@@ -133,29 +143,34 @@ following this four-sentence structure:
       tradition." The city IS the differentiator.
     • A specific dish or technique not shared by every restaurant of
       this cuisine: Hủ Tiếu Nam Vang is not Pho. Makgeolli brewing is
-      not Korean BBQ. Name the specific thing.
+      not Korean BBQ. Name the specific thing — and then tell the reader
+      what it actually is. "Kothu Parotta, flatbread torn and stir-fried
+      on a griddle" closes the tab. "Kothu Parotta" alone does not.
     • An operating format that changes who should go: counter-only
       takeout, full sit-down with bar, 24-hour, halal-certified,
-      family-run with <30 seats.
+      family-run with <30 seats. USE AN OWNERSHIP/FORMAT DESCRIPTOR ONLY
+      WHEN THE EVIDENCE EXPLICITLY STATES IT (see GROUNDING below). Do not
+      infer "family-run" from an individual operator name, a single
+      location, or a homey vibe.
 
   Sentence 3 — DEPTH: expand on the differentiator. Who does this
   kitchen serve — which community, which diaspora, which occasion?
-  What is the dining experience actually like: counter-only, full
-  sit-down, market stall, shared plates, BYOB? What does a first
-  visit look like in practice? One concrete detail the evidence
-  supports, written as a fact rather than a recommendation.
+  Use the neighbourhood to say something specific: a Bangladeshi
+  restaurant in Scarborough is not the same cultural fact as one
+  in Kensington Market. What gap does this kitchen fill? One concrete
+  detail the evidence supports, written as a fact.
 
   Sentence 4 — THE ANSWER HOOK: a standalone, extractable claim
   that directly answers "what should I order" or "why is this
   worth going to" for someone who has never been. Write it as an
   assertion that can be lifted out of the blurb and cited alone.
   Examples of the register: "The lamb Mandi is slow-roasted whole
-  and carved tableside — the kitchen's calling card since day one."
+  and carved tableside, the kitchen's calling card since day one."
   "The counter runs a rotating selection of Oaxacan tlayudas not
   found elsewhere in the city." If the evidence supports no specific
   dish claim, make the hook about the format or the community need
   it fills: "The kitchen is one of the few halal-certified Ethiopian
-  spots in Scarborough, making it the go-to for the local community."
+  spots in Scarborough, a meaningful address for the community on Finch."
   Never invent dishes; only name what the evidence explicitly supports.
 
   DO NOT add a source-attribution sentence ("Verified open via the
@@ -179,6 +194,44 @@ every restaurant and therefore say nothing:
     restaurant of the same cuisine in the directory.
 If you reach for one of these, stop and ask: what specific fact
 from the evidence replaces this? If there is none, end earlier.
+
+**GROUNDING — every operational claim must trace to the evidence note.**
+The note is the only source for operational facts. But you know what
+dishes ARE. Culinary context is NOT grounding-restricted:
+  • DISH DESCRIPTIONS — explaining what a named dish is (ingredients,
+    cooking method, texture, regional origin) is ALWAYS allowed. It uses
+    your documented culinary knowledge, not inferred restaurant-specific
+    facts. "Kothu Parotta is flatbread torn and stir-fried on a hot
+    griddle" is a culinary fact, not a claim about this restaurant.
+    "Injera is a fermented flatbread used as a communal plate" is a
+    culinary fact. Use this latitude to make blurbs informative.
+  • NEIGHBOURHOOD CULTURAL CONTEXT — when the address places a restaurant
+    in a neighbourhood with a documented diaspora concentration (Malvern
+    for Tamil, Agincourt for East Asian, Little Ethiopia on Danforth, etc.),
+    you may note that context. It's verifiable geography, not a claim about
+    this specific operator.
+The grounding restriction applies to OPERATIONAL claims only:
+  • OWNERSHIP / OPERATOR STRUCTURE — "family-run", "family-owned",
+    "husband-and-wife", "woman-owned", "veteran-owned", "owner-operated",
+    "independent", "chain", "franchise": write it ONLY if the note states
+    it in those terms. An individual licensee name, a single address, or
+    a warm tone is NOT evidence of a family operation. When the note says
+    "multi-location", "franchise", "Locations plural", or "corporate", the
+    place is a CHAIN BRANCH, not "family-run" — say so plainly.
+  • POPULARITY / REPUTATION — a place's standing is review-derived and we
+    do not carry it. BANNED outright (they are unverifiable mood, not facts):
+    "built / earned / won / gained a (loyal/devoted/steady) following",
+    "loyal following", "hidden gem", "go-to (spot)", "neighbourhood
+    favourite / institution / gem", "beloved", "draws praise", "winning
+    over", "word of mouth", "cult following", "under the radar", "labour
+    of love", "without (the) fanfare", "keeps regulars coming back". These
+    restate review sentiment in disguise — drop them entirely.
+  • A "long history" / "established" / "since YEAR" claim is allowed ONLY
+    when the note gives the year or explicitly calls it established /
+    pre-existing / a relocation or renewal. Do not infer age from a licence
+    date (the licence can post-date the business by decades, or be brand new).
+If stripping ungrounded clauses leaves you with two honest sentences,
+ship two honest sentences. A short true blurb beats a padded inferred one.
 
 Hard rules:
   - First letter of the blurb MUST be capitalized (full sentence case).
@@ -217,11 +270,21 @@ Hard rules:
     "licensed in August 2025", "operating since 2024", "opened in 2024".
     Bare month-year and bare year are fine. "newly registered" is fine —
     it restates the coverage policy, not a relative-to-now claim.
-  - DO NOT attribute facts to Google, Google Places, Google Maps,
-    Google reviews, or "Places reviews". Treat any review snippets in
-    the note as raw factual intel — restate the fact directly without
-    citing the source. (Reviews citing "great biryani" → write "the
-    biryani is the calling card", not "reviewers praise the biryani".)
+  - DO NOT cite reviews, reviewers, ratings, or sources — ever. Banned:
+    "reviewers/diners/customers/patrons (consistently/often) praise/note/
+    rave/love/highlight", "highly rated", "well-reviewed", "5-star",
+    "N reviews", "according to reviews/diners", and any attribution to
+    Google, Google Places, Google Maps, "Google reviews", or "Places
+    reviews". We do NOT have review data for every listing, so review
+    sentiment is never used — including it would give some listings
+    special treatment. Treat any review snippet in the note as raw factual
+    intel and restate the fact directly, with no sentiment and no source.
+    (Reviews citing "great biryani" → "the biryani is the calling card",
+    NOT "reviewers praise the biryani".)
+  - DO NOT use research/source artefacts: "the website says", "according
+    to their social media", "their online presence", "appears to be",
+    "seems to", "reportedly", "based on available information". State facts
+    plainly from what the evidence supports.
   - DO NOT fabricate. If the note doesn't name a dish, write about
     the cuisine in general terms or skip that beat. Never invent
     operators, neighbourhoods, or signature dishes.
@@ -279,6 +342,7 @@ def main():
 
     data = json.loads(DATA_PATH.read_text())
     wv = json.loads(WV_CACHE_PATH.read_text())
+    wt = json.loads(WT_CACHE_PATH.read_text()) if WT_CACHE_PATH.exists() else {}
     recent = data.get('newOpenings', {}).get('recent', [])
 
     # Cuisine label lookup (raw keys → display labels)
@@ -290,15 +354,33 @@ def main():
     for r in recent:
         ck = r.get('_cacheKey', '')
         if not ck or (ck in cache and not force): continue
+        # NEVER regenerate a hand-authored, fact-checked blurb, even under
+        # --force. These (opus_manual_v1) were grounded against the evidence
+        # by a human-reviewed pass; a Haiku rewrite would reintroduce the
+        # inference/embellishment we removed. --force still regenerates
+        # machine blurbs (batch / haiku_editorial_*).
+        if cache.get(ck, {}).get('via', '').startswith('opus_manual'): continue
         wv_e = wv.get(ck) or {}
         ev = (wv_e.get('validator_evidence') or wv_e.get('evidence') or '').strip()
+        ev_src = 'verify'
+        if not ev:
+            # No web_verify evidence yet (brand-new entry that hasn't been
+            # through a web_search pass). Fall back to the restaurant's OWN
+            # website text we already cache via Jina — gives same-cycle, real
+            # site-derived blurbs (actual dishes/vibe) instead of waiting a
+            # full web_verify cycle. Truncated to keep the input token cost low.
+            site = (r.get('website') or '').strip()
+            wt_text = ((wt.get(site) or {}).get('text') or '') if site else ''
+            wt_text = wt_text.replace('HOMEPAGE (jina-rendered):', '').strip()
+            if len(wt_text) >= 200:
+                ev, ev_src = wt_text[:1500], 'website'
         if not ev: continue
         keys = r.get('cuisines') or ([r['cuisine']] if r.get('cuisine') else [])
         cuisine_label = labels.get(keys[0], keys[0].title()) if keys else 'restaurant'
         addr = (r.get('address') or '').strip()
         district = (r.get('district') or '').strip()
         prior = ((r.get('priorTenant') or {}).get('name') or '').strip()
-        targets.append((ck, r.get('operatingName', ''), cuisine_label, addr, district, prior, ev))
+        targets.append((ck, r.get('operatingName', ''), cuisine_label, addr, district, prior, ev, ev_src))
 
     print(f"  candidates: {len(targets)} uncached entries")
 
@@ -308,7 +390,7 @@ def main():
 
     requests = []
     target_keys = []
-    for ck, name, cuisine, addr, district, prior, ev in targets:
+    for ck, name, cuisine, addr, district, prior, ev, ev_src in targets:
         custom_id = 'e' + str(abs(hash(ck)) & 0x7fffffff)
         prompt_lines = [
             f"Restaurant: {name}",
@@ -317,7 +399,14 @@ def main():
         ]
         # prior tenant intentionally omitted — "taking over from X" implies
         # closure which we can't verify; DineSafe address matching is imprecise.
-        prompt_lines.append(f"Verification note: {ev}")
+        if ev_src == 'website':
+            prompt_lines.append(
+                "Source — the restaurant's own website text (extract real "
+                "dishes / focus from it; ignore nav labels, hours, and "
+                "ordering/catering boilerplate):")
+            prompt_lines.append(ev)
+        else:
+            prompt_lines.append(f"Verification note: {ev}")
         prompt_lines.append("")
         prompt_lines.append(
             "Write a 130-160 word editorial blurb following the "

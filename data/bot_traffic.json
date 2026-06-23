@@ -1,807 +1,2161 @@
 {
-  "generatedAt": "2026-05-27T12:31:33.136647+00:00",
+  "generatedAt": "2026-06-23T05:32:35.610702+00:00",
   "status": "ok",
   "logSource": "vhost",
   "searchEngines": [
     {
-      "bot": "Bingbot",
-      "hits30d": 1144,
-      "hits7d": 1064,
-      "uniquePaths30d": 582,
-      "lastSeen": "2026-05-27T12:25:02+00:00",
-      "daily": [
-        {
-          "day": "2026-05-15",
-          "hits": 6
-        },
-        {
-          "day": "2026-05-16",
-          "hits": 13
-        },
-        {
-          "day": "2026-05-17",
-          "hits": 29
-        },
-        {
-          "day": "2026-05-18",
-          "hits": 4
-        },
-        {
-          "day": "2026-05-19",
-          "hits": 28
-        },
-        {
-          "day": "2026-05-20",
-          "hits": 33
-        },
-        {
-          "day": "2026-05-21",
-          "hits": 26
-        },
-        {
-          "day": "2026-05-22",
-          "hits": 24
-        },
-        {
-          "day": "2026-05-23",
-          "hits": 18
-        },
-        {
-          "day": "2026-05-24",
-          "hits": 22
-        },
-        {
-          "day": "2026-05-25",
-          "hits": 27
-        },
-        {
-          "day": "2026-05-26",
-          "hits": 34
-        },
-        {
-          "day": "2026-05-27",
-          "hits": 880
-        }
-      ],
-      "verification": {
-        "expected": "Microsoft / Bing",
-        "verified": 701,
-        "sampled": 701,
-        "rate": 1.0
-      }
-    },
-    {
       "bot": "Googlebot",
-      "hits30d": 383,
-      "hits7d": 272,
-      "uniquePaths30d": 63,
-      "lastSeen": "2026-05-27T12:15:31+00:00",
+      "type": "search",
+      "hits30d": 3247,
+      "hits7d": 1549,
+      "uniquePaths30d": 562,
+      "lastSeen": "2026-06-23T05:08:27+00:00",
       "daily": [
         {
-          "day": "2026-05-14",
-          "hits": 37
+          "day": "2026-06-09",
+          "hits": 219
         },
         {
-          "day": "2026-05-15",
-          "hits": 22
+          "day": "2026-06-10",
+          "hits": 263
         },
         {
-          "day": "2026-05-16",
-          "hits": 12
+          "day": "2026-06-11",
+          "hits": 245
         },
         {
-          "day": "2026-05-17",
-          "hits": 15
+          "day": "2026-06-12",
+          "hits": 274
         },
         {
-          "day": "2026-05-18",
-          "hits": 5
+          "day": "2026-06-13",
+          "hits": 215
         },
         {
-          "day": "2026-05-19",
-          "hits": 20
+          "day": "2026-06-14",
+          "hits": 274
         },
         {
-          "day": "2026-05-20",
-          "hits": 21
+          "day": "2026-06-15",
+          "hits": 208
         },
         {
-          "day": "2026-05-21",
-          "hits": 19
+          "day": "2026-06-16",
+          "hits": 151
         },
         {
-          "day": "2026-05-22",
-          "hits": 41
+          "day": "2026-06-17",
+          "hits": 136
         },
         {
-          "day": "2026-05-23",
-          "hits": 13
+          "day": "2026-06-18",
+          "hits": 261
         },
         {
-          "day": "2026-05-24",
-          "hits": 47
+          "day": "2026-06-19",
+          "hits": 211
         },
         {
-          "day": "2026-05-25",
-          "hits": 27
+          "day": "2026-06-20",
+          "hits": 198
         },
         {
-          "day": "2026-05-26",
-          "hits": 73
+          "day": "2026-06-21",
+          "hits": 254
         },
         {
-          "day": "2026-05-27",
-          "hits": 31
+          "day": "2026-06-22",
+          "hits": 293
+        },
+        {
+          "day": "2026-06-23",
+          "hits": 45
         }
       ],
       "verification": {
         "expected": "Google",
-        "verified": 31,
-        "sampled": 31,
-        "rate": 1.0
+        "verified": 3078,
+        "sampled": 3177,
+        "rate": 0.969,
+        "method": "ip-range"
       }
     },
     {
-      "bot": "YandexBot",
-      "hits30d": 187,
-      "hits7d": 185,
-      "uniquePaths30d": 123,
-      "lastSeen": "2026-05-27T07:34:19+00:00",
+      "bot": "Bingbot",
+      "type": "search",
+      "hits30d": 1359,
+      "hits7d": 874,
+      "uniquePaths30d": 785,
+      "lastSeen": "2026-06-23T05:28:21+00:00",
       "daily": [
         {
-          "day": "2026-05-16",
-          "hits": 2
+          "day": "2026-06-09",
+          "hits": 64
         },
         {
-          "day": "2026-05-26",
-          "hits": 113
+          "day": "2026-06-10",
+          "hits": 62
         },
         {
-          "day": "2026-05-27",
-          "hits": 72
+          "day": "2026-06-11",
+          "hits": 74
+        },
+        {
+          "day": "2026-06-12",
+          "hits": 84
+        },
+        {
+          "day": "2026-06-13",
+          "hits": 51
+        },
+        {
+          "day": "2026-06-14",
+          "hits": 66
+        },
+        {
+          "day": "2026-06-15",
+          "hits": 84
+        },
+        {
+          "day": "2026-06-16",
+          "hits": 101
+        },
+        {
+          "day": "2026-06-17",
+          "hits": 121
+        },
+        {
+          "day": "2026-06-18",
+          "hits": 130
+        },
+        {
+          "day": "2026-06-19",
+          "hits": 129
+        },
+        {
+          "day": "2026-06-20",
+          "hits": 112
+        },
+        {
+          "day": "2026-06-21",
+          "hits": 106
+        },
+        {
+          "day": "2026-06-22",
+          "hits": 153
+        },
+        {
+          "day": "2026-06-23",
+          "hits": 22
         }
       ],
       "verification": {
-        "expected": "Yandex",
-        "verified": 26,
-        "sampled": 26,
-        "rate": 1.0
+        "expected": "Microsoft / Bing",
+        "verified": 356,
+        "sampled": 356,
+        "rate": 1.0,
+        "method": "rdns"
       }
     },
     {
       "bot": "Applebot",
-      "hits30d": 121,
-      "hits7d": 20,
-      "uniquePaths30d": 44,
-      "lastSeen": "2026-05-27T09:37:49+00:00",
+      "type": "search",
+      "hits30d": 566,
+      "hits7d": 108,
+      "uniquePaths30d": 506,
+      "lastSeen": "2026-06-22T20:25:14+00:00",
       "daily": [
         {
-          "day": "2026-05-14",
-          "hits": 26
+          "day": "2026-06-09",
+          "hits": 164
         },
         {
-          "day": "2026-05-15",
-          "hits": 24
+          "day": "2026-06-10",
+          "hits": 5
         },
         {
-          "day": "2026-05-16",
-          "hits": 25
+          "day": "2026-06-11",
+          "hits": 51
         },
         {
-          "day": "2026-05-17",
-          "hits": 8
+          "day": "2026-06-12",
+          "hits": 64
         },
         {
-          "day": "2026-05-18",
-          "hits": 3
+          "day": "2026-06-13",
+          "hits": 89
         },
         {
-          "day": "2026-05-19",
-          "hits": 15
+          "day": "2026-06-14",
+          "hits": 63
         },
         {
-          "day": "2026-05-24",
-          "hits": 16
+          "day": "2026-06-15",
+          "hits": 22
         },
         {
-          "day": "2026-05-26",
-          "hits": 2
+          "day": "2026-06-16",
+          "hits": 46
         },
         {
-          "day": "2026-05-27",
-          "hits": 2
+          "day": "2026-06-17",
+          "hits": 27
+        },
+        {
+          "day": "2026-06-18",
+          "hits": 17
+        },
+        {
+          "day": "2026-06-19",
+          "hits": 1
+        },
+        {
+          "day": "2026-06-20",
+          "hits": 7
+        },
+        {
+          "day": "2026-06-21",
+          "hits": 5
+        },
+        {
+          "day": "2026-06-22",
+          "hits": 5
         }
       ],
       "verification": {
         "expected": "Apple",
-        "verified": 2,
-        "sampled": 2,
-        "rate": 1.0
+        "verified": 59,
+        "sampled": 63,
+        "rate": 0.937,
+        "method": "rdns"
+      }
+    },
+    {
+      "bot": "YandexBot",
+      "type": "search",
+      "hits30d": 469,
+      "hits7d": 195,
+      "uniquePaths30d": 271,
+      "lastSeen": "2026-06-23T04:17:24+00:00",
+      "daily": [
+        {
+          "day": "2026-06-09",
+          "hits": 133
+        },
+        {
+          "day": "2026-06-10",
+          "hits": 39
+        },
+        {
+          "day": "2026-06-11",
+          "hits": 58
+        },
+        {
+          "day": "2026-06-12",
+          "hits": 7
+        },
+        {
+          "day": "2026-06-13",
+          "hits": 19
+        },
+        {
+          "day": "2026-06-14",
+          "hits": 13
+        },
+        {
+          "day": "2026-06-15",
+          "hits": 5
+        },
+        {
+          "day": "2026-06-16",
+          "hits": 16
+        },
+        {
+          "day": "2026-06-17",
+          "hits": 7
+        },
+        {
+          "day": "2026-06-18",
+          "hits": 41
+        },
+        {
+          "day": "2026-06-19",
+          "hits": 56
+        },
+        {
+          "day": "2026-06-20",
+          "hits": 28
+        },
+        {
+          "day": "2026-06-21",
+          "hits": 16
+        },
+        {
+          "day": "2026-06-22",
+          "hits": 24
+        },
+        {
+          "day": "2026-06-23",
+          "hits": 7
+        }
+      ],
+      "verification": {
+        "expected": "Yandex",
+        "verified": 64,
+        "sampled": 74,
+        "rate": 0.865,
+        "method": "rdns"
       }
     },
     {
       "bot": "DuckDuckBot",
-      "hits30d": 18,
-      "hits7d": 9,
-      "uniquePaths30d": 5,
-      "lastSeen": "2026-05-26T13:37:09+00:00",
+      "type": "search",
+      "hits30d": 39,
+      "hits7d": 23,
+      "uniquePaths30d": 2,
+      "lastSeen": "2026-06-22T20:22:39+00:00",
       "daily": [
         {
-          "day": "2026-05-15",
-          "hits": 3
-        },
-        {
-          "day": "2026-05-16",
-          "hits": 1
-        },
-        {
-          "day": "2026-05-19",
-          "hits": 5
-        },
-        {
-          "day": "2026-05-22",
-          "hits": 3
-        },
-        {
-          "day": "2026-05-24",
-          "hits": 3
-        },
-        {
-          "day": "2026-05-26",
-          "hits": 3
-        }
-      ],
-      "verification": null
-    },
-    {
-      "bot": "Baiduspider",
-      "hits30d": 3,
-      "hits7d": 0,
-      "uniquePaths30d": 3,
-      "lastSeen": "2026-05-19T23:33:34+00:00",
-      "daily": [
-        {
-          "day": "2026-05-16",
+          "day": "2026-06-10",
           "hits": 2
         },
         {
-          "day": "2026-05-19",
+          "day": "2026-06-12",
           "hits": 1
+        },
+        {
+          "day": "2026-06-13",
+          "hits": 9
+        },
+        {
+          "day": "2026-06-14",
+          "hits": 2
+        },
+        {
+          "day": "2026-06-15",
+          "hits": 2
+        },
+        {
+          "day": "2026-06-16",
+          "hits": 6
+        },
+        {
+          "day": "2026-06-17",
+          "hits": 2
+        },
+        {
+          "day": "2026-06-18",
+          "hits": 2
+        },
+        {
+          "day": "2026-06-19",
+          "hits": 4
+        },
+        {
+          "day": "2026-06-20",
+          "hits": 2
+        },
+        {
+          "day": "2026-06-21",
+          "hits": 3
+        },
+        {
+          "day": "2026-06-22",
+          "hits": 4
         }
       ],
-      "verification": null
+      "verification": {
+        "expected": "DuckDuckGo",
+        "verified": 0,
+        "sampled": 39,
+        "rate": 0.0,
+        "method": "rdns"
+      }
+    },
+    {
+      "bot": "Baiduspider",
+      "type": "search",
+      "hits30d": 10,
+      "hits7d": 5,
+      "uniquePaths30d": 10,
+      "lastSeen": "2026-06-20T06:17:23+00:00",
+      "daily": [
+        {
+          "day": "2026-06-10",
+          "hits": 5
+        },
+        {
+          "day": "2026-06-20",
+          "hits": 5
+        }
+      ],
+      "verification": {
+        "expected": "Baidu",
+        "verified": 0,
+        "sampled": 10,
+        "rate": 0.0,
+        "method": "rdns"
+      }
     }
   ],
   "aiBots": [
     {
-      "bot": "GPTBot",
-      "hits30d": 346,
-      "hits7d": 296,
-      "uniquePaths30d": 322,
-      "lastSeen": "2026-05-26T23:07:07+00:00",
+      "bot": "Amazonbot",
+      "type": "ai-training",
+      "hits30d": 541,
+      "hits7d": 450,
+      "uniquePaths30d": 315,
+      "lastSeen": "2026-06-22T23:36:07+00:00",
       "daily": [
         {
-          "day": "2026-05-13",
-          "hits": 3
-        },
-        {
-          "day": "2026-05-14",
+          "day": "2026-06-10",
           "hits": 1
         },
         {
-          "day": "2026-05-15",
-          "hits": 5
+          "day": "2026-06-11",
+          "hits": 20
         },
         {
-          "day": "2026-05-16",
-          "hits": 4
+          "day": "2026-06-12",
+          "hits": 9
         },
         {
-          "day": "2026-05-17",
-          "hits": 32
+          "day": "2026-06-13",
+          "hits": 27
         },
         {
-          "day": "2026-05-18",
+          "day": "2026-06-14",
+          "hits": 16
+        },
+        {
+          "day": "2026-06-15",
+          "hits": 18
+        },
+        {
+          "day": "2026-06-16",
           "hits": 1
         },
         {
-          "day": "2026-05-19",
-          "hits": 4
-        },
-        {
-          "day": "2026-05-20",
-          "hits": 13
-        },
-        {
-          "day": "2026-05-21",
-          "hits": 1
-        },
-        {
-          "day": "2026-05-22",
+          "day": "2026-06-17",
           "hits": 2
         },
         {
-          "day": "2026-05-23",
-          "hits": 275
-        },
-        {
-          "day": "2026-05-24",
+          "day": "2026-06-18",
           "hits": 1
         },
         {
-          "day": "2026-05-25",
-          "hits": 3
+          "day": "2026-06-19",
+          "hits": 12
         },
         {
-          "day": "2026-05-26",
-          "hits": 1
-        }
-      ],
-      "verification": null
-    },
-    {
-      "bot": "ClaudeBot",
-      "hits30d": 184,
-      "hits7d": 1,
-      "uniquePaths30d": 89,
-      "lastSeen": "2026-05-20T16:23:42+00:00",
-      "daily": [
-        {
-          "day": "2026-05-13",
-          "hits": 4
+          "day": "2026-06-20",
+          "hits": 124
         },
         {
-          "day": "2026-05-14",
-          "hits": 72
+          "day": "2026-06-21",
+          "hits": 206
         },
         {
-          "day": "2026-05-15",
-          "hits": 36
-        },
-        {
-          "day": "2026-05-16",
-          "hits": 56
-        },
-        {
-          "day": "2026-05-17",
-          "hits": 8
-        },
-        {
-          "day": "2026-05-19",
-          "hits": 7
-        },
-        {
-          "day": "2026-05-20",
-          "hits": 1
-        }
-      ],
-      "verification": null
-    },
-    {
-      "bot": "OAI-SearchBot",
-      "hits30d": 119,
-      "hits7d": 81,
-      "uniquePaths30d": 49,
-      "lastSeen": "2026-05-27T08:32:46+00:00",
-      "daily": [
-        {
-          "day": "2026-05-13",
-          "hits": 4
-        },
-        {
-          "day": "2026-05-14",
-          "hits": 1
-        },
-        {
-          "day": "2026-05-15",
-          "hits": 11
-        },
-        {
-          "day": "2026-05-16",
-          "hits": 6
-        },
-        {
-          "day": "2026-05-17",
-          "hits": 6
-        },
-        {
-          "day": "2026-05-18",
-          "hits": 2
-        },
-        {
-          "day": "2026-05-19",
-          "hits": 8
-        },
-        {
-          "day": "2026-05-20",
-          "hits": 23
-        },
-        {
-          "day": "2026-05-21",
-          "hits": 5
-        },
-        {
-          "day": "2026-05-22",
-          "hits": 5
-        },
-        {
-          "day": "2026-05-23",
-          "hits": 28
-        },
-        {
-          "day": "2026-05-24",
-          "hits": 7
-        },
-        {
-          "day": "2026-05-25",
-          "hits": 5
-        },
-        {
-          "day": "2026-05-26",
-          "hits": 5
-        },
-        {
-          "day": "2026-05-27",
-          "hits": 3
+          "day": "2026-06-22",
+          "hits": 104
         }
       ],
       "verification": {
-        "expected": "OpenAI",
-        "verified": 0,
-        "sampled": 3,
-        "rate": 0.0
+        "expected": "Amazon",
+        "verified": 94,
+        "sampled": 94,
+        "rate": 1.0,
+        "method": "rdns"
       }
     },
     {
-      "bot": "Meta-ExternalAgent",
-      "hits30d": 86,
-      "hits7d": 82,
-      "uniquePaths30d": 71,
-      "lastSeen": "2026-05-25T04:23:52+00:00",
+      "bot": "ChatGPT-User",
+      "type": "live-user",
+      "hits30d": 230,
+      "hits7d": 129,
+      "uniquePaths30d": 100,
+      "lastSeen": "2026-06-22T22:21:48+00:00",
       "daily": [
         {
-          "day": "2026-05-14",
-          "hits": 1
+          "day": "2026-06-09",
+          "hits": 11
         },
         {
-          "day": "2026-05-16",
-          "hits": 1
+          "day": "2026-06-10",
+          "hits": 26
         },
         {
-          "day": "2026-05-19",
-          "hits": 2
+          "day": "2026-06-11",
+          "hits": 14
         },
         {
-          "day": "2026-05-21",
-          "hits": 1
+          "day": "2026-06-12",
+          "hits": 8
         },
         {
-          "day": "2026-05-22",
-          "hits": 79
+          "day": "2026-06-13",
+          "hits": 16
         },
         {
-          "day": "2026-05-24",
-          "hits": 1
+          "day": "2026-06-14",
+          "hits": 8
         },
         {
-          "day": "2026-05-25",
-          "hits": 1
+          "day": "2026-06-15",
+          "hits": 18
+        },
+        {
+          "day": "2026-06-16",
+          "hits": 24
+        },
+        {
+          "day": "2026-06-17",
+          "hits": 49
+        },
+        {
+          "day": "2026-06-18",
+          "hits": 5
+        },
+        {
+          "day": "2026-06-19",
+          "hits": 23
+        },
+        {
+          "day": "2026-06-20",
+          "hits": 12
+        },
+        {
+          "day": "2026-06-21",
+          "hits": 9
+        },
+        {
+          "day": "2026-06-22",
+          "hits": 7
         }
       ],
-      "verification": null
+      "verification": {
+        "expected": "OpenAI",
+        "verified": 93,
+        "sampled": 105,
+        "rate": 0.886,
+        "method": "ip-range"
+      }
     },
     {
-      "bot": "ChatGPT-User",
-      "hits30d": 25,
-      "hits7d": 14,
-      "uniquePaths30d": 13,
-      "lastSeen": "2026-05-27T01:49:08+00:00",
+      "bot": "GPTBot",
+      "type": "ai-training",
+      "hits30d": 185,
+      "hits7d": 108,
+      "uniquePaths30d": 161,
+      "lastSeen": "2026-06-23T00:22:25+00:00",
       "daily": [
         {
-          "day": "2026-05-13",
-          "hits": 2
-        },
-        {
-          "day": "2026-05-14",
+          "day": "2026-06-09",
           "hits": 4
         },
         {
-          "day": "2026-05-15",
-          "hits": 3
+          "day": "2026-06-10",
+          "hits": 33
         },
         {
-          "day": "2026-05-19",
-          "hits": 2
-        },
-        {
-          "day": "2026-05-20",
-          "hits": 3
-        },
-        {
-          "day": "2026-05-22",
+          "day": "2026-06-11",
           "hits": 1
         },
         {
-          "day": "2026-05-23",
+          "day": "2026-06-12",
+          "hits": 24
+        },
+        {
+          "day": "2026-06-13",
+          "hits": 8
+        },
+        {
+          "day": "2026-06-15",
           "hits": 7
         },
         {
-          "day": "2026-05-24",
+          "day": "2026-06-16",
+          "hits": 71
+        },
+        {
+          "day": "2026-06-17",
           "hits": 2
         },
         {
-          "day": "2026-05-27",
+          "day": "2026-06-18",
+          "hits": 2
+        },
+        {
+          "day": "2026-06-19",
+          "hits": 1
+        },
+        {
+          "day": "2026-06-20",
+          "hits": 26
+        },
+        {
+          "day": "2026-06-21",
+          "hits": 1
+        },
+        {
+          "day": "2026-06-22",
+          "hits": 4
+        },
+        {
+          "day": "2026-06-23",
           "hits": 1
         }
       ],
       "verification": {
         "expected": "OpenAI",
-        "verified": 0,
-        "sampled": 1,
-        "rate": 0.0
+        "verified": 179,
+        "sampled": 185,
+        "rate": 0.968,
+        "method": "ip-range"
+      }
+    },
+    {
+      "bot": "ClaudeBot",
+      "type": "ai-training",
+      "hits30d": 166,
+      "hits7d": 70,
+      "uniquePaths30d": 44,
+      "lastSeen": "2026-06-20T06:17:25+00:00",
+      "daily": [
+        {
+          "day": "2026-06-09",
+          "hits": 24
+        },
+        {
+          "day": "2026-06-10",
+          "hits": 7
+        },
+        {
+          "day": "2026-06-13",
+          "hits": 25
+        },
+        {
+          "day": "2026-06-14",
+          "hits": 31
+        },
+        {
+          "day": "2026-06-15",
+          "hits": 9
+        },
+        {
+          "day": "2026-06-17",
+          "hits": 35
+        },
+        {
+          "day": "2026-06-18",
+          "hits": 29
+        },
+        {
+          "day": "2026-06-20",
+          "hits": 6
+        }
+      ],
+      "verification": {
+        "expected": "Anthropic",
+        "verified": 150,
+        "sampled": 166,
+        "rate": 0.904,
+        "method": "rdns"
+      }
+    },
+    {
+      "bot": "OAI-SearchBot",
+      "type": "ai-search",
+      "hits30d": 129,
+      "hits7d": 66,
+      "uniquePaths30d": 52,
+      "lastSeen": "2026-06-23T02:09:53+00:00",
+      "daily": [
+        {
+          "day": "2026-06-09",
+          "hits": 21
+        },
+        {
+          "day": "2026-06-10",
+          "hits": 10
+        },
+        {
+          "day": "2026-06-11",
+          "hits": 5
+        },
+        {
+          "day": "2026-06-12",
+          "hits": 11
+        },
+        {
+          "day": "2026-06-13",
+          "hits": 7
+        },
+        {
+          "day": "2026-06-14",
+          "hits": 4
+        },
+        {
+          "day": "2026-06-15",
+          "hits": 5
+        },
+        {
+          "day": "2026-06-16",
+          "hits": 19
+        },
+        {
+          "day": "2026-06-17",
+          "hits": 7
+        },
+        {
+          "day": "2026-06-18",
+          "hits": 5
+        },
+        {
+          "day": "2026-06-19",
+          "hits": 8
+        },
+        {
+          "day": "2026-06-20",
+          "hits": 13
+        },
+        {
+          "day": "2026-06-21",
+          "hits": 6
+        },
+        {
+          "day": "2026-06-22",
+          "hits": 7
+        },
+        {
+          "day": "2026-06-23",
+          "hits": 1
+        }
+      ],
+      "verification": {
+        "expected": "OpenAI",
+        "verified": 97,
+        "sampled": 105,
+        "rate": 0.924,
+        "method": "ip-range"
       }
     },
     {
       "bot": "Bytespider",
-      "hits30d": 10,
-      "hits7d": 3,
-      "uniquePaths30d": 6,
-      "lastSeen": "2026-05-25T05:10:59+00:00",
+      "type": "ai-training",
+      "hits30d": 87,
+      "hits7d": 72,
+      "uniquePaths30d": 55,
+      "lastSeen": "2026-06-23T03:14:09+00:00",
       "daily": [
         {
-          "day": "2026-05-14",
-          "hits": 1
-        },
-        {
-          "day": "2026-05-15",
-          "hits": 4
-        },
-        {
-          "day": "2026-05-16",
-          "hits": 1
-        },
-        {
-          "day": "2026-05-19",
-          "hits": 1
-        },
-        {
-          "day": "2026-05-20",
-          "hits": 1
-        },
-        {
-          "day": "2026-05-25",
-          "hits": 2
-        }
-      ],
-      "verification": null
-    },
-    {
-      "bot": "PerplexityBot",
-      "hits30d": 8,
-      "hits7d": 1,
-      "uniquePaths30d": 7,
-      "lastSeen": "2026-05-20T16:23:43+00:00",
-      "daily": [
-        {
-          "day": "2026-05-16",
+          "day": "2026-06-09",
           "hits": 2
         },
         {
-          "day": "2026-05-19",
-          "hits": 5
-        },
-        {
-          "day": "2026-05-20",
+          "day": "2026-06-10",
           "hits": 1
-        }
-      ],
-      "verification": null
-    },
-    {
-      "bot": "CCBot",
-      "hits30d": 7,
-      "hits7d": 1,
-      "uniquePaths30d": 6,
-      "lastSeen": "2026-05-20T16:23:43+00:00",
-      "daily": [
-        {
-          "day": "2026-05-16",
-          "hits": 4
         },
         {
-          "day": "2026-05-19",
+          "day": "2026-06-11",
+          "hits": 1
+        },
+        {
+          "day": "2026-06-13",
+          "hits": 10
+        },
+        {
+          "day": "2026-06-14",
+          "hits": 1
+        },
+        {
+          "day": "2026-06-16",
           "hits": 2
         },
         {
-          "day": "2026-05-20",
-          "hits": 1
-        }
-      ],
-      "verification": null
-    },
-    {
-      "bot": "Perplexity-User",
-      "hits30d": 6,
-      "hits7d": 0,
-      "uniquePaths30d": 3,
-      "lastSeen": "2026-05-19T23:34:12+00:00",
-      "daily": [
-        {
-          "day": "2026-05-19",
-          "hits": 6
-        }
-      ],
-      "verification": null
-    },
-    {
-      "bot": "Claude-User",
-      "hits30d": 6,
-      "hits7d": 1,
-      "uniquePaths30d": 3,
-      "lastSeen": "2026-05-20T16:23:43+00:00",
-      "daily": [
-        {
-          "day": "2026-05-16",
-          "hits": 2
-        },
-        {
-          "day": "2026-05-19",
+          "day": "2026-06-17",
           "hits": 3
         },
         {
-          "day": "2026-05-20",
-          "hits": 1
+          "day": "2026-06-18",
+          "hits": 2
+        },
+        {
+          "day": "2026-06-19",
+          "hits": 2
+        },
+        {
+          "day": "2026-06-20",
+          "hits": 10
+        },
+        {
+          "day": "2026-06-21",
+          "hits": 22
+        },
+        {
+          "day": "2026-06-22",
+          "hits": 24
+        },
+        {
+          "day": "2026-06-23",
+          "hits": 7
         }
       ],
-      "verification": null
+      "verification": {
+        "expected": "ByteDance",
+        "verified": 4,
+        "sampled": 48,
+        "rate": 0.083,
+        "method": "rdns"
+      }
     },
     {
-      "bot": "Amazonbot",
-      "hits30d": 5,
-      "hits7d": 3,
-      "uniquePaths30d": 3,
-      "lastSeen": "2026-05-22T17:55:48+00:00",
+      "bot": "Meta-ExternalAgent",
+      "type": "ai-training",
+      "hits30d": 47,
+      "hits7d": 9,
+      "uniquePaths30d": 46,
+      "lastSeen": "2026-06-19T22:52:14+00:00",
       "daily": [
         {
-          "day": "2026-05-15",
-          "hits": 1
+          "day": "2026-06-12",
+          "hits": 31
         },
         {
-          "day": "2026-05-19",
-          "hits": 1
+          "day": "2026-06-13",
+          "hits": 5
         },
         {
-          "day": "2026-05-21",
-          "hits": 1
-        },
-        {
-          "day": "2026-05-22",
+          "day": "2026-06-14",
           "hits": 2
+        },
+        {
+          "day": "2026-06-17",
+          "hits": 1
+        },
+        {
+          "day": "2026-06-18",
+          "hits": 2
+        },
+        {
+          "day": "2026-06-19",
+          "hits": 6
+        }
+      ],
+      "verification": {
+        "expected": "Meta",
+        "verified": 30,
+        "sampled": 33,
+        "rate": 0.909,
+        "method": "rdns"
+      }
+    },
+    {
+      "bot": "Claude-User",
+      "type": "live-user",
+      "hits30d": 30,
+      "hits7d": 2,
+      "uniquePaths30d": 19,
+      "lastSeen": "2026-06-17T15:30:27+00:00",
+      "daily": [
+        {
+          "day": "2026-06-09",
+          "hits": 2
+        },
+        {
+          "day": "2026-06-10",
+          "hits": 17
+        },
+        {
+          "day": "2026-06-11",
+          "hits": 2
+        },
+        {
+          "day": "2026-06-13",
+          "hits": 2
+        },
+        {
+          "day": "2026-06-15",
+          "hits": 5
+        },
+        {
+          "day": "2026-06-17",
+          "hits": 2
+        }
+      ],
+      "verification": {
+        "expected": "Anthropic",
+        "verified": 0,
+        "sampled": 30,
+        "rate": 0.0,
+        "method": "rdns"
+      }
+    },
+    {
+      "bot": "PerplexityBot",
+      "type": "ai-search",
+      "hits30d": 24,
+      "hits7d": 7,
+      "uniquePaths30d": 13,
+      "lastSeen": "2026-06-20T21:03:51+00:00",
+      "daily": [
+        {
+          "day": "2026-06-10",
+          "hits": 7
+        },
+        {
+          "day": "2026-06-12",
+          "hits": 2
+        },
+        {
+          "day": "2026-06-13",
+          "hits": 4
+        },
+        {
+          "day": "2026-06-14",
+          "hits": 2
+        },
+        {
+          "day": "2026-06-15",
+          "hits": 2
+        },
+        {
+          "day": "2026-06-18",
+          "hits": 2
+        },
+        {
+          "day": "2026-06-20",
+          "hits": 5
+        }
+      ],
+      "verification": {
+        "expected": "Perplexity",
+        "verified": 15,
+        "sampled": 24,
+        "rate": 0.625,
+        "method": "ip-range"
+      }
+    },
+    {
+      "bot": "CCBot",
+      "type": "ai-training",
+      "hits30d": 12,
+      "hits7d": 4,
+      "uniquePaths30d": 11,
+      "lastSeen": "2026-06-20T06:17:21+00:00",
+      "daily": [
+        {
+          "day": "2026-06-10",
+          "hits": 2
+        },
+        {
+          "day": "2026-06-12",
+          "hits": 2
+        },
+        {
+          "day": "2026-06-13",
+          "hits": 4
+        },
+        {
+          "day": "2026-06-20",
+          "hits": 4
         }
       ],
       "verification": null
     },
     {
       "bot": "YouBot",
+      "type": "ai-training",
+      "hits30d": 5,
+      "hits7d": 5,
+      "uniquePaths30d": 4,
+      "lastSeen": "2026-06-19T02:45:04+00:00",
+      "daily": [
+        {
+          "day": "2026-06-18",
+          "hits": 2
+        },
+        {
+          "day": "2026-06-19",
+          "hits": 3
+        }
+      ],
+      "verification": null
+    },
+    {
+      "bot": "claude-web",
+      "type": "ai-training",
       "hits30d": 4,
       "hits7d": 0,
       "uniquePaths30d": 4,
-      "lastSeen": "2026-05-19T23:33:31+00:00",
+      "lastSeen": "2026-06-13T04:11:42+00:00",
       "daily": [
         {
-          "day": "2026-05-16",
-          "hits": 3
-        },
-        {
-          "day": "2026-05-19",
-          "hits": 1
+          "day": "2026-06-13",
+          "hits": 4
         }
       ],
-      "verification": null
+      "verification": {
+        "expected": "Anthropic",
+        "verified": 0,
+        "sampled": 4,
+        "rate": 0.0,
+        "method": "rdns"
+      }
     },
     {
       "bot": "Google-Extended",
-      "hits30d": 1,
-      "hits7d": 1,
-      "uniquePaths30d": 1,
-      "lastSeen": "2026-05-20T16:23:43+00:00",
+      "type": "ai-training",
+      "hits30d": 2,
+      "hits7d": 0,
+      "uniquePaths30d": 2,
+      "lastSeen": "2026-06-13T04:11:40+00:00",
       "daily": [
         {
-          "day": "2026-05-20",
-          "hits": 1
+          "day": "2026-06-13",
+          "hits": 2
         }
       ],
-      "verification": null
+      "verification": {
+        "expected": "Google",
+        "verified": 0,
+        "sampled": 2,
+        "rate": 0.0,
+        "method": "rdns"
+      }
     },
     {
-      "bot": "Applebot-Extended",
-      "hits30d": 1,
-      "hits7d": 1,
-      "uniquePaths30d": 1,
-      "lastSeen": "2026-05-20T16:23:44+00:00",
+      "bot": "cohere-ai",
+      "type": "ai-training",
+      "hits30d": 2,
+      "hits7d": 0,
+      "uniquePaths30d": 2,
+      "lastSeen": "2026-06-13T04:11:16+00:00",
       "daily": [
         {
-          "day": "2026-05-20",
-          "hits": 1
+          "day": "2026-06-13",
+          "hits": 2
         }
       ],
       "verification": null
     }
   ],
+  "otherBots": [
+    {
+      "bot": "SemrushBot",
+      "type": "search",
+      "hits30d": 1362,
+      "hits7d": 472,
+      "uniquePaths30d": 675,
+      "lastSeen": "2026-06-23T04:46:55+00:00",
+      "daily": [
+        {
+          "day": "2026-06-09",
+          "hits": 309
+        },
+        {
+          "day": "2026-06-10",
+          "hits": 51
+        },
+        {
+          "day": "2026-06-11",
+          "hits": 38
+        },
+        {
+          "day": "2026-06-12",
+          "hits": 54
+        },
+        {
+          "day": "2026-06-13",
+          "hits": 132
+        },
+        {
+          "day": "2026-06-14",
+          "hits": 184
+        },
+        {
+          "day": "2026-06-15",
+          "hits": 122
+        },
+        {
+          "day": "2026-06-16",
+          "hits": 44
+        },
+        {
+          "day": "2026-06-17",
+          "hits": 91
+        },
+        {
+          "day": "2026-06-18",
+          "hits": 49
+        },
+        {
+          "day": "2026-06-19",
+          "hits": 46
+        },
+        {
+          "day": "2026-06-20",
+          "hits": 170
+        },
+        {
+          "day": "2026-06-21",
+          "hits": 38
+        },
+        {
+          "day": "2026-06-22",
+          "hits": 25
+        },
+        {
+          "day": "2026-06-23",
+          "hits": 9
+        }
+      ],
+      "operator": "Semrush"
+    },
+    {
+      "bot": "AhrefsBot",
+      "type": "other",
+      "hits30d": 991,
+      "hits7d": 174,
+      "uniquePaths30d": 939,
+      "lastSeen": "2026-06-23T04:41:10+00:00",
+      "daily": [
+        {
+          "day": "2026-06-09",
+          "hits": 27
+        },
+        {
+          "day": "2026-06-10",
+          "hits": 163
+        },
+        {
+          "day": "2026-06-11",
+          "hits": 475
+        },
+        {
+          "day": "2026-06-12",
+          "hits": 88
+        },
+        {
+          "day": "2026-06-13",
+          "hits": 18
+        },
+        {
+          "day": "2026-06-14",
+          "hits": 27
+        },
+        {
+          "day": "2026-06-15",
+          "hits": 19
+        },
+        {
+          "day": "2026-06-16",
+          "hits": 14
+        },
+        {
+          "day": "2026-06-17",
+          "hits": 36
+        },
+        {
+          "day": "2026-06-18",
+          "hits": 14
+        },
+        {
+          "day": "2026-06-19",
+          "hits": 22
+        },
+        {
+          "day": "2026-06-20",
+          "hits": 24
+        },
+        {
+          "day": "2026-06-21",
+          "hits": 22
+        },
+        {
+          "day": "2026-06-22",
+          "hits": 33
+        },
+        {
+          "day": "2026-06-23",
+          "hits": 9
+        }
+      ],
+      "operator": "Ahrefs"
+    },
+    {
+      "bot": "DotBot",
+      "type": "search",
+      "hits30d": 839,
+      "hits7d": 667,
+      "uniquePaths30d": 481,
+      "lastSeen": "2026-06-23T05:05:29+00:00",
+      "daily": [
+        {
+          "day": "2026-06-10",
+          "hits": 2
+        },
+        {
+          "day": "2026-06-12",
+          "hits": 3
+        },
+        {
+          "day": "2026-06-13",
+          "hits": 52
+        },
+        {
+          "day": "2026-06-14",
+          "hits": 57
+        },
+        {
+          "day": "2026-06-15",
+          "hits": 58
+        },
+        {
+          "day": "2026-06-16",
+          "hits": 61
+        },
+        {
+          "day": "2026-06-17",
+          "hits": 79
+        },
+        {
+          "day": "2026-06-18",
+          "hits": 116
+        },
+        {
+          "day": "2026-06-19",
+          "hits": 92
+        },
+        {
+          "day": "2026-06-20",
+          "hits": 96
+        },
+        {
+          "day": "2026-06-21",
+          "hits": 139
+        },
+        {
+          "day": "2026-06-22",
+          "hits": 74
+        },
+        {
+          "day": "2026-06-23",
+          "hits": 10
+        }
+      ],
+      "operator": "Moz"
+    },
+    {
+      "bot": "SERankingBacklinksBot",
+      "type": "other",
+      "hits30d": 324,
+      "hits7d": 0,
+      "uniquePaths30d": 150,
+      "lastSeen": "2026-06-10T15:43:16+00:00",
+      "daily": [
+        {
+          "day": "2026-06-09",
+          "hits": 92
+        },
+        {
+          "day": "2026-06-10",
+          "hits": 232
+        }
+      ],
+      "operator": "SEranking"
+    },
+    {
+      "bot": "DataForSeoBot",
+      "type": "other",
+      "hits30d": 107,
+      "hits7d": 54,
+      "uniquePaths30d": 95,
+      "lastSeen": "2026-06-23T05:08:15+00:00",
+      "daily": [
+        {
+          "day": "2026-06-09",
+          "hits": 7
+        },
+        {
+          "day": "2026-06-10",
+          "hits": 9
+        },
+        {
+          "day": "2026-06-11",
+          "hits": 11
+        },
+        {
+          "day": "2026-06-12",
+          "hits": 2
+        },
+        {
+          "day": "2026-06-13",
+          "hits": 7
+        },
+        {
+          "day": "2026-06-14",
+          "hits": 7
+        },
+        {
+          "day": "2026-06-15",
+          "hits": 10
+        },
+        {
+          "day": "2026-06-16",
+          "hits": 5
+        },
+        {
+          "day": "2026-06-17",
+          "hits": 8
+        },
+        {
+          "day": "2026-06-18",
+          "hits": 2
+        },
+        {
+          "day": "2026-06-19",
+          "hits": 8
+        },
+        {
+          "day": "2026-06-20",
+          "hits": 10
+        },
+        {
+          "day": "2026-06-21",
+          "hits": 11
+        },
+        {
+          "day": "2026-06-22",
+          "hits": 8
+        },
+        {
+          "day": "2026-06-23",
+          "hits": 2
+        }
+      ],
+      "operator": "DataForSEO"
+    },
+    {
+      "bot": "meta-webindexer",
+      "type": "search",
+      "hits30d": 84,
+      "hits7d": 49,
+      "uniquePaths30d": 24,
+      "lastSeen": "2026-06-22T19:22:00+00:00",
+      "daily": [
+        {
+          "day": "2026-06-09",
+          "hits": 8
+        },
+        {
+          "day": "2026-06-10",
+          "hits": 3
+        },
+        {
+          "day": "2026-06-11",
+          "hits": 2
+        },
+        {
+          "day": "2026-06-12",
+          "hits": 2
+        },
+        {
+          "day": "2026-06-13",
+          "hits": 11
+        },
+        {
+          "day": "2026-06-14",
+          "hits": 5
+        },
+        {
+          "day": "2026-06-15",
+          "hits": 4
+        },
+        {
+          "day": "2026-06-16",
+          "hits": 5
+        },
+        {
+          "day": "2026-06-17",
+          "hits": 8
+        },
+        {
+          "day": "2026-06-18",
+          "hits": 7
+        },
+        {
+          "day": "2026-06-19",
+          "hits": 3
+        },
+        {
+          "day": "2026-06-20",
+          "hits": 8
+        },
+        {
+          "day": "2026-06-21",
+          "hits": 11
+        },
+        {
+          "day": "2026-06-22",
+          "hits": 7
+        }
+      ],
+      "operator": "Meta"
+    },
+    {
+      "bot": "facebookexternalhit",
+      "type": "live-user",
+      "hits30d": 41,
+      "hits7d": 23,
+      "uniquePaths30d": 4,
+      "lastSeen": "2026-06-23T00:26:22+00:00",
+      "daily": [
+        {
+          "day": "2026-06-09",
+          "hits": 2
+        },
+        {
+          "day": "2026-06-10",
+          "hits": 3
+        },
+        {
+          "day": "2026-06-11",
+          "hits": 1
+        },
+        {
+          "day": "2026-06-12",
+          "hits": 2
+        },
+        {
+          "day": "2026-06-13",
+          "hits": 5
+        },
+        {
+          "day": "2026-06-14",
+          "hits": 2
+        },
+        {
+          "day": "2026-06-15",
+          "hits": 3
+        },
+        {
+          "day": "2026-06-16",
+          "hits": 2
+        },
+        {
+          "day": "2026-06-17",
+          "hits": 2
+        },
+        {
+          "day": "2026-06-18",
+          "hits": 4
+        },
+        {
+          "day": "2026-06-19",
+          "hits": 1
+        },
+        {
+          "day": "2026-06-20",
+          "hits": 6
+        },
+        {
+          "day": "2026-06-21",
+          "hits": 5
+        },
+        {
+          "day": "2026-06-22",
+          "hits": 1
+        },
+        {
+          "day": "2026-06-23",
+          "hits": 2
+        }
+      ],
+      "operator": "Meta"
+    },
+    {
+      "bot": "Twitterbot",
+      "type": "live-user",
+      "hits30d": 18,
+      "hits7d": 9,
+      "uniquePaths30d": 7,
+      "lastSeen": "2026-06-21T07:40:03+00:00",
+      "daily": [
+        {
+          "day": "2026-06-11",
+          "hits": 4
+        },
+        {
+          "day": "2026-06-13",
+          "hits": 5
+        },
+        {
+          "day": "2026-06-19",
+          "hits": 5
+        },
+        {
+          "day": "2026-06-21",
+          "hits": 4
+        }
+      ],
+      "operator": "Twitter"
+    },
+    {
+      "bot": "YandexRenderResourcesBot",
+      "type": "search",
+      "hits30d": 12,
+      "hits7d": 3,
+      "uniquePaths30d": 10,
+      "lastSeen": "2026-06-17T05:08:52+00:00",
+      "daily": [
+        {
+          "day": "2026-06-13",
+          "hits": 4
+        },
+        {
+          "day": "2026-06-14",
+          "hits": 3
+        },
+        {
+          "day": "2026-06-15",
+          "hits": 2
+        },
+        {
+          "day": "2026-06-17",
+          "hits": 3
+        }
+      ],
+      "operator": "Yandex"
+    },
+    {
+      "bot": "PromtPressBot",
+      "type": "other",
+      "hits30d": 11,
+      "hits7d": 0,
+      "uniquePaths30d": 6,
+      "lastSeen": "2026-06-15T15:36:54+00:00",
+      "daily": [
+        {
+          "day": "2026-06-15",
+          "hits": 11
+        }
+      ],
+      "operator": ""
+    },
+    {
+      "bot": "xAI-SearchBot",
+      "type": "ai-search",
+      "hits30d": 10,
+      "hits7d": 5,
+      "uniquePaths30d": 10,
+      "lastSeen": "2026-06-20T06:17:21+00:00",
+      "daily": [
+        {
+          "day": "2026-06-10",
+          "hits": 5
+        },
+        {
+          "day": "2026-06-20",
+          "hits": 5
+        }
+      ],
+      "operator": "xAI"
+    },
+    {
+      "bot": "AliyunSecBot",
+      "type": "other",
+      "hits30d": 9,
+      "hits7d": 9,
+      "uniquePaths30d": 8,
+      "lastSeen": "2026-06-19T13:49:18+00:00",
+      "daily": [
+        {
+          "day": "2026-06-18",
+          "hits": 3
+        },
+        {
+          "day": "2026-06-19",
+          "hits": 6
+        }
+      ],
+      "operator": "Alibaba"
+    },
+    {
+      "bot": "MJ12bot",
+      "type": "search",
+      "hits30d": 9,
+      "hits7d": 9,
+      "uniquePaths30d": 7,
+      "lastSeen": "2026-06-17T12:01:25+00:00",
+      "daily": [
+        {
+          "day": "2026-06-16",
+          "hits": 1
+        },
+        {
+          "day": "2026-06-17",
+          "hits": 8
+        }
+      ],
+      "operator": "Majestic"
+    },
+    {
+      "bot": "Google-CloudVertexBot",
+      "type": "ai-training",
+      "hits30d": 8,
+      "hits7d": 4,
+      "uniquePaths30d": 8,
+      "lastSeen": "2026-06-20T06:17:22+00:00",
+      "daily": [
+        {
+          "day": "2026-06-10",
+          "hits": 4
+        },
+        {
+          "day": "2026-06-20",
+          "hits": 4
+        }
+      ],
+      "operator": "Google"
+    },
+    {
+      "bot": "ShapBot",
+      "type": "other",
+      "hits30d": 8,
+      "hits7d": 8,
+      "uniquePaths30d": 4,
+      "lastSeen": "2026-06-16T00:44:13+00:00",
+      "daily": [
+        {
+          "day": "2026-06-16",
+          "hits": 8
+        }
+      ],
+      "operator": ""
+    },
+    {
+      "bot": "anthropic-ai",
+      "type": "ai-training",
+      "hits30d": 6,
+      "hits7d": 0,
+      "uniquePaths30d": 6,
+      "lastSeen": "2026-06-13T04:13:12+00:00",
+      "daily": [
+        {
+          "day": "2026-06-13",
+          "hits": 6
+        }
+      ],
+      "operator": "Anthropic"
+    },
+    {
+      "bot": "Facebot",
+      "type": "other",
+      "hits30d": 6,
+      "hits7d": 4,
+      "uniquePaths30d": 2,
+      "lastSeen": "2026-06-19T00:00:29+00:00",
+      "daily": [
+        {
+          "day": "2026-06-13",
+          "hits": 2
+        },
+        {
+          "day": "2026-06-16",
+          "hits": 1
+        },
+        {
+          "day": "2026-06-18",
+          "hits": 2
+        },
+        {
+          "day": "2026-06-19",
+          "hits": 1
+        }
+      ],
+      "operator": ""
+    },
+    {
+      "bot": "AdsBot-Google-Mobile",
+      "type": "search",
+      "hits30d": 6,
+      "hits7d": 0,
+      "uniquePaths30d": 4,
+      "lastSeen": "2026-06-14T02:13:01+00:00",
+      "daily": [
+        {
+          "day": "2026-06-09",
+          "hits": 1
+        },
+        {
+          "day": "2026-06-10",
+          "hits": 2
+        },
+        {
+          "day": "2026-06-12",
+          "hits": 1
+        },
+        {
+          "day": "2026-06-14",
+          "hits": 2
+        }
+      ],
+      "operator": "Google"
+    },
+    {
+      "bot": "Scrapy",
+      "type": "other",
+      "hits30d": 5,
+      "hits7d": 1,
+      "uniquePaths30d": 2,
+      "lastSeen": "2026-06-20T01:02:44+00:00",
+      "daily": [
+        {
+          "day": "2026-06-13",
+          "hits": 4
+        },
+        {
+          "day": "2026-06-20",
+          "hits": 1
+        }
+      ],
+      "operator": ""
+    },
+    {
+      "bot": "FeedBot",
+      "type": "other",
+      "hits30d": 4,
+      "hits7d": 4,
+      "uniquePaths30d": 1,
+      "lastSeen": "2026-06-23T03:30:13+00:00",
+      "daily": [
+        {
+          "day": "2026-06-23",
+          "hits": 4
+        }
+      ],
+      "operator": ""
+    },
+    {
+      "bot": "wpbot",
+      "type": "other",
+      "hits30d": 4,
+      "hits7d": 2,
+      "uniquePaths30d": 3,
+      "lastSeen": "2026-06-22T14:09:49+00:00",
+      "daily": [
+        {
+          "day": "2026-06-10",
+          "hits": 2
+        },
+        {
+          "day": "2026-06-22",
+          "hits": 2
+        }
+      ],
+      "operator": ""
+    },
+    {
+      "bot": "Bravebot",
+      "type": "search",
+      "hits30d": 4,
+      "hits7d": 1,
+      "uniquePaths30d": 1,
+      "lastSeen": "2026-06-18T01:33:27+00:00",
+      "daily": [
+        {
+          "day": "2026-06-11",
+          "hits": 1
+        },
+        {
+          "day": "2026-06-13",
+          "hits": 1
+        },
+        {
+          "day": "2026-06-15",
+          "hits": 1
+        },
+        {
+          "day": "2026-06-18",
+          "hits": 1
+        }
+      ],
+      "operator": "Brave"
+    },
+    {
+      "bot": "DuckAssistBot",
+      "type": "ai-search",
+      "hits30d": 4,
+      "hits7d": 2,
+      "uniquePaths30d": 3,
+      "lastSeen": "2026-06-16T20:02:03+00:00",
+      "daily": [
+        {
+          "day": "2026-06-11",
+          "hits": 2
+        },
+        {
+          "day": "2026-06-16",
+          "hits": 2
+        }
+      ],
+      "operator": "DuckDuckGo"
+    },
+    {
+      "bot": "sellsybot",
+      "type": "other",
+      "hits30d": 4,
+      "hits7d": 4,
+      "uniquePaths30d": 2,
+      "lastSeen": "2026-06-21T05:47:15+00:00",
+      "daily": [
+        {
+          "day": "2026-06-21",
+          "hits": 4
+        }
+      ],
+      "operator": "Sellsy"
+    },
+    {
+      "bot": "Exabot",
+      "type": "search",
+      "hits30d": 3,
+      "hits7d": 1,
+      "uniquePaths30d": 1,
+      "lastSeen": "2026-06-16T20:39:50+00:00",
+      "daily": [
+        {
+          "day": "2026-06-11",
+          "hits": 1
+        },
+        {
+          "day": "2026-06-15",
+          "hits": 1
+        },
+        {
+          "day": "2026-06-16",
+          "hits": 1
+        }
+      ],
+      "operator": "Exalead"
+    },
+    {
+      "bot": "DeepSeekBot",
+      "type": "ai-training",
+      "hits30d": 3,
+      "hits7d": 3,
+      "uniquePaths30d": 3,
+      "lastSeen": "2026-06-20T06:17:24+00:00",
+      "daily": [
+        {
+          "day": "2026-06-20",
+          "hits": 3
+        }
+      ],
+      "operator": "DeepSeek"
+    },
+    {
+      "bot": "domainsbot.com",
+      "type": "other",
+      "hits30d": 2,
+      "hits7d": 0,
+      "uniquePaths30d": 2,
+      "lastSeen": "2026-06-10T09:33:17+00:00",
+      "daily": [
+        {
+          "day": "2026-06-10",
+          "hits": 2
+        }
+      ],
+      "operator": "DomainsBot"
+    },
+    {
+      "bot": "LinkedInBot",
+      "type": "search",
+      "hits30d": 2,
+      "hits7d": 0,
+      "uniquePaths30d": 2,
+      "lastSeen": "2026-06-09T19:43:11+00:00",
+      "daily": [
+        {
+          "day": "2026-06-09",
+          "hits": 2
+        }
+      ],
+      "operator": "LinkedIn"
+    },
+    {
+      "bot": "PriceTrackBot",
+      "type": "other",
+      "hits30d": 2,
+      "hits7d": 2,
+      "uniquePaths30d": 1,
+      "lastSeen": "2026-06-21T10:23:09+00:00",
+      "daily": [
+        {
+          "day": "2026-06-21",
+          "hits": 2
+        }
+      ],
+      "operator": ""
+    },
+    {
+      "bot": "StackScopeBot",
+      "type": "other",
+      "hits30d": 2,
+      "hits7d": 2,
+      "uniquePaths30d": 2,
+      "lastSeen": "2026-06-17T02:16:30+00:00",
+      "daily": [
+        {
+          "day": "2026-06-17",
+          "hits": 2
+        }
+      ],
+      "operator": "StackScope"
+    },
+    {
+      "bot": "SleepBot",
+      "type": "other",
+      "hits30d": 1,
+      "hits7d": 0,
+      "uniquePaths30d": 1,
+      "lastSeen": "2026-06-13T11:45:33+00:00",
+      "daily": [
+        {
+          "day": "2026-06-13",
+          "hits": 1
+        }
+      ],
+      "operator": ""
+    },
+    {
+      "bot": "trafilatura",
+      "type": "other",
+      "hits30d": 1,
+      "hits7d": 0,
+      "uniquePaths30d": 1,
+      "lastSeen": "2026-06-12T04:56:35+00:00",
+      "daily": [
+        {
+          "day": "2026-06-12",
+          "hits": 1
+        }
+      ],
+      "operator": ""
+    },
+    {
+      "bot": "HNBot",
+      "type": "other",
+      "hits30d": 1,
+      "hits7d": 0,
+      "uniquePaths30d": 1,
+      "lastSeen": "2026-06-12T13:21:46+00:00",
+      "daily": [
+        {
+          "day": "2026-06-12",
+          "hits": 1
+        }
+      ],
+      "operator": ""
+    },
+    {
+      "bot": "CertSignalBot",
+      "type": "other",
+      "hits30d": 1,
+      "hits7d": 1,
+      "uniquePaths30d": 1,
+      "lastSeen": "2026-06-18T08:07:46+00:00",
+      "daily": [
+        {
+          "day": "2026-06-18",
+          "hits": 1
+        }
+      ],
+      "operator": ""
+    },
+    {
+      "bot": "www.domainscores.net",
+      "type": "other",
+      "hits30d": 1,
+      "hits7d": 1,
+      "uniquePaths30d": 1,
+      "lastSeen": "2026-06-16T20:43:55+00:00",
+      "daily": [
+        {
+          "day": "2026-06-16",
+          "hits": 1
+        }
+      ],
+      "operator": ""
+    },
+    {
+      "bot": "WebCrawler",
+      "type": "other",
+      "hits30d": 1,
+      "hits7d": 0,
+      "uniquePaths30d": 1,
+      "lastSeen": "2026-06-15T20:11:35+00:00",
+      "daily": [
+        {
+          "day": "2026-06-15",
+          "hits": 1
+        }
+      ],
+      "operator": ""
+    }
+  ],
   "exploitScanners": {
-    "hits30d": 3999,
-    "hits7d": 1891,
-    "uniquePaths30d": 152,
+    "hits30d": 3376,
+    "hits7d": 2515,
+    "uniquePaths30d": 1034,
     "topPaths": [
       {
         "path": "/wp-admin/install.php",
-        "hits": 2503
-      },
-      {
-        "path": "/xmlrpc.php",
-        "hits": 177
-      },
-      {
-        "path": "/wp-login.php",
-        "hits": 160
+        "hits": 220
       },
       {
         "path": "/.env",
-        "hits": 89
+        "hits": 146
+      },
+      {
+        "path": "/xmlrpc.php",
+        "hits": 53
       },
       {
         "path": "/.git/config",
-        "hits": 70
+        "hits": 43
+      },
+      {
+        "path": "/wp-login.php",
+        "hits": 42
       },
       {
         "path": "/.env.local",
-        "hits": 45
-      },
-      {
-        "path": "/.env.bak",
-        "hits": 41
-      },
-      {
-        "path": "/.env.save",
-        "hits": 36
-      },
-      {
-        "path": "/.env.production",
-        "hits": 33
-      },
-      {
-        "path": "/config.json",
         "hits": 32
       },
       {
         "path": "/.env.backup",
-        "hits": 32
+        "hits": 29
       },
       {
-        "path": "/.env.development",
+        "path": "/wp-json/gravitysmtp/v1/tests/mock-data",
         "hits": 25
+      },
+      {
+        "path": "/.env.save",
+        "hits": 23
+      },
+      {
+        "path": "/.env.old",
+        "hits": 23
+      },
+      {
+        "path": "/.env.bak",
+        "hits": 21
+      },
+      {
+        "path": "/.env.production",
+        "hits": 21
       }
     ],
     "topSources": [
       {
+        "host": "FBW NETWORKS (FR)",
+        "hits": 2424
+      },
+      {
         "host": "Cloudflare",
-        "hits": 50
+        "hits": 222
+      },
+      {
+        "host": "AWS",
+        "hits": 132
+      },
+      {
+        "host": "Techoff SRV Limited (AD)",
+        "hits": 122
+      },
+      {
+        "host": "Techoff SRV Limited (NL)",
+        "hits": 122
+      },
+      {
+        "host": "Advin Services LLC (US)",
+        "hits": 39
+      },
+      {
+        "host": "TIG (NL)",
+        "hits": 37
+      },
+      {
+        "host": "Google Cloud",
+        "hits": 34
+      },
+      {
+        "host": "PT Trisari Data Indonesia (ID)",
+        "hits": 25
+      },
+      {
+        "host": "Infraly, LLC (US)",
+        "hits": 18
+      },
+      {
+        "host": "DigitalOcean",
+        "hits": 17
+      },
+      {
+        "host": "Storm Industries (NL)",
+        "hits": 14
       }
     ],
     "topCountries": [
       {
-        "country": "US",
-        "hits": 47
+        "country": "FR",
+        "hits": 2425
       },
       {
-        "country": "SG",
-        "hits": 3
+        "country": "US",
+        "hits": 399
+      },
+      {
+        "country": "NL",
+        "hits": 209
+      },
+      {
+        "country": "AD",
+        "hits": 122
+      },
+      {
+        "country": "IN",
+        "hits": 51
+      },
+      {
+        "country": "KR",
+        "hits": 45
+      },
+      {
+        "country": "JP",
+        "hits": 29
+      },
+      {
+        "country": "ID",
+        "hits": 26
+      },
+      {
+        "country": "DE",
+        "hits": 15
+      },
+      {
+        "country": "FI",
+        "hits": 11
       }
     ],
-    "sourcesAvailable": 50
+    "sourcesAvailable": 3376
   },
   "totals": {
-    "last7d": 2035,
-    "last30d": 2664
+    "last7d": 3676,
+    "last30d": 7154
   }
 }

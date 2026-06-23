@@ -16,209 +16,209 @@
 <link rel="canonical" href="https://nowservingto.com/press">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <style>
-  :root {
-    --ink: #1a1a1a; --ink2: #2d2d2b; --muted: #6f6e6a; --paper: #ffffff;
-    --bg: #faf6ed; --line: #ebe9e4; --accent: #e84e3a; --accent-2: #3fb37f;
-    --serif: Georgia, "Times New Roman", serif;
-    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; line-height: 1.55; }
-  a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; }
-  a:hover { color: var(--accent); text-decoration-color: var(--accent); }
-  .wrap { max-width: 840px; margin: 0 auto; padding: 0 24px; }
-  header.mast { padding: 28px 0 18px; border-bottom: 1px solid var(--line); margin-bottom: 36px; }
-  header.mast .brand { font: 800 22px/1 var(--sans); letter-spacing: -0.02em; text-decoration: none; color: var(--ink); }
-  header.mast .crumb { font: 400 13px/1 var(--sans); color: var(--muted); margin-top: 6px; }
-  h1 { font: 800 clamp(28px, 4vw, 40px)/1.1 var(--sans); margin: 0 0 12px; letter-spacing: -0.022em; }
-  .dek { font: 400 17px/1.5 var(--serif); color: var(--ink2); margin: 0 0 36px; max-width: 60ch; font-style: italic; }
-  h2 { font: 800 22px/1.2 var(--sans); margin: 40px 0 12px; letter-spacing: -0.012em; }
-  h3 { font: 700 15px/1.3 var(--sans); margin: 22px 0 8px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
-  p { font: 400 15.5px/1.6 var(--sans); margin: 0 0 14px; color: var(--ink); }
-  ul { padding-left: 22px; margin: 0 0 16px; }
-  ul li { font: 400 15px/1.55 var(--sans); margin-bottom: 6px; }
-  /* Stats grid */
-  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin: 28px 0 36px; }
-  .stat { padding: 20px 16px; border-right: 1px solid var(--line); }
-  .stat:last-child { border-right: 0; }
-  .stat-num { font: 800 clamp(26px, 3.6vw, 34px)/1 var(--sans); color: var(--accent); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
-  .stat-label { font: 700 10.5px/1.3 var(--sans); color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 8px; }
-  @media (max-width: 600px) {
-    .stats { grid-template-columns: repeat(2, 1fr); }
-    .stat { border-bottom: 1px solid var(--line); }
-    .stat:nth-child(2n) { border-right: 0; }
-    .stat:nth-last-child(-n+2) { border-bottom: 0; }
-  }
-  /* Code blocks */
-  code, pre { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 13px; }
-  pre { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; line-height: 1.45; color: var(--ink); }
-  p code { background: var(--paper); border: 1px solid var(--line); padding: 1px 6px; border-radius: 4px; font-size: 12.5px; }
-  /* Embed preview */
-  .embed-preview-wrap { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin: 8px 0 24px; }
-  /* Citation block */
-  .cite-block { background: var(--paper); border-left: 3px solid var(--accent); padding: 14px 18px; font: 400 14.5px/1.55 var(--serif); color: var(--ink2); margin: 8px 0 20px; }
-  .cite-block b { color: var(--ink); font-weight: 700; }
-  /* Pitch list */
-  .pitch-list { margin: 6px 0 24px; }
-  .pitch-list a { display: inline-block; }
-  /* Footer */
-  footer.foot { margin: 60px 0 40px; padding-top: 22px; border-top: 1px solid var(--line); font: 400 13px/1.55 var(--sans); color: var(--muted); }
-  footer.foot a { color: var(--ink2); }
-  .contact-card { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 16px 20px; margin: 8px 0 24px; }
-  .contact-card .lab { font: 700 11px/1.4 var(--sans); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
-  .contact-card .val { font: 600 15px/1.4 var(--sans); margin-top: 2px; }
-  /* ---- Charts (inline SVG, same patterns as /usage page) ---- */
-  .chart-card { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px 18px; margin: 14px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
-  .chart-card .ch-title { font: 700 11px/1 var(--sans); color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin: 0 0 14px; }
-  .chart-card .ch-svg { width: 100%; height: auto; display: block; }
-  .chart-card .ch-foot { font: 500 12px/1.4 var(--sans); color: var(--muted); margin-top: 10px; }
-  /* 2-up grid for cuisine + district charts on desktop */
-  .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 14px 0; }
-  @media (max-width: 720px) { .chart-grid { grid-template-columns: 1fr; } }
-  .chart-grid > .chart-card { margin: 0; }
-  /* Donut + legend */
-  .donut-wrap { display: grid; grid-template-columns: 140px 1fr; gap: 18px; align-items: center; }
-  @media (max-width: 520px) { .donut-wrap { grid-template-columns: 1fr; justify-items: center; } }
-  .donut-legend { display: grid; gap: 4px; font: 500 12px/1.3 var(--sans); width: 100%; }
-  .donut-legend .lg-row { display: grid; grid-template-columns: 12px 1fr auto auto; gap: 8px; align-items: baseline; padding: 2px 0; border-bottom: 1px dashed var(--line); }
-  .donut-legend .lg-row:last-child { border-bottom: 0; }
-  .donut-legend .lg-swatch { width: 10px; height: 10px; border-radius: 2px; align-self: center; }
-  .donut-legend .lg-pct { color: var(--muted); font: 500 11px/1 ui-monospace, monospace; min-width: 32px; text-align: right; }
-  .donut-legend .lg-cost { color: var(--ink); font: 700 12px/1 var(--sans); min-width: 38px; text-align: right; }
-  /* District + cuisine bars */
-  .bar-h { display: grid; grid-template-columns: 130px 1fr 50px; gap: 10px; align-items: center; padding: 5px 0; font: 500 12px/1 var(--sans); }
-  .bar-h .bh-label { color: var(--ink2); font: 600 12px/1.3 var(--sans); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .bar-h .bh-label a { color: var(--ink2); text-decoration: none; }
-  .bar-h .bh-label a:hover { color: var(--accent); }
-  .bar-h .bh-track { position: relative; height: 14px; background: var(--bg); border-radius: 3px; overflow: hidden; }
-  .bar-h .bh-fill { position: absolute; top: 0; left: 0; bottom: 0; background: var(--accent); border-radius: 3px; transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
-  .bar-h .bh-val { color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
-  @media (max-width: 500px) { .bar-h { grid-template-columns: 100px 1fr 40px; gap: 8px; } }
-  /* Monthly timeline - vertical bars */
-  .month-bars { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; align-items: end; height: 140px; padding: 4px 0 0; }
-  .month-bar { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; height: 100%; min-width: 0; }
-  .month-bar .mb-fill { width: 100%; background: var(--accent); border-radius: 2px 2px 0 0; min-height: 2px; transition: height 0.5s cubic-bezier(0.22, 1, 0.36, 1); position: relative; }
-  .month-bar .mb-fill:hover { background: var(--ink); }
-  .month-bar .mb-label { font: 500 10px/1 ui-monospace, monospace; color: var(--muted); text-transform: uppercase; }
-  .month-bar .mb-val { position: absolute; top: -16px; left: 50%; transform: translateX(-50%); font: 700 10px/1 var(--sans); color: var(--ink); font-variant-numeric: tabular-nums; opacity: 0; transition: opacity 0.15s; pointer-events: none; }
-  .month-bar:hover .mb-val { opacity: 1; }
-  /* Pull-quote box for press-worthy data points */
-  .press-pulls { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 18px 0 28px; }
-  @media (max-width: 600px) { .press-pulls { grid-template-columns: 1fr; } }
-  .press-pull { background: var(--paper); border-left: 4px solid var(--accent-2); padding: 14px 18px; border-radius: 0 8px 8px 0; }
-  .press-pull .pp-num { font: 800 22px/1 var(--sans); color: var(--ink); letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
-  .press-pull .pp-txt { font: 400 13.5px/1.4 var(--serif); color: var(--ink2); margin-top: 6px; font-style: italic; }
+ :root {
+ --ink: #1a1a1a; --ink2: #2d2d2b; --muted: #6f6e6a; --paper: #ffffff;
+ --bg: #faf6ed; --line: #ebe9e4; --accent: #e84e3a; --accent-2: #3fb37f;
+ --serif: Georgia, "Times New Roman", serif;
+ --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+ }
+ * { box-sizing: border-box; }
+ html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; line-height: 1.55; }
+ a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; }
+ a:hover { color: var(--accent); text-decoration-color: var(--accent); }
+ .wrap { max-width: 840px; margin: 0 auto; padding: 0 24px; }
+ header.mast { padding: 28px 0 18px; border-bottom: 1px solid var(--line); margin-bottom: 36px; }
+ header.mast .brand { font: 800 22px/1 var(--sans); letter-spacing: -0.02em; text-decoration: none; color: var(--ink); }
+ header.mast .crumb { font: 400 13px/1 var(--sans); color: var(--muted); margin-top: 6px; }
+ h1 { font: 800 clamp(28px, 4vw, 40px)/1.1 var(--sans); margin: 0 0 12px; letter-spacing: -0.022em; }
+ .dek { font: 400 17px/1.5 var(--serif); color: var(--ink2); margin: 0 0 36px; max-width: 60ch; font-style: italic; }
+ h2 { font: 800 22px/1.2 var(--sans); margin: 40px 0 12px; letter-spacing: -0.012em; }
+ h3 { font: 700 15px/1.3 var(--sans); margin: 22px 0 8px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+ p { font: 400 15.5px/1.6 var(--sans); margin: 0 0 14px; color: var(--ink); }
+ ul { padding-left: 22px; margin: 0 0 16px; }
+ ul li { font: 400 15px/1.55 var(--sans); margin-bottom: 6px; }
+ /* Stats grid */
+ .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin: 28px 0 36px; }
+ .stat { padding: 20px 16px; border-right: 1px solid var(--line); }
+ .stat:last-child { border-right: 0; }
+ .stat-num { font: 800 clamp(26px, 3.6vw, 34px)/1 var(--sans); color: var(--accent); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+ .stat-label { font: 700 10.5px/1.3 var(--sans); color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 8px; }
+ @media (max-width: 600px) {
+ .stats { grid-template-columns: repeat(2, 1fr); }
+ .stat { border-bottom: 1px solid var(--line); }
+ .stat:nth-child(2n) { border-right: 0; }
+ .stat:nth-last-child(-n+2) { border-bottom: 0; }
+ }
+ /* Code blocks */
+ code, pre { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 13px; }
+ pre { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; line-height: 1.45; color: var(--ink); }
+ p code { background: var(--paper); border: 1px solid var(--line); padding: 1px 6px; border-radius: 4px; font-size: 12.5px; }
+ /* Embed preview */
+ .embed-preview-wrap { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin: 8px 0 24px; }
+ /* Citation block */
+ .cite-block { background: var(--paper); border-left: 3px solid var(--accent); padding: 14px 18px; font: 400 14.5px/1.55 var(--serif); color: var(--ink2); margin: 8px 0 20px; }
+ .cite-block b { color: var(--ink); font-weight: 700; }
+ /* Pitch list */
+ .pitch-list { margin: 6px 0 24px; }
+ .pitch-list a { display: inline-block; }
+ /* Footer */
+ footer.foot { margin: 60px 0 40px; padding-top: 22px; border-top: 1px solid var(--line); font: 400 13px/1.55 var(--sans); color: var(--muted); }
+ footer.foot a { color: var(--ink2); }
+ .contact-card { background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 16px 20px; margin: 8px 0 24px; }
+ .contact-card .lab { font: 700 11px/1.4 var(--sans); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+ .contact-card .val { font: 600 15px/1.4 var(--sans); margin-top: 2px; }
+ /* ---- Charts (inline SVG, same patterns as /usage page) ---- */
+ .chart-card { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px 18px; margin: 14px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+ .chart-card .ch-title { font: 700 11px/1 var(--sans); color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin: 0 0 14px; }
+ .chart-card .ch-svg { width: 100%; height: auto; display: block; }
+ .chart-card .ch-foot { font: 500 12px/1.4 var(--sans); color: var(--muted); margin-top: 10px; }
+ /* 2-up grid for cuisine + district charts on desktop */
+ .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 14px 0; }
+ @media (max-width: 720px) { .chart-grid { grid-template-columns: 1fr; } }
+ .chart-grid > .chart-card { margin: 0; }
+ /* Donut + legend */
+ .donut-wrap { display: grid; grid-template-columns: 140px 1fr; gap: 18px; align-items: center; }
+ @media (max-width: 520px) { .donut-wrap { grid-template-columns: 1fr; justify-items: center; } }
+ .donut-legend { display: grid; gap: 4px; font: 500 12px/1.3 var(--sans); width: 100%; }
+ .donut-legend .lg-row { display: grid; grid-template-columns: 12px 1fr auto auto; gap: 8px; align-items: baseline; padding: 2px 0; border-bottom: 1px dashed var(--line); }
+ .donut-legend .lg-row:last-child { border-bottom: 0; }
+ .donut-legend .lg-swatch { width: 10px; height: 10px; border-radius: 2px; align-self: center; }
+ .donut-legend .lg-pct { color: var(--muted); font: 500 11px/1 ui-monospace, monospace; min-width: 32px; text-align: right; }
+ .donut-legend .lg-cost { color: var(--ink); font: 700 12px/1 var(--sans); min-width: 38px; text-align: right; }
+ /* District + cuisine bars */
+ .bar-h { display: grid; grid-template-columns: 130px 1fr 50px; gap: 10px; align-items: center; padding: 5px 0; font: 500 12px/1 var(--sans); }
+ .bar-h .bh-label { color: var(--ink2); font: 600 12px/1.3 var(--sans); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+ .bar-h .bh-label a { color: var(--ink2); text-decoration: none; }
+ .bar-h .bh-label a:hover { color: var(--accent); }
+ .bar-h .bh-track { position: relative; height: 14px; background: var(--bg); border-radius: 3px; overflow: hidden; }
+ .bar-h .bh-fill { position: absolute; top: 0; left: 0; bottom: 0; background: var(--accent); border-radius: 3px; transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
+ .bar-h .bh-val { color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
+ @media (max-width: 500px) { .bar-h { grid-template-columns: 100px 1fr 40px; gap: 8px; } }
+ /* Monthly timeline - vertical bars */
+ .month-bars { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; align-items: end; height: 140px; padding: 4px 0 0; }
+ .month-bar { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; height: 100%; min-width: 0; }
+ .month-bar .mb-fill { width: 100%; background: var(--accent); border-radius: 2px 2px 0 0; min-height: 2px; transition: height 0.5s cubic-bezier(0.22, 1, 0.36, 1); position: relative; }
+ .month-bar .mb-fill:hover { background: var(--ink); }
+ .month-bar .mb-label { font: 500 10px/1 ui-monospace, monospace; color: var(--muted); text-transform: uppercase; }
+ .month-bar .mb-val { position: absolute; top: -16px; left: 50%; transform: translateX(-50%); font: 700 10px/1 var(--sans); color: var(--ink); font-variant-numeric: tabular-nums; opacity: 0; transition: opacity 0.15s; pointer-events: none; }
+ .month-bar:hover .mb-val { opacity: 1; }
+ /* Pull-quote box for press-worthy data points */
+ .press-pulls { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 18px 0 28px; }
+ @media (max-width: 600px) { .press-pulls { grid-template-columns: 1fr; } }
+ .press-pull { background: var(--paper); border-left: 4px solid var(--accent-2); padding: 14px 18px; border-radius: 0 8px 8px 0; }
+ .press-pull .pp-num { font: 800 22px/1 var(--sans); color: var(--ink); letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+ .press-pull .pp-txt { font: 400 13.5px/1.4 var(--serif); color: var(--ink2); margin-top: 6px; font-style: italic; }
 </style>
 <!-- Google Analytics 4 + Microsoft Clarity (lazy-loaded on first interaction so neither tanks LCP) -->
 <script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  (function() {
-    var loaded = false;
-    var load = function() {
-      if (loaded) return; loaded = true;
-      ['scroll','pointerdown','keydown','touchstart','visibilitychange']
-        .forEach(function(ev){ window.removeEventListener(ev, load, true); });
-      var s = document.createElement('script');
-      s.async = true;
-      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-CBQJHD3G7P';
-      document.head.appendChild(s);
-      gtag('js', new Date());
-      gtag('config', 'G-CBQJHD3G7P');
-      (function(c,l,a,r,i,t,y){
-        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-      })(window, document, "clarity", "script", "x10kln08ch");
-    };
-    ['scroll','pointerdown','keydown','touchstart','visibilitychange']
-      .forEach(function(ev){ window.addEventListener(ev, load, {once: true, passive: true, capture: true}); });
-    setTimeout(load, 10000);
-  })();
+ window.dataLayer = window.dataLayer || [];
+ function gtag(){dataLayer.push(arguments);}
+ (function() {
+ var loaded = false;
+ var load = function() {
+ if (loaded) return; loaded = true;
+ ['scroll','pointerdown','keydown','touchstart','visibilitychange']
+ .forEach(function(ev){ window.removeEventListener(ev, load, true); });
+ var s = document.createElement('script');
+ s.async = true;
+ s.src = 'https://www.googletagmanager.com/gtag/js?id=G-CBQJHD3G7P';
+ document.head.appendChild(s);
+ gtag('js', new Date());
+ gtag('config', 'G-CBQJHD3G7P');
+ (function(c,l,a,r,i,t,y){
+ c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+ t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+ })(window, document, "clarity", "script", "x10kln08ch");
+ };
+ ['scroll','pointerdown','keydown','touchstart','visibilitychange']
+ .forEach(function(ev){ window.addEventListener(ev, load, {once: true, passive: true, capture: true}); });
+ setTimeout(load, 10000);
+ })();
 </script>
 
 </head>
 <body>
 
 <header class="mast">
-  <div class="wrap">
-    <a href="/" class="brand">NowServingTO</a>
-    <div class="crumb"><a href="/">Home</a> · Press &amp; Media Kit</div>
-  </div>
+ <div class="wrap">
+ <a href="/" class="brand">NowServingTO</a>
+ <div class="crumb"><a href="/">Home</a> · Press &amp; Media Kit</div>
+ </div>
 </header>
 
 <main class="wrap">
 
-  <h1>Press &amp; Media Kit</h1>
-  <p class="dek">Methodology, embed code, citation format, and editorial briefs for journalists covering Toronto&apos;s restaurant scene.</p>
+ <h1>Press &amp; Media Kit</h1>
+ <p class="dek">Methodology, embed code, citation format, and editorial briefs for journalists covering Toronto&apos;s restaurant scene.</p>
 
-  <p style="margin: 18px 0 32px; display: flex; gap: 12px; flex-wrap: wrap;">
-    <a href="/trends" style="display: inline-block; padding: 10px 18px; background: var(--ink); color: #fff; text-decoration: none; border-radius: 999px; font: 700 13.5px/1 var(--sans);">Live data &rsaquo; /trends</a>
-    <a href="/" style="display: inline-block; padding: 10px 18px; background: var(--paper); color: var(--ink); text-decoration: none; border-radius: 999px; font: 600 13.5px/1 var(--sans); border: 1px solid var(--line);">Live directory &rsaquo; /</a>
-    <a href="/data/corridors.json" style="display: inline-block; padding: 10px 18px; background: var(--paper); color: var(--ink); text-decoration: none; border-radius: 999px; font: 600 13.5px/1 var(--sans); border: 1px solid var(--line);">JSON feed &rsaquo;</a>
-  </p>
+ <p style="margin: 18px 0 32px; display: flex; gap: 12px; flex-wrap: wrap;">
+ <a href="/trends" style="display: inline-block; padding: 10px 18px; background: var(--ink); color: #fff; text-decoration: none; border-radius: 999px; font: 700 13.5px/1 var(--sans);">Live data &rsaquo; /trends</a>
+ <a href="/" style="display: inline-block; padding: 10px 18px; background: var(--paper); color: var(--ink); text-decoration: none; border-radius: 999px; font: 600 13.5px/1 var(--sans); border: 1px solid var(--line);">Live directory &rsaquo; /</a>
+ <a href="/data/corridors.json" style="display: inline-block; padding: 10px 18px; background: var(--paper); color: var(--ink); text-decoration: none; border-radius: 999px; font: 600 13.5px/1 var(--sans); border: 1px solid var(--line);">JSON feed &rsaquo;</a>
+ </p>
 
-  <h2>How it works</h2>
-  <p>Every night the pipeline pulls Toronto&apos;s business licence registry from the City&apos;s open-data CKAN portal (158k rows, refreshed daily), filters to restaurant categories issued in the last 365 days, deduplicates against OpenStreetMap and Wikidata chain databases, classifies each entry by cuisine via Claude Haiku with web-search verification, and cross-checks DineSafe inspections and social media signals to confirm the location is currently operating.</p>
+ <h2>How it works</h2>
+ <p>Every night the pipeline pulls Toronto&apos;s business licence registry from the City&apos;s open-data CKAN portal (158k rows, refreshed daily), filters to restaurant categories issued in the last 365 days, deduplicates against OpenStreetMap and Wikidata chain databases, classifies each entry by cuisine via Claude Haiku with web-search verification, and cross-checks DineSafe inspections and social media signals to confirm the location is currently operating.</p>
 
-  <p>A second gate cross-checks every candidate against Toronto Public Health&apos;s DineSafe inspection record. If DineSafe inspected the establishment at the same address and name more than 180 days <em>before</em> the licence-issued date, the licence event is treated as a re-licensing of a pre-existing restaurant (ownership transfer, suite renumbering, licence-type addition) and the entry is suppressed - this is how MAKILALA-class long-operating places stay out of the &quot;newly registered&quot; feed even when their City paperwork looks fresh. Only restaurants verified as currently open at the licensed address are shown.</p>
+ <p>A second gate cross-checks every candidate against Toronto Public Health&apos;s DineSafe inspection record. If DineSafe inspected the establishment at the same address and name more than 180 days <em>before</em> the licence-issued date, the licence event is treated as a re-licensing of a pre-existing restaurant (ownership transfer, suite renumbering, licence-type addition) and the entry is suppressed - this is how MAKILALA-class long-operating places stay out of the &quot;newly registered&quot; feed even when their City paperwork looks fresh. Only restaurants verified as currently open at the licensed address are shown.</p>
 
-  <p><b>The displayed &quot;First seen&quot; date is the earlier of the City licence-issued date or the first Toronto Public Health DineSafe inspection — whichever proves the restaurant was actually operating.</b> Roughly 72% of currently-tracked restaurants have a DineSafe match by address + name; for those, the inspection date is used (a public-health officer physically present in the kitchen is a stronger proof of operation than the paper filing). For the remaining 28% with no DineSafe match, the licence date is used as the fallback. This is what other Toronto restaurant aggregators can&apos;t do: BlogTO and Yelp don&apos;t cross-reference the inspection record, so their &quot;newly opened&quot; signals lean on press releases and social mentions. The City + Public Health cross-reference is the project&apos;s primary differentiator.</p>
+ <p><b>The displayed &quot;First seen&quot; date is the earlier of the City licence-issued date or the first Toronto Public Health DineSafe inspection, whichever proves the restaurant was actually operating.</b> Roughly 72% of currently-tracked restaurants have a DineSafe match by address + name; for those, the inspection date is used (a public-health officer physically present in the kitchen is a stronger proof of operation than the paper filing). For the remaining 28% with no DineSafe match, the licence date is used as the fallback. This is what other Toronto restaurant aggregators can&apos;t do: BlogTO and Yelp don&apos;t cross-reference the inspection record, so their &quot;newly opened&quot; signals lean on press releases and social mentions. The City + Public Health cross-reference is the project&apos;s primary differentiator.</p>
 
-  <h2>Embeddable widget</h2>
-  <p>Drop a fresh feed of newly registered restaurants into any blog post or news article. The widget renders a small card with the 3–5 most recent licences for a cuisine or district, links each card to its restaurant page, and includes a footer attribution link back to NowServingTO. No iframe - the rendered links count for SEO.</p>
+ <h2>Embeddable widget</h2>
+ <p>Drop a fresh feed of newly registered restaurants into any blog post or news article. The widget renders a small card with the 3-5 most recent licences for a cuisine or district, links each card to its restaurant page, and includes a footer attribution link back to NowServingTO. No iframe - the rendered links count for SEO.</p>
 
-  <p>Basic usage:</p>
-  <pre>&lt;div data-nsto-embed data-cuisine="vietnamese" data-count="5"&gt;&lt;/div&gt;
+ <p>Basic usage:</p>
+ <pre>&lt;div data-nsto-embed data-cuisine="vietnamese" data-count="5"&gt;&lt;/div&gt;
 &lt;script src="https://nowservingto.com/embed.js" async&gt;&lt;/script&gt;</pre>
 
-  <p>Supported attributes: <code>data-cuisine</code> (any of the <a href="/#cuisines">~50 cuisine keys</a>), <code>data-district</code> (<code>downtown</code>, <code>east-toronto</code>, <code>etobicoke</code>, <code>north-york</code>, <code>scarborough</code>, <code>west-toronto</code>), <code>data-count</code> (1–10, default 5). Use both <code>data-cuisine</code> and <code>data-district</code> to get the intersection. Loads asynchronously, ~4 KB script, no jQuery.</p>
+ <p>Supported attributes: <code>data-cuisine</code> (any of the <a href="/#cuisines">~50 cuisine keys</a>), <code>data-district</code> (<code>downtown</code>, <code>east-toronto</code>, <code>etobicoke</code>, <code>north-york</code>, <code>scarborough</code>, <code>west-toronto</code>), <code>data-count</code> (1-10, default 5). Use both <code>data-cuisine</code> and <code>data-district</code> to get the intersection. Loads asynchronously, ~4 KB script, no jQuery.</p>
 
-  <p>Live preview:</p>
-  <div class="embed-preview-wrap">
-    <div data-nsto-embed data-cuisine="vietnamese" data-count="3"></div>
-  </div>
+ <p>Live preview:</p>
+ <div class="embed-preview-wrap">
+ <div data-nsto-embed data-cuisine="vietnamese" data-count="3"></div>
+ </div>
 
-  <h2>Citation format</h2>
-  <p>If you use our numbers or feed in a story, please credit us. Recommended language:</p>
-  <div class="cite-block"><b>Source:</b> NowServingTO.com, daily-tracked from the City of Toronto&apos;s business licence registry (Toronto Open Data, refreshed nightly). Last updated <!-- PRESS-UPDATED-DATE -->June 9, 2026<!-- /PRESS-UPDATED-DATE -->.</div>
-  <p>Plain HTML:</p>
-  <pre>Source: &lt;a href="https://nowservingto.com/"&gt;NowServingTO.com&lt;/a&gt;,
+ <h2>Citation format</h2>
+ <p>If you use our numbers or feed in a story, please credit us. Recommended language:</p>
+ <div class="cite-block"><b>Source:</b> NowServingTO.com, daily-tracked from the City of Toronto&apos;s business licence registry (Toronto Open Data, refreshed nightly). Last updated <!-- PRESS-UPDATED-DATE -->June 13, 2026<!-- /PRESS-UPDATED-DATE -->.</div>
+ <p>Plain HTML:</p>
+ <pre>Source: &lt;a href="https://nowservingto.com/"&gt;NowServingTO.com&lt;/a&gt;,
 daily-tracked from the &lt;a href="https://open.toronto.ca/dataset/municipal-licensing-and-standards-business-licences-and-permits/"&gt;City of Toronto business licence registry&lt;/a&gt;.</pre>
 
-  <h2>For diaspora editors</h2>
-  <p>We maintain dedicated weekly editorial briefs for select diaspora communities - live, auto-updating, designed to be lifted verbatim or used as research. Each brief carries the registered-this-week count, the past-12-month total, a real Places photo of the most-recent opening, the full card grid of recent registrations, and a district-density bar chart:</p>
-  <ul class="pitch-list">
-    <li><a href="/wire/indian">Indian kitchens, region by region</a></li>
-    <li><a href="/wire/chinese">Chinese kitchens, regional and rising</a></li>
-    <li><a href="/wire/italian">Italian kitchens, the licence registry</a></li>
-    <li><a href="/wire/mexican">Mexican kitchens, the wave</a></li>
-    <li><a href="/wire/vietnamese">Vietnamese kitchens, by the week</a></li>
-    <li><a href="/wire/korean">Korean kitchens, K-town and beyond</a></li>
-    <li><a href="/wire/filipino">Filipino kitchens, this week in Toronto</a></li>
-    <li><a href="/wire/jamaican">Jamaican kitchens, Eglinton West and beyond</a></li>
-    <li><a href="/wire/tamil">Tamil kitchens, Scarborough&apos;s everyday wave</a></li>
-  </ul>
-  <p>If you edit a publication serving a diaspora community in Canada and want a custom feed (your cuisine, your region of Toronto, your cadence), email us - we&apos;ll wire it.</p>
+ <h2>For diaspora editors</h2>
+ <p>We maintain dedicated weekly editorial briefs for select diaspora communities - live, auto-updating, designed to be lifted verbatim or used as research. Each brief carries the registered-this-week count, the past-12-month total, the full card grid of recent registrations, and a district-density bar chart:</p>
+ <ul class="pitch-list">
+ <li><a href="/wire/indian">Indian kitchens, region by region</a></li>
+ <li><a href="/wire/chinese">Chinese kitchens, regional and rising</a></li>
+ <li><a href="/wire/italian">Italian kitchens, the licence registry</a></li>
+ <li><a href="/wire/mexican">Mexican kitchens, the wave</a></li>
+ <li><a href="/wire/vietnamese">Vietnamese kitchens, by the week</a></li>
+ <li><a href="/wire/korean">Korean kitchens, K-town and beyond</a></li>
+ <li><a href="/wire/filipino">Filipino kitchens, this week in Toronto</a></li>
+ <li><a href="/wire/jamaican">Jamaican kitchens, Eglinton West and beyond</a></li>
+ <li><a href="/wire/tamil">Tamil kitchens, Scarborough&apos;s everyday wave</a></li>
+ </ul>
+ <p>If you edit a publication serving a diaspora community in Canada and want a custom feed (your cuisine, your region of Toronto, your cadence), email us - we&apos;ll wire it.</p>
 
-  <h2>Contact</h2>
-  <div class="contact-card">
-    <div class="lab">Editorial / data / partnerships</div>
-    <div class="val"><a href="mailto:hello@nowservingto.com">hello@nowservingto.com</a></div>
-  </div>
+ <h2>Contact</h2>
+ <div class="contact-card">
+ <div class="lab">Editorial / data / partnerships</div>
+ <div class="val"><a href="mailto:hello@nowservingto.com">hello@nowservingto.com</a></div>
+ </div>
 
-  <h2>What we are not</h2>
-  <ul>
-    <li><b>Not a review site.</b> We surface registry data, not user reviews or ratings.</li>
-    <li><b>Not a directory of every Toronto restaurant.</b> We only track those registered in the past 365 days - the &quot;newly opened&quot; cohort.</li>
-    <li><b>Not user-submitted.</b> No tips, no claims, no self-tagged ethnicity. The data is the City&apos;s licensing registry plus web-search verification.</li>
-    <li><b>Not affiliated</b> with the City of Toronto, Google, or any restaurant listed.</li>
-  </ul>
+ <h2>What we are not</h2>
+ <ul>
+ <li><b>Not a review site.</b> We surface registry data, not user reviews or ratings.</li>
+ <li><b>Not a directory of every Toronto restaurant.</b> We only track those registered in the past 365 days - the &quot;newly opened&quot; cohort.</li>
+ <li><b>Not user-submitted.</b> No tips, no claims, no self-tagged ethnicity. The data is the City&apos;s licensing registry plus web-search verification.</li>
+ <li><b>Not affiliated</b> with the City of Toronto, Google, or any restaurant listed.</li>
+ </ul>
 
-  <footer class="foot">
-    <p><a href="/">Home</a> · <a href="/sitemap.xml">Sitemap</a> · <a href="/usage">Operating cost</a> · <a href="/contribute">Submit a correction</a></p>
-    <p>NowServingTO is an independent project. Data: City of Toronto Open Data (business licences + DineSafe inspections), social media signals, OpenStreetMap, Wikidata. Code: Python + vanilla HTML/JS.</p>
-  </footer>
+ <footer class="foot">
+ <p><a href="/">Home</a> · <a href="/sitemap.xml">Sitemap</a> · <a href="/usage">Operating cost</a> · <a href="/contribute">Submit a correction</a></p>
+ <p>NowServingTO is an independent project. Data: City of Toronto Open Data (business licences + DineSafe inspections), social media signals, OpenStreetMap, Wikidata. Code: Python + vanilla HTML/JS.</p>
+ </footer>
 
 </main>
 

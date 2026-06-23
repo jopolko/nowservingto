@@ -204,20 +204,15 @@
     unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
   }
   :root {
-    /* Editorial palette 2026-06-04 — deepened from the previous "1987
-       cookbook" register toward a confident-print-magazine direction.
-       Warm cream paper, ink-black (not grey), saturated oxblood accent,
-       moss-green for the freshness signal. The mono data layer (day
-       counts + addresses) reads against the serif body as "facts" vs
-       "prose" — the trick that separates a data product from a blog. */
-    --bg: #fbf8f0;        /* off-white with the faintest warm cast — magazine paper */
-    --paper: #ffffff;     /* pure white cards layered on the warm-white bg */
-    --ink: #0a0a0a;       /* true black — maximum ink contrast */
-    --ink2: #222222;      /* dark grey, near-ink */
-    --muted: #6e665a;     /* warm muted grey */
-    --line: #e7e1d2;      /* neutral warm hairline */
-    --rule: #0a0a0a;
-    --accent: #b5252e;    /* saturated Bon-Appétit-style editorial red */
+    --bg: #faf8f4;
+    --paper: #ffffff;
+    --ink: #16140f;
+    --ink2: #3f3a30;
+    --muted: #6e665a;
+    --line: rgba(0,0,0,.10);
+    --rule: rgba(0,0,0,.12);
+    --accent: #b5252e;
+    --gold: #ef9f27;
     --accent-2: #1f3a26;  /* deep forest green */
     --moss: #1f3a26;
     --fresh: #1f3a26;
@@ -248,6 +243,7 @@
     --serif: 'Fraunces', 'Iowan Old Style', 'Charter', Georgia, ui-serif, serif;
     --sans: 'Fraunces', 'Iowan Old Style', 'Charter', Georgia, ui-serif, serif;
     --mono: ui-monospace, Menlo, Consolas, 'SF Mono', monospace;
+    --ui: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
@@ -418,12 +414,19 @@
   .phone-modal .pm-url a { color: var(--muted); text-decoration: none; }
   .phone-modal .pm-url a:hover { color: var(--ink); }
 
-  .filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 24px 0 14px; }
+  .filters { display: flex; gap: 8px; align-items: center; margin: 24px 0 14px; position: sticky; top: 0; z-index: 500; transition: box-shadow .18s; flex-wrap: nowrap; overflow: visible; }
+  .filters::before { content: ""; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 100vw; height: 100%; background: var(--bg); border-bottom: 1px solid transparent; z-index: -1; transition: border-color .18s; }
+  body.sticky-on .filters { box-shadow: 0 8px 20px -14px rgba(0,0,0,.4); }
+  body.sticky-on .filters::before { border-bottom-color: var(--line); }
+  .filters-brand { display: none; font: 800 16px/1 var(--serif); color: var(--ink); text-decoration: none; letter-spacing: -.01em; margin-right: 4px; white-space: nowrap; align-self: center; flex-shrink: 0; }
+  .filters-brand:hover { color: var(--accent); }
+  body.sticky-on .filters-brand { display: inline-flex; }
+  @media (max-width: 560px) { body.sticky-on .filters-brand { font-size: 15px; } }
   @media (max-width: 600px) {
     /* Two-row layout: cuisine + region split 50/50 on row 1; near-me + saved +
        view-toggle pack together on row 2. Avoids the 3-row wrap that happens
        when each dropdown wants its full desktop min-width. */
-    .filters { gap: 6px; }
+    .filters { gap: 6px; flex-wrap: wrap; }
     .filters .cuisine-picker { flex: 1 1 calc(50% - 3px); min-width: 0; }
     .filters .cuisine-picker .cp-trigger { min-width: 0; width: 100%; }
     /* Compact icon-only buttons for Near me + Saved on row 2 */
@@ -438,7 +441,7 @@
   .filters .filter-clear:hover { color: var(--accent); }
   .cuisine-picker { position: relative; }
   .cuisine-picker.region button.cp-trigger { min-width: 160px; }
-  .cuisine-picker button.cp-trigger { font: 600 13px/1.3 var(--sans); font-variant-numeric: lining-nums tabular-nums; color: var(--ink); background: var(--paper); border: 1px solid var(--line); border-radius: 999px; padding: 9px 32px 9px 16px; cursor: pointer; min-width: 200px; max-width: 100%; text-align: left; position: relative; transition: border-color 0.12s, box-shadow 0.12s, background 0.12s; }
+  .cuisine-picker button.cp-trigger { font: 600 13px/1.3 var(--sans); font-variant-numeric: lining-nums tabular-nums; color: var(--ink); background: var(--paper); border: 1px solid var(--line); border-radius: 999px; padding: 9px 32px 9px 16px; cursor: pointer; min-width: 200px; max-width: 100%; text-align: left; position: relative; transition: border-color 0.12s, box-shadow 0.12s, background 0.12s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .cuisine-picker button.cp-trigger::after { content: ''; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid var(--ink); transition: transform 0.12s; }
   .cuisine-picker button.cp-trigger[aria-expanded="true"]::after { transform: translateY(-50%) rotate(180deg); }
   .cuisine-picker button.cp-trigger:hover { border-color: var(--rule); }
@@ -454,11 +457,10 @@
   #rp-panel { left: auto; right: 0; }
   /* Tighten option padding so short district / cuisine names don't have
      stranded whitespace next to the count column. */
-  .cuisine-picker .cp-opt { padding-left: 12px; padding-right: 12px; }
   .cuisine-picker .cp-panel[hidden] { display: none; }
-  .cuisine-picker .cp-opt { display: flex; align-items: baseline; gap: 8px; padding: 10px 16px; cursor: pointer; font: 500 14px/1.3 var(--sans); color: var(--ink); border: 0; background: transparent; width: 100%; text-align: left; min-height: 40px; }
-  .cuisine-picker .cp-opt:hover, .cuisine-picker .cp-opt:focus-visible { background: var(--bg); outline: none; }
-  .cuisine-picker .cp-opt[aria-selected="true"] { background: rgba(200, 54, 36, 0.06); font-weight: 700; }
+  .cuisine-picker .cp-opt { display: flex; align-items: baseline; gap: 8px; padding: 10px 12px; cursor: pointer; font: 500 14px/1.3 var(--sans); color: var(--ink); border: 0; background: transparent; width: 100%; text-align: left; min-height: 40px; }
+  .cuisine-picker .cp-opt:hover, .cuisine-picker .cp-opt:focus-visible { background: #f3efe7; outline: none; }
+  .cuisine-picker .cp-opt[aria-selected="true"] { background: rgba(181,37,46,.10); color: var(--ink); font-weight: 700; }
   /* <a class="cp-opt"> needs text-decoration override since browser
      defaults underline links. The cp-opt button styles above mostly
      apply already, this is the safety net. */
@@ -467,7 +469,7 @@
      dropdown jumps to a match, that match gets aria-current="true". Pulse-
      less highlight (no transition; it's a positioning aid, not a CTA). */
   .cuisine-picker .cp-opt[aria-current="true"] { background: rgba(138, 42, 31, 0.10); }
-  .cuisine-picker .cp-opt .ct { color: var(--muted); font: 500 11.5px/1 var(--mono); font-variant-numeric: lining-nums tabular-nums; margin-left: auto; }
+  .cuisine-picker .cp-opt .ct { color: var(--accent); font: 700 11.5px/1 var(--mono); font-variant-numeric: lining-nums tabular-nums; margin-left: auto; }
   .cuisine-picker .cp-opt.cp-all { border-bottom: 1px solid var(--line); }
 
   .open-feed { background: var(--paper); border: 1px solid #d9d1ba; border-radius: 12px; padding: 0; margin-bottom: 28px; box-shadow: 0 2px 6px rgba(0,0,0,0.06), 0 12px 32px rgba(0,0,0,0.05); overflow: hidden; }
@@ -681,6 +683,46 @@
   .open-feed .show-more { display: block; width: calc(100% - 36px); margin: 8px 18px 12px; padding: 11px 14px; background: var(--paper); border: 1px solid var(--line); border-radius: 6px; cursor: pointer; font: 700 11.5px/1 var(--sans); text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink2); transition: all 0.12s; }
   .open-feed .show-more:hover { background: var(--bg); border-color: var(--rule); color: var(--ink); }
 
+  /* ── Ticket card (JS-rendered: paintFeed → buildRowEl) ─── */
+  .ticket { background: var(--paper); border-bottom: 1px solid var(--line); padding: 20px 24px; position: relative; transition: background 0.12s; }
+  .ticket:last-of-type, .ticket:last-child { border-bottom: 0; }
+  body:not(.page-listing) .ticket[data-slug] { cursor: pointer; }
+  .ticket[data-slug]:hover { background: rgba(0,0,0,.018); }
+  .tk-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .tk-badge { font: 700 10px/1 var(--sans); text-transform: uppercase; letter-spacing: 0.07em; color: #fff; padding: 4px 10px; border-radius: 99px; white-space: nowrap; }
+  .tk-freshness { font: 500 12px/1 var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; margin-left: auto; white-space: nowrap; }
+  .tk-freshness .days { font-weight: 700; color: var(--ink2); }
+  .tk-name { font: 600 18px/1.25 var(--display, var(--serif)); color: var(--ink); margin: 0 0 6px; letter-spacing: -0.01em; }
+  .tk-name a { color: var(--ink); text-decoration: none; transition: color 0.12s; }
+  .tk-name a:hover { color: var(--accent); }
+  .tk-name .ext-arrow { color: var(--muted); font-size: 0.7em; margin-left: 4px; vertical-align: 1px; transition: color 0.12s; }
+  .tk-name a:hover .ext-arrow { color: var(--accent); }
+  .tk-blurb { font: 400 13.5px/1.5 var(--serif); color: var(--ink2); margin: 0 0 10px; }
+  .row-fresh { color: var(--accent); font-style: italic; font-weight: 500; }
+  .tear { border: 0; border-top: 1px dashed rgba(0,0,0,.12); margin: 12px 0 10px; }
+  .tk-foot { display: flex; align-items: flex-start; gap: 10px; flex-wrap: wrap; }
+  .tk-addr { flex: 1; min-width: 0; font: 400 12.5px/1.45 var(--sans); color: var(--muted); }
+  .nbhd { display: block; font: 700 10.5px/1.2 var(--sans); color: var(--ink2); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 3px; }
+  .tk-addr a { color: var(--muted); text-decoration: underline; text-decoration-style: dotted; text-decoration-color: rgba(0,0,0,.25); transition: color 0.12s; cursor: pointer; }
+  .tk-addr a:hover { color: var(--accent); }
+  .oad-rest { opacity: .7; }
+  .oad-d { font-weight: 500; color: var(--ink2); }
+  .tk-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .ticket .row-fav, .ticket .row-share { display: inline-flex; align-items: center; gap: 4px; font: 600 11.5px/1 var(--sans); padding: 6px 12px; border: 1px solid var(--line); border-radius: 99px; background: var(--paper); color: var(--ink2); cursor: pointer; transition: background 0.12s, border-color 0.12s, color 0.12s; white-space: nowrap; }
+  .ticket .row-fav:hover, .ticket .row-share:hover { border-color: var(--rule); background: var(--bg); color: var(--ink); }
+  .ticket .row-fav.fav-on { color: var(--accent); border-color: rgba(181,37,46,.3); background: rgba(181,37,46,.05); }
+  .ticket .row-fav::after { content: 'Save'; }
+  .ticket .row-fav.fav-on::after { content: 'Saved'; }
+  .ticket .row-share::after { content: 'Share'; }
+  .ticket .row-share svg { display: block; }
+  .tk-cta { display: inline-flex; align-items: center; font: 600 11.5px/1 var(--sans); padding: 6px 12px; border: 1px solid var(--line); border-radius: 99px; background: var(--paper); color: var(--ink2); text-decoration: none; transition: background 0.12s, border-color 0.12s, color 0.12s; white-space: nowrap; }
+  .tk-cta:hover { background: var(--ink); color: #fff; border-color: var(--ink); }
+  @media (max-width: 600px) {
+    .ticket { padding: 16px 18px; }
+    .tk-name { font-size: 16px; }
+    .tk-actions { flex-wrap: wrap; }
+  }
+
   main.wrap { padding-bottom: 60px; }
   /* Visible breadcrumb above the filter row on /cuisine, /district, /r pages.
      Empty on the homepage (no parent). Mirrors the BreadcrumbList JSON-LD so
@@ -734,6 +776,13 @@
   .all-cuisines a + a::before, .all-districts a + a::before, .all-neighborhoods a + a::before { content: ' · '; color: var(--line); }
   .all-districts { margin-top: 8px; }
   .all-neighborhoods { margin-top: 8px; margin-bottom: 32px; }
+  .site-footer { max-width: 1100px; margin: 40px auto 0; padding: 24px 24px 40px; border-top: 1px solid var(--line); }
+  .footer-methodology { font: 400 12.5px/1.6 var(--sans); color: var(--muted); margin: 0 0 12px; }
+  .footer-methodology a { color: var(--muted); text-decoration: underline; text-decoration-style: dotted; text-decoration-color: rgba(0,0,0,.25); text-underline-offset: 2px; }
+  .footer-methodology a:hover { color: var(--ink2); }
+  .footer-links { display: flex; gap: 20px; flex-wrap: wrap; }
+  .footer-links a { font: 500 12px/1 var(--sans); color: var(--muted); text-decoration: none; }
+  .footer-links a:hover { color: var(--ink); }
   /* Neighbourhood browse section — visible, above the newsletter CTA */
   .nbhd-browse { margin: 40px auto 0; max-width: 1100px; padding: 24px 24px 0; border-top: 1px solid var(--line); }
   .nbhd-browse-h { font: 700 15px/1.2 var(--sans); color: var(--ink); margin: 0 0 4px; letter-spacing: -0.01em; }
@@ -1375,484 +1424,28 @@
     .open-row > .row-blurb { font-size: 12.5px !important; line-height: 1.45 !important; margin: 4px 0 0; }
   }
 
-  /* ══════════════════════════════════════════════════════════
-     DARK EDITION 2026-06-12 — night-market aesthetic.
-     Dark field, cream ticket cards, teal freshness signal.
-     Overrides the light palette declared above.
-     ══════════════════════════════════════════════════════════ */
+  /* ===== Light-edition components (2026-06-13) ===== */
 
-  :root {
-    --bg:       #070b08;
-    --paper:    #f7f1e1;
-    --line:     rgba(255,255,255,.07);
-    --rule:     rgba(255,255,255,.14);
-    --fresh:    #4a8b8b;
-    --moss:     #4a8b8b;
-    --accent-2: #4a8b8b;
-  }
-
-  body { color: var(--paper); }
-
-  /* — Masthead ————————————————————————————————— */
-  .mast .wrap { border-bottom-color: rgba(255,255,255,.1); }
-  .mast .mast-lockup { border-bottom-color: rgba(255,255,255,.06); }
-  .mast .brand { color: var(--paper); }
-  .mast .brand:hover { color: var(--accent); }
-  .mast .mast-meta { color: rgba(247,241,225,.55); }
-  .mast .mast-meta .mast-issue { color: var(--accent); }
-  .mast .mast-meta .mast-date { color: rgba(247,241,225,.7); }
-  .mast .sub { color: rgba(247,241,225,.88); }
-  .mast .sub .hl { color: var(--accent); }
-  .mast .home-methodology { color: rgba(247,241,225,.6); }
-  .mast .home-methodology a { color: rgba(247,241,225,.6); text-decoration-color: rgba(181,37,46,.4); }
-  .mast .home-methodology a:hover { color: rgba(247,241,225,.9); }
-  .mast .mast-dispatch {
-    background: rgba(255,255,255,.05);
-    border-color: rgba(255,255,255,.11);
-    color: rgba(247,241,225,.55);
-  }
-  .mast .mast-dispatch:hover { border-color: var(--accent); color: var(--accent); background: rgba(181,37,46,.07); }
-
-  /* — Filter row ———————————————————————————————— */
-  .cuisine-picker button.cp-trigger,
-  .map-btn {
-    background: rgba(255,255,255,.05);
-    border-color: rgba(255,255,255,.1);
-    color: var(--paper);
-  }
-  .cuisine-picker button.cp-trigger::after { border-top-color: rgba(247,241,225,.7); }
-  .cuisine-picker button.cp-trigger:hover { border-color: rgba(255,255,255,.22); background: rgba(255,255,255,.07); }
-  .cuisine-picker button.cp-trigger:focus-visible { border-color: var(--paper); box-shadow: 0 0 0 3px rgba(247,241,225,.1); }
-  .map-btn:hover { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.2); }
-  .map-btn.active { background: var(--fresh); border-color: var(--fresh); color: #fff; }
-  .filters .filter-clear { color: rgba(247,241,225,.32); }
-  .filters .filter-clear:hover { color: var(--accent); }
-  .view-toggle { background: rgba(255,255,255,.05); border-color: rgba(255,255,255,.1); }
-  .view-toggle .vt-btn { background: transparent; color: rgba(247,241,225,.4); }
-  .view-toggle .vt-btn:hover { color: var(--paper); }
-  .view-toggle .vt-btn.vt-active { background: var(--paper); color: var(--ink); }
-
-  /* — Cuisine dropdown ———————————————————————— */
-  .cuisine-picker .cp-panel {
-    background: #0f160f;
-    border-color: rgba(255,255,255,.12);
-    box-shadow: 0 8px 36px rgba(0,0,0,.75);
-  }
-  .cuisine-picker .cp-opt { color: rgba(247,241,225,.8); }
-  .cuisine-picker a.cp-opt { color: rgba(247,241,225,.8); }
-  .cuisine-picker .cp-opt:hover,
-  .cuisine-picker .cp-opt:focus-visible { background: rgba(255,255,255,.07); }
-  .cuisine-picker .cp-opt.cp-all { border-bottom-color: rgba(255,255,255,.07); }
-  .cuisine-picker .cp-opt .ct { color: rgba(247,241,225,.32); }
-  .cuisine-picker .cp-opt[aria-selected="true"] { background: rgba(181,37,46,.12); color: var(--paper); }
-
-  /* — Data note tip ——————————————————————————— */
-  .data-note-tip summary { color: rgba(247,241,225,.32); border-color: rgba(255,255,255,.1); }
-  .data-note-tip summary:hover { color: rgba(247,241,225,.6); border-color: rgba(255,255,255,.2); }
-  .data-note-tip[open] summary { color: var(--paper); border-color: rgba(255,255,255,.25); }
-
-  /* — Feed container → dissolve, let rows float — */
-  .open-feed {
-    background: transparent;
-    border: none;
-    box-shadow: none;
-    border-radius: 0;
-  }
-  .feed-section .fs-label { color: var(--accent); }
-  .feed-section .fs-rule { background: rgba(247,241,225,.1); opacity: 1; }
-  .feed-section .fs-count { color: rgba(247,241,225,.32); }
-
-  /* — Individual rows → cream ticket cards ———— */
-  .open-row {
-    background: var(--paper);
-    color: var(--ink);
-    border: none;
-    border-radius: 3px;
-    margin-bottom: 14px;
-    box-shadow: 0 4px 22px rgba(0,0,0,.42);
-  }
-  .open-row:nth-child(even) { background: var(--paper); }
-  .open-row:last-child { border-bottom: none; margin-bottom: 0; }
-  .open-row:hover,
-  body:not(.page-listing) .open-row[data-slug]:hover { background: #ede5ce; }
-  .open-row .od { color: #2d5555; }
-  .open-row .on { color: var(--ink); }
-  .open-row .on a { color: var(--ink); }
-  .open-row .on a:hover { color: var(--accent); }
-  .open-row .on .oad { color: #5a5040; }
-  .open-row .on .oad .oad-d { color: #2e2419; }
-  .open-row .on .oad a { color: #5a5040; }
-  .open-row .on .oad a:hover { color: var(--accent); }
-  .row-blurb { color: #5a5040 !important; }
-
-  /* — Answers page on dark ————————————————————— */
-  body.page-answers .ans-h1,
-  body.page-answers .ans-q { color: var(--paper); }
-  body.page-answers .ans-a { color: rgba(247,241,225,.72); }
-  body.page-answers .ans-a strong { color: var(--paper); }
-  body.page-answers .ans-hdr { border-bottom-color: rgba(255,255,255,.1); }
-  body.page-answers .ans { border-bottom-color: rgba(255,255,255,.07); }
-  body.page-answers .ans-lede { color: rgba(247,241,225,.5); }
-
-  /* — All-page A–Z on dark ————————————————————— */
-  .all-row { color: var(--paper); }
-  .all-name { color: var(--paper); }
-  .all-name:hover { color: var(--accent); }
-  .all-meta { color: rgba(247,241,225,.42); }
-
-  /* — Newsletter CTA on dark ——————————————————— */
-  .newsletter-cta {
-    background: rgba(255,255,255,.04);
-    border-color: rgba(255,255,255,.08);
-    color: var(--paper);
-  }
-
-  /* — Breadcrumb on dark ——————————————————————— */
-  .breadcrumb a { color: rgba(247,241,225,.48); }
-  .breadcrumb a:hover { color: var(--paper); }
-  .breadcrumb span[aria-current] { color: var(--paper); }
-
-  /* — Site footer on dark ————————————————————— */
-  .site-footer,
-  footer { color: rgba(247,241,225,.32); }
-  .site-footer a,
-  footer a { color: rgba(247,241,225,.45); }
-  .site-footer a:hover,
-  footer a:hover { color: var(--paper); }
-
-  /* ── TICKET LIST (replaces .open-feed) ─────── */
-  .ticket-list {
-    max-width: 640px;
-    margin: 0 auto;
-    padding: 0 0 40px;
-  }
-  .ticket-list .empty {
-    padding: 28px 20px; color: rgba(247,241,225,.42);
-    font: italic 13px/1.4 var(--serif); text-align: center;
-  }
-  .ticket-list .show-more {
-    display: block; width: 100%; margin: 12px 0 0; padding: 12px 14px;
-    background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1);
-    border-radius: 2px; cursor: pointer;
-    font: 700 10px/1 var(--mono); text-transform: uppercase;
-    letter-spacing: .12em; color: rgba(247,241,225,.55);
-    transition: background .12s, color .12s;
-  }
-  .ticket-list .show-more:hover { background: rgba(255,255,255,.08); color: var(--paper); }
-
-  /* ── TICKET CARD ────────────────────────────── */
-  .ticket {
-    background: var(--paper);
-    color: var(--ink);
-    border-radius: 3px;
-    margin-top: 22px;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 4px 24px rgba(0,0,0,.45);
-    cursor: pointer;
-    transition: box-shadow .15s, transform .15s;
-  }
-  .ticket:first-child { margin-top: 0; }
-  .ticket:hover { box-shadow: 0 6px 32px rgba(0,0,0,.55); transform: translateY(-1px); }
-
-  .tk-head {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 11px 18px 9px;
-    border-bottom: 1px dashed #d0c49a;
-  }
-  .tk-badge {
-    display: inline-flex; align-items: center; gap: 6px;
-    color: #fff;
-    font: 700 9.5px/1 var(--mono);
-    letter-spacing: .13em; text-transform: uppercase;
-    padding: 4px 10px; border-radius: 2px;
-  }
-  .tk-freshness {
-    font: 700 10px/1 var(--mono);
-    letter-spacing: .1em; text-transform: uppercase;
-    color: #5a5040;
-  }
-  .tk-freshness .days { color: #b5252e; font-size: 13px; }
-
-  .tk-body { padding: 15px 18px 13px; }
-  .tk-name {
-    font: 800 clamp(20px,4.5vw,28px)/1.05 var(--serif);
-    letter-spacing: -.02em; color: var(--ink); margin-bottom: 5px;
-    text-decoration: none;
-  }
-  .tk-name a { color: var(--ink); text-decoration: none; }
-  .tk-name a:hover { color: #b5252e; }
-  .tk-blurb {
-    font: italic 13.5px/1.5 var(--serif);
-    color: #5a5040; margin: 0;
-  }
-
-  /* tear-line with notch circles */
-  .tear {
-    position: relative; height: 16px; margin: 0;
-    border-top: 1px dashed #d0c49a; overflow: visible;
-  }
-  .tear::before, .tear::after {
-    content: ''; position: absolute; top: -8px;
-    width: 14px; height: 14px;
-    background: var(--bg); border-radius: 50%;
-  }
-  .tear::before { left: -7px; }
-  .tear::after  { right: -7px; }
-
-  .tk-foot {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 8px 18px 13px; gap: 10px;
-  }
-  .tk-addr {
-    font: 10px/1.4 var(--mono); letter-spacing: .04em;
-    color: #5a5040; flex: 1; min-width: 0;
-  }
-  .tk-addr .nbhd {
-    display: block; font-weight: 700; font-size: 9px;
-    letter-spacing: .1em; text-transform: uppercase;
-    color: #2d5555; margin-bottom: 2px;
-  }
-  .tk-addr a { color: #5a5040; text-decoration: none; }
-  .tk-addr a:hover { color: #b5252e; }
-  .tk-actions {
-    display: flex; align-items: center; gap: 8px; flex-shrink: 0;
-  }
-  .tk-cta {
-    display: inline-block;
-    background: var(--ink); color: var(--paper);
-    font: 700 10px/1 var(--mono);
-    letter-spacing: .08em; text-transform: uppercase;
-    padding: 7px 13px; border-radius: 2px;
-    text-decoration: none; white-space: nowrap;
-    transition: background .12s;
-  }
-  .tk-cta:hover { background: #2d5555; color: var(--paper); text-decoration: none; }
-
-  /* Fav / share buttons inside ticket */
-  .row-fav, .row-share {
-    background: none; border: none; cursor: pointer;
-    color: #5a5040; font-size: 15px; padding: 4px;
-    transition: color .12s;
-  }
-  .row-fav:hover, .row-share:hover { color: #b5252e; }
-  .row-fav.fav-on { color: #b5252e; }
-
-  /* ── FEED SECTION HEADER (date buckets) ───── */
-  .feed-section {
-    display: flex; align-items: center; gap: 14px;
-    margin: 32px 0 6px;
-    font: 700 10px/1 var(--mono);
-    letter-spacing: .14em; text-transform: uppercase;
-  }
-  .feed-section:first-child { margin-top: 0; }
-  .feed-section .fs-label { color: #b5252e; white-space: nowrap; }
-  .feed-section .fs-rule { flex: 1; height: 1px; background: rgba(247,241,225,.1); }
-  .feed-section .fs-count { color: rgba(247,241,225,.32); white-space: nowrap; }
-
-  /* ── FILTER ROW → chip style ────────────────── */
-  .filters { gap: 6px; margin: 20px 0 18px; max-width: 640px; margin-left: auto; margin-right: auto; }
-  .cuisine-picker button.cp-trigger {
-    font: 700 10px/1 var(--mono);
-    letter-spacing: .07em; text-transform: uppercase;
-    background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.09);
-    border-radius: 2px; padding: 7px 14px; min-width: 0;
-    color: rgba(247,241,225,.6);
-    transition: background .12s, border-color .12s, color .12s;
-  }
-  .cuisine-picker button.cp-trigger::after { border-top-color: rgba(247,241,225,.5); }
-  .cuisine-picker button.cp-trigger:hover,
-  .cuisine-picker button.cp-trigger[aria-expanded="true"] {
-    background: rgba(74,139,139,.2); border-color: #4a8b8b; color: var(--paper);
-  }
-  .map-btn {
-    font: 700 10px/1 var(--mono); letter-spacing: .07em; text-transform: uppercase;
-    background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.09);
-    border-radius: 2px; padding: 7px 12px; color: rgba(247,241,225,.6);
-    transition: background .12s, border-color .12s, color .12s;
-  }
-  .map-btn:hover { background: rgba(74,139,139,.2); border-color: #4a8b8b; color: var(--paper); }
-  .map-btn.active { background: #4a8b8b; border-color: #4a8b8b; color: #fff; }
-  .view-toggle { border-radius: 2px; }
-  .view-toggle .vt-btn { font: 700 10px/1 var(--mono); letter-spacing: .07em; text-transform: uppercase; padding: 7px 12px; }
-
-  /* ── SECTION LABEL (used in cuisine/district pages) */
-  .section-label {
-    font: 700 10px/1 var(--mono); letter-spacing: .18em; text-transform: uppercase;
-    color: rgba(255,255,255,.3); margin-bottom: 16px;
-    display: flex; align-items: center; gap: 10px;
-  }
-  .section-label::after { content: ''; flex: 1; height: 1px; background: rgba(255,255,255,.06); }
-
-  /* ── DISPATCH / PAGE HEADER (cuisine/district pages) */
-  .page-intro-section {
-    max-width: 640px; margin: 32px auto 0; padding: 0 0 24px;
-    border-bottom: 1px solid rgba(255,255,255,.07);
-  }
-  .page-eyebrow {
-    font: 700 10.5px/1 var(--mono); letter-spacing: .18em;
-    text-transform: uppercase; color: #4a8b8b; margin-bottom: 10px;
-  }
-  .page-h1 {
-    font: 800 clamp(28px,6vw,48px)/1.05 var(--serif);
-    letter-spacing: -.02em; color: var(--paper);
-  }
-  .page-h1 .hl { color: #4a8b8b; font-style: italic; font-weight: 400; }
-  .page-lede {
-    margin-top: 12px; font: italic 15px/1.5 var(--serif);
-    color: rgba(247,241,225,.74);
-  }
-
-  /* ── District cards (homepage only) ──────────────────────── */
-  .district-cards { display: none; }
-  body.page-home .district-cards {
-    display: block;
-    margin: 1.5rem 0 1rem;
-  }
-  body.page-home .dc-heading {
-    font-size: .72rem;
-    font-weight: 700;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin: 0 0 .65rem;
-  }
-  body.page-home .dc-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: .65rem;
-  }
-  @media (max-width: 640px) {
-    body.page-home .dc-grid { grid-template-columns: repeat(2, 1fr); gap: .5rem; }
-  }
-  body.page-home .dc-card {
-    display: block;
-    text-decoration: none;
-    border: none;
-    border-radius: 3px;
-    padding: .85rem 1rem;
-    background: var(--paper);
-    box-shadow: 0 4px 18px rgba(0,0,0,.38);
-    transition: transform .15s, box-shadow .15s;
-  }
-  body.page-home .dc-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 28px rgba(0,0,0,.5);
-  }
-  body.page-home .dc-name {
-    font: 700 1rem/1.1 var(--serif);
-    color: var(--ink);
-    margin-bottom: .2rem;
-  }
-  body.page-home .dc-count {
-    font-size: .73rem;
-    font-weight: 600;
-    color: var(--accent);
-    letter-spacing: .02em;
-    margin-bottom: .5rem;
-  }
-  body.page-home .dc-preview {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-  body.page-home .dc-preview li {
-    font-size: .74rem;
-    color: #5a5040;
-    line-height: 1.35;
-    padding: .18rem 0;
-    border-top: 1px solid rgba(22,20,15,.12);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  body.page-home .dc-preview li:first-child { border-top: none; }
-  body.page-home .dc-cta {
-    display: block;
-    font-size: .7rem;
-    font-weight: 600;
-    color: var(--accent-2);
-    letter-spacing: .04em;
-    margin-top: .45rem;
-    text-transform: uppercase;
-  }
-  /* ── End district cards ─────────────────────────────────── */
-
-
-
-
-
-/* === LIGHT EDITION 2026-06-13 START === */
-  /* Friendly, lightly-gamified light theme. Appended last so it wins over the
-     DARK EDITION block above. Most components use CSS vars, so flipping :root
-     re-skins them automatically; the rest are re-lit explicitly below. */
-  :root {
-    --bg:#faf8f4; --paper:#ffffff; --ink:#16140f; --ink2:#3f3a30;
-    --muted:#6e665a; --line:rgba(0,0,0,.10); --rule:rgba(0,0,0,.12);
-    --accent:#b5252e; --gold:#ef9f27;
-  }
-  body { background:var(--bg); color:var(--ink); }
-
-  /* Masthead → light */
-  .mast .wrap { border-bottom-color:var(--rule); }
-  .mast .mast-lockup { border-bottom-color:var(--line); }
-  .mast .brand { color:var(--ink); }
-  .mast .brand:hover { color:var(--accent); }
-  .mast .mast-meta { color:var(--muted); }
-  .mast .mast-meta .mast-issue { color:var(--accent); }
-  .mast .mast-meta .mast-date { color:var(--ink2); }
-  .mast .sub { color:var(--ink2); }
-  .mast .sub .hl { color:var(--accent); }
-  .mast .home-methodology { color:var(--muted); }
-  .mast .home-methodology a { color:var(--accent); text-decoration-color:var(--accent); }
-  .mast .home-methodology a:hover { color:var(--ink); text-decoration-color:var(--ink); }
-
-  /* Section labels / FAQ / browse chips / nav → light */
-  .section-label { color:var(--muted); }
-  .section-label::after { background:var(--line); }
-  details { border-top-color:var(--line); }
-  details:last-child { border-bottom-color:var(--line); }
-  summary { color:var(--ink); }
-  summary::after { color:var(--accent); }
-  .faq-answer { color:var(--ink2); }
-  .faq-answer strong { color:var(--ink); }
-  .chip { background:#fff; border:1px solid var(--line); color:var(--ink2); }
-  .chip:hover { background:#f3efe7; border-color:var(--accent); color:var(--ink); }
-  .chip.active { background:var(--accent); border-color:var(--accent); color:#fff; }
-  .nbhd-browse-h, .nbhd-browse-sub, .all-cuisines-label { color:var(--ink2); }
-  .nbhd-browse-nav a, .all-cuisines a, .all-districts a, .all-neighborhoods a { color:var(--muted); }
-  .nbhd-browse-nav a:hover, .all-cuisines a:hover, .all-districts a:hover, .all-neighborhoods a:hover { color:var(--accent); }
-
-  /* Filter controls → light */
-  .filters .cp-trigger, .filters .map-btn, .filters .vt-btn {
-    background:#fff !important; border:1px solid var(--line) !important; color:var(--ink2) !important;
-  }
-  .filters .cp-trigger:hover, .filters .map-btn:hover,
-  .filters .cp-trigger[aria-expanded="true"] { border-color:var(--accent) !important; color:var(--ink) !important; background:#f3efe7 !important; }
-  .filters .map-btn.active, .filters .vt-btn.vt-active { background:var(--accent) !important; border-color:var(--accent) !important; color:#fff !important; }
-  /* Light dropdown (match .cuisine-picker specificity so it wins the dark
-     block by source order). Counts in bold oxblood so they're easy to read. */
-  .cuisine-picker .cp-panel { background:#fff; border:1px solid var(--line);
-    box-shadow:0 8px 28px rgba(0,0,0,.16); }
-  .cuisine-picker .cp-opt, .cuisine-picker a.cp-opt { color:var(--ink2); }
-  .cuisine-picker .cp-opt:hover, .cuisine-picker .cp-opt:focus-visible { background:#f3efe7; }
-  .cuisine-picker .cp-opt[aria-selected="true"] { background:rgba(181,37,46,.10); color:var(--ink); }
-  .cuisine-picker .cp-opt.cp-all { border-bottom-color:var(--line); }
-  .cuisine-picker .cp-opt .ct { color:var(--accent); font-weight:700; }
-  .data-note-tip summary { color:var(--muted); }
-  .data-note-tip p { color:var(--ink2); }
 
   /* ===== Streak bar ===== */
   .ns-streak-bar { display:flex; align-items:center; gap:12px; max-width:640px;
     margin:18px auto 18px; background:#f3efe7; border:1px solid var(--line);
     border-radius:12px; padding:12px 16px; }
   .ns-streak-bar .ns-flame { font-size:22px; line-height:1; }
+  .ns-streak-main { display:flex; flex-direction:column; }
   .ns-streak-bar .ns-count { font:600 24px/1 var(--ui); color:var(--ink); }
   .ns-streak-bar .ns-label { font:400 13px/1.3 var(--ui); color:var(--muted); margin-top:3px; }
-  .ns-dots { display:flex; gap:5px; margin-left:auto; }
+  .ns-heat { margin-left:auto; display:flex; flex-direction:column; align-items:center; gap:5px; }
+  .ns-dots { display:flex; gap:5px; }
   .ns-dot { width:10px; height:10px; border-radius:50%; background:#ddd5c4; }
   .ns-dot.on { background:var(--gold); }
-  .ns-updated { font:400 11px/1 var(--ui); color:var(--muted); white-space:nowrap; }
+  .ns-heat-word { font:600 10px/1 var(--ui); color:#c0532a; text-transform:uppercase; letter-spacing:.05em; }
+  .ns-updated { font:400 11px/1 var(--ui); color:var(--muted); white-space:nowrap;
+    border-left:1px solid var(--line); padding-left:12px; }
+  .ns-streak-bar.ns-tappable { cursor:pointer; transition:background .12s, border-color .12s; }
+  .ns-streak-bar.ns-tappable:hover { border-color:var(--accent); }
+  .ns-streak-bar.ns-active { background:#fbece6; border-color:var(--accent); }
+  .ns-streak-cta { font:600 11px/1 var(--ui); color:var(--accent); white-space:nowrap; }
 
   /* ===== Hero cards (top 3) ===== */
   .ns-hero-grid { max-width:640px; margin:0 auto 22px; display:grid;
@@ -1887,13 +1480,14 @@
   .ns-section-head-label { font:500 12px/1 var(--ui); color:var(--muted); white-space:nowrap; }
   .ns-section-head-line { flex:1; height:1px; background:var(--line); }
 
+  /* ===== Feed: container + old date buckets ===== */
+  #open-feed { max-width:none; }
+
   /* ===== Ranked list (entries 4+) ===== */
-  #open-feed { max-width:640px; margin:0 auto; padding:0; }
-  #open-feed .feed-section { display:none; }   /* old date buckets hidden — ns-section-head replaces them */
-  .ns-list-item { display:flex; align-items:center; gap:13px; padding:10px 6px;
-    border-bottom:1px solid var(--line); text-decoration:none; color:inherit;
-    border-radius:8px; transition:background .12s; }
-  .ns-list-item:hover { background:#f3efe7; }
+  .ns-list-item { display:flex; align-items:flex-start; gap:13px; padding:12px 14px;
+    background:#fff; border:1px solid var(--line); border-radius:12px; margin-bottom:8px;
+    text-decoration:none; color:inherit; transition:background .12s,border-color .12s,box-shadow .12s,transform .12s; }
+  .ns-list-item:hover { border-color:rgba(0,0,0,.22); box-shadow:0 4px 14px rgba(0,0,0,.06); transform:translateY(-1px); }
   .ns-list-num { font:400 13px/1 var(--ui); color:#b8b0a0; width:20px; text-align:right; flex-shrink:0; }
   .ns-list-icon { width:38px; height:38px; border-radius:10px; display:flex; align-items:center;
     justify-content:center; font-size:19px; flex-shrink:0; }
@@ -1903,66 +1497,125 @@
   .ns-list-meta { font:400 12px/1.25 var(--ui); color:var(--muted); margin:0;
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .ns-list-age { font:600 11.5px/1 var(--ui); color:var(--muted); flex-shrink:0; white-space:nowrap; }
+  .ns-status { display:inline-block; font:700 9px/1.55 var(--ui); text-transform:uppercase;
+    letter-spacing:.05em; padding:0 5px; border-radius:999px; vertical-align:middle; }
+  .ns-status.operating  { color:#1c7a48; background:rgba(28,122,72,.12); }
+  .ns-status.registered { color:#6e665a; background:rgba(0,0,0,.06); }
+  .ns-legend { max-width:640px; margin:-6px auto 16px; padding:0 4px;
+    font:400 11px/1.5 var(--ui); color:var(--muted); text-align:center; }
+  .ns-legend .ns-status { margin:0 3px; }
+
+  /* ===== Action buttons ===== */
+  .ns-card-actions { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:6px; }
+  .ns-act { display:inline-flex; align-items:center; gap:3px; cursor:pointer;
+    font:600 11px/1 var(--ui); padding:5px 9px; border-radius:8px;
+    border:1px solid var(--line); background:#fff; color:var(--ink2); }
+  .ns-act.web { border-color:var(--accent); color:var(--accent); }
+  .ns-act.web:hover { background:var(--accent); color:#fff; }
+  .ns-act.map:hover { background:#f3efe7; color:var(--ink); }
+  .ns-act .ext-arrow { font-weight:700; }
+  .ns-act.mini { margin-left:8px; padding:4px 7px; flex-shrink:0; align-self:flex-start;
+    border-color:var(--accent); color:var(--accent); font-size:12px; }
+  .ns-act.mini:hover { background:var(--accent); color:#fff; }
+  .ns-maplink { cursor:pointer; }
+  .ns-maplink:hover { text-decoration:underline; }
+  .ns-pin { margin-right:3px; font-size:.9em; opacity:.65; }
+  .ext-arrow { font-size:.82em; opacity:.55; margin-left:3px; }
   .show-more { display:block; width:100%; max-width:640px; margin:16px auto 0; padding:12px;
     background:#fff; border:1px solid var(--line); border-radius:10px; cursor:pointer;
     font:600 12px/1 var(--ui); color:var(--ink2); }
   .show-more:hover { background:#f3efe7; border-color:var(--accent); color:var(--ink); }
 
-  /* ===== Newsletter CTA → light card ===== */
-  .newsletter-cta { max-width:640px; margin:28px auto 28px !important; background:#f3efe7 !important;
-    border:1px solid var(--line) !important; border-radius:14px !important; box-shadow:none !important; }
-  .newsletter-cta .nl-pitch h2 { color:var(--ink) !important; }
-  .newsletter-cta .nl-pitch p { color:var(--ink2) !important; }
+  /* ===== Feed redesign: names wrap, recency chip, top-of-card chrome ===== */
+  .ns-card-name, .ns-list-name { white-space:normal; overflow:visible; text-overflow:clip; }
+  .ns-card-top { display:flex; align-items:center; gap:8px; padding:12px 15px 0; margin-bottom:4px; }
+  .ns-card-top .ns-when { margin-left:auto; }
+  .ns-crown { font:700 9.5px/1.6 var(--ui); text-transform:uppercase; letter-spacing:.08em;
+    color:#fff; background:var(--accent); padding:2px 9px; border-radius:999px; }
+  .ns-when { font:700 11.5px/1 var(--ui); color:var(--muted); white-space:nowrap; }
+  .ns-when.fresh { color:var(--accent); }
+  .ns-list-end { display:flex; align-items:center; gap:8px; flex-shrink:0; margin-top:1px; }
+  .ns-firstseen { max-width:640px; margin:-2px auto 14px; }
+  .ns-firstseen summary { cursor:pointer; list-style:none; display:inline-flex; align-items:center; gap:6px;
+    font:700 11px/1 var(--ui); color:var(--muted); text-transform:uppercase; letter-spacing:.05em; padding:6px 0; }
+  .ns-firstseen summary::-webkit-details-marker { display:none; }
+  .ns-firstseen .ns-i { display:inline-flex; align-items:center; justify-content:center; width:15px; height:15px;
+    border-radius:50%; border:1px solid currentColor; font:italic 700 10px/1 Georgia,serif; }
+  .ns-firstseen[open] summary { color:var(--accent); }
+  .ns-firstseen p { margin:6px 0 0; font:400 12px/1.55 var(--ui); color:var(--muted); }
 
-  /* Blurbs ported from the ticket feed (full text in the DOM for SEO; clamped
-     visually). Hero gets 3 lines, list rows 2. */
+  /* ===== Tiered grid: feature cards + responsive grid ===== */
+  @media (min-width:960px) { #open-feed.ns-feed-wide { max-width:960px; } }
+  .ns-tier-head { font:700 12px/1 var(--ui); text-transform:uppercase; letter-spacing:.07em;
+    color:var(--ink2); margin:20px 2px 11px; }
+  .ns-feature-grid { display:grid; gap:14px; grid-template-columns:1fr; }
+  @media (min-width:560px) { .ns-feature-grid { grid-template-columns:repeat(2,1fr); } }
+  .ns-grid { display:grid; gap:12px; grid-template-columns:repeat(auto-fill,minmax(248px,1fr)); }
+  .ns-gc { display:flex; flex-direction:row; align-items:flex-start; gap:12px; background:#fff; border:1px solid var(--line);
+    border-radius:12px; padding:13px 15px; text-decoration:none; color:inherit;
+    transition:border-color .12s,box-shadow .12s,transform .12s; }
+  .ns-gc:hover { border-color:rgba(0,0,0,.22); box-shadow:0 4px 14px rgba(0,0,0,.06); transform:translateY(-2px); }
+  .ns-gc-ico { flex:0 0 auto; width:42px; height:42px; border-radius:11px; border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center; font-size:21px; line-height:1; }
+  .ns-gc-main { flex:1; min-width:0; display:flex; flex-direction:column; }
+  .ns-gc-top { display:flex; align-items:baseline; gap:8px; }
+  .ns-gc-name { font:600 14px/1.25 var(--ui); color:var(--ink); flex:1; min-width:0; }
+  .ns-gc-top .ns-when { margin-left:auto; }
+  .ns-gc-meta { font:400 12px/1.3 var(--ui); color:var(--muted); margin:3px 0 0; }
+  .ns-gc-blurb { font:400 11.5px/1.45 var(--ui); color:var(--ink2); margin:7px 0 0;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .ns-card-name, .ns-gc-name, .ns-gc-ico, a.ns-card-sub, a.ns-gc-meta,
+  .ns-card-blurb, .ns-gc-blurb { text-decoration:none; }
+  .ns-card-name { display:block; }
+  .ns-card-name, .ns-gc-name, .ns-card-blurb, .ns-gc-blurb { cursor:pointer; }
+  .ns-card-name:hover, .ns-gc-name:hover { text-decoration:underline; }
+  .ns-card-blurb:hover, .ns-gc-blurb:hover { color:var(--ink); }
+
+  /* ===== Newsletter CTA ===== */
+  body.page-listing .newsletter-cta { max-width:none; }
+  .newsletter-cta { max-width:640px; margin:28px auto 28px; background:#f3efe7;
+    border:1px solid var(--line); border-radius:14px; box-shadow:none; }
+  .newsletter-cta .nl-pitch h2 { color:var(--ink); }
+  .newsletter-cta .nl-pitch p { color:var(--ink2); }
+
+  /* ===== Blurbs ===== */
   .ns-card-blurb { font:400 12px/1.45 var(--ui); color:var(--ink2); margin:0 0 9px;
     display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
-  .ns-list-item { align-items:flex-start; }
   .ns-list-num, .ns-list-age { margin-top:1px; }
   .ns-list-icon { margin-top:1px; }
   .ns-list-blurb { font:400 11.5px/1.4 var(--ui); color:var(--muted); margin:3px 0 0;
     display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
 
-  /* Sub-pages (cuisine / district / listing) — their dispatch header + breadcrumb
-     were light-on-dark; re-ink them so they're readable on the light field. */
+  /* ===== Sub-page re-inks ===== */
   .page-h1 { color:var(--ink); }
   .page-h1 .hl { color:var(--accent); }
   .page-eyebrow { color:var(--accent); }
   .page-lede { color:var(--ink2); }
   .page-intro-section { border-bottom-color:var(--line); }
-  .breadcrumb, .breadcrumb a, .crumbs, .crumbs a { color:var(--muted); }
-  .breadcrumb a:hover, .crumbs a:hover { color:var(--accent); }
-  .feed-section .fs-label { color:var(--accent); }
-  .feed-section .fs-rule { background:var(--line); }
-  .feed-section .fs-count { color:var(--muted); }
-  .lx-near-h, .lx-near-name, .lx-card h2 { color:var(--ink); }
-  .lx-near-where, .lx-near-when, .lx-near-bare { color:var(--muted); }
+  .feed-section .fs-rule { background:var(--line); opacity:1; }
+  body.page-answers .ans-a { color:var(--ink2); }
+  body.page-answers .ans-lede { color:var(--muted); }
 
-  /* Individual listing (/r/) pages: hide the homepage methodology boilerplate
-     and the masthead name+lede line — both redundant with the breadcrumb +
-     ticket + editorial right below. The H1 stays in the DOM (display:none) so
-     the page keeps its heading for SEO; only the duplicate visual block goes. */
+  /* ===== Page hides ===== */
   body.page-listing .mast .home-methodology,
   body.page-listing .mast .sub { display:none; }
-
-  /* Legacy content pages (trends / answers / data / all) inherit the homepage
-     feed + filter bar from the template; hide them so only the page's own
-     content shows. (data + all already hide the feed; trends + answers were
-     missing the rule.) */
   body.page-trends .filters, body.page-trends .ticket-list,
   body.page-answers .filters, body.page-answers .ticket-list,
   body.page-trends .home-methodology, body.page-answers .home-methodology { display:none !important; }
-  /* Re-ink the /answers Q&A — it was white/cream (dark-era) → invisible on light. */
-  body.page-answers .ans-q, body.page-answers .ans-a strong { color:var(--ink); }
-  body.page-answers .ans-a { color:var(--ink2); }
-  body.page-answers .ans-lede { color:var(--muted); }
-  body.page-answers .ans-hdr { border-bottom-color:var(--line); }
-  body.page-answers .ans { border-bottom-color:var(--line); }
 
-  /* Use the system UI stack for the new app-like layout; brand wordmark keeps the serif. */
-  :root { --ui: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
-/* === LIGHT EDITION 2026-06-13 END === */
+  /* ===== Animations: sheen, badge glow, save sparkle ===== */
+  .ns-hero-card.rank-1 { position:relative; overflow:hidden; }
+  .ns-hero-card.rank-1::after { content:""; position:absolute; top:0; left:0; width:55%; height:100%;
+    background:linear-gradient(100deg, transparent, rgba(255,255,255,.5), transparent);
+    transform:translateX(-130%) skewX(-12deg); animation:ns-sheen 5s ease-in-out 1.4s infinite; pointer-events:none; }
+  @keyframes ns-sheen { 0% { transform:translateX(-130%) skewX(-12deg); } 60%,100% { transform:translateX(320%) skewX(-12deg); } }
+  .ns-rank-badge.r1 { animation:ns-badge-glow 2.8s ease-in-out infinite; }
+  @keyframes ns-badge-glow { 0%,100% { box-shadow:0 0 0 0 rgba(212,160,23,0); } 50% { box-shadow:0 0 11px 1px rgba(212,160,23,.5); } }
+  .ns-spark { position:fixed; z-index:9999; pointer-events:none; font-size:14px; will-change:transform,opacity;
+    animation:ns-spark .72s ease-out forwards; }
+  @keyframes ns-spark { 0% { transform:translate(0,0) scale(.3) rotate(0); opacity:1; }
+    100% { transform:translate(var(--dx),var(--dy)) scale(1) rotate(160deg); opacity:0; } }
+  @media (prefers-reduced-motion: reduce) { .ns-hero-card.rank-1::after, .ns-rank-badge.r1, .ns-spark { animation:none; } }
 </style>
 </head>
 <body class="page-home">
@@ -1977,7 +1630,6 @@
       </div>
     </div>
     <h1 class="sub">Tracking Toronto's <span class="hl">newest, independent, registered</span> restaurants</h1>
-    <p class="home-methodology"><a href="https://open.toronto.ca/dataset/municipal-licensing-and-standards-business-licences-and-permits/" target="_blank" rel="noopener"><b>Permits</b></a> sourced from the <a href="https://open.toronto.ca/" target="_blank" rel="noopener"><b>City of Toronto Open Data Portal</b></a>, cross-referenced with <a href="https://open.toronto.ca/dataset/dinesafe/" target="_blank" rel="noopener"><b>DineSafe</b></a> and social media to bring you the freshest, newest kitchens in the city.</p>
   </div>
 </header>
 
@@ -1989,13 +1641,13 @@
     <div class="cuisine-picker">
       <button id="cp-trigger" class="cp-trigger" aria-haspopup="listbox" aria-expanded="false" aria-label="Filter by cuisine">All cuisines</button>
       <div id="cp-panel" class="cp-panel" role="listbox" aria-labelledby="cp-trigger" hidden>
-        <!-- CUISINE-DROPDOWN-START --><a class="cp-opt cp-all" role="option" data-key="__all" href="/"><span class="lbl">All cuisines</span><span class="ct">282</span></a><a class="cp-opt" role="option" data-key="afghan" href="/cuisine/afghan"><span class="lbl">Afghan</span><span class="ct">3</span></a><a class="cp-opt" role="option" data-key="argentinian" href="/cuisine/argentinian"><span class="lbl">Argentinian</span><span class="ct">3</span></a><a class="cp-opt" role="option" data-key="armenian" href="/cuisine/armenian"><span class="lbl">Armenian</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="bangladeshi" href="/cuisine/bangladeshi"><span class="lbl">Bangladeshi</span><span class="ct">3</span></a><a class="cp-opt" role="option" data-key="belgian" href="/cuisine/belgian"><span class="lbl">Belgian</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="caribbean" href="/cuisine/caribbean"><span class="lbl">Caribbean</span><span class="ct">2</span></a><a class="cp-opt" role="option" data-key="chinese" href="/cuisine/chinese"><span class="lbl">Chinese</span><span class="ct">37</span></a><a class="cp-opt" role="option" data-key="colombian" href="/cuisine/colombian"><span class="lbl">Colombian</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="costa_rican" href="/cuisine/costa_rican"><span class="lbl">Costa Rican</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="eritrean" href="/cuisine/eritrean"><span class="lbl">Eritrean</span><span class="ct">2</span></a><a class="cp-opt" role="option" data-key="ethiopian" href="/cuisine/ethiopian"><span class="lbl">Ethiopian</span><span class="ct">2</span></a><a class="cp-opt" role="option" data-key="filipino" href="/cuisine/filipino"><span class="lbl">Filipino</span><span class="ct">5</span></a><a class="cp-opt" role="option" data-key="french" href="/cuisine/french"><span class="lbl">French</span><span class="ct">4</span></a><a class="cp-opt" role="option" data-key="ghanaian" href="/cuisine/ghanaian"><span class="lbl">Ghanaian</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="greek" href="/cuisine/greek"><span class="lbl">Greek</span><span class="ct">4</span></a><a class="cp-opt" role="option" data-key="guatemalan" href="/cuisine/guatemalan"><span class="lbl">Guatemalan</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="indian" href="/cuisine/indian"><span class="lbl">Indian</span><span class="ct">46</span></a><a class="cp-opt" role="option" data-key="indonesian" href="/cuisine/indonesian"><span class="lbl">Indonesian</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="italian" href="/cuisine/italian"><span class="lbl">Italian</span><span class="ct">20</span></a><a class="cp-opt" role="option" data-key="jamaican" href="/cuisine/jamaican"><span class="lbl">Jamaican</span><span class="ct">3</span></a><a class="cp-opt" role="option" data-key="japanese" href="/cuisine/japanese"><span class="lbl">Japanese</span><span class="ct">16</span></a><a class="cp-opt" role="option" data-key="korean" href="/cuisine/korean"><span class="lbl">Korean</span><span class="ct">12</span></a><a class="cp-opt" role="option" data-key="kurdish" href="/cuisine/kurdish"><span class="lbl">Kurdish</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="latin" href="/cuisine/latin"><span class="lbl">Latin American</span><span class="ct">2</span></a><a class="cp-opt" role="option" data-key="lebanese" href="/cuisine/lebanese"><span class="lbl">Lebanese</span><span class="ct">6</span></a><a class="cp-opt" role="option" data-key="mexican" href="/cuisine/mexican"><span class="lbl">Mexican</span><span class="ct">18</span></a><a class="cp-opt" role="option" data-key="middle_east" href="/cuisine/middle_east"><span class="lbl">Middle Eastern</span><span class="ct">5</span></a><a class="cp-opt" role="option" data-key="nigerian" href="/cuisine/nigerian"><span class="lbl">Nigerian</span><span class="ct">2</span></a><a class="cp-opt" role="option" data-key="pakistani" href="/cuisine/pakistani"><span class="lbl">Pakistani</span><span class="ct">8</span></a><a class="cp-opt" role="option" data-key="palestinian" href="/cuisine/palestinian"><span class="lbl">Palestinian</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="persian" href="/cuisine/persian"><span class="lbl">Persian</span><span class="ct">5</span></a><a class="cp-opt" role="option" data-key="peruvian" href="/cuisine/peruvian"><span class="lbl">Peruvian</span><span class="ct">2</span></a><a class="cp-opt" role="option" data-key="portuguese" href="/cuisine/portuguese"><span class="lbl">Portuguese</span><span class="ct">2</span></a><a class="cp-opt" role="option" data-key="senegalese" href="/cuisine/senegalese"><span class="lbl">Senegalese</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="singaporean" href="/cuisine/singaporean"><span class="lbl">Singaporean</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="south_asian" href="/cuisine/south_asian"><span class="lbl">South Asian</span><span class="ct">2</span></a><a class="cp-opt" role="option" data-key="spanish" href="/cuisine/spanish"><span class="lbl">Spanish</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="sri_lankan" href="/cuisine/sri_lankan"><span class="lbl">Sri Lankan</span><span class="ct">6</span></a><a class="cp-opt" role="option" data-key="taiwanese" href="/cuisine/taiwanese"><span class="lbl">Taiwanese</span><span class="ct">2</span></a><a class="cp-opt" role="option" data-key="tamil" href="/cuisine/tamil"><span class="lbl">Tamil</span><span class="ct">5</span></a><a class="cp-opt" role="option" data-key="thai" href="/cuisine/thai"><span class="lbl">Thai</span><span class="ct">8</span></a><a class="cp-opt" role="option" data-key="tibetan" href="/cuisine/tibetan"><span class="lbl">Tibetan</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="turkish" href="/cuisine/turkish"><span class="lbl">Turkish</span><span class="ct">10</span></a><a class="cp-opt" role="option" data-key="venezuelan" href="/cuisine/venezuelan"><span class="lbl">Venezuelan</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="vietnamese" href="/cuisine/vietnamese"><span class="lbl">Vietnamese</span><span class="ct">23</span></a><!-- CUISINE-DROPDOWN-END -->
+        <!-- CUISINE-DROPDOWN-START --><a class="cp-opt cp-all" role="option" data-key="__all" href="/"><span class="lbl">Show all</span><span class="ct">282</span></a><a class="cp-opt" role="option" data-key="afghan" href="/cuisine/afghan"><span class="lbl">Afghan</span><span class="ct">3</span></a><a class="cp-opt" role="option" data-key="argentinian" href="/cuisine/argentinian"><span class="lbl">Argentinian</span><span class="ct">3</span></a><a class="cp-opt" role="option" data-key="armenian" href="/cuisine/armenian"><span class="lbl">Armenian</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="bangladeshi" href="/cuisine/bangladeshi"><span class="lbl">Bangladeshi</span><span class="ct">3</span></a><a class="cp-opt" role="option" data-key="belgian" href="/cuisine/belgian"><span class="lbl">Belgian</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="caribbean" href="/cuisine/caribbean"><span class="lbl">Caribbean</span><span class="ct">2</span></a><a class="cp-opt" role="option" data-key="chinese" href="/cuisine/chinese"><span class="lbl">Chinese</span><span class="ct">37</span></a><a class="cp-opt" role="option" data-key="colombian" href="/cuisine/colombian"><span class="lbl">Colombian</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="costa_rican" href="/cuisine/costa_rican"><span class="lbl">Costa Rican</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="eritrean" href="/cuisine/eritrean"><span class="lbl">Eritrean</span><span class="ct">2</span></a><a class="cp-opt" role="option" data-key="ethiopian" href="/cuisine/ethiopian"><span class="lbl">Ethiopian</span><span class="ct">2</span></a><a class="cp-opt" role="option" data-key="filipino" href="/cuisine/filipino"><span class="lbl">Filipino</span><span class="ct">5</span></a><a class="cp-opt" role="option" data-key="french" href="/cuisine/french"><span class="lbl">French</span><span class="ct">4</span></a><a class="cp-opt" role="option" data-key="ghanaian" href="/cuisine/ghanaian"><span class="lbl">Ghanaian</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="greek" href="/cuisine/greek"><span class="lbl">Greek</span><span class="ct">4</span></a><a class="cp-opt" role="option" data-key="guatemalan" href="/cuisine/guatemalan"><span class="lbl">Guatemalan</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="indian" href="/cuisine/indian"><span class="lbl">Indian</span><span class="ct">46</span></a><a class="cp-opt" role="option" data-key="indonesian" href="/cuisine/indonesian"><span class="lbl">Indonesian</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="italian" href="/cuisine/italian"><span class="lbl">Italian</span><span class="ct">20</span></a><a class="cp-opt" role="option" data-key="jamaican" href="/cuisine/jamaican"><span class="lbl">Jamaican</span><span class="ct">3</span></a><a class="cp-opt" role="option" data-key="japanese" href="/cuisine/japanese"><span class="lbl">Japanese</span><span class="ct">16</span></a><a class="cp-opt" role="option" data-key="korean" href="/cuisine/korean"><span class="lbl">Korean</span><span class="ct">12</span></a><a class="cp-opt" role="option" data-key="kurdish" href="/cuisine/kurdish"><span class="lbl">Kurdish</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="latin" href="/cuisine/latin"><span class="lbl">Latin American</span><span class="ct">2</span></a><a class="cp-opt" role="option" data-key="lebanese" href="/cuisine/lebanese"><span class="lbl">Lebanese</span><span class="ct">6</span></a><a class="cp-opt" role="option" data-key="mexican" href="/cuisine/mexican"><span class="lbl">Mexican</span><span class="ct">18</span></a><a class="cp-opt" role="option" data-key="middle_east" href="/cuisine/middle_east"><span class="lbl">Middle Eastern</span><span class="ct">5</span></a><a class="cp-opt" role="option" data-key="nigerian" href="/cuisine/nigerian"><span class="lbl">Nigerian</span><span class="ct">2</span></a><a class="cp-opt" role="option" data-key="pakistani" href="/cuisine/pakistani"><span class="lbl">Pakistani</span><span class="ct">8</span></a><a class="cp-opt" role="option" data-key="palestinian" href="/cuisine/palestinian"><span class="lbl">Palestinian</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="persian" href="/cuisine/persian"><span class="lbl">Persian</span><span class="ct">5</span></a><a class="cp-opt" role="option" data-key="peruvian" href="/cuisine/peruvian"><span class="lbl">Peruvian</span><span class="ct">2</span></a><a class="cp-opt" role="option" data-key="portuguese" href="/cuisine/portuguese"><span class="lbl">Portuguese</span><span class="ct">2</span></a><a class="cp-opt" role="option" data-key="senegalese" href="/cuisine/senegalese"><span class="lbl">Senegalese</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="singaporean" href="/cuisine/singaporean"><span class="lbl">Singaporean</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="south_asian" href="/cuisine/south_asian"><span class="lbl">South Asian</span><span class="ct">2</span></a><a class="cp-opt" role="option" data-key="spanish" href="/cuisine/spanish"><span class="lbl">Spanish</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="sri_lankan" href="/cuisine/sri_lankan"><span class="lbl">Sri Lankan</span><span class="ct">6</span></a><a class="cp-opt" role="option" data-key="taiwanese" href="/cuisine/taiwanese"><span class="lbl">Taiwanese</span><span class="ct">2</span></a><a class="cp-opt" role="option" data-key="tamil" href="/cuisine/tamil"><span class="lbl">Tamil</span><span class="ct">5</span></a><a class="cp-opt" role="option" data-key="thai" href="/cuisine/thai"><span class="lbl">Thai</span><span class="ct">8</span></a><a class="cp-opt" role="option" data-key="tibetan" href="/cuisine/tibetan"><span class="lbl">Tibetan</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="turkish" href="/cuisine/turkish"><span class="lbl">Turkish</span><span class="ct">10</span></a><a class="cp-opt" role="option" data-key="venezuelan" href="/cuisine/venezuelan"><span class="lbl">Venezuelan</span><span class="ct">1</span></a><a class="cp-opt" role="option" data-key="vietnamese" href="/cuisine/vietnamese"><span class="lbl">Vietnamese</span><span class="ct">23</span></a><!-- CUISINE-DROPDOWN-END -->
       </div>
     </div>
     <div class="cuisine-picker region">
       <button id="rp-trigger" class="cp-trigger" aria-haspopup="listbox" aria-expanded="false" aria-label="Filter by district">All Toronto</button>
       <div id="rp-panel" class="cp-panel" role="listbox" aria-labelledby="rp-trigger" hidden>
-        <!-- DISTRICT-DROPDOWN-START --><a class="cp-opt cp-all" role="option" data-key="__all" href="/"><span class="lbl">All Toronto</span><span class="ct">260</span></a><a class="cp-opt" role="option" data-key="Downtown" href="/district/downtown"><span class="lbl">Downtown</span><span class="ct">52</span></a><a class="cp-opt" role="option" data-key="East Toronto" href="/district/east-toronto"><span class="lbl">East Toronto</span><span class="ct">36</span></a><a class="cp-opt" role="option" data-key="Etobicoke" href="/district/etobicoke"><span class="lbl">Etobicoke</span><span class="ct">25</span></a><a class="cp-opt" role="option" data-key="North York" href="/district/north-york"><span class="lbl">North York</span><span class="ct">32</span></a><a class="cp-opt" role="option" data-key="Scarborough" href="/district/scarborough"><span class="lbl">Scarborough</span><span class="ct">59</span></a><a class="cp-opt" role="option" data-key="West Toronto" href="/district/west-toronto"><span class="lbl">West Toronto</span><span class="ct">56</span></a><!-- DISTRICT-DROPDOWN-END -->
+        <!-- DISTRICT-DROPDOWN-START --><a class="cp-opt cp-all" role="option" data-key="__all" href="/"><span class="lbl">Show all</span><span class="ct">260</span></a><a class="cp-opt" role="option" data-key="Downtown" href="/district/downtown"><span class="lbl">Downtown</span><span class="ct">52</span></a><a class="cp-opt" role="option" data-key="East Toronto" href="/district/east-toronto"><span class="lbl">East Toronto</span><span class="ct">36</span></a><a class="cp-opt" role="option" data-key="Etobicoke" href="/district/etobicoke"><span class="lbl">Etobicoke</span><span class="ct">25</span></a><a class="cp-opt" role="option" data-key="North York" href="/district/north-york"><span class="lbl">North York</span><span class="ct">32</span></a><a class="cp-opt" role="option" data-key="Scarborough" href="/district/scarborough"><span class="lbl">Scarborough</span><span class="ct">59</span></a><a class="cp-opt" role="option" data-key="West Toronto" href="/district/west-toronto"><span class="lbl">West Toronto</span><span class="ct">56</span></a><!-- DISTRICT-DROPDOWN-END -->
       </div>
     </div>
     <button id="locate-btn" class="map-btn" type="button" aria-label="Find restaurants near me">📍 Near me</button>
@@ -2094,6 +1746,15 @@
     <span class="all-cuisines-label">Index:</span>
     <!-- ALL-INDEX-START --><a href="/all">All 260 restaurants A&ndash;Z</a><!-- ALL-INDEX-END -->
   </nav>
+
+  <footer class="site-footer">
+    <p class="footer-methodology"><a href="https://open.toronto.ca/dataset/municipal-licensing-and-standards-business-licences-and-permits/" target="_blank" rel="noopener">Permits</a> sourced from the <a href="https://open.toronto.ca/" target="_blank" rel="noopener">City of Toronto Open Data Portal</a>, cross-referenced with <a href="https://open.toronto.ca/dataset/dinesafe/" target="_blank" rel="noopener">DineSafe</a> and social media to bring you the freshest, newest kitchens in the city.</p>
+    <nav class="footer-links" aria-label="Site links">
+      <a href="/press">How we verify</a>
+      <a href="/usage">Usage &amp; Crawlers</a>
+      <a href="/contribute">Submit a tip</a>
+    </nav>
+  </footer>
 
 </main>
 

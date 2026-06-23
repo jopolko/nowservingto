@@ -1,0 +1,17 @@
+# joshuaopolko.com — AEO target queries.
+# A personal tech/AI authority site. We can't out-rank Toronto Life on food, so
+# we target the demand our actual articles answer: self-hosting guides and
+# AI-tooling comparisons, where a sharp personal write-up can earn an AI
+# citation. One query per line; blanks and #-comments ignored.
+# Re-run:  .venv-seo/bin/python tools/seo_pull.py --aeo --site joshuaopolko.com
+
+self host n8n guide
+n8n self hosted setup
+searxng self hosted guide
+dify self hosted guide
+crewai production setup guide
+claude vs gemini for code generation
+claude code specification workflow
+llm etl architecture
+self hosted ai workflow tools
+how to self host searxng

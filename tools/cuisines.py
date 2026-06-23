@@ -160,6 +160,21 @@ _CANONICAL_ALIASES = {
     'north_indian': 'indian',
     'gujarati': 'indian',
     'punjabi': 'indian',
+    'hyderabadi': 'indian',
+    'maharashtrian': 'indian',
+    'hakka': 'chinese',
+    'indian_hakka': 'chinese',
+    'sichuan': 'chinese',
+    'southern_chinese': 'chinese',
+    'yunnan_chinese': 'chinese',
+    'indian_chinese': 'chinese',
+    'cantonese': 'chinese',
+    'hong_kong': 'chinese',
+    'southern_italian': 'italian',
+    'sicilian': 'italian',
+    'nepali': 'nepalese',
+    'kurdish': 'middle_east',
+    'ecuadorian': 'latin',
     # Banned labels (validator prompt: "never return these"). Force to drop
     # by mapping to '' (caller treats empty key as no-cuisine).
     'canadian': '',
@@ -167,6 +182,8 @@ _CANONICAL_ALIASES = {
     'european': '',
     'hawaiian': '',
     'mediterranean': '',
+    'belgian': '',
+    'cajun': '',
 }
 
 

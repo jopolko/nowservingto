@@ -160,16 +160,12 @@ log "  step 4c (llm_photo_classify_batch)  DISABLED — site is text-only"
 log "  step 4c+ (retry_denied_photos)      DISABLED — site is text-only"
 log "  step 4c+ (retry_places_photos)      DISABLED — site is text-only"
 
-# Step 4d: rewrite validator_evidence into editorial prose. The raw
-# evidence from the verifier reads as a verification log ("Website
-# confirms...", "Places match shows...") and leaks that register onto
-# the LISTING-EXTRA "What we know" panel and the meta description.
-# This pass turns each evidence string into a 1-2 sentence editorial
-# blurb. Cached forever per _cacheKey; only new openings run.
-log "→ llm_evidence_rewrite_batch.py (Haiku: rewrite verification notes editorially)"
-if ! "$PYTHON" -u tools/llm_evidence_rewrite_batch.py >> "$LOG_FILE" 2>&1; then
-    log "WARN: evidence-rewrite batch failed (non-fatal — pages fall back to raw evidence)"
-fi
+# Step 4d: (moved) Editorial-blurb generation now runs ONCE, after the final
+# inject (Step 6.2), so it sees the complete admitted set. It used to run here
+# too — but llm_evidence_rewrite_batch reads corridors.json, and at this point
+# same-day entries haven't cleared the gate yet, so this pass only ever rewrote
+# yesterday's entries (already cached) while today's stayed blurb-less until a
+# second "catch-up" run. That double-ran Haiku for no benefit; removed.
 
 # Step 5: probe every cached restaurant website for HTTP errors so we don't show
 # dead links. $0 cost, ~20s for full sweep. Each URL re-probed every 14 days.
@@ -259,6 +255,20 @@ fi
 # Step 6: final inject — merges verification + health-check results into corridors.json
 log "→ inject_openings.py (final, post-verify + post-health-check)"
 "$PYTHON" tools/inject_openings.py >> "$LOG_FILE" 2>&1 || log "WARN: final inject failed"
+
+# Step 6.2: editorial blurbs — the SINGLE evidence-rewrite pass. It runs here,
+# after the final inject, on purpose: llm_evidence_rewrite_batch reads
+# corridors.json, so an entry must be admitted (in the wire) before it can get a
+# blurb. By this point every spot that cleared the gate today is admitted with
+# its web_verify evidence, so this one pass covers the complete set — no lag, no
+# second "catch-up" run, and Haiku is paid once. The re-inject below bakes the
+# new blurbs into corridors.json + /r/ pages. Incremental (cached per _cacheKey)
+# → ~1-3 Haiku calls/day. inject's field-synthesized _fallback_blurb is the
+# safety net for any entry whose evidence is too thin to write from.
+log "→ llm_evidence_rewrite_batch.py (Haiku: editorial blurbs for the admitted set)"
+"$PYTHON" -u tools/llm_evidence_rewrite_batch.py >> "$LOG_FILE" 2>&1 || log "WARN: evidence-rewrite failed (non-fatal — new spots fall back to synthesized blurb)"
+log "→ inject_openings.py (bake blurbs into corridors.json + /r/ pages)"
+"$PYTHON" tools/inject_openings.py >> "$LOG_FILE" 2>&1 || log "WARN: blurb re-inject failed (non-fatal)"
 
 # Step 6.25: regenerate the diaspora pitch wire pages (/wire/filipino,
 # /wire/jamaican, /wire/vietnamese) from the freshly-injected corridors.json.

@@ -81,6 +81,12 @@ try:
 except FileNotFoundError:
     URL_HEALTH_CACHE = {}
 
+PRE_EXISTING_LLM_CACHE_PATH = f'{ROOT}/tools/cache/pre_existing_llm_cache.json'
+try:
+    PRE_EXISTING_LLM_CACHE = json.load(open(PRE_EXISTING_LLM_CACHE_PATH))
+except FileNotFoundError:
+    PRE_EXISTING_LLM_CACHE = {}
+
 # Toronto's 158 official neighbourhood polygons + curated iconic-corridor
 # overrides (Greektown, Little Italy, Wexford, etc.). Together these let
 # inject_openings tag every entry with its `neighborhood` (popular name
@@ -239,6 +245,29 @@ def url_is_alive(url):
             pass
     if not h: return True   # never checked → optimistic
     return bool(h.get('ok'))
+
+_SOCIAL_HOSTS = frozenset({
+    'instagram.com', 'www.instagram.com',
+    'facebook.com', 'www.facebook.com', 'm.facebook.com',
+    'tiktok.com', 'www.tiktok.com',
+    'twitter.com', 'www.twitter.com',
+    'x.com', 'www.x.com',
+    'linkedin.com', 'www.linkedin.com',
+    'youtube.com', 'www.youtube.com',
+})
+
+def _is_social_url(url):
+    """True for Instagram / Facebook / TikTok / etc. links. These are never
+    used as the primary restaurant link; visitors should land on a real website
+    or Google Places, not a social profile that may vanish."""
+    if not url:
+        return False
+    try:
+        from urllib.parse import urlsplit
+        return urlsplit(url.strip()).netloc.lower() in _SOCIAL_HOSTS
+    except Exception:
+        return False
+
 WINDOW_365 = REFERENCE_DATE - timedelta(days=365)
 WINDOW_30  = REFERENCE_DATE - timedelta(days=30)
 
@@ -508,8 +537,17 @@ def verification_for(name, address):
             out = {'businessStatus': bs, 'verifiedBy': 'places'}
             for k in ('website', 'mapsUrl', 'rating', 'reviewCount', 'matchedName', 'lat', 'lng'):
                 if p.get(k) is not None: out[k] = p[k]
-            if out.get('website') and not url_is_alive(out['website']):
+            if out.get('website') and (not url_is_alive(out['website']) or _is_social_url(out['website'])):
                 del out['website']  # let mapsUrl be the link instead
+            # If validator explicitly rejected the Places-provided website
+            # (parked domain, GoDaddy lander, wrong-business, etc.), clear it
+            # so mapsUrl becomes the fallback link instead.
+            if out.get('website'):
+                _wv = WEB_VERIFY_CACHE.get(key)
+                if _wv:
+                    _vj = _wv.get('validator_judgment')
+                    if isinstance(_vj, dict) and 'best_website' in _vj and _vj['best_website'] is None:
+                        del out['website']
             # When Places matched but has no own-website (or its URL was
             # dead), fall back to the web_verify-surfaced URL (top Google-
             # search match Haiku found earlier). Without this, JARDIN NOIR
@@ -519,7 +557,7 @@ def verification_for(name, address):
                 w = WEB_VERIFY_CACHE.get(key)
                 if w and w.get('status') == 'ok' and w.get('operating') == 'yes':
                     wv_site = _validator_best_website(w)
-                    if wv_site and url_is_alive(wv_site):
+                    if wv_site and url_is_alive(wv_site) and not _is_social_url(wv_site):
                         out['website'] = wv_site
             if out.get('lat') is None and geo_coords[0] is not None:
                 out['lat'], out['lng'] = geo_coords
@@ -538,7 +576,7 @@ def verification_for(name, address):
     if ALLOW_WEB_SEARCH_ONLY and w and w.get('status') == 'ok' and w.get('operating') == 'yes':
         out = {'businessStatus': 'OPERATIONAL', 'verifiedBy': 'web_search'}
         wv_site = _validator_best_website(w)
-        if wv_site and url_is_alive(wv_site):
+        if wv_site and url_is_alive(wv_site) and not _is_social_url(wv_site):
             out['website'] = wv_site
         if p and p.get('status') == 'ok':
             for k in ('mapsUrl', 'rating', 'reviewCount', 'matchedName', 'lat', 'lng'):
@@ -584,6 +622,79 @@ def _pre_existing_evidence(cache_key_val, issued_date_str):
         return (False, None, None)
     gap = (licence_dt - earliest_dt).days
     return (gap > PRE_EXISTING_GAP_DAYS, gap, earliest_dt.strftime('%Y-%m-%d'))
+
+
+# Phase C pre-existing gate: Haiku checks reviewCount + review text.
+# Triggered once per entry (result cached). Catches relocation/renewal
+# cases that slip through Phases A+B because Google only samples 5
+# reviews and the sampled ones happen to be recent (e.g. Ruyi Garden:
+# 291 total reviews but all 5 sampled post-date the July 2025 licence).
+_pre_existing_llm_client = None
+
+def _check_pre_existing_llm(ck, issued_date_str, review_count, reviews_detail):
+    """Return True if Haiku decides this is a pre-existing business.
+    Skips (returns False) when reviewCount < threshold or no API key.
+    Writes result to PRE_EXISTING_LLM_CACHE so it only runs once."""
+    global _pre_existing_llm_client
+    if ck in PRE_EXISTING_LLM_CACHE:
+        return PRE_EXISTING_LLM_CACHE[ck].get('pre_existing', False)
+    review_texts = [
+        (r.get('text') or '').strip()[:200]
+        for r in (reviews_detail or [])
+        if (r.get('text') or '').strip()
+    ]
+    if not review_texts:
+        return False
+    api_key = _load_anthropic_key()
+    if not api_key:
+        return False
+    try:
+        if _pre_existing_llm_client is None:
+            import anthropic as _anth_c
+            _pre_existing_llm_client = _anth_c.Anthropic(api_key=api_key)
+        prompt = (
+            "Today is 2026-06-22. Read these Google Maps review texts for a Toronto "
+            f"restaurant that was first licensed on {issued_date_str}:\n\n"
+            + "\n".join(f"- {t}" for t in review_texts)
+            + "\n\nDoes ANY review contain an explicit duration or date showing the "
+            "reviewer has been a customer for MORE THAN 1 YEAR? "
+            "Valid evidence: 'been ordering for 8 years', 'coming here since 2022', "
+            "'my go-to for 3 years', 'been a regular for over a year'. "
+            "NOT valid: high review count, phrases like 'a few times', 'great food', "
+            "'will be back', or any inference from review velocity. "
+            "ONLY flag pre_existing=true if a review contains an explicit time reference "
+            "exceeding 365 days. "
+            'Return ONLY JSON: {"pre_existing":true,"reason":"exact quoted phrase from review"} '
+            'or {"pre_existing":false,"reason":"no explicit >1yr patron reference found"}'
+        )
+        resp = _pre_existing_llm_client.messages.create(
+            model='claude-haiku-4-5-20251001',
+            max_tokens=300,
+            messages=[{'role': 'user', 'content': prompt}],
+        )
+        raw = ''
+        for _blk in resp.content:
+            if hasattr(_blk, 'text') and _blk.text:
+                raw = _blk.text.strip()
+                break
+        if not raw:
+            raise ValueError(f'empty response (stop_reason={resp.stop_reason})')
+        raw = _re.sub(r'^```(?:json)?\s*', '', raw)
+        raw = _re.sub(r'\s*```$', '', raw.strip())
+        parsed, _ = json.JSONDecoder().raw_decode(raw)
+        result = bool(parsed.get('pre_existing'))
+        PRE_EXISTING_LLM_CACHE[ck] = {
+            'pre_existing': result,
+            'reason': parsed.get('reason', ''),
+            'review_count': review_count,
+        }
+        json.dump(PRE_EXISTING_LLM_CACHE, open(PRE_EXISTING_LLM_CACHE_PATH, 'w'), indent=2)
+        if result:
+            print(f"  [phase-C] LLM pre-existing: {ck} → DROP | {parsed.get('reason', '')}")
+        return result
+    except Exception as ex:
+        print(f"  WARN: LLM pre-existing check failed for {ck}: {ex}")
+        return False
 
 
 # DineSafe lookup, loaded once at module import. Maps "<streetnum>
@@ -958,11 +1069,11 @@ with open(CSV_PATH, encoding='utf-8', errors='replace') as f:
                 # "5 dishes" / "since 2024" style false positives.
                 if groups and groups[0]:
                     n = int(groups[0])
-                    if 1900 < n <= 2100:    # year
-                        if (REFERENCE_DATE.year - n) >= 3:
+                    if 1900 < n <= 2100:    # year: only 2024 and earlier are
+                        if (REFERENCE_DATE.year - n) >= 2:  # unambiguously >365d
                             old_match = True
                             break
-                    elif n >= 3:            # "for X years"
+                    elif n >= 2:            # "for X years" — 2+ years > 365d
                         old_match = True
                         break
                 else:                       # text-only signal
@@ -1118,6 +1229,14 @@ with open(CSV_PATH, encoding='utf-8', errors='replace') as f:
         if not is_pre:
             is_pre, _, _, _ = _pre_existing_dinesafe(op_raw, address_full,
                                                      iss.isoformat())
+        if not is_pre:
+            _ck = cache_key(op_raw, address_full)
+            _pc = PLACES_CACHE.get(_ck) or {}
+            is_pre = _check_pre_existing_llm(
+                _ck, iss.isoformat(),
+                _pc.get('reviewCount') or 0,
+                _pc.get('reviewsDetail') or [],
+            )
         if is_pre:
             n_dropped_pre_existing += 1
             continue
@@ -1248,7 +1367,6 @@ if _n_dropped_over_1yr:
 # that won't make the final feed).
 _today_iso_for_firstseen = REFERENCE_DATE.isoformat()
 _n_first_seen_new = 0
-_n_first_seen_backfilled = 0
 _n_prior_tenant = 0
 for _k, _e in seen_entries.items():
     # firstSeen cache is keyed by the canonical _cacheKey string (the
@@ -1265,15 +1383,15 @@ for _k, _e in seen_entries.items():
     # now have an actually-inspected date). Cache stays monotonic in
     # accuracy direction (only moves toward earlier/more-authoritative
     # dates, never forward). The cap at today prevents future-dated junk.
-    _seed = _e.get('issuedDate') or _today_iso_for_firstseen
-    if _seed > _today_iso_for_firstseen: _seed = _today_iso_for_firstseen
+    # firstSeen = the date we FIRST listed this entry (true sighting), seeded
+    # to TODAY for genuinely-new keys and then frozen. This feeds schema
+    # dateModified + sitemap lastmod, so it must reflect when the page actually
+    # appeared on the site — NOT the licence/operating date (that lives in
+    # issuedDate / daysOpen / dateSource). Previously seeded to issuedDate,
+    # which told Google a brand-new page was "modified" on its old licence date.
     if _fs_key not in FIRST_SEEN_CACHE:
-        FIRST_SEEN_CACHE[_fs_key] = _seed
+        FIRST_SEEN_CACHE[_fs_key] = _today_iso_for_firstseen
         _n_first_seen_new += 1
-    elif _seed < FIRST_SEEN_CACHE[_fs_key]:
-        # Backfill: stronger evidence (earlier inspection) now available.
-        FIRST_SEEN_CACHE[_fs_key] = _seed
-        _n_first_seen_backfilled += 1
     _e['firstSeen'] = FIRST_SEEN_CACHE[_fs_key]
     # priorTenant: address has DineSafe history under different names →
     # this is a fresh tenant in an old kitchen, editorial gold.
@@ -1296,9 +1414,8 @@ if _n_first_seen_new:
     _os.makedirs(_os.path.dirname(FIRST_SEEN_PATH), exist_ok=True)
     with open(FIRST_SEEN_PATH, 'w') as _f:
         json.dump(FIRST_SEEN_CACHE, _f, sort_keys=True, separators=(',', ':'))
-print(f"  signals: firstSeen={_n_first_seen_new} new entries cached "
-      f"({_n_first_seen_backfilled} backfilled from stronger DineSafe evidence, "
-      f"{len(FIRST_SEEN_CACHE)} total), priorTenant flagged on {_n_prior_tenant} entries, "
+print(f"  signals: firstSeen={_n_first_seen_new} new entries cached today "
+      f"({len(FIRST_SEEN_CACHE)} total), priorTenant flagged on {_n_prior_tenant} entries, "
       f"neighborhood tagged on {_n_neighborhood} entries ({_n_iconic} in iconic corridors)")
 
 # Now bucket the deduped entries by cuisine and compute counts.
@@ -1598,14 +1715,41 @@ def _scrub_blurb(text):
     text = _re.sub(
         r',?\s*\b(popular|beloved|cherished|loved|celebrated|famed|renowned)\s+(?:by|among|with|in)\s+(?:locals?|the\s+(?:local\s+)?community|residents?|diners?)\b',
         '', text, flags=_re.I)
-    # 8) "Fresh licence" — same logic as #4, "fresh" implies very recent.
-    text = _re.sub(r'\b[Ff]resh\s+licence\b', 'Licence', text)
-    # 8b) Strip Google-Places-derived review/rating phrasing. ToS §5.3
-    # restricts caching of Places ratings, review text, review counts —
-    # so we must not surface that data in editorial copy either.
+    # 7b) Age / heritage claims — these contradict the directory's "new in the
+    #     last 365 days" premise so strip them from any blurb that reaches here.
+    #     "established 2019", "since 2018", "in business for 3 years", "decades-old".
     text = _re.sub(
-        r',?\s*\b(reviewers|google\s+reviewers?|places?\s+reviewers?|early\s+reviewers?|google\s+reviews?|places?\s+reviews?)\s+'
-        r'(?:praise|praising|note|noting|describe|describing|say|saying|highlight|highlighting|call|calling|rate|consistently\s+praise)\b[^.;,]*',
+        r',?\s*\b(?:established|founded|operating since|since)\s+(?:in\s+)?\d{4}\b',
+        '', text, flags=_re.I)
+    text = _re.sub(
+        r',?\s*\b(?:for|over|nearly|almost)\s+\d+\s*\+?\s*(?:years?|yrs?)\b[^,.;]*',
+        '', text, flags=_re.I)
+    text = _re.sub(r',?\s*\bdecades[\s\-]?(?:old|of\s+(?:service|operation|history))?\b', '', text, flags=_re.I)
+    text = _re.sub(r',?\s*\b(?:long-?standing|long-?running|legendary|iconic)\b', '', text, flags=_re.I)
+    # 8) Any "licensed in YYYY" reference — redundant, all listings are within
+    #    365 days by definition. Catches trailing ", licensed in 2026." and
+    #    standalone "It was licensed in 2026." / "Licensed in 2026." forms.
+    text = _re.sub(r',?\s*\blicensed in \d{4}\.?', '', text, flags=_re.I)
+    text = _re.sub(r'\s*\bIt was licensed in \d{4}\.?', '', text, flags=_re.I)
+    # "Fresh licence" — same logic as #4, "fresh" implies very recent.
+    text = _re.sub(r'\b[Ff]resh\s+licence\b', 'Licence', text)
+    # 8b) Strip review-sentiment + rating phrasing entirely. The underlying
+    # sentiment is Google-Places review-derived, and ToS §5.3 restricts caching/
+    # surfacing Places review text, ratings, and counts (Places ratings were
+    # removed from the pipeline 2026-06-04) — so we keep it out of editorial copy
+    # rather than open that can of worms, including generic "reviewers praise…"
+    # (that's where it comes from). The relative-pronoun cleanup further down
+    # removes any "…that." stranded when the clause is cut.
+    text = _re.sub(
+        r',?\s*\b(?:reviewers?|google\s+reviewers?|places?\s+reviewers?|early\s+reviewers?|'
+        r'google\s+reviews?|places?\s+reviews?|diners?|customers?|patrons?|guests?)\s+'
+        r'(?:consistently\s+|frequently\s+|often\s+|regularly\s+)?'
+        r'(?:praise|praising|note|noting|describe|describing|say|saying|highlight|highlighting|call|calling|rave|raving|love|loving|rate|rating)\b[^.;,]*',
+        '', text, flags=_re.I)
+    # "according to (diners|reviewers|customers…)" attribution → drop the clause.
+    text = _re.sub(
+        r',?\s*\b[Aa]ccording to (?:its|their|the)?\s*(?:many\s+)?'
+        r'(?:reviewers?|diners?|customers?|patrons?|guests?|locals?)\b[^,.;]*,?\s*',
         '', text, flags=_re.I)
     text = _re.sub(
         r',?\s*\bwith\s+(?:over\s+)?\d+[\s+]*\b(?:positive\s+)?(?:google\s+)?(?:reviews?|ratings?)\b',
@@ -1616,6 +1760,31 @@ def _scrub_blurb(text):
     text = _re.sub(r',?\s*\b(?:on\s+)?google\s+(?:reviews?|maps?|places?)\b[^.;,]*', '', text, flags=_re.I)
     text = _re.sub(r',?\s*\b(?:with\s+)?(?:a\s+)?\d+\.\d\s*[★\*]?\s*(?:star\s+)?(?:google\s+)?rating\b', '', text, flags=_re.I)
     text = _re.sub(r',?\s*\bplaces\s+(?:reviews?\s+)?(?:match|confirms?)\b[^.;,]*', '', text, flags=_re.I)
+    # 8c) Source-attribution / AI-research artefacts. A blurb must read as a
+    # plain factual description, not meta-commentary about where we looked
+    # ("the website says…", "according to their social media", "appears to be").
+    # Strip the attribution clause; keep the fact that follows it.
+    text = _re.sub(
+        r'\b[Aa]ccording to (?:its|their|the)?\s*(?:own\s+)?'
+        r'(?:website|site|social\s+media(?:\s+presence)?|online\s+presence|instagram|facebook|tiktok|posts?|listing|profile)[^,.;]*,?\s*',
+        '', text, flags=_re.I)
+    text = _re.sub(
+        r'\b(?:its|their|the)\s+(?:own\s+)?'
+        r'(?:website|site|social\s+media(?:\s+presence)?|online\s+presence|instagram|facebook|tiktok)\s+'
+        r'(?:says?|states?|notes?|describes?|indicates?|lists?|mentions?|advertises?|suggests?|reads?|shows?|reveals?|confirms?)\s+(?:that\s+)?',
+        '', text, flags=_re.I)
+    # Narrow boilerplate only: "(with) (its/their) online presence and business
+    # details (recently) established/in place" — pure AI filler. Descriptive uses
+    # ("keeps a minimal online presence but maintains steady operations") are
+    # factual and left intact, so we DON'T greedily eat to the next period.
+    text = _re.sub(
+        r',?\s*\b(?:with\s+)?(?:its|their|an?|the)\s+(?:\w+\s+)?(?:online\s+presence|social\s+media(?:\s+presence)?)\s+'
+        r'and\s+business\s+details\s+(?:recently\s+)?(?:established|in\s+place)\b',
+        '', text, flags=_re.I)
+    text = _re.sub(r'\b(?:appears|seems)\s+to\s+be\b', 'is', text, flags=_re.I)
+    text = _re.sub(r'\bis\s+said\s+to\s+be\b', 'is', text, flags=_re.I)
+    text = _re.sub(r'\b(?:reportedly|apparently|presumably)\s+', '', text, flags=_re.I)
+    text = _re.sub(r'\bbased on (?:the\s+)?(?:available|current)\s+(?:information|evidence|data)\b,?\s*', '', text, flags=_re.I)
     # 9) "opened" → "registered" everywhere (we know licence date, not actual open date).
     text = _re.sub(r'\bopened\b', 'registered', text, flags=_re.I)
     # 10) Strip dangling "no Places match" / "yet crawled" verification leakage.
@@ -1631,9 +1800,16 @@ def _scrub_blurb(text):
     text = _re.sub(r'\s{2,}', ' ', text)
     text = _re.sub(r'\s+([,.;:])', r'\1', text)
     text = _re.sub(r',\s*(?:with|but|and|;)\s+', ' ', text)
+    # Dangling connective or orphaned relative pronoun left by a stripped trailing
+    # clause ("…cuisine, with." → "…cuisine."; "…preparation that." → "…preparation.")
+    # — drop it when it now sits right before punctuation/end.
+    text = _re.sub(r',?\s*\b(?:with|featuring|having|boasting|and|but|that|which|who|whom|whose|where|when|while)\b\s*(?=[.;,]|$)', '', text, flags=_re.I)
     text = _re.sub(r'[;,]+\s*(?=[.;,])', '', text)
     text = _re.sub(r'\(\s*\)', '', text)
     text = _re.sub(r',\s*\.', '.', text)
+    # Collapse doubled sentence enders left when a trailing clause was cut
+    # ("hospitality.." / "sauce. ." → "hospitality." / "sauce.").
+    text = _re.sub(r'\.(?:\s*\.)+', '.', text)
     # ". ," / ". ;" / ". —" → ". " (capitalize next letter via callback)
     def _period_cap(m): return '. ' + m.group(1).upper()
     text = _re.sub(r'\.\s*[,;\-—–]\s*(\w)', _period_cap, text)
@@ -1645,6 +1821,107 @@ def _scrub_blurb(text):
     if text:
         text = text[:1].upper() + text[1:]
     return text
+
+
+def _clean_excerpt(text, max_len=220):
+    """Trim a blurb to a clean boundary for /answers excerpts — never mid-word,
+    prefer a sentence end. Replaces the old hard ``[:200]`` slice that cut mid-
+    word ("…Id", "…specificit"), which an AI could reproduce verbatim when
+    citing the page. Run the text through _scrub_blurb() first."""
+    t = (text or '').strip()
+    if len(t) <= max_len:
+        return t
+    cut = t[:max_len]
+    # Prefer the last full sentence end inside the window (keep the period).
+    ends = list(_re.finditer(r'[.!?](?=\s|$)', cut))
+    if ends and ends[-1].start() >= max_len * 0.5:
+        return cut[:ends[-1].end()].strip()
+    # Else cut at the last word boundary and mark the elision.
+    sp = cut.rfind(' ')
+    base = (cut[:sp] if sp > 0 else cut).rstrip(' ,;:—–-')
+    return base + '…'
+
+
+def _primary_cuisine_of(e):
+    """The entry's PRIMARY cuisine key (first in its cuisines list). A singular
+    'newest <cuisine>' claim must be backed by a primary match — a dual-concept
+    place keeps its secondary tag in the full listing but must not headline a
+    cuisine that isn't its main identity (e.g. an Italian pizzeria that also
+    serves Greek souvlaki is not 'the newest Greek restaurant')."""
+    cs = e.get('cuisines') or ([e['cuisine']] if e.get('cuisine') else [])
+    return cs[0] if cs else ''
+
+
+# Beverage/dessert-format names that almost never denote a savory ethnic
+# main-meal restaurant. When a single such entry would define a cuisine's
+# "newest <cuisine>" headline (the exact passage AI assistants cite), it's far
+# more likely a classification error than a real claim — e.g. "Metkelna Bubble
+# Tea And Smoothie" tagged the newest Ethiopian restaurant. Guard the HEADLINE
+# only; the entry stays in the full directory listing.
+_BEVERAGE_NAME_RE = _re.compile(r'\b(bubble\s*tea|boba|milk\s*tea|smoothie|juice\s+bar)\b', _re.I)
+# Cuisine buckets that ARE beverage/dessert formats — the marker is expected there.
+_BEVERAGE_CUISINES = {'bubble_tea', 'taiwanese', 'dessert', 'cafe', 'coffee'}
+
+def _headline_safe(entry, cuisine_key):
+    """False when naming this entry as the singular 'newest <cuisine>' would
+    surface a likely misclassification (a beverage-format name headlining a
+    savory ethnic cuisine)."""
+    if cuisine_key in _BEVERAGE_CUISINES:
+        return True
+    return not _BEVERAGE_NAME_RE.search(entry.get('operatingName') or '')
+
+
+# Street / directional / common abbreviations whose trailing period is NOT a
+# sentence end — a naive split on the first "." mangles "on Carlton St. in
+# Downtown" into "…on Carlton St". Used by _first_sentence().
+_SENT_ABBR = {'st', 'ave', 'blvd', 'rd', 'cres', 'dr', 'ste', 'apt', 'unit',
+              'fl', 'rm', 'hwy', 'pkwy', 'sq', 'ln', 'ct', 'pl', 'terr',
+              'n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw',
+              'mt', 'ft', 'no', 'jr', 'sr', 'co', 'inc', 'ltd', 'mr', 'mrs',
+              'ms', 'dr', 'vs', 'etc', 'approx'}
+
+def _first_sentence(text):
+    """First sentence of a blurb. A period only ends a sentence when it's at
+    end-of-string or followed by whitespace + a capital/quote/digit, AND isn't
+    an abbreviation period ("St.", "Ave.", "N."). Returns the whole string when
+    no real boundary is found (caller length-truncates)."""
+    t = (text or '').strip()
+    for m in _re.finditer(r'[.!?]+', t):
+        rest = t[m.end():]
+        if rest and not _re.match(r'\s+["“‘\'(]?[A-Z0-9]', rest):
+            continue  # e.g. "St. in" (lowercase next) — not a real boundary
+        before = t[:m.start()].strip()
+        toks = _re.split(r'\s+', before)
+        last = toks[-1].strip('([{"\'`').lower() if toks else ''
+        if last in _SENT_ABBR:
+            continue  # "Carlton St." / "Bathurst Ave." — abbreviation, keep going
+        return t[:m.end()].strip()
+    return t
+
+
+def _sentence_case(text):
+    """Capitalize the first letter of the blurb and of every sentence that
+    follows a real sentence-ending period/?/!. The Haiku batch rewrites very
+    often return lowercase sentence starts ("...stars. the steady operation
+    ..." — 191 of 495 cached blurbs). Left alone they (a) read as broken
+    English on the page and (b) defeat _first_sentence, which only treats a
+    period as a boundary when an UPPERCASE/digit follows — so the row blurb
+    overruns its first sentence, hard-truncates ("...stars. the…"), and the
+    listing-page de-dup is skipped, printing the same sentence twice. Fixing
+    the casing at render time repairs all three at $0, no regen. Abbreviation
+    periods (St., Ave.) are skipped so "on Bathurst St. near" is left intact."""
+    if not text:
+        return text
+    # First alphabetic char of the whole string.
+    t = _re.sub(r'^(\s*["“‘\'(]?)([a-z])',
+                lambda m: m.group(1) + m.group(2).upper(), text)
+    # First letter after each real sentence boundary, abbreviation-aware.
+    def _cap(m):
+        if (m.group('w') or '').lower() in _SENT_ABBR:
+            return m.group(0)  # "St. near" — not a real boundary, leave it
+        return m.group('pre') + m.group('c').upper()
+    return _re.sub(
+        r'(?P<pre>(?P<w>\w+)[.!?]+\s+["“‘\'(]?)(?P<c>[a-z])', _cap, t)
 
 
 # Per-row editorial blurb + bare-bones flag — surface a one-sentence
@@ -1666,8 +1943,8 @@ def _row_blurb_first_sentence(entry):
     # what+where+who+source-assertion pattern that the legacy scrubber
     # would chew up (it eats "licence registry", "registered", etc.).
     if er.get('via') in ('opus_manual_v1', 'haiku_editorial_v2'):
-        m = _re.match(r'^[^.!?]+[.!?]', raw)
-        text = m.group(0) if m else raw[:180]
+        raw = _scrub_blurb(raw)
+        text = _first_sentence(_sentence_case(raw))
         if len(text) > 180:
             text = text[:177].rsplit(' ', 1)[0] + '…'
         return text
@@ -1687,9 +1964,11 @@ def _row_blurb_first_sentence(entry):
         except (json.JSONDecodeError, ValueError):
             _m2 = _re.search(r'"blurb"\s*:\s*"((?:[^"\\]|\\.)*)"', raw)
             raw = _m2.group(1).replace('\\"', '"').replace('\\n', ' ') if _m2 else _stripped
-    # Take through first sentence-ending period; fall back to first 180 chars.
-    m = _re.match(r'^[^.!?]+[.!?]', raw)
-    text = m.group(0) if m else raw[:180]
+    # Take through the first real sentence boundary (street abbreviations like
+    # "St."/"Ave." are not sentence ends); length-truncated below. Casing is
+    # normalized first so lowercase Haiku sentence starts ("...stars. the…")
+    # don't hide the boundary and overrun into the next sentence.
+    text = _first_sentence(_sentence_case(raw))
     text = _scrub_blurb(text)
     if not text: return ''
     text = text[:1].upper() + text[1:]
@@ -1745,6 +2024,9 @@ def _is_ghost_website(url):
     wt = _WEBSITE_TEXT_CACHE.get(url) or {}
     text = (wt.get('text') or '').lower()
     if not text: return False
+    # Explicit ghost sentinel returned by fetch_page_text when it detects
+    # a parking page via JS-redirect inspection (GoDaddy lander pattern).
+    if text.startswith('ghost:'): return True
     # Strip the jina prefix
     text = text.replace('homepage (jina-rendered):', '').strip()
     # Hard short: <200 chars of real text = empty page
@@ -1762,10 +2044,108 @@ def _is_ghost_website(url):
     ))
 
 
+def _short_street(addr):
+    """Extract just the street portion of a full Places-formatted address.
+    Examples:
+      '1154 St Clair Ave W Unit B, York, ON M6N 1A3, Canada' -> '1154 St Clair Ave W'
+      '3776 Bathurst St, North York, ON M3H 3M6, Canada'      -> '3776 Bathurst St'
+      '84 OAKDALE RD'                                          -> '84 Oakdale Rd'
+    Strips: city + province + postal + country tail, unit/suite suffixes."""
+    if not addr: return ''
+    import re as _r
+    s = addr.strip()
+    # Drop the ", City, ON XYZ ABC, Country" tail
+    s = _r.sub(
+        r',\s*(?:Old\s+|North\s+|East\s+|West\s+)?[A-Z][a-zA-Z\s]+,\s*ON\s+[A-Z]\d[A-Z]\s+\d[A-Z]\d.*$',
+        '', s, flags=_r.IGNORECASE)
+    # Drop trailing "Unit X" / "# X" / suite numbers
+    s = _r.sub(r'\s+(?:Unit|Ste|Suite|#)\s*[\w\-]+\s*$', '', s, flags=_r.IGNORECASE)
+    s = _r.sub(r'\s*,\s*#\s*[\w\-]+\s*$', '', s)
+    s = s.rstrip(',').strip()
+    # Title-case if the whole string is ALL CAPS (from City raw licence
+    # data). str.title() correctly handles "ST CLAIR AVE W" -> "St Clair
+    # Ave W" without lowercasing the directional/abbreviation tokens.
+    if s.isupper():
+        s = s.title()
+    return s
+
+
+def _street_name_only(entry):
+    """Pull just the street name (no number, no city, no unit) from an
+    entry's address. Returns '' if unavailable.
+
+    Examples:
+      '1154 St Clair Ave W Unit B, York, ON M6N 1A3' -> 'St Clair Ave W'
+      '13 Elm St, Toronto, ON M5G 1H1'               -> 'Elm St'
+      '3776 Bathurst St'                              -> 'Bathurst St'
+
+    Bing keyword data (2026-05) shows searchers phrase queries by street
+    name ("new indonesian restaurant on danforth ave") not by district.
+    Block 1 + Block 2 of the cuisine editorial template surface the
+    street name to capture this query class without needing dedicated
+    /street/<name> landing pages.
+    """
+    addr = (entry.get('address') or '').strip()
+    if not addr: return ''
+    short = _short_street(addr)
+    if not short: return ''
+    # _short_street returns "1154 St Clair Ave W" — strip the leading
+    # street number so the editorial reads "on St Clair Ave W" not
+    # "on 1154 St Clair Ave W" (which sounds transactional).
+    import re as _r
+    name = _r.sub(r'^\s*\d+[A-Za-z]?\s*[-/]?\s*\d*[A-Za-z]?\s+', '', short).strip()
+    # Trailing suite-position markers from the City raw licence file —
+    # e.g. "706 BLOOR ST W, MAIN" parses to "Bloor St W, Main" which reads
+    # wrong. These are floor/unit descriptors, not part of the street name.
+    name = _r.sub(
+        r',\s*(?:Main|Bsmt|Basement|Ground|Rear|Front|Lower|Upper|Flr|Floor|Mezz|Mezzanine)\s*$',
+        '', name, flags=_r.IGNORECASE).strip()
+    # Drop very short / clearly garbage results (e.g. just a unit number).
+    if len(name) < 4: return ''
+    return name
+
+
+def _ns_title(s):
+    # Use the _re alias (imported at module top); plain `re` isn't bound at
+    # module level until later in the file, and this runs during initial load.
+    t = _re.sub(r'\b([a-z])', lambda m: m.group(1).upper(), (s or '').lower())
+    # Don't capitalize the possessive 's ("Hao'S" → "Hao's"); leaves elision
+    # prefixes alone ("L'Amoreaux", "O'Brien" keep their capital).
+    return _re.sub(r"([A-Za-z])'S\b", lambda m: m.group(1) + "'s", t)
+
+
+def _fallback_blurb(entry):
+    """Zero-cost description synthesized from structured fields, for brand-new
+    entries the editorial-rewrite cache hasn't reached yet (e.g. HAO'S BISTRO,
+    13 days old). Keeps fresh listings from rendering blank; auto-replaced the
+    moment the rewrite cache fills in a real blurb. Mirrors nsBlurbText() in
+    app.js."""
+    name = _ns_title((entry.get('operatingName') or '').strip())
+    if not name:
+        return ''
+    ks = entry.get('cuisines') or ([entry['cuisine']] if entry.get('cuisine') else [])
+    clab = CUISINE_LABEL.get(ks[0], ks[0].replace('_', ' ').title()) if ks else ''
+    street = _street_name_only(entry)
+    nb = entry.get('neighborhood') or {}
+    hood = (nb.get('label') if isinstance(nb, dict) else '') or entry.get('district') or ''
+    where = (f' on {street}' if street else '') + (f' in {hood}' if hood else '')
+    cuisine_frag = f'{clab} ' if clab else ''
+    # Reuse the menu dishes we already extracted from the site (zero extra
+    # cost) so a site-having spot reads with real substance, not just
+    # cuisine+street. Falls through gracefully when no dishes are cached yet.
+    mh = MENU_HIGHLIGHTS_CACHE.get(entry.get('_cacheKey', '')) or {}
+    dishes = mh.get('dishes') if mh.get('status') == 'ok' else None
+    dish_frag = ''
+    if dishes:
+        ds = dishes[:2]
+        dish_frag = ', known for ' + (' and '.join(ds) if len(ds) == 2 else ds[0])
+    return f'{name} is a {cuisine_frag}spot{where}{dish_frag}.'.strip()
+
+
 _n_ghost_scrubbed = 0
 for _e in seen_entries.values():
-    _b = _row_blurb_first_sentence(_e)
-    if _b: _e['blurb'] = _b
+    _b = _row_blurb_first_sentence(_e) or _fallback_blurb(_e)
+    if _b: _e['blurb'] = _b.replace(' — ', ', ').replace('—', '-')
     # Ghost-website scrub BEFORE bare detection so scrubbed entries also
     # get the bare-bones tag.
     if _is_ghost_website(_e.get('website')):
@@ -1775,6 +2155,50 @@ for _e in seen_entries.values():
         _e['bare'] = True
 if _n_ghost_scrubbed:
     print(f"  ghost-website scrub: stripped {_n_ghost_scrubbed} parked/placeholder URLs")
+
+# Blurb age-claim gate: drop listings whose blurb text claims > 365d of
+# operation. The evidence gate above catches most of these during the main
+# loop, but blurbs are generated from evidence prose and can contain age
+# signals ("established 2022", "in business for 2 years") that the validator
+# didn't explicitly flag as is_brand_new=no. Any such claim contradicts the
+# directory's core promise (new openings, last 365 days) so drop the entry.
+_BLURB_AGE_PATTERNS = [
+    _re.compile(r'\b(?:for|over|nearly|almost|past|been)\s+(\d{1,3})\s*\+?\s*(?:years?|yrs?)\b'),
+    _re.compile(r'\b(\d{1,3})\+\s*(?:years?|yrs?)\b'),
+    _re.compile(r'\b(\d{1,3})[\s\-]+(?:years?|yrs?)[\s\-]+old\b'),
+    _re.compile(r'\b(\d{1,3})[\s\-]+(?:years?|yrs?)\s+(?:operation|operating|veteran|running|business|family|restaurant|institution|tradition|service|kitchen|establishment|legacy|history)\b'),
+    _re.compile(r'\b(?:since|established|founded|operating since)\s+(?:in\s+)?(\d{4})\b'),
+    _re.compile(r'\bdecades(?:[\s\-](?:old|of|long))?\b'),
+    _re.compile(r'\b(?:longstanding|long-?running|long-?standing|legendary|iconic|generations[\s\-]old)\b'),
+]
+_n_dropped_blurb_age = 0
+for _k in list(seen_entries.keys()):
+    _blurb_text = (seen_entries[_k].get('blurb') or '').lower()
+    if not _blurb_text:
+        continue
+    _blurb_old = False
+    for _pat in _BLURB_AGE_PATTERNS:
+        _m = _pat.search(_blurb_text)
+        if not _m:
+            continue
+        _groups = _m.groups()
+        if _groups and _groups[0]:
+            _n = int(_groups[0])
+            if 1900 < _n <= 2100:
+                if (REFERENCE_DATE.year - _n) >= 2:
+                    _blurb_old = True
+                    break
+            elif _n >= 2:
+                _blurb_old = True
+                break
+        else:
+            _blurb_old = True
+            break
+    if _blurb_old:
+        del seen_entries[_k]
+        _n_dropped_blurb_age += 1
+if _n_dropped_blurb_age:
+    print(f"  blurb age-claim drop: {_n_dropped_blurb_age} entries removed (blurb claims >365d of operation)")
 
 # Flat feed: all openings, newest first. Iterate seen_entries directly (NOT the
 # per-cuisine buckets) so multi-cuisine entries - which appear in multiple cuisine
@@ -2072,67 +2496,6 @@ def _flag_color(key):
 # ---------------------------------------------------------------------------
 # Static-feed + JSON-LD builders (shared between homepage and per-cuisine pages).
 # ---------------------------------------------------------------------------
-def _short_street(addr):
-    """Extract just the street portion of a full Places-formatted address.
-    Examples:
-      '1154 St Clair Ave W Unit B, York, ON M6N 1A3, Canada' -> '1154 St Clair Ave W'
-      '3776 Bathurst St, North York, ON M3H 3M6, Canada'      -> '3776 Bathurst St'
-      '84 OAKDALE RD'                                          -> '84 Oakdale Rd'
-    Strips: city + province + postal + country tail, unit/suite suffixes."""
-    if not addr: return ''
-    import re as _r
-    s = addr.strip()
-    # Drop the ", City, ON XYZ ABC, Country" tail
-    s = _r.sub(
-        r',\s*(?:Old\s+|North\s+|East\s+|West\s+)?[A-Z][a-zA-Z\s]+,\s*ON\s+[A-Z]\d[A-Z]\s+\d[A-Z]\d.*$',
-        '', s, flags=_r.IGNORECASE)
-    # Drop trailing "Unit X" / "# X" / suite numbers
-    s = _r.sub(r'\s+(?:Unit|Ste|Suite|#)\s*[\w\-]+\s*$', '', s, flags=_r.IGNORECASE)
-    s = _r.sub(r'\s*,\s*#\s*[\w\-]+\s*$', '', s)
-    s = s.rstrip(',').strip()
-    # Title-case if the whole string is ALL CAPS (from City raw licence
-    # data). str.title() correctly handles "ST CLAIR AVE W" -> "St Clair
-    # Ave W" without lowercasing the directional/abbreviation tokens.
-    if s.isupper():
-        s = s.title()
-    return s
-
-
-def _street_name_only(entry):
-    """Pull just the street name (no number, no city, no unit) from an
-    entry's address. Returns '' if unavailable.
-
-    Examples:
-      '1154 St Clair Ave W Unit B, York, ON M6N 1A3' -> 'St Clair Ave W'
-      '13 Elm St, Toronto, ON M5G 1H1'               -> 'Elm St'
-      '3776 Bathurst St'                              -> 'Bathurst St'
-
-    Bing keyword data (2026-05) shows searchers phrase queries by street
-    name ("new indonesian restaurant on danforth ave") not by district.
-    Block 1 + Block 2 of the cuisine editorial template surface the
-    street name to capture this query class without needing dedicated
-    /street/<name> landing pages.
-    """
-    addr = (entry.get('address') or '').strip()
-    if not addr: return ''
-    short = _short_street(addr)
-    if not short: return ''
-    # _short_street returns "1154 St Clair Ave W" — strip the leading
-    # street number so the editorial reads "on St Clair Ave W" not
-    # "on 1154 St Clair Ave W" (which sounds transactional).
-    import re as _r
-    name = _r.sub(r'^\s*\d+[A-Za-z]?\s*[-/]?\s*\d*[A-Za-z]?\s+', '', short).strip()
-    # Trailing suite-position markers from the City raw licence file —
-    # e.g. "706 BLOOR ST W, MAIN" parses to "Bloor St W, Main" which reads
-    # wrong. These are floor/unit descriptors, not part of the street name.
-    name = _r.sub(
-        r',\s*(?:Main|Bsmt|Basement|Ground|Rear|Front|Lower|Upper|Flr|Floor|Mezz|Mezzanine)\s*$',
-        '', name, flags=_r.IGNORECASE).strip()
-    # Drop very short / clearly garbage results (e.g. just a unit number).
-    if len(name) < 4: return ''
-    return name
-
-
 def _build_listing_title(name, primary_lbl, addr, district, entry):
     """Build the per-listing <title>. Goal: rank for address-style queries
     ('3776 bathurst street'), neighborhood queries ('italian restaurant st
@@ -2272,20 +2635,7 @@ def _build_listing_meta_desc(entry, primary_lbl, name, desc_addr, fallback):
         r',\s*(?:Old\s+|North\s+|East\s+|West\s+)?[A-Z][a-zA-Z\s]+,\s*ON\s+[A-Z]\d[A-Z]\s+\d[A-Z]\d.*$',
         '', short_addr).strip().rstrip(',')
 
-    # Freshness anchor — uses the licence-issued month/year so the
-    # phrase is time-stable. Earlier "first seen Nd ago" pattern decayed
-    # because the cached meta was permanent but the relative number kept
-    # drifting. Format: "Licensed September 2025."
-    _iso = entry.get('issuedDate') or ''
     age_phrase = ''
-    if _iso and len(_iso) >= 7:
-        try:
-            _y, _m = _iso[:4], int(_iso[5:7])
-            _months = ['', 'January','February','March','April','May','June',
-                       'July','August','September','October','November','December']
-            age_phrase = f'licensed {_months[_m]} {_y}'
-        except (ValueError, IndexError):
-            age_phrase = ''
 
     # 1) Menu highlights (cleanest signal) — lead with NAME so brand-recall
     # searches match the SERP exactly; close with the age anchor.
@@ -2313,6 +2663,8 @@ def _build_listing_meta_desc(entry, primary_lbl, name, desc_addr, fallback):
     er = EVIDENCE_REWRITE_CACHE.get(cache_key) or {}
     if er.get('status') == 'ok' and er.get('blurb'):
         b = er['blurb'].strip()
+        b = _re_meta.sub(r',?\s*\blicensed in \d{4}\.?', '', b, flags=_re_meta.I)
+        b = _re_meta.sub(r'\s*\bIt was licensed in \d{4}\.?', '', b, flags=_re_meta.I).strip()
         b = _re_meta.sub(r'\s*[—–]\s*', ', ', b)
         b = _re_meta.sub(r'\bopened\b', 'registered', b, flags=_re_meta.I)
         b = b[:1].upper() + b[1:]
@@ -2576,8 +2928,13 @@ def build_static_rows(entries, link_to_listing=False, group_by_date=False, show_
         # restaurant's "own site" - fall through to mapsUrl / internal.
         site = r.get('website')
         if _is_aggregator_url(site): site = None
+        if site and _is_social_url(site): site = None  # social profile → fall back to mapsUrl
         if site and not url_is_alive(site): site = None  # ECONNREFUSED/dead → fall back to mapsUrl
-        link = r.get('mapsUrl') or site or internal_url
+        # Name link → the restaurant's OWN site first (that's what the ↗ arrow
+        # below signals and what visitors expect from clicking a name); Maps is
+        # the fallback when there's no live own-site. Address + thumb still
+        # prefer Maps (directions / more photos) — only the NAME leads to the site.
+        link = site or r.get('mapsUrl') or internal_url
         name_ext_tgt = ' target="_blank" rel="noopener"' if link and not link.startswith('/r/') else ' rel="noopener"'
         # Diagonal-arrow indicator (↗) only when the name link goes to the
         # restaurant's OWN website - not Maps fallback, not internal /r/ page.
@@ -3065,20 +3422,48 @@ def _ns_icon_tint(hexcol):
         return '#f0ece3'
     return f'rgba({r},{g},{b},0.16)'
 
-def _ns_title(s):
-    return re.sub(r'\b([a-z])', lambda m: m.group(1).upper(), (s or '').lower())
-
 def _ns_ago(d):
-    # Days under a month; months once it's over a month. Mirrors nsAgo() in app.js.
+    # Recency, no "ago". Mirrors nsAgo() in app.js.
     if not isinstance(d, int):
         return ''
+    if d <= 0:
+        return 'today'
+    if d == 1:
+        return 'yesterday'
     if d < 30:
-        return f"{d} day ago" if d == 1 else f"{d} days ago"
+        return f"{d} days"
     m = d // 30
-    return f"{m} month ago" if m == 1 else f"{m} months ago"
+    return f"{m} month" if m == 1 else f"{m} months"
 
-# Below this many listings a page keeps the ticket feed (mirrors HERO_MIN in app.js).
-HERO_MIN = 10
+def _ns_chip(r):
+    # Recency chip; fresh (<=7 days) pops in accent. Mirrors nsChip() in app.js.
+    d = r.get('daysOpen')
+    fresh = isinstance(d, int) and d <= 7
+    return f'<span class="ns-when{" fresh" if fresh else ""}">{_ns_ago(d)}</span>'
+
+# "First seen" explainer disclosure (one per feed). Native <details> — no JS
+# needed. Mirrors NS_FIRSTSEEN in app.js.
+_NS_FIRSTSEEN = ('<details class="ns-firstseen"><summary>First seen <span class="ns-i" aria-hidden="true">i</span></summary>'
+                 "<p>Each listing's date is when the spot was <strong>first seen in official Toronto records</strong>: "
+                 "its Toronto Public Health (DineSafe) inspection date when there is one (the most reliable sign it was "
+                 "actually serving), otherwise the City of Toronto business-licence date. Every listing is also "
+                 "confirmed open via its website or social media.</p></details>")
+
+def _ns_status(r):
+    # Tag labels the DATE shown, not open/closed — every listing already passed
+    # the Places OPERATIONAL gate. Mirrors nsStatus() in app.js. dateSource
+    # 'dinesafe' = shown date is a Toronto Public Health inspection
+    # ("Operating"); otherwise it's the City licence date ("Registered").
+    if r.get('dateSource') == 'dinesafe':
+        return ('<span class="ns-status operating" title="Operating date — confirmed by a '
+                'Toronto Public Health (DineSafe) inspection">Operating</span>')
+    return ('<span class="ns-status registered" title="Registered date — City of '
+            'Toronto business licence">Registered</span>')
+
+_NS_LEGEND = ('<p class="ns-legend">'
+              '<span class="ns-status operating">Operating</span> date confirmed by a Toronto Public Health inspection'
+              ' · <span class="ns-status registered">Registered</span> date from the City licence'
+              ' · every listing is open &amp; verified</p>')
 
 def build_home_feed(rows, scope_label='new spots', scoped=False, limit=30):
     def keys(r):
@@ -3111,77 +3496,91 @@ def build_home_feed(rows, scope_label='new spots', scoped=False, limit=30):
     pips = ''.join(f'<div class="ns-dot{" on" if i <= heat else ""}"></div>' for i in range(1, 6))
     _lbl = 'new this month' if win == 30 else f'new · {span}'
     streak = (f'<div class="ns-streak-bar"><span class="ns-flame">🔥</span>'
-              f'<div><div class="ns-count">{count}</div><div class="ns-label">{_lbl} · '
-              f'<span style="color:#c0532a;font-weight:600">{heat_word}</span></div></div>'
-              f'<div class="ns-dots" aria-label="activity heat {heat} of 5" title="How active the {span} are">{pips}</div>'
-              f'<span class="ns-updated">of {total} tracked</span></div>')
-    # Hero cards (top 3)
-    cards = []
-    for i, r in enumerate(rows[:3]):
+              f'<div class="ns-streak-main"><div class="ns-count">{count}</div>'
+              f'<div class="ns-label">{_lbl}</div></div>'
+              f'<div class="ns-heat" title="How active the {span} are">'
+              f'<div class="ns-dots" aria-label="activity {heat} of 5">{pips}</div>'
+              f'<div class="ns-heat-word">{heat_word}</div></div>'
+              f'<span class="ns-updated">{total} tracked</span></div>')
+    # Whole card links to the accurate destination: own (pre-cleaned) website >
+    # Places/Maps > internal /r/ profile. Small name ↗ when it opens out.
+    def _best(r):
+        s = (r.get('website') or '').strip()
+        if s: return s, True
+        if r.get('mapsUrl'): return r['mapsUrl'], True
+        return (f"/r/{r['slug']}" if r.get('slug') else '#'), False
+    # Split tap targets — card is a <div>/<article> container (not one big <a>;
+    # nested <a> is invalid HTML): name+↗ → own site / Places; location line →
+    # Google Maps; blurb + glyph → /r/ full editorial profile.
+    def _r_link(r):
+        s = r.get('slug')
+        return f'/r/{s}' if s else _best(r)[0]
+    def _sub_line(r, k, cls):
+        hh = hood(r)
+        inner = f'{_esc(lab(k))}{(" · " + _esc(hh)) if hh else ""}'
+        maps = r.get('mapsUrl') or ''
+        if maps:
+            return (f'<a class="{cls} ns-maplink" href="{_esc(maps)}" target="_blank" rel="noopener">'
+                    f'<span class="ns-pin" aria-hidden="true">📍</span>{inner}</a>')
+        return f'<p class="{cls}">{inner}</p>'
+    def _hero_card(r, i):
         ks = keys(r); k = ks[0] if ks else ''
-        emoji = _NS_EMOJI.get(k, '🍴')
-        badge = ['r1','r2','r3'][i]; blbl = ['🏆 Newest','2nd newest','3rd newest'][i]
-        href = f"/r/{r['slug']}" if r.get('slug') else '#'
+        href, ext = _best(r)
+        tgt = ' target="_blank" rel="noopener"' if ext else ''
+        arr = '<span class="ext-arrow" aria-hidden="true">↗</span>' if ext else ''
         dist = r.get('district') or ''
         disttag = f'<span class="ns-tag hood">{_esc(dist)}</span>' if dist else ''
-        hh = hood(r)
-        blurb = f'<p class="ns-card-blurb">{_esc(r.get("blurb"))}</p>' if r.get('blurb') else ''
-        cards.append(
-            f'<a href="{href}" class="ns-hero-card{" rank-1" if i == 0 else ""}" data-slug="{_esc(r.get("slug") or "")}">'
-            f'<div class="ns-card-rank"><span class="ns-rank-badge {badge}">{blbl}</span><span class="ns-days-ago">{_ns_ago(r.get("daysOpen"))}</span></div>'
-            f'<div class="ns-card-icon">{emoji}</div>'
-            f'<div class="ns-card-body"><p class="ns-card-name">{_esc(_ns_title(r.get("operatingName")))}</p>'
-            f'<p class="ns-card-sub">{_esc(lab(k))}{(" · " + _esc(hh)) if hh else ""}</p>'
+        r_href = _r_link(r)
+        blurb = f'<a class="ns-card-blurb" href="{_esc(r_href)}">{_esc(r.get("blurb"))}</a>' if r.get('blurb') else ''
+        crown = '<span class="ns-crown">Newest</span>' if i == 0 else ''
+        nm = _esc(_ns_title(r.get('operatingName')))
+        return (
+            f'<article class="ns-hero-card{" rank-1" if i == 0 else ""}" data-slug="{_esc(r.get("slug") or "")}">'
+            f'<div class="ns-card-top">{crown}{_ns_chip(r)}</div>'
+            f'<div class="ns-card-body"><a class="ns-card-name" href="{_esc(href)}"{tgt}>{nm}{arr}</a>'
+            f'{_sub_line(r, k, "ns-card-sub")}'
             f'{blurb}'
-            f'<span class="ns-tag cuisine">{_esc(lab(k))}</span>{disttag}<br>'
-            f'<button class="ns-save-btn" type="button" data-slug="{_esc(r.get("slug") or "")}">♡ Save</button>'
-            f'</div></a>'
+            f'<span class="ns-tag cuisine">{_esc(lab(k))}</span>{disttag}'
+            f'<div class="ns-card-actions"><button class="ns-save-btn" type="button" data-slug="{_esc(r.get("slug") or "")}">♡ Save</button></div>'
+            f'</div></article>'
         )
-    hero = '<div class="ns-hero-grid">' + ''.join(cards) + '</div>'
-    # Ranked list (4+), capped at `limit`, grouped by registration month.
-    # The month bucket = floor(daysOpen/30) months before today, matching the
-    # "X months ago" age label (so a "1 month ago" row sits under "May"). The
-    # month label is right-aligned (line then label) on every divider so they
-    # line up; no year (redundant).
-    def _month_label(b):
-        t = REFERENCE_DATE.year * 12 + (REFERENCE_DATE.month - 1) - b
-        y = t // 12
-        return _NS_MONTHS[t % 12] + (f' {y}' if y != REFERENCE_DATE.year else '')
-    list_html = ''
-    prev_b = None
-    for idx, r in enumerate(rows[3:limit], start=4):
-        d = r.get('daysOpen')
-        b = (d // 30) if isinstance(d, int) else 0
-        if b != prev_b:
-            if prev_b is None:
-                list_html += (f'<div class="ns-section-head"><span class="ns-section-head-label">Also registered recently</span>'
-                              f'<div class="ns-section-head-line"></div>'
-                              f'<span class="ns-section-head-label">{_month_label(b)}</span></div>')
-            else:
-                list_html += (f'<div class="ns-section-head"><div class="ns-section-head-line"></div>'
-                              f'<span class="ns-section-head-label">{_month_label(b)}</span></div>')
-            prev_b = b
+    def _grid_card(r):
         ks = keys(r); k = ks[0] if ks else ''
+        href, ext = _best(r)
+        tgt = ' target="_blank" rel="noopener"' if ext else ''
+        arr = '<span class="ext-arrow" aria-hidden="true">↗</span>' if ext else ''
+        r_href = _r_link(r)
+        blurb = f'<a class="ns-gc-blurb" href="{_esc(r_href)}">{_esc(r.get("blurb"))}</a>' if r.get('blurb') else ''
+        color = PALETTE_HEX.get(k) or cuisine_color(k) or '#b06a2c'
         emoji = _NS_EMOJI.get(k, '🍴')
-        color = PALETTE_HEX.get(k) or cuisine_color(k) or '#888888'
-        href = f"/r/{r['slug']}" if r.get('slug') else '#'
-        hh = hood(r)
-        blurb = f'<p class="ns-list-blurb">{_esc(r.get("blurb"))}</p>' if r.get('blurb') else ''
-        list_html += (
-            f'<a href="{href}" class="ns-list-item" data-slug="{_esc(r.get("slug") or "")}">'
-            f'<span class="ns-list-num">{idx}</span>'
-            f'<div class="ns-list-icon" style="background:{_ns_icon_tint(color)}">{emoji}</div>'
-            f'<div class="ns-list-info"><p class="ns-list-name">{_esc(_ns_title(r.get("operatingName")))}</p>'
-            f'<p class="ns-list-meta">{_esc(lab(k))}{(" · " + _esc(hh)) if hh else ""}</p>{blurb}</div>'
-            f'<span class="ns-list-age">{_ns_ago(r.get("daysOpen"))}</span></a>'
+        nm = _esc(_ns_title(r.get('operatingName')))
+        return (
+            f'<div class="ns-gc" data-slug="{_esc(r.get("slug") or "")}">'
+            f'<a class="ns-gc-ico" href="{_esc(r_href)}" style="background:{_ns_icon_tint(color)};border-color:{color}33" aria-label="{nm} — full profile">{emoji}</a>'
+            f'<div class="ns-gc-main">'
+            f'<div class="ns-gc-top"><a class="ns-gc-name" href="{_esc(href)}"{tgt}>{nm}{arr}</a>{_ns_chip(r)}</div>'
+            f'{_sub_line(r, k, "ns-gc-meta")}'
+            f'{blurb}</div></div>'
         )
-    return ('' if scoped else streak) + hero + list_html
+    # Tier 1: freshest (≤7d, ≥2) as feature cards, else top 3. Tier 2: the rest.
+    fresh = [r for r in rows if isinstance(r.get('daysOpen'), int) and r['daysOpen'] <= 7]
+    featured = fresh[:4] if len(fresh) >= 2 else rows[:3]
+    feat_ids = {id(r) for r in featured}
+    feat_label = 'Just landed this week' if len(fresh) >= 2 else 'Newest'
+    hero = (f'<div class="ns-tier-head">{feat_label}</div>'
+            '<div class="ns-feature-grid">' + ''.join(_hero_card(r, i) for i, r in enumerate(featured)) + '</div>')
+    rest = [r for r in rows if id(r) not in feat_ids][:limit]
+    grid = ''
+    if rest:
+        grid = ('<div class="ns-tier-head">More recent openings</div>'
+                '<div class="ns-grid">' + ''.join(_grid_card(r) for r in rest) + '</div>')
+    return ('' if scoped else streak + _NS_FIRSTSEEN) + hero + grid
 
 # ---------------------------------------------------------------------------
 # Inject into the HOMEPAGE (index.html).
 # ---------------------------------------------------------------------------
 top_for_static = all_recent[:30]
-static_block = build_home_feed(all_recent, scope_label='new spots')
+static_block = build_static_rows(all_recent[:30], link_to_listing=True, group_by_date=True, show_cta=True)
 home_url = 'https://nowservingto.com/'
 
 
@@ -3475,14 +3874,14 @@ def build_dispatch_intro(picks, month_label, prev_month_url=None):
             f'<p class="dispatch-lead">Toronto added <b>{n}</b> new restaurants to '
             f'the City of Toronto licence registry in <b>{_esc(month_label)}</b>. '
             f'{_esc(lead_tail)} Chains excluded. Each entry below is verified open '
-            f'and carries an exact "first seen" date.</p>'
+            f'and carries an estimated "first seen" date.</p>'
         )
     else:
         lead = (
             f'<p class="dispatch-lead">Toronto added <b>{n}</b> new restaurants to '
             f'the City of Toronto licence registry in <b>{_esc(month_label)}</b>. '
             f'Chains excluded. Each entry below is verified open and carries an '
-            f'exact "first seen" date.</p>'
+            f'estimated "first seen" date.</p>'
         )
 
     # --- Block B: By cuisine. Top 5 cuisines, named representative entry.
@@ -3758,7 +4157,7 @@ def build_answers_corpus(cuisines_out, opens_365_by_cuisine, by_district,
         _f0blurb = ''
         _f0er = EVIDENCE_REWRITE_CACHE.get(f.get('_cacheKey', '')) or {}
         if _f0er.get('status') == 'ok' and _f0er.get('blurb'):
-            _f0blurb = _f0er['blurb'].strip()[:200]
+            _f0blurb = _clean_excerpt(_scrub_blurb(_f0er['blurb']))
         _f0_issued = f.get('issuedDate') or ''
         _f0_issued_phrase = ''
         if _f0_issued and len(_f0_issued) >= 7:
@@ -3774,15 +4173,15 @@ def build_answers_corpus(cuisines_out, opens_365_by_cuisine, by_district,
             f'<strong>{_esc(f_name)}</strong>'
             f'{f", a <strong>{_esc(f_lbl)}</strong> spot" if f_lbl else ""}'
             f'{f_loc_html}, '
-            f'first seen on the City of Toronto licence registry <strong>{_ago_long(f_days)} ago</strong>. '
+            f'first seen in official Toronto records <strong>{_ago_long(f_days)} ago</strong>. '
             + (f'{_esc(_f0blurb)} ' if _f0blurb else '')
-            + f'The listing was verified open via Google Places operational status'
+            + f'The listing was verified open via its website or social media'
             + (f', with its City licence issued in {_f0_issued_phrase}' if _f0_issued_phrase else '')
             + f'. '
             f'NowServingTO tracks restaurants licensed by the City of Toronto in the past 365 days, '
             f'verified open and independently owned. Data is sourced from the City of Toronto '
             f'Municipal Licensing and Standards open data and cross-referenced with Toronto Public '
-            f'Health DineSafe inspections and Google Places. Updated daily, chains excluded. '
+            f'Health DineSafe inspections and the operator\'s website or social media. Updated daily, chains excluded. '
             f'<a href="/">See the full daily directory →</a>'
         )
         a_text = (
@@ -3790,15 +4189,15 @@ def build_answers_corpus(cuisines_out, opens_365_by_cuisine, by_district,
             f'{f_name}'
             f'{f", a {f_lbl} spot" if f_lbl else ""}'
             f'{f_loc_text}, '
-            f'first seen on the City of Toronto licence registry {_ago_long(f_days)} ago. '
+            f'first seen in official Toronto records {_ago_long(f_days)} ago. '
             + (_f0blurb + ' ' if _f0blurb else '')
-            + f'The listing was verified open via Google Places operational status'
+            + f'The listing was verified open via its website or social media'
             + (f', with its City licence issued in {_f0_issued_phrase}' if _f0_issued_phrase else '')
             + f'. '
             f'NowServingTO tracks restaurants licensed by the City of Toronto in the past 365 days, '
             f'verified open and independently owned. Data is sourced from the City of Toronto '
             f'Municipal Licensing and Standards open data and cross-referenced with Toronto Public '
-            f'Health DineSafe inspections and Google Places. Updated daily, chains excluded.'
+            f'Health DineSafe inspections and the operator\'s website or social media. Updated daily, chains excluded.'
         )
         _emit(q, a_html, a_text)
 
@@ -3809,7 +4208,17 @@ def build_answers_corpus(cuisines_out, opens_365_by_cuisine, by_district,
         label = c['label']
         entries = (opens_365_by_cuisine.get(key) or [])
         if not entries: continue
-        freshest = entries[0]
+        # The singular "newest <cuisine>" headline must be backed by an entry
+        # whose PRIMARY cuisine is this one. A dual-concept place (e.g. an
+        # Italian pizzeria that also serves Greek souvlaki, or an Afghan kitchen
+        # tagged Pakistani) keeps its secondary tag in the full cuisine listing,
+        # but citing it as "the newest Greek restaurant" is misleading. If no
+        # primary match exists, skip this cuisine's Q&A rather than emit a wrong
+        # answer that an AI could cite verbatim.
+        _primary_entries = [e for e in entries
+                            if _primary_cuisine_of(e) == key and _headline_safe(e, key)]
+        if not _primary_entries: continue
+        freshest = _primary_entries[0]
         f_name = (freshest.get('operatingName') or '').strip()
         f_district = (freshest.get('district') or '').strip()
         f_nbhd = (freshest.get('neighborhood') or {}).get('label')
@@ -3854,7 +4263,7 @@ def build_answers_corpus(cuisines_out, opens_365_by_cuisine, by_district,
         _fw = WEB_VERIFY_CACHE.get(freshest.get('_cacheKey', '')) or {}
         _fer = EVIDENCE_REWRITE_CACHE.get(freshest.get('_cacheKey', '')) or {}
         if _fer.get('status') == 'ok' and _fer.get('blurb'):
-            _fblurb = _fer['blurb'].strip()[:200]
+            _fblurb = _clean_excerpt(_scrub_blurb(_fer['blurb']))
         # Issued date for grounding context sentence.
         _f_issued = freshest.get('issuedDate') or ''
         _f_issued_phrase = ''
@@ -3869,30 +4278,30 @@ def build_answers_corpus(cuisines_out, opens_365_by_cuisine, by_district,
         a_html = (
             f'The newest verified-open <strong>{_esc(label)}</strong> restaurant in '
             f'Toronto is <strong>{_esc(f_name)}</strong>{f_loc_html}, '
-            f'first seen on the City of Toronto licence registry <strong>{_ago_long(f_days)} ago</strong>. '
+            f'first seen in official Toronto records <strong>{_ago_long(f_days)} ago</strong>. '
             + (f'{_esc(_fblurb)} ' if _fblurb else '')
-            + f'It was verified open via Google Places operational status'
+            + f'It was verified open via its website or social media'
             + (f', with its licence issued in {_f_issued_phrase}' if _f_issued_phrase else '')
             + f'. '
             + _dist_html
             + f'<strong>{n365}</strong> {_esc(label)} restaurants are currently tracked across Toronto, '
             f'all licensed within the last 365 days, verified open, and independently owned. Chains are excluded. '
             f'Data is sourced daily from the City of Toronto Municipal Licensing and Standards open data, '
-            f'cross-referenced with Toronto Public Health DineSafe inspection records and Google Places. '
+            f'cross-referenced with Toronto Public Health DineSafe inspection records and the operator\'s website or social media. '
             f'<a href="/cuisine/{key}">Browse all {_esc(label)} restaurants →</a>'
         )
         a_text = (
             f'The newest verified-open {label} restaurant in Toronto is {f_name}{f_loc_text}, '
-            f'first seen on the City of Toronto licence registry {_ago_long(f_days)} ago. '
+            f'first seen in official Toronto records {_ago_long(f_days)} ago. '
             + (_fblurb + ' ' if _fblurb else '')
-            + f'It was verified open via Google Places operational status'
+            + f'It was verified open via its website or social media'
             + (f', with its licence issued in {_f_issued_phrase}' if _f_issued_phrase else '')
             + f'. '
             + _dist_text
             + f'{n365} {label} restaurants are currently tracked across Toronto, '
             f'all licensed within the last 365 days, verified open, and independently owned. Chains are excluded. '
             f'Data is sourced daily from the City of Toronto Municipal Licensing and Standards open data, '
-            f'cross-referenced with Toronto Public Health DineSafe inspection records and Google Places.'
+            f'cross-referenced with Toronto Public Health DineSafe inspection records and the operator\'s website or social media.'
         )
         _emit(q, a_html, a_text)
 
@@ -3931,7 +4340,7 @@ def build_answers_corpus(cuisines_out, opens_365_by_cuisine, by_district,
         _dblurb = ''
         _der = EVIDENCE_REWRITE_CACHE.get(d_freshest.get('_cacheKey', '')) or {}
         if _der.get('status') == 'ok' and _der.get('blurb'):
-            _dblurb = _der['blurb'].strip()[:200]
+            _dblurb = _clean_excerpt(_scrub_blurb(_der['blurb']))
         _d_issued = d_freshest.get('issuedDate') or ''
         _d_issued_phrase = ''
         if _d_issued and len(_d_issued) >= 7:
@@ -3945,9 +4354,9 @@ def build_answers_corpus(cuisines_out, opens_365_by_cuisine, by_district,
         a_html = (
             f'The newest verified-open restaurant in <strong>{_esc(district_label)}</strong> '
             f'is <strong>{_esc(d_name)}</strong>{meta_html}, '
-            f'first seen on the City of Toronto licence registry <strong>{_ago_long(d_days)} ago</strong>. '
+            f'first seen in official Toronto records <strong>{_ago_long(d_days)} ago</strong>. '
             + (f'{_esc(_dblurb)} ' if _dblurb else '')
-            + f'It was verified open via Google Places operational status'
+            + f'It was verified open via its website or social media'
             + (f', with its City licence issued in {_d_issued_phrase}' if _d_issued_phrase else '')
             + f'. '
             f'<strong>{d_count}</strong> restaurants are currently tracked in {_esc(district_label)}, '
@@ -3959,9 +4368,9 @@ def build_answers_corpus(cuisines_out, opens_365_by_cuisine, by_district,
         a_text = (
             f'The newest verified-open restaurant in {district_label} '
             f'is {d_name}{meta_text}, '
-            f'first seen on the City of Toronto licence registry {_ago_long(d_days)} ago. '
+            f'first seen in official Toronto records {_ago_long(d_days)} ago. '
             + (_dblurb + ' ' if _dblurb else '')
-            + f'It was verified open via Google Places operational status'
+            + f'It was verified open via its website or social media'
             + (f', with its City licence issued in {_d_issued_phrase}' if _d_issued_phrase else '')
             + f'. '
             f'{d_count} restaurants are currently tracked in {district_label}, '
@@ -4059,7 +4468,7 @@ def build_answers_corpus(cuisines_out, opens_365_by_cuisine, by_district,
         _nblurb = ''
         _ner = EVIDENCE_REWRITE_CACHE.get(nbhd_freshest.get('_cacheKey', '')) or {}
         if _ner.get('status') == 'ok' and _ner.get('blurb'):
-            _nblurb = _ner['blurb'].strip()[:200]
+            _nblurb = _clean_excerpt(_scrub_blurb(_ner['blurb']))
         _n_issued = nbhd_freshest.get('issuedDate') or ''
         _n_issued_phrase = ''
         if _n_issued and len(_n_issued) >= 7:
@@ -4073,10 +4482,10 @@ def build_answers_corpus(cuisines_out, opens_365_by_cuisine, by_district,
         a_html = (
             f'The newest verified-open restaurant in <strong>{_esc(n_label)}</strong> '
             f'is <strong>{_esc(nf_name)}</strong>{meta_html}, '
-            f'first seen on the City of Toronto licence registry '
+            f'first seen in official Toronto records '
             f'<strong>{_ago_long(nf_days)} ago</strong>. '
             + (f'{_esc(_nblurb)} ' if _nblurb else '')
-            + f'It was verified open via Google Places operational status'
+            + f'It was verified open via its website or social media'
             + (f', with its City licence issued in {_n_issued_phrase}' if _n_issued_phrase else '')
             + f'. '
             f'<strong>{len(dedup)}</strong> restaurants are currently tracked in '
@@ -4086,9 +4495,9 @@ def build_answers_corpus(cuisines_out, opens_365_by_cuisine, by_district,
         )
         a_text = (
             f'The newest verified-open restaurant in {n_label} is {nf_name}{meta_text}, '
-            f'first seen on the City of Toronto licence registry {_ago_long(nf_days)} ago. '
+            f'first seen in official Toronto records {_ago_long(nf_days)} ago. '
             + (_nblurb + ' ' if _nblurb else '')
-            + f'It was verified open via Google Places operational status'
+            + f'It was verified open via its website or social media'
             + (f', with its City licence issued in {_n_issued_phrase}' if _n_issued_phrase else '')
             + f'. '
             f'{len(dedup)} restaurants are currently tracked in {n_label}, '
@@ -4118,7 +4527,7 @@ def build_answers_corpus(cuisines_out, opens_365_by_cuisine, by_district,
                     _a2blurb = ''
                     _a2er = EVIDENCE_REWRITE_CACHE.get(ae.get('_cacheKey', '')) or {}
                     if _a2er.get('status') == 'ok' and _a2er.get('blurb'):
-                        _a2blurb = _a2er['blurb'].strip()[:200]
+                        _a2blurb = _clean_excerpt(_scrub_blurb(_a2er['blurb']))
                     _a2_issued = ae.get('issuedDate') or ''
                     _a2_issued_phrase = ''
                     if _a2_issued and len(_a2_issued) >= 7:
@@ -4133,10 +4542,10 @@ def build_answers_corpus(cuisines_out, opens_365_by_cuisine, by_district,
                         f'The newest verified-open <strong>{_esc(anchor_lbl)}</strong> '
                         f'restaurant in <strong>{_esc(n_label)}</strong> is '
                         f'<strong>{_esc(ae_name)}</strong>{street_clause_html}, '
-                        f'first seen on the City of Toronto licence registry '
+                        f'first seen in official Toronto records '
                         f'<strong>{_ago_long(ae_days)} ago</strong>. '
                         + (f'{_esc(_a2blurb)} ' if _a2blurb else '')
-                        + f'Verified open via Google Places operational status'
+                        + f'Verified open via its website or social media'
                         + (f', City licence issued in {_a2_issued_phrase}' if _a2_issued_phrase else '')
                         + f'. '
                         f'<strong>{len(anchor_entries)}</strong> {_esc(anchor_lbl)} '
@@ -4148,10 +4557,10 @@ def build_answers_corpus(cuisines_out, opens_365_by_cuisine, by_district,
                     a2_text = (
                         f'The newest verified-open {anchor_lbl} restaurant in '
                         f'{n_label} is {ae_name}{street_clause_text}, '
-                        f'first seen on the City of Toronto licence registry '
+                        f'first seen in official Toronto records '
                         f'{_ago_long(ae_days)} ago. '
                         + (_a2blurb + ' ' if _a2blurb else '')
-                        + f'Verified open via Google Places operational status'
+                        + f'Verified open via its website or social media'
                         + (f', City licence issued in {_a2_issued_phrase}' if _a2_issued_phrase else '')
                         + f'. '
                         f'{len(anchor_entries)} {anchor_lbl} restaurants are currently tracked in '
@@ -4183,18 +4592,18 @@ def build_answers_corpus(cuisines_out, opens_365_by_cuisine, by_district,
         ('NowServingTO is a directory of <strong>independent, owner-operated</strong> '
          'new restaurants. Multi-location chains (Tim Hortons, Subway, Popeyes, KFC, '
          'Boston Pizza, McDonald\'s, etc.) are excluded so the directory surfaces the '
-         'newest independent kitchens — the spots most likely to reflect specific '
+         'newest independent kitchens, the spots most likely to reflect specific '
          'diaspora and neighbourhood food scenes that aren\'t already on every food map.'),
         ('NowServingTO is a directory of independent, owner-operated new restaurants. '
          'Multi-location chains (Tim Hortons, Subway, Popeyes, KFC, Boston Pizza, '
          'McDonald\'s, etc.) are excluded so the directory surfaces the newest '
-         'independent kitchens — the spots most likely to reflect specific diaspora '
+         'independent kitchens, the spots most likely to reflect specific diaspora '
          'and neighbourhood food scenes.'),
     )
     _emit(
         "What does \"First seen\" mean on NowServingTO?",
         ('"First seen" reflects the earlier of the City of Toronto licence-issued '
-         'date or the first Toronto Public Health DineSafe inspection — whichever '
+         'date or the first Toronto Public Health DineSafe inspection, whichever '
          'proves the restaurant was actually operating. Roughly <strong>72%</strong> '
          'of currently-tracked restaurants have a DineSafe inspection record '
          'matched by address and name; for those, "First seen" is the inspection '
@@ -4202,7 +4611,7 @@ def build_answers_corpus(cuisines_out, opens_365_by_cuisine, by_district,
          'operation than paper licensing). For the rest, "First seen" falls back '
          'to the licence-issued date. Both sources update daily.'),
         ('"First seen" reflects the earlier of the City of Toronto licence-issued '
-         'date or the first Toronto Public Health DineSafe inspection — whichever '
+         'date or the first Toronto Public Health DineSafe inspection, whichever '
          'proves the restaurant was actually operating. About 72% of entries are '
          'tagged via DineSafe inspection (stronger evidence than a paper licence); '
          'the rest fall back to the licence date.'),
@@ -4212,7 +4621,7 @@ def build_answers_corpus(cuisines_out, opens_365_by_cuisine, by_district,
         ('Only restaurants licensed within the last <strong>365 days</strong> appear on '
          'the directory. Older licences automatically fall out of the coverage window. '
          'The directory is rebuilt daily around 1:17 AM Toronto time from the City\'s '
-         'open data feed, with each entry tagged with its exact "First seen" date.'),
+         'open data feed, with each entry tagged with its estimated "First seen" date.'),
         ('Only restaurants licensed within the last 365 days appear on the directory. '
          'Older licences automatically fall out of the coverage window. The directory '
          'is rebuilt daily around 1:17 AM Toronto time from the City\'s open data feed.'),
@@ -4225,7 +4634,7 @@ def build_answers_corpus(cuisines_out, opens_365_by_cuisine, by_district,
         f'by cuisine and neighbourhood, answered from the live City of Toronto licence '
         f'registry. Updated daily. Last refresh: <strong>{_esc(reference_date_iso)}</strong>.</p>'
         '<p class="ans-byline">Compiled and maintained by <strong>Josh Opolko</strong>, '
-        'NowServingTO — a daily-refresh independent restaurant directory sourced '
+        'NowServingTO, your daily-refreshed independent restaurant directory sourced '
         'from the City of Toronto open data.</p>'
         '</header>'
         '<main class="ans-main">'
@@ -4299,7 +4708,12 @@ def build_page_intro(cuisine_key, entries=None, label=None, n365=None, n30=None)
     # Toronto" queries rather than only the editorial framing.
     data_lede = ''
     if label and n365:
-        _fresh = entries[0] if entries else None
+        # The "most recent <cuisine>" claim must be backed by a PRIMARY-cuisine
+        # match (a dual-concept place tagged with this cuisine as secondary
+        # stays in the listing but doesn't headline it). Fall back to nothing
+        # rather than naming a place whose main identity is a different cuisine.
+        _fresh = next((e for e in (entries or [])
+                       if _primary_cuisine_of(e) == cuisine_key and _headline_safe(e, cuisine_key)), None)
         _fn = (_fresh.get('operatingName') or '').strip() if _fresh else ''
         _fdays = _ago_long(_fresh.get('daysOpen')) if _fresh else ''
         _recent = f' ({n30} in the last 30 days)' if n30 else ''
@@ -4537,9 +4951,7 @@ for c in cuisines_out:
                   lambda m: cuisine_h1, page, count=1)
 
     # Replace STATIC-FEED + LD-ITEMLIST with cuisine-scoped versions.
-    cuisine_static = (build_home_feed(entries, scope_label=f'new {label} spots', scoped=True)
-                      if len(entries) >= HERO_MIN
-                      else build_static_rows(entries, link_to_listing=True, group_by_date=True))
+    cuisine_static = build_static_rows(entries, link_to_listing=True, group_by_date=True)
     cuisine_itemlist = build_ld_itemlist(
         entries,
         name=f"Newest {label} restaurants in Toronto",
@@ -4703,9 +5115,7 @@ for label, entries in by_district.items():
                   lambda m: district_h1, page, count=1)
 
     # District-scoped static feed (top 30) + structured data set
-    district_static = (build_home_feed(entries, scope_label=f'new spots in {label}', scoped=True)
-                       if len(entries) >= HERO_MIN
-                       else build_static_rows(entries[:30], link_to_listing=True, group_by_date=True))
+    district_static = build_static_rows(entries[:30], link_to_listing=True, group_by_date=True)
     district_itemlist = build_ld_itemlist(
         entries[:30],
         name=f"Newest restaurants in {place}",
@@ -5306,7 +5716,7 @@ _all_neighborhoods_html = ''.join(
 _n_total_for_picker = sum((c.get('count365d') or 0) for c in _sorted_cuisines)
 _cuisine_picker_html = (
     f'<a class="cp-opt cp-all" role="option" data-key="__all" href="/">'
-    f'<span class="lbl">All cuisines</span>'
+    f'<span class="lbl">Show all</span>'
     f'<span class="ct">{_n_total_for_picker}</span></a>'
     + ''.join(
         f'<a class="cp-opt" role="option" data-key="{c["key"]}" '
@@ -5322,7 +5732,7 @@ for _e in seen_entries.values():
     if _d in _district_counts: _district_counts[_d] += 1
 _district_picker_html = (
     f'<a class="cp-opt cp-all" role="option" data-key="__all" href="/">'
-    f'<span class="lbl">All Toronto</span>'
+    f'<span class="lbl">Show all</span>'
     f'<span class="ct">{sum(_district_counts.values())}</span></a>'
     + ''.join(
         f'<a class="cp-opt" role="option" data-key="{_esc(d)}" '
@@ -5341,7 +5751,7 @@ _nav_subs = [
     # /all was orphaned (sitemap-only) until 2026-06-11; every page now links
     # the A-Z index so its 260 static /r/ links pass crawl-priority signals.
     (r'(<!-- ALL-INDEX-START -->).*?(<!-- ALL-INDEX-END -->)',
-     f'<a href="/all">All {len(alpha_entries)} restaurants A&ndash;Z</a>'),
+     f'<a href="/all">All {len(alpha_entries)} restaurants A-Z</a>'),
 ]
 for _pat, _html in _nav_subs:
     listing_template = re.sub(_pat,
@@ -5573,7 +5983,10 @@ def build_listing_extra(entry, all_entries, cuisines_index):
         blurb_text = blurb_text[:1].upper() + blurb_text[1:]
         # Legacy scrubber chain — runs ONLY on non-Opus blurbs (Haiku-cached
         # ones that need fluff stripped + "opened"→"registered" rewriting).
-        # Opus blurbs are written factually accurate, no scrubbing needed.
+        # Opus blurbs bypass heavy scrubbing but still need the licensed-year strip.
+        if _is_opus_blurb:
+            blurb_text = re.sub(r',?\s*\blicensed in \d{4}\.?', '', blurb_text, flags=re.I)
+            blurb_text = re.sub(r'\s*\bIt was licensed in \d{4}\.?', '', blurb_text, flags=re.I)
         if not _is_opus_blurb:
             blurb_text = _scrub_blurb(blurb_text)
             blurb_text = re.sub(
@@ -5604,6 +6017,10 @@ def build_listing_extra(entry, all_entries, cuisines_index):
         # and Haiku v2, since dish-name capitalization shouldn't depend
         # on the blurb's origin.
         blurb_text = _capitalize_proper_nouns(blurb_text)
+        # Normalize sentence casing (lowercase Haiku sentence starts → caps)
+        # so the editorial reads cleanly AND its first sentence matches the
+        # ticket blurb below, which is what the de-dup keys on.
+        blurb_text = _sentence_case(blurb_text)
         # Bare-bones tag — oxblood "No website yet" callout at the end of
         # the editorial blurb when this entry has no website. Matches the
         # row treatment so the signal is consistent across surfaces.
@@ -6012,6 +6429,8 @@ for entry in seen_entries.values():
             except (json.JSONDecodeError, ValueError):
                 pass
         if _ld_desc:
+            _ld_desc = re.sub(r',?\s*\blicensed in \d{4}\.?', '', _ld_desc, flags=re.I)
+            _ld_desc = re.sub(r'\s*\bIt was licensed in \d{4}\.?', '', _ld_desc, flags=re.I).strip()
             listing_ld['description'] = _capitalize_proper_nouns(_ld_desc)
     # geo: GeoCoordinates lets Google/AI parse exact location without
     # text-mining the address. Standard schema.org Restaurant field.
@@ -7990,7 +8409,7 @@ for _sel, _val in [
 # Replace homepage H1 with the Q&A page H1; body class hides feed chrome via CSS.
 _answers_page = re.sub(
     r'<h1 class="sub">[\s\S]*?</h1>(?:<div class="listing-lede">[\s\S]*?</div>)?',
-    '<h1 class="sub">Q&amp;A — Toronto\'s newest restaurants</h1>',
+    '<h1 class="sub">Q&amp;A: Toronto\'s newest restaurants</h1>',
     _answers_page, count=1,
 )
 # Inject the Q&A body before the open-feed div; .page-answers CSS hides
@@ -8007,10 +8426,10 @@ print(f"  wrote /answers.html ({_answers_n} Q&A pairs)")
 url_blocks = [
     _sitemap_url(f'{SITE_BASE}/',           _today_iso),
     _sitemap_url(f'{SITE_BASE}/answers',    _today_iso),
-    _sitemap_url(f'{SITE_BASE}/press/',     _today_iso),
+    _sitemap_url(f'{SITE_BASE}/press',      _today_iso),
     _sitemap_url(f'{SITE_BASE}/all',        _today_iso),
     _sitemap_url(f'{SITE_BASE}/usage',      _today_iso),
-    _sitemap_url(f'{SITE_BASE}/contribute', _today_iso),
+    # /contribute omitted: it is noindex (contribution form), so it must not be in the sitemap
     _sitemap_url(f'{SITE_BASE}/game',       _today_iso),
 ]
 # Monthly dispatch archive pages — one per month, indexed for SEO

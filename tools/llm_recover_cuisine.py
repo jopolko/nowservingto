@@ -287,6 +287,38 @@ def fetch_page_text(url):
             combined += f"\n\nMENU/ABOUT PAGE ({menu_url}): {menu_text}"
         return combined[:3200], final_url
 
+    # Static fetch came up empty. Before calling Jina, check whether the raw
+    # HTML is a JS-only redirect (GoDaddy parking pattern: tiny page with
+    # window.location.href="/lander" and nothing else). If so, follow the
+    # redirect ourselves - Jina sometimes can't render these parking pages.
+    if static_total < 80 and raw:
+        raw_str = raw.decode('utf-8', errors='replace') if isinstance(raw, bytes) else raw
+        js_redir = re.search(
+            r'window\.location(?:\.href)?\s*=\s*["\']([^"\']{1,200})["\']',
+            raw_str, re.IGNORECASE)
+        if js_redir:
+            from urllib.parse import urljoin
+            redir_target = urljoin(final_url, js_redir.group(1))
+            if redir_target != url:
+                redir_raw, redir_final = _fetch_raw(redir_target)
+                if redir_raw:
+                    redir_str = redir_raw.decode('utf-8', errors='replace').lower()
+                    # GoDaddy / Namecheap / generic parking markers in raw JS
+                    _PARKING_MARKERS = (
+                        'ap:"parking"', "ap:'parking'", 'lander_system',
+                        '_trfd', 'parked-page', 'parked page',
+                        'domain is for sale', 'namecheap parking',
+                        'sedoparking', 'hugedomains',
+                    )
+                    if any(m in redir_str for m in _PARKING_MARKERS):
+                        return 'GHOST: godaddy domain parking page', redir_final
+                    # Not a known parking page - use its stripped text if non-empty
+                    redir_text = _strip_html(redir_raw)
+                    redir_body = (redir_text.split('TEXT:', 1)[1].strip()
+                                  if redir_text and 'TEXT:' in redir_text else '')
+                    if len(redir_body) >= 80:
+                        return f"HOMEPAGE (JS-redirect): {redir_body[:3200]}", redir_final
+
     # Static fetch came up empty but the URL is alive - likely a JS-only SPA.
     # Fall through to jina's headless-rendered text.
     rendered = _fetch_jina(url)
