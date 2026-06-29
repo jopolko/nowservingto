@@ -58,6 +58,14 @@
  .crawl-group.grp-search h3 { border-left-color: #0e7186; color: #0e7186; background: #f0f9fb; }
  .crawl-group.grp-ai h3 { border-left-color: #7c3aed; color: #5b21b6; background: #f5f3ff; }
  .crawl-group.grp-other h3 { border-left-color: #b45309; color: #92400e; background: #fffbeb; }
+ .expand-row { padding: 10px 20px; border-top: 1px solid var(--line); text-align: center; }
+ .expand-btn { background: none; border: 1px solid var(--line); border-radius: 6px; font: 600 13px/1 var(--sans); color: var(--muted); cursor: pointer; padding: 7px 16px; }
+ .expand-btn:hover { color: var(--ink); border-color: var(--ink); }
+ .path-row { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; padding: 9px 20px; border-bottom: 1px solid var(--line); align-items: baseline; font-variant-numeric: tabular-nums; }
+ .path-row:last-child { border-bottom: 0; }
+ .path-rank { font: 700 11px/1 var(--sans); color: var(--muted); min-width: 22px; text-align: right; }
+ .path-url { font: 13px/1.4 var(--mono); color: var(--ink2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+ .path-hits { font: 700 13px/1 var(--sans); color: var(--ink); text-align: right; white-space: nowrap; }
  .bot-row { display: grid; grid-template-columns: 1fr auto auto auto; gap: 14px; padding: 12px 20px; border-bottom: 1px solid var(--line); align-items: baseline; font-variant-numeric: tabular-nums; }
  .bot-row:last-child { border-bottom: 0; }
  .bot-name { font: 700 14px/1 var(--mono); color: var(--ink); }
@@ -179,6 +187,12 @@
  <h3 class="ch-title">Every crawler, by type</h3>
  <div id="crawl-detail"></div>
  <div class="ch-foot">Type: search index (Google/Bing) &middot; AI search (cited live) &middot; AI training (scraped for models) &middot; live user fetch (a real person's prompt). Verification checks the source IP against the operator.</div>
+ </div>
+
+ <div class="chart-card">
+ <h3 class="ch-title">Top 25 most-crawled pages, last 30 days</h3>
+ <div id="top-paths"></div>
+ <div class="ch-foot">Counts all search engine and AI bot hits. Only page paths with at least one hit are listed; query strings stripped.</div>
  </div>
 
  <div class="chart-card">
@@ -446,12 +460,34 @@ fetch('/data/bot_traffic.json?v=' + Date.now()).then(r => r.json()).then(data =>
  }
  function grp(title, list, isOther, cls) {
  if (!list || !list.length) return '';
+ const LIMIT = 10;
+ if (isOther && list.length > LIMIT) {
+ const shownHtml = rowsHtml(list.slice(0, LIMIT), isOther);
+ const hiddenHtml = rowsHtml(list.slice(LIMIT), isOther);
+ const n = list.length;
+ return `<div class="crawl-group${cls?' '+cls:''}"><h3>${title}</h3>${shownHtml}<div id="other-bots-more" style="display:none">${hiddenHtml}</div><div class="expand-row"><button class="expand-btn" onclick="document.getElementById('other-bots-more').style.display='block';this.parentNode.style.display='none'">Show all ${n} crawlers &#9660;</button></div></div>`;
+ }
  return `<div class="crawl-group${cls?' '+cls:''}"><h3>${title}</h3>${rowsHtml(list, isOther)}</div>`;
  }
  const el = document.getElementById('crawl-detail');
  if (!el) return;
  el.innerHTML = (grp('Search engines', data.searchEngines, false, 'grp-search') + grp('AI crawlers', data.aiBots, false, 'grp-ai') + grp('Newly seen \xb7 auto-classified', data.otherBots, true, 'grp-other'))
  || '<div class="crawl-empty">No crawler detail yet.</div>';
+ })();
+
+ // ---- Top 25 most-crawled pages ----
+ (function renderTopPaths() {
+ const el = document.getElementById('top-paths');
+ if (!el) return;
+ const paths = data.topPaths;
+ if (!paths || !paths.length) {
+ el.innerHTML = '<div class="crawl-empty">No page data yet. Will appear after the next daily aggregation run.</div>';
+ return;
+ }
+ el.innerHTML = paths.map((r, i) => {
+ const label = r.path === '/' ? '/ (homepage)' : r.path;
+ return `<div class="path-row"><span class="path-rank">#${i+1}</span><span class="path-url" title="${r.path}">${label}</span><span class="path-hits">${fmt(r.hits)}</span></div>`;
+ }).join('');
  })();
 
  // ---- Reusable donut renderer ----

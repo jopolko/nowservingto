@@ -538,6 +538,8 @@ def main():
     day_counts = defaultdict(lambda: defaultdict(int))
     # Per-bot unique paths over the full 30d window.
     unique_paths = defaultdict(set)
+    # Total hits per path across all legit bots (excl. exploit scanners).
+    path_hit_counts = defaultdict(int)
     # Last-seen timestamp per bot.
     last_seen = {}
     tiers = {}
@@ -616,6 +618,7 @@ def main():
             day = t.date().isoformat()
             day_counts[bot][day] += 1
             unique_paths[bot].add(path)
+            path_hit_counts[path.split('?', 1)[0]] += 1
             if bot not in last_seen or t > last_seen[bot]:
                 last_seen[bot] = t
             tiers[bot] = tier
@@ -808,6 +811,10 @@ def main():
             'sourcesAvailable': sum(exploit_ips.values()),
         },
         'totals': {'last7d': total_7d, 'last30d': total_30d},
+        'topPaths': sorted(
+            [{'path': p, 'hits': n} for p, n in path_hit_counts.items()],
+            key=lambda r: r['hits'], reverse=True,
+        )[:25],
     }, indent=2))
     print(f'wrote {OUT_PATH} - {total_30d} HTML-bot hits in 30d, {total_7d} in 7d, '
           f'{len(search_rows)} search engines, {len(ai_rows)} AI bots, '
