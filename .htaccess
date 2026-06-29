@@ -127,8 +127,10 @@ RewriteRule ^cuisine/ecuadorian/?$ /cuisine/latin [R=301,L]
 # to home. Stale Google index entries from before the bans were enforced.
 RewriteRule ^cuisine/(cajun|canadian|european|hawaiian|mediterranean|belgian)/?$ / [R=301,L]
 
-# /usage → usage.html (one-pager showing per-provider API spend)
-RewriteRule ^usage/?$ /usage.html [L]
+# /crawlers → crawlers.html (AI crawler + API cost dashboard)
+RewriteRule ^crawlers/?$ /crawlers.html [L]
+# /usage is the old name — 301 to /crawlers so any indexed links carry over
+RewriteRule ^usage/?$ /crawlers [R=301,L]
 
 # /contribute → contribute.html (Tally form for tips + corrections)
 RewriteRule ^contribute/?$ /contribute.html [L]

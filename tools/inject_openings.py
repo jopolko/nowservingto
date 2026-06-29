@@ -8525,7 +8525,7 @@ url_blocks = [
     _sitemap_url(f'{SITE_BASE}/press',      _today_iso),
     _sitemap_url(f'{SITE_BASE}/all',        _today_iso),
     _sitemap_url(f'{SITE_BASE}/new',        _today_iso),
-    _sitemap_url(f'{SITE_BASE}/usage',      _today_iso),
+    _sitemap_url(f'{SITE_BASE}/crawlers',      _today_iso),
     # /contribute omitted: it is noindex (contribution form), so it must not be in the sitemap
     _sitemap_url(f'{SITE_BASE}/game',       _today_iso),
 ]

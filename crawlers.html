@@ -1,0 +1,548 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The receipts: what it costs to run a daily-fresh restaurant directory · NowServingTO</title>
+<meta name="description" content="Daily-itemized API spend behind NowServingTO. Google Places, Anthropic Haiku, Jina Reader, Google Street View. About $0.35 a day to track every newly registered Toronto restaurant. Open ledger, updated nightly.">
+<meta property="og:title" content="The receipts: what it costs to run NowServingTO">
+<meta property="og:description" content="Daily-itemized API spend behind a daily-fresh Toronto restaurant directory. About $0.35 a day. Open ledger, updated nightly.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://nowservingto.com/crawlers">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://nowservingto.com/crawlers">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<style>
+ :root {
+ --bg: #faf6ed; --paper: #ffffff; --ink: #1a1a1a; --ink2: #2d2d2b;
+ --muted: #6f6e6a; --line: #ebe9e4; --accent: #e84e3a; --accent-2: #3fb37f;
+ --sans: -apple-system, 'Helvetica Neue', ui-sans-serif, sans-serif;
+ --serif: 'Iowan Old Style', 'Charter', Georgia, ui-serif, serif;
+ --mono: ui-monospace, 'JetBrains Mono', Menlo, monospace;
+ }
+ * { box-sizing: border-box; }
+ html, body { margin: 0; padding: 0; }
+ body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--sans); -webkit-font-smoothing: antialiased; }
+ .wrap { max-width: 820px; margin: 0 auto; padding: 0 20px 60px; }
+ header { padding: 22px 0 0; }
+ header .inner { border-bottom: 3px solid var(--ink); padding-bottom: 16px; }
+ .brand { font: 800 28px/1 var(--serif); letter-spacing: -0.02em; color: var(--ink); text-decoration: none; }
+ .brand sup { font: 600 10px/1 var(--sans); letter-spacing: 0.08em; color: var(--muted); margin-left: 6px; vertical-align: super; text-transform: uppercase; }
+ .sub { color: var(--muted); font: 400 14px/1.4 var(--serif); margin: 6px 0 0; font-style: italic; }
+ h1 { font: 700 26px/1.2 var(--serif); margin: 30px 0 6px; letter-spacing: -0.01em; }
+ h2 { font: 700 17px/1.2 var(--sans); margin: 28px 0 12px; letter-spacing: -0.005em; }
+ p { color: var(--ink2); }
+ .totals { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 16px 0 0; }
+ .totals .card { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+ .totals .card .lbl { font: 700 11px/1 var(--sans); color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+ .totals .card .num { font: 800 32px/1.1 var(--sans); color: var(--ink); margin-top: 6px; font-variant-numeric: tabular-nums; }
+ .totals .card .calls { font: 500 13px/1 var(--muted); color: var(--muted); margin-top: 6px; }
+ .providers { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); overflow: hidden; }
+ .prov { padding: 16px 20px; border-bottom: 1px solid var(--line); }
+ .prov:last-child { border-bottom: 0; }
+ .prov-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+ .prov-name { font: 700 16px/1 var(--sans); color: var(--ink); letter-spacing: -0.005em; }
+ .prov-cost { font: 800 18px/1 var(--sans); color: var(--accent); font-variant-numeric: tabular-nums; }
+ .prov-calls { font: 500 12px/1 var(--sans); color: var(--muted); margin-left: 10px; }
+ .skus { margin-top: 10px; display: grid; gap: 4px; }
+ .sku { display: grid; grid-template-columns: 1fr auto auto; gap: 12px; padding: 4px 0; font: 13px/1.4 var(--mono); color: var(--ink2); border-top: 1px dashed var(--line); }
+ .sku-name { color: var(--ink2); }
+ .sku-cost { color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
+ .sku-calls { color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; min-width: 60px; }
+ .footer-note { color: var(--muted); font: italic 13px/1.5 var(--serif); margin-top: 24px; }
+ .stamp { font: 500 12px/1 var(--mono); color: var(--muted); }
+ /* Crawl section - same card chrome as .providers so the page reads
+ as one document with two ledgers, not two unrelated widgets. */
+ .crawl-group { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); overflow: hidden; margin-top: 14px; }
+ .crawl-group h3 { font: 700 13px/1 var(--sans); color: var(--ink); margin: 0; padding: 14px 20px; border-bottom: 1px solid var(--line); text-transform: uppercase; letter-spacing: 0.06em; }
+ .bot-row { display: grid; grid-template-columns: 1fr auto auto auto; gap: 14px; padding: 12px 20px; border-bottom: 1px solid var(--line); align-items: baseline; font-variant-numeric: tabular-nums; }
+ .bot-row:last-child { border-bottom: 0; }
+ .bot-name { font: 700 14px/1 var(--mono); color: var(--ink); }
+ .bot-verify { display: inline-block; margin-left: 8px; font: 500 11px/1.4 var(--sans); padding: 1px 6px; border-radius: 6px; vertical-align: 2px; }
+ .bot-verify.ok { background: #e5f5ec; color: #146c43; }
+ .bot-verify.bad { background: #fdecec; color: #a02828; }
+ .bot-verify.partial { background: #fff4d6; color: #8a5a00; }
+ .bot-type { display: inline-block; margin-left: 6px; font: 600 10px/1.4 var(--sans); padding: 1px 6px; border-radius: 5px; vertical-align: 2px; text-transform: none; letter-spacing: 0; }
+ .bot-type.t-search { background: #e8f0fe; color: #1a56b8; }
+ .bot-type.t-ai-search { background: #fce8f3; color: #b8156b; }
+ .bot-type.t-ai-training { background: #f3e8fc; color: #7d1db8; }
+ .bot-type.t-live-user { background: #e5f5ec; color: #146c43; }
+ .bot-type.t-other { background: #eef0f2; color: #666; }
+ .bot-hits { font: 600 13px/1 var(--sans); color: var(--ink2); text-align: right; }
+ .bot-hits .lbl-inline { color: var(--muted); font-weight: 500; margin-left: 4px; }
+ .bot-last { font: 500 12px/1 var(--mono); color: var(--muted); text-align: right; min-width: 100px; }
+ .crawl-empty { padding: 18px 20px; color: var(--muted); font: italic 14px/1.5 var(--serif); }
+ .crawl-warn { background: #fff8ec; border: 1px solid #f5d98b; color: #6b5210; border-radius: 10px; padding: 12px 16px; margin-top: 14px; font: 13px/1.5 var(--sans); }
+ /* Bot-farm rows: path + hit count. Mono font on the path so the
+ ./env / .git / wp-admin probes line up visually. */
+ .exploit-summary { padding: 14px 20px; color: var(--ink2); font: 14px/1.5 var(--sans); border-bottom: 1px solid var(--line); background: #fafafa; }
+ .exploit-row { display: grid; grid-template-columns: 1fr auto; gap: 14px; padding: 10px 20px; border-bottom: 1px solid var(--line); align-items: baseline; font-variant-numeric: tabular-nums; }
+ .exploit-row:last-child { border-bottom: 0; }
+ .exploit-path { font: 500 13px/1.3 var(--mono); color: var(--ink2); word-break: break-all; }
+ .exploit-hits { font: 700 13px/1 var(--sans); color: var(--ink); text-align: right; }
+
+ /* ---- Charts (inline SVG, no library) ---- */
+ .chart-card { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); margin: 14px 0; }
+ .chart-card .ch-title { font: 700 12px/1 var(--sans); color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin: 0 0 12px; }
+ .chart-card .ch-svg { width: 100%; height: auto; display: block; }
+ .chart-card .ch-foot { font: 500 12px/1.4 var(--mono); color: var(--muted); margin-top: 8px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+ /* Donut + legend layout */
+ .donut-wrap { display: grid; grid-template-columns: minmax(140px, 180px) 1fr; gap: 24px; align-items: center; }
+ @media (max-width: 520px) { .donut-wrap { grid-template-columns: 1fr; justify-items: center; } }
+ .donut-legend { display: grid; gap: 6px; font: 500 13px/1.3 var(--sans); width: 100%; }
+ .donut-legend .lg-row { display: grid; grid-template-columns: 14px 1fr auto auto; gap: 10px; align-items: baseline; padding: 3px 0; border-bottom: 1px dashed var(--line); }
+ .donut-legend .lg-row:last-child { border-bottom: 0; }
+ .donut-legend .lg-swatch { width: 12px; height: 12px; border-radius: 3px; align-self: center; }
+ .donut-legend .lg-pct { color: var(--muted); font: 500 12px/1 var(--mono); font-variant-numeric: tabular-nums; min-width: 38px; text-align: right; }
+ .donut-legend .lg-cost { color: var(--ink); font: 700 13px/1 var(--sans); font-variant-numeric: tabular-nums; min-width: 56px; text-align: right; }
+ /* Sparkline area-fill colour */
+ .ch-spark-area { fill: rgba(200, 54, 36, 0.10); }
+ .ch-spark-line { stroke: var(--accent); stroke-width: 1.8; fill: none; stroke-linejoin: round; stroke-linecap: round; }
+ .ch-spark-dot { fill: var(--accent); }
+ .ch-spark-dot-today { fill: var(--accent); stroke: var(--paper); stroke-width: 2; }
+ .ch-axis { font: 500 10px/1 var(--mono); fill: var(--muted); }
+ /* Horizontal bar chart for bots */
+ /* 3-column grid: bot name | bar track | hit count. Was 2-column,
+ which pushed the count down to a second row. */
+ .bar-h { display: grid; grid-template-columns: 150px 1fr 60px; gap: 12px; align-items: center; padding: 5px 0; font: 500 12px/1 var(--sans); }
+ .bar-h .bh-label { color: var(--ink2); font: 600 12px/1.3 var(--mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+ .bar-h .bh-track { position: relative; height: 14px; background: var(--bg); border-radius: 3px; overflow: hidden; }
+ .bar-h .bh-fill { position: absolute; top: 0; left: 0; bottom: 0; background: var(--accent); border-radius: 3px; transition: width 0.4s ease-out; }
+ .bar-h .bh-val { color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
+ @media (max-width: 500px) {
+ .bar-h { grid-template-columns: 110px 1fr 50px; gap: 8px; }
+ .bar-h .bh-label { font-size: 11px; }
+ }
+</style>
+<!-- Google Analytics 4 + Microsoft Clarity (lazy-loaded on first interaction so neither tanks LCP) -->
+<script>
+ window.dataLayer = window.dataLayer || [];
+ function gtag(){dataLayer.push(arguments);}
+ (function() {
+ var loaded = false;
+ var load = function() {
+ if (loaded) return; loaded = true;
+ ['scroll','pointerdown','keydown','touchstart','visibilitychange']
+ .forEach(function(ev){ window.removeEventListener(ev, load, true); });
+ var s = document.createElement('script');
+ s.async = true;
+ s.src = 'https://www.googletagmanager.com/gtag/js?id=G-CBQJHD3G7P';
+ document.head.appendChild(s);
+ gtag('js', new Date());
+ gtag('config', 'G-CBQJHD3G7P');
+ (function(c,l,a,r,i,t,y){
+ c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+ t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+ y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+ })(window, document, "clarity", "script", "x10kln08ch");
+ };
+ ['scroll','pointerdown','keydown','touchstart','visibilitychange']
+ .forEach(function(ev){ window.addEventListener(ev, load, {once: true, passive: true, capture: true}); });
+ setTimeout(load, 10000);
+ })();
+</script>
+
+</head>
+<body>
+<header>
+ <div class="wrap inner">
+ <a href="/" class="brand">NowServingTO</a>
+ <div class="sub">The receipts.</div>
+ </div>
+</header>
+
+<main class="wrap">
+ <h1 style="font-size: 32px; margin-bottom: 14px">Who's actually reading us</h1>
+
+ <h2 id="crawlers" style="margin-top: 0; border: none; display: none"></h2>
+ <p style="color: var(--ink2); margin: 0 0 4px">
+ Parsed from Apache's access log: every search engine and AI crawler that has
+ fetched a page in the last 30 days. The shape of this list is the entire
+ SEO + GEO answer for an indie directory: are Googlebot, Bingbot, and the
+ AI engines (ChatGPT, Perplexity, Claude) showing up? Bing-derived AI search
+ surfaces fresh content fastest, which is why IndexNow and llms.txt are wired
+ in. The chart below is the receipt.
+ </p>
+
+ <div id="crawl-warn-box"></div>
+
+ <div class="chart-card">
+ <h3 class="ch-title">Top 10 crawlers, last 30 days</h3>
+ <div id="ch-bots-bars"></div>
+ <div class="ch-foot"><span id="ch-bots-foot">-</span></div>
+ </div>
+
+ <div class="chart-card">
+ <h3 class="ch-title">Every crawler, by type</h3>
+ <div id="crawl-detail"></div>
+ <div class="ch-foot">Type: search index (Google/Bing) &middot; AI search (cited live) &middot; AI training (scraped for models) &middot; live user fetch (a real person's prompt). Verification checks the source IP against the operator.</div>
+ </div>
+
+ <div class="chart-card">
+ <h3 class="ch-title">Search engines, share of crawl</h3>
+ <div class="donut-wrap">
+ <svg id="ch-donut-search" class="ch-svg" viewBox="0 0 200 200" style="max-width: 180px" aria-label="Search engine crawl share"></svg>
+ <div id="ch-donut-search-legend" class="donut-legend"></div>
+ </div>
+ </div>
+
+ <div class="chart-card">
+ <h3 class="ch-title">AI &amp; LLM crawlers, share of crawl</h3>
+ <div class="donut-wrap">
+ <svg id="ch-donut-ai" class="ch-svg" viewBox="0 0 200 200" style="max-width: 180px" aria-label="AI crawler share"></svg>
+ <div id="ch-donut-ai-legend" class="donut-legend"></div>
+ </div>
+ </div>
+
+ <div class="chart-card" id="ch-bot-farms-card" hidden>
+ <h3 class="ch-title">Bot farms, exploit-scanner probes by country</h3>
+ <div class="donut-wrap">
+ <svg id="ch-donut-farms" class="ch-svg" viewBox="0 0 200 200" style="max-width: 180px" aria-label="Exploit scanner geographic share"></svg>
+ <div id="ch-donut-farms-legend" class="donut-legend"></div>
+ </div>
+ <div class="ch-foot"><span id="ch-farms-foot">-</span></div>
+ </div>
+ <p class="stamp" style="margin-top: 36px">Snapshot: <span id="stamp">-</span></p>
+
+ <section style="margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--line);">
+ <p style="font: 700 11px/1 var(--sans); color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin: 0 0 14px;">API running costs</p>
+ <div style="display: flex; gap: 28px; flex-wrap: wrap; margin-bottom: 18px; align-items: flex-end;">
+ <div><span style="font: 700 11px/1 var(--sans); color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 4px;">Today</span><span id="today-cost" style="font: 700 22px/1 var(--sans); font-variant-numeric: tabular-nums;">-</span>&ensp;<span id="today-calls" style="font: 500 12px/1 var(--mono); color: var(--muted);">-</span></div>
+ <div><span style="font: 700 11px/1 var(--sans); color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 4px;">All time</span><span id="all-cost" style="font: 700 22px/1 var(--sans); font-variant-numeric: tabular-nums;">-</span>&ensp;<span id="all-calls" style="font: 500 12px/1 var(--mono); color: var(--muted);">-</span></div>
+ </div>
+ <div style="display: grid; grid-template-columns: minmax(120px, 140px) 1fr; gap: 18px; align-items: center; max-width: 480px;">
+ <svg id="ch-donut" class="ch-svg" viewBox="0 0 200 200" style="max-width: 130px" aria-label="API cost share by provider"></svg>
+ <div id="ch-donut-legend" class="donut-legend"></div>
+ </div>
+ </section>
+</main>
+
+<!-- JSON-LD: Article schema so search + AI engines can categorize this
+ correctly as an editorial piece (not a thin admin page). Boosts the
+ odds of it being cited for cost-transparency / "how much does X cost"
+ queries. -->
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "Article",
+ "headline": "The receipts: what it costs to run a daily-fresh restaurant directory",
+ "description": "Daily-itemized API spend behind NowServingTO. Google Places, Anthropic Haiku, Jina Reader, Google Street View. About $0.35 a day to track every newly registered Toronto restaurant.",
+ "author": {"@type": "Person", "name": "Josh Opolko"},
+ "publisher": {"@type": "Organization", "name": "NowServingTO", "url": "https://nowservingto.com/"},
+ "url": "https://nowservingto.com/crawlers",
+ "mainEntityOfPage": "https://nowservingto.com/crawlers",
+ "about": ["API cost transparency", "Open data project economics", "Toronto restaurant directory", "Anthropic Haiku cost", "Google Places API cost"]
+}
+</script>
+
+<script>
+fetch('/data/usage.json?v=' + Date.now()).then(r => r.json()).then(data => {
+ const fmt = n => '$' + (Math.round((n||0) * 100) / 100).toFixed(2);
+ const fmtFine = n => '$' + (Math.round((n||0) * 10000) / 10000).toFixed(4);
+ const fmtCalls = n => (n||0).toLocaleString();
+ document.getElementById('all-cost').textContent = fmt(data.totals?.all?.cost);
+ document.getElementById('all-calls').innerHTML = `${fmtCalls(data.totals?.all?.calls)} calls since <span id="first-day">${data.first || '-'}</span>`;
+ document.getElementById('today-cost').textContent = fmt(data.totals?.today?.cost);
+ document.getElementById('today-calls').textContent= `${fmtCalls(data.totals?.today?.calls)} calls today`;
+ document.getElementById('stamp').textContent = (data.generatedAt || '-').replace('T', ' ').slice(0, 19) + ' UTC';
+ const labels = {
+ google_places: 'Google Places',
+ google_streetview: 'Google Street View',
+ anthropic: 'Anthropic (Claude Haiku)',
+ jina: 'Jina Reader',
+ x: 'X / Twitter',
+ other: 'Other',
+ };
+ // Per-provider/SKU table removed - the donut chart + legend below
+ // already shows provider costs at a glance; the SKU-level breakdown
+ // was overflowing detail that nobody needed on a public page.
+
+ // ---- Charts ----------------------------------------------------------
+
+ // Provider palette - deterministic per-provider colour for donut + bars.
+ // Keeps the same provider in the same colour across page renders.
+ const PROV_COLOURS = {
+ google_places: '#1a73e8',
+ google_streetview:'#34a853',
+ anthropic: '#c83624',
+ jina: '#9c27b0',
+ x: '#15110d',
+ other: '#74787c',
+ };
+ const colourFor = p => PROV_COLOURS[p] || '#888';
+
+ // Daily-spend multi-line chart - one line per provider, plus an
+ // aggregate total line drawn slightly heavier so the day's overall
+ // spend stays the dominant read.
+ (function renderDaily() {
+ const days = data.byDay || [];
+ const byDayProv = data.byDayProvider || [];
+ if (!days.length) return;
+ const svg = document.getElementById('ch-daily');
+ if (!svg) return;
+ const W = 600, H = 180, PAD_L = 32, PAD_R = 8, PAD_T = 10, PAD_B = 22;
+ const innerW = W - PAD_L - PAD_R, innerH = H - PAD_T - PAD_B;
+ const last30 = days.slice(-30);
+ const last30Prov = byDayProv.slice(-30);
+ // Index providers seen in the window (preserve donut palette colours)
+ const provSet = new Set();
+ last30Prov.forEach(d => Object.keys(d.providers || {}).forEach(p => provSet.add(p)));
+ const provs = Array.from(provSet);
+ // Per-day per-provider lookup
+ const provCost = (i, p) => (last30Prov[i] && last30Prov[i].providers && last30Prov[i].providers[p]) || 0;
+ // Y-axis scales to the max per-provider single-day value (was scaling
+ // to daily total, but with the total line removed that left every
+ // provider line crammed into the bottom third of the chart). Now each
+ // provider's peak hits roughly the top of the plot.
+ let maxC = 0.001;
+ last30Prov.forEach(d => {
+ Object.values(d.providers || {}).forEach(v => { if (v > maxC) maxC = v; });
+ });
+ const stepX = innerW / Math.max(1, last30.length - 1);
+ const ptX = i => PAD_L + i * stepX;
+ const ptY = c => PAD_T + innerH - (c / maxC) * innerH;
+ // Build per-provider polylines (no aggregate total line - each provider
+ // gets its own stroke at full weight, easier to read individual signals).
+ let lines = '';
+ provs.forEach(p => {
+ const path = last30.map((d, i) => `${i===0?'M':'L'}${ptX(i).toFixed(1)},${ptY(provCost(i, p)).toFixed(1)}`).join(' ');
+ lines += `<path d="${path}" fill="none" stroke="${colourFor(p)}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><title>${p}</title></path>`;
+ });
+ const dots = '';
+ // Y-axis ticks: 0, mid, max
+ const yTicks = [0, maxC/2, maxC].map(v => {
+ const y = ptY(v);
+ const lbl = '$' + v.toFixed(v < 1 ? 2 : (v < 10 ? 1 : 0));
+ return `<line x1="${PAD_L}" x2="${W-PAD_R}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="#ebecef" stroke-width="0.8"/>` +
+ `<text class="ch-axis" x="${PAD_L-4}" y="${(y+3).toFixed(1)}" text-anchor="end">${lbl}</text>`;
+ }).join('');
+ // X-axis tick labels for first / mid / last day
+ const xTicks = [0, Math.floor((last30.length-1)/2), last30.length-1].map(i => {
+ const dd = last30[i].day.slice(5);
+ return `<text class="ch-axis" x="${ptX(i).toFixed(1)}" y="${H-6}" text-anchor="${i===0?'start':i===last30.length-1?'end':'middle'}">${dd}</text>`;
+ }).join('');
+ svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+ svg.innerHTML = yTicks + lines + dots + xTicks;
+ // Provider legend swatches inline above the chart's footer
+ const labels = {
+ google_places: 'Google Places',
+ google_streetview: 'Street View',
+ anthropic: 'Anthropic',
+ jina: 'Jina',
+ x: 'X',
+ other: 'Other',
+ };
+ const legendHtml = provs.map(p =>
+ `<span style="display:inline-flex;align-items:center;gap:5px;margin-right:14px;font:600 11px/1 var(--sans)"><span style="width:14px;height:3px;background:${colourFor(p)};display:inline-block;border-radius:1px"></span>${labels[p] || p}</span>`
+ ).join('');
+ const total = last30.reduce((s,d)=>s+d.cost,0);
+ const avg = total / last30.length;
+ document.getElementById('ch-daily-range').innerHTML = legendHtml;
+ document.getElementById('ch-daily-stats').innerHTML =
+ `peak $${maxC.toFixed(2)} · avg $${avg.toFixed(2)}/day · 30d total $${total.toFixed(2)}`;
+ })();
+
+ // Provider cost-share donut (pure-SVG; no library)
+ (function renderDonut() {
+ const provs = data.byProvider || [];
+ if (!provs.length) return;
+ const total = provs.reduce((s,p)=>s+p.cost,0);
+ if (total <= 0) return;
+ const cx=100, cy=100, r=72, sw=24; // ring centre, radius, stroke width
+ const C = 2 * Math.PI * r;
+ let offset = 0;
+ let segs = '';
+ provs.forEach(p => {
+ const frac = p.cost / total;
+ const len = C * frac;
+ segs += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${colourFor(p.provider)}" stroke-width="${sw}" stroke-dasharray="${len.toFixed(2)} ${(C-len).toFixed(2)}" stroke-dashoffset="${(-offset).toFixed(2)}" transform="rotate(-90 ${cx} ${cy})"><title>${p.provider}: $${p.cost.toFixed(2)} (${(frac*100).toFixed(0)}%)</title></circle>`;
+ offset += len;
+ });
+ // Centre label - total spend
+ segs += `<text x="${cx}" y="${cy-4}" text-anchor="middle" font-family="-apple-system,sans-serif" font-weight="800" font-size="22" fill="#131516">$${total.toFixed(2)}</text>`;
+ segs += `<text x="${cx}" y="${cy+14}" text-anchor="middle" font-family="-apple-system,sans-serif" font-weight="600" font-size="10" fill="#74787c" letter-spacing="0.5">TOTAL SPEND</text>`;
+ document.getElementById('ch-donut').innerHTML = segs;
+ // Legend
+ const labels = {
+ google_places: 'Google Places',
+ google_streetview: 'Google Street View',
+ anthropic: 'Anthropic Haiku',
+ jina: 'Jina Reader',
+ x: 'X / Twitter',
+ other: 'Other',
+ };
+ document.getElementById('ch-donut-legend').innerHTML = provs.map(p => {
+ const pct = (p.cost/total*100).toFixed(0);
+ return `<div class="lg-row"><span class="lg-swatch" style="background:${colourFor(p.provider)}"></span><span>${labels[p.provider]||p.provider}</span><span class="lg-pct">${pct}%</span><span class="lg-cost">$${p.cost.toFixed(2)}</span></div>`;
+ }).join('');
+ })();
+}).catch(e => {
+ const donut = document.getElementById('ch-donut-legend');
+ if (donut) donut.innerHTML = '<div class="lg-row">Could not load /data/usage.json</div>';
+});
+
+// Crawl section - separate file so this whole block degrades cleanly
+// if bot_traffic.json hasn't been generated yet.
+fetch('/data/bot_traffic.json?v=' + Date.now()).then(r => r.json()).then(data => {
+ const fmt = n => (n||0).toLocaleString();
+ // Crawl-totals cards removed - the chart below already conveys volume.
+
+ if (data.status === 'unavailable') {
+ document.getElementById('crawl-warn-box').innerHTML =
+ `<div class="crawl-warn"><b>Crawl data unavailable.</b> ${data.reason || ''}</div>`;
+ }
+
+ // (Per-bot table helpers removed - all bot data now renders as donuts/bars.)
+
+ // ---- Top-10 crawler horizontal bar chart ----
+ // Pools search engines + AI bots, sorts by 30d hits, shows top 10 as
+ // horizontal bars. One-glance read of "who's actually crawling us".
+ (function renderBotBars() {
+ const all = [...(data.searchEngines || []), ...(data.aiBots || [])];
+ if (!all.length) {
+ document.getElementById('ch-bots-bars').innerHTML =
+ '<div class="crawl-empty">No bot hits yet to chart.</div>';
+ return;
+ }
+ const top = [...all].sort((a,b) => (b.hits30d||0) - (a.hits30d||0)).slice(0, 10);
+ const maxH = Math.max(...top.map(r => r.hits30d||0), 1);
+ const aiSet = new Set((data.aiBots||[]).map(b => b.bot));
+ document.getElementById('ch-bots-bars').innerHTML = top.map(r => {
+ const pct = ((r.hits30d||0) / maxH * 100).toFixed(1);
+ const colour = aiSet.has(r.bot) ? 'var(--accent)' : '#1a73e8';
+ return `<div class="bar-h">
+ <span class="bh-label" title="${r.bot}">${r.bot}</span>
+ <div class="bh-track"><div class="bh-fill" style="width:${pct}%; background:${colour}"></div></div>
+ <span class="bh-val">${fmt(r.hits30d)}</span>
+ </div>`;
+ }).join('');
+ const aiCount = top.filter(r => aiSet.has(r.bot)).length;
+ const seCount = top.length - aiCount;
+ document.getElementById('ch-bots-foot').textContent =
+ `${seCount} search engine${seCount===1?'':'s'} (blue) · ${aiCount} AI crawler${aiCount===1?'':'s'} (red) · top ${top.length} by 30-day hits`;
+ })();
+
+ // ---- Detailed crawler list: name + type chip + IP verification + hits ----
+ (function renderCrawlDetail() {
+ const TYPE_LABEL = {'search':'search index','ai-search':'AI search','ai-training':'AI training','live-user':'live user fetch','other':'unclassified'};
+ function badge(v) {
+ if (!v || !v.sampled) return '<span class="bot-verify partial" title="no verified-IP sample yet">no IP data</span>';
+ const r = v.rate;
+ if (r >= 0.9) return '<span class="bot-verify ok">verified</span>';
+ if (r >= 0.3) return `<span class="bot-verify partial">${Math.round(r*100)}% verified</span>`;
+ return `<span class="bot-verify partial" title="source IPs did not resolve to ${v.expected} - may be cloud-hosted (e.g. OpenAI on Azure) or spoofed">unverified IP</span>`;
+ }
+ function rowsHtml(list, isOther) {
+ return (list||[]).map(b => {
+ const tl = TYPE_LABEL[b.type] || '';
+ const op = isOther && b.operator ? ` &middot; ${b.operator}` : '';
+ const vb = isOther ? '<span class="bot-verify partial" title="auto-classified by Haiku from the user-agent; IP not verified">auto</span>' : badge(b.verification);
+ const last = b.lastSeen ? new Date(b.lastSeen).toISOString().slice(0,10) : '-';
+ return `<div class="bot-row"><span class="bot-name">${b.bot}${tl?` <span class="bot-type t-${b.type}">${tl}</span>`:''}${op} ${vb}</span><span class="bot-hits">${fmt(b.hits30d)}<span class="lbl-inline">30d</span></span><span class="bot-hits">${fmt(b.hits7d)}<span class="lbl-inline">7d</span></span><span class="bot-last">${last}</span></div>`;
+ }).join('');
+ }
+ function grp(title, list, isOther) {
+ if (!list || !list.length) return '';
+ return `<div class="crawl-group"><h3>${title}</h3>${rowsHtml(list, isOther)}</div>`;
+ }
+ const el = document.getElementById('crawl-detail');
+ if (!el) return;
+ el.innerHTML = (grp('Search engines', data.searchEngines) + grp('AI crawlers', data.aiBots) + grp('Newly seen &middot; auto-classified', data.otherBots, true))
+ || '<div class="crawl-empty">No crawler detail yet.</div>';
+ })();
+
+ // ---- Reusable donut renderer ----
+ // items: [{label, value, color}] - sorted by value desc, top 8 shown,
+ // rest collapsed to "Other". Renders SVG ring + legend.
+ function renderDonut(svgEl, legendEl, items, opts) {
+ opts = opts || {};
+ const topN = opts.topN || 8;
+ items = items.filter(i => i.value > 0).sort((a,b) => b.value - a.value);
+ let segs = items.slice(0, topN);
+ if (items.length > topN) {
+ const otherTotal = items.slice(topN).reduce((s,i) => s+i.value, 0);
+ segs.push({label: `+${items.length - topN} more`, value: otherTotal, color: '#bbb'});
+ }
+ const total = segs.reduce((s,i) => s+i.value, 0);
+ if (total <= 0) {
+ svgEl.innerHTML = '';
+ legendEl.innerHTML = '<div class="lg-row" style="grid-template-columns:1fr;color:var(--muted)">no data</div>';
+ return;
+ }
+ const cx=100, cy=100, r=72, sw=24;
+ const C = 2 * Math.PI * r;
+ let offset = 0;
+ let svgInner = '';
+ segs.forEach(s => {
+ const frac = s.value / total;
+ const len = C * frac;
+ svgInner += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${s.color}" stroke-width="${sw}" stroke-dasharray="${len.toFixed(2)} ${(C-len).toFixed(2)}" stroke-dashoffset="${(-offset).toFixed(2)}" transform="rotate(-90 ${cx} ${cy})"><title>${s.label}: ${fmt(s.value)} (${(frac*100).toFixed(0)}%)</title></circle>`;
+ offset += len;
+ });
+ const totalFmt = opts.centerFmt ? opts.centerFmt(total) : fmt(total);
+ svgInner += `<text x="${cx}" y="${cy-4}" text-anchor="middle" font-family="-apple-system,sans-serif" font-weight="800" font-size="22" fill="#131516">${totalFmt}</text>`;
+ svgInner += `<text x="${cx}" y="${cy+14}" text-anchor="middle" font-family="-apple-system,sans-serif" font-weight="600" font-size="10" fill="#74787c" letter-spacing="0.5">${opts.centerLabel || 'TOTAL'}</text>`;
+ svgEl.innerHTML = svgInner;
+ legendEl.innerHTML = segs.map(s => {
+ const pct = (s.value/total*100).toFixed(0);
+ return `<div class="lg-row"><span class="lg-swatch" style="background:${s.color}"></span><span>${s.label}</span><span class="lg-pct">${pct}%</span><span class="lg-cost">${fmt(s.value)}</span></div>`;
+ }).join('');
+ }
+
+ // Deterministic palette generator for crawler/country pies
+ const PIE_COLOURS = ['#1a73e8','#c83624','#34a853','#9c27b0','#ff9800',
+ '#00acc1','#e91e63','#5e35b1','#43a047','#fb8c00',
+ '#0288d1','#d81b60','#7b1fa2','#388e3c','#f57c00'];
+ const colourAt = i => PIE_COLOURS[i % PIE_COLOURS.length];
+
+ // ---- Search engines donut ----
+ (function() {
+ const items = (data.searchEngines || []).map((b, i) => ({
+ label: b.bot, value: b.hits30d || 0, color: colourAt(i)
+ }));
+ renderDonut(
+ document.getElementById('ch-donut-search'),
+ document.getElementById('ch-donut-search-legend'),
+ items,
+ {centerLabel: 'HITS 30D'}
+ );
+ })();
+
+ // ---- AI crawlers donut ----
+ (function() {
+ const items = (data.aiBots || []).map((b, i) => ({
+ label: b.bot, value: b.hits30d || 0, color: colourAt(i)
+ }));
+ renderDonut(
+ document.getElementById('ch-donut-ai'),
+ document.getElementById('ch-donut-ai-legend'),
+ items,
+ {centerLabel: 'HITS 30D'}
+ );
+ })();
+
+ // ---- Bot farms donut (by source country if available) ----
+ const ex = data.exploitScanners;
+ if (ex && ex.hits30d && ex.topCountries && ex.topCountries.length) {
+ document.getElementById('ch-bot-farms-card').hidden = false;
+ const items = ex.topCountries.map((c, i) => ({
+ label: c.country, value: c.hits, color: colourAt(i)
+ }));
+ renderDonut(
+ document.getElementById('ch-donut-farms'),
+ document.getElementById('ch-donut-farms-legend'),
+ items,
+ {centerLabel: 'PROBES 30D'}
+ );
+ document.getElementById('ch-farms-foot').textContent =
+ `${fmt(ex.hits30d)} probes total · ${fmt(ex.uniquePaths30d)} unique paths · all served HTTP 404`;
+ }
+}).catch(e => {
+ ['ch-donut-search-legend','ch-donut-ai-legend'].forEach(id => {
+ const el = document.getElementById(id);
+ if (el) el.innerHTML = '<div class="lg-row" style="grid-template-columns:1fr;color:var(--muted)">Could not load /data/bot_traffic.json yet, runs on the next daily cron.</div>';
+ });
+});
+</script>
+</body>
+</html>

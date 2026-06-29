@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DEMO — NowServingTO Dark Redesign</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<style>
+  @font-face {
+    font-family: 'Fraunces';
+    font-style: normal;
+    font-weight: 400 900;
+    font-display: swap;
+    src: url(/fonts/fraunces-_9v0c2Wa0KxC9TeA.woff2) format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+  }
+  @font-face {
+    font-family: 'Fraunces';
+    font-style: normal;
+    font-weight: 400 900;
+    font-display: swap;
+    src: url(/fonts/fraunces-v0c2Wa0KxCFTeO-U.woff2) format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+  }
+
+  :root {
+    --bg:         #0f0d0a;
+    --paper:      #181511;
+    --paper-hi:   #201d18;
+    --ink:        #ede8df;
+    --ink2:       #a8a098;
+    --muted:      #5e574e;
+    --line:       rgba(255,255,255,.07);
+    --rule:       rgba(255,255,255,.11);
+    --accent:     #c93d2a;
+    --gold:       #e8a030;
+    --fresh:      #3daa6a;
+    --display: 'Fraunces', Georgia, ui-serif, serif;
+    --serif:   'Fraunces', Georgia, ui-serif, serif;
+    --sans:    system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --mono:    ui-monospace, Menlo, 'SF Mono', Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font: 16px/1.55 var(--serif);
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: 'kern','liga','onum','tnum';
+    overflow-x: hidden;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+  /* Demo banner */
+  .demo-bar {
+    background: var(--accent);
+    color: #fff;
+    text-align: center;
+    font: 700 11px/1 var(--sans);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 8px 16px;
+  }
+  .demo-bar a { color: rgba(255,255,255,.8); text-decoration: underline; }
+
+  /* Masthead */
+  .mast { padding: 28px 0 0; }
+  .mast .wrap { border-bottom: 1px solid var(--rule); padding-bottom: 18px; }
+  .mast-lockup {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 24px; padding-bottom: 14px; border-bottom: 1px solid var(--line);
+    flex-wrap: wrap;
+  }
+  .brand {
+    display: inline-block; white-space: nowrap;
+    color: var(--ink); text-decoration: none;
+    font: 800 38px/1 var(--display);
+    letter-spacing: -0.025em;
+    font-variation-settings: "opsz" 144;
+  }
+  .brand:hover { color: var(--accent); text-decoration: none; }
+  .mast-meta {
+    display: flex; align-items: baseline; gap: 10px;
+    font: 600 11px/1.2 var(--mono);
+    letter-spacing: 0.08em; color: var(--muted);
+    text-transform: uppercase;
+  }
+  .mast-issue { color: var(--gold); }
+  .mast-date { color: var(--ink2); font-size: 13px; letter-spacing: 0.04em; }
+  .mast-dispatch {
+    margin-left: 14px;
+    font: 600 11px/1.2 var(--mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink2);
+    text-decoration: none;
+    padding: 4px 10px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--paper-hi);
+    transition: color 0.12s, border-color 0.12s;
+    white-space: nowrap;
+  }
+  .mast-dispatch:hover { color: var(--accent); border-color: var(--accent); }
+  .sub {
+    color: var(--ink2);
+    font: 400 18px/1.45 var(--serif);
+    margin: 14px 0 0; font-style: italic;
+  }
+  .sub .hl { font-weight: 800; font-style: normal; color: var(--accent); }
+  .home-methodology {
+    color: var(--muted); font: 400 14px/1.5 var(--serif);
+    margin: 8px 0 0;
+  }
+  .home-methodology a {
+    color: inherit; text-decoration: underline dotted;
+    text-decoration-color: var(--accent); text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+  }
+  .home-methodology a:hover { color: var(--accent); }
+
+  /* Filter bar */
+  .filters {
+    display: flex; gap: 8px; align-items: center;
+    margin: 24px 0 14px;
+    position: sticky; top: 0; z-index: 500;
+    flex-wrap: nowrap; overflow: visible;
+  }
+  .filters::before {
+    content: "";
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 100vw; height: 100%;
+    background: rgba(15,13,10,.88);
+    backdrop-filter: blur(14px) saturate(1.3);
+    -webkit-backdrop-filter: blur(14px) saturate(1.3);
+    border-bottom: 1px solid var(--line);
+    z-index: -1;
+  }
+  .cuisine-picker { position: relative; }
+  .cuisine-picker.region button.cp-trigger { min-width: 160px; }
+  .cuisine-picker button.cp-trigger {
+    font: 600 13px/1.3 var(--sans);
+    color: var(--ink2);
+    background: var(--paper-hi);
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    padding: 9px 32px 9px 16px;
+    cursor: pointer; min-width: 200px;
+    text-align: left; position: relative;
+    transition: border-color 0.12s, color 0.12s;
+    white-space: nowrap;
+  }
+  .cuisine-picker button.cp-trigger::after {
+    content: '';
+    position: absolute; right: 12px; top: 50%;
+    transform: translateY(-50%);
+    width: 0; height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid var(--ink2);
+  }
+  .cuisine-picker button.cp-trigger:hover { border-color: var(--ink2); color: var(--ink); }
+  .map-btn {
+    font: 600 12px/1 var(--sans);
+    padding: 9px 14px;
+    background: var(--paper-hi);
+    color: var(--ink2);
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: border-color 0.12s, color 0.12s;
+    white-space: nowrap;
+  }
+  .map-btn:hover { border-color: var(--ink2); color: var(--ink); }
+  .view-toggle {
+    display: inline-flex;
+    border: 1px solid var(--rule);
+    border-radius: 999px; overflow: hidden;
+    background: var(--paper-hi);
+  }
+  .vt-btn {
+    font: 600 12px/1 var(--sans);
+    padding: 9px 14px;
+    background: transparent;
+    color: var(--ink2);
+    border: 0; cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+  }
+  .vt-btn:hover { color: var(--ink); }
+  .vt-btn.vt-active { background: var(--ink); color: var(--bg); }
+  .data-note-tip summary {
+    list-style: none; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 9px 12px;
+    font: 600 12px/1 var(--sans);
+    color: var(--muted);
+    background: transparent;
+    border: 1px dashed var(--line);
+    border-radius: 999px;
+    user-select: none;
+    transition: color 0.12s, border-color 0.12s;
+  }
+  .data-note-tip summary::-webkit-details-marker { display: none; }
+  .data-note-tip summary:hover { color: var(--ink2); border-color: var(--muted); }
+
+  /* Feed */
+  .open-feed {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    padding: 0; margin-bottom: 28px;
+    box-shadow: 0 2px 24px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.04);
+    overflow: hidden;
+  }
+  .feed-section {
+    display: flex; align-items: center; gap: 14px;
+    margin: 0; padding: 10px 20px;
+    font: 700 11px/1 var(--mono);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    background: rgba(255,255,255,.028);
+    border-bottom: 1px solid var(--line);
+  }
+  .feed-section:not(:first-child) {
+    border-top: 1px solid var(--line);
+    margin-top: 0;
+  }
+  .fs-label { color: var(--accent); white-space: nowrap; font-size: 12px; }
+  .fs-rule { flex: 1; height: 1px; background: var(--rule); opacity: 0.4; }
+  .fs-count { color: var(--muted); white-space: nowrap; font-weight: 500; }
+
+  /* Listing rows */
+  .open-row {
+    display: grid;
+    grid-template-columns: 90px 1fr auto;
+    grid-template-rows: auto auto;
+    align-items: start;
+    column-gap: 16px; row-gap: 0;
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--line);
+    transition: background 0.1s;
+    position: relative;
+    cursor: pointer;
+  }
+  .open-row::before {
+    content: '';
+    position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+    background: var(--row-accent, transparent);
+    opacity: 0.7;
+    transition: opacity 0.1s;
+  }
+  .open-row:hover::before { opacity: 1; }
+  .open-row:hover { background: rgba(255,255,255,.025); }
+  .open-row:last-child { border-bottom: 0; }
+
+  /* Date */
+  .od {
+    font: 600 12px/1.3 var(--mono);
+    color: var(--fresh);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    padding-top: 3px;
+  }
+  .od a { color: inherit; text-decoration: none; }
+  .od a:hover { opacity: 0.75; }
+
+  /* Name + address */
+  .on { min-width: 0; }
+  .on > a {
+    font: 700 20px/1.2 var(--display);
+    color: var(--ink);
+    text-decoration: none;
+    letter-spacing: -0.018em;
+    font-variation-settings: "opsz" 72;
+    transition: color 0.1s;
+    display: inline;
+  }
+  .on > a:hover { color: var(--accent); }
+  .ext-arrow {
+    display: inline-block; margin-left: 4px;
+    font-size: 0.72em; color: var(--muted);
+    transition: color 0.1s; transform: translateY(-1px);
+  }
+  .on > a:hover .ext-arrow { color: var(--accent); }
+  .oad {
+    display: inline; font: 400 12px/1.4 var(--mono);
+    color: var(--muted); margin-left: 10px;
+    font-variant-numeric: tabular-nums;
+  }
+  .oad::before { content: '· '; margin-right: 1px; }
+  .oad-d { color: var(--ink2); font-weight: 600; }
+  .oad a { color: var(--muted); text-decoration: none; transition: color 0.1s; }
+  .oad a:hover { color: var(--accent); }
+  .rating {
+    display: inline-block; margin-left: 10px;
+    font: 700 11px/1 var(--sans); color: var(--ink2);
+    font-variant-numeric: tabular-nums; vertical-align: 1px;
+  }
+  .rating::before { content: '★'; color: var(--gold); margin-right: 3px; font-size: 12px; }
+  .rc { color: var(--muted); font-weight: 400; margin-left: 3px; font-size: 10px; }
+
+  /* Row blurb */
+  .row-blurb {
+    grid-column: 2 / 3;
+    margin: 5px 0 0;
+    font: 400 13px/1.55 var(--sans);
+    color: var(--ink2);
+  }
+  .row-fresh { color: var(--accent); font-weight: 600; font-style: normal; }
+
+  /* Right: cuisine pills + actions */
+  .oc {
+    text-align: right;
+    display: flex; flex-wrap: wrap;
+    justify-content: flex-end; align-items: center;
+    gap: 4px 6px;
+    padding-top: 3px;
+  }
+  .pill {
+    font: 700 9px/1 var(--sans);
+    padding: 5px 10px;
+    border-radius: 99px;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    white-space: nowrap;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+    display: inline-block;
+    box-shadow: 0 0 0 1px rgba(255,255,255,.12);
+  }
+  .pill:hover { transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,.4), 0 0 0 1px rgba(255,255,255,.2); color: #fff; }
+  .row-cta {
+    display: inline-flex; align-items: center; gap: 3px;
+    font: 600 11px/1 var(--sans);
+    padding: 5px 9px;
+    border: 1px solid var(--rule);
+    border-radius: 99px;
+    color: var(--ink2);
+    text-decoration: none;
+    background: var(--paper-hi);
+    transition: background 0.1s, border-color 0.1s, color 0.1s;
+    white-space: nowrap;
+  }
+  .row-cta:hover { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .row-fav {
+    background: transparent; border: 0; cursor: pointer;
+    font: 17px/1 var(--sans); padding: 0 6px 0 0;
+    color: var(--muted); transition: color 0.1s, transform 0.1s;
+  }
+  .row-fav:hover { color: var(--accent); transform: scale(1.1); }
+
+  /* Show more */
+  .show-more {
+    display: block; width: calc(100% - 36px);
+    margin: 8px 18px 12px; padding: 11px 14px;
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 6px; cursor: pointer;
+    font: 700 11px/1 var(--sans);
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--muted);
+    transition: all 0.12s;
+  }
+  .show-more:hover { background: var(--paper-hi); border-color: var(--rule); color: var(--ink2); }
+
+  /* Neighbourhood browse */
+  .nbhd-browse {
+    margin: 40px auto 0; max-width: 1100px;
+    padding: 24px 24px 0; border-top: 1px solid var(--line);
+  }
+  .nbhd-browse-h { font: 700 15px/1.2 var(--sans); color: var(--ink); margin: 0 0 4px; }
+  .nbhd-browse-sub { font: 400 12px/1.5 var(--sans); color: var(--muted); margin: 0 0 10px; }
+  .nbhd-browse-nav { font: 400 13px/1.9 var(--sans); }
+  .nbhd-browse-nav a { color: var(--ink2); text-decoration: none; border-bottom: 1px dotted transparent; margin-right: 2px; }
+  .nbhd-browse-nav a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+  .nbhd-browse-nav a + a::before { content: ' · '; color: var(--line); }
+
+  /* Newsletter */
+  .newsletter-cta {
+    margin: 40px 0 24px; padding: 22px 24px;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 8px;
+    display: grid; grid-template-columns: 1fr; gap: 16px;
+  }
+  @media (min-width: 640px) { .newsletter-cta { grid-template-columns: 1.1fr 1fr; gap: 28px; } }
+  .nl-pitch h2 { font: 700 17px/1.25 var(--sans); margin: 0 0 6px; color: var(--ink); }
+  .nl-pitch p { font: 400 13px/1.45 var(--sans); margin: 0; color: var(--ink2); }
+  .alert-form { display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-start; }
+  .alert-form input[type="email"] {
+    flex: 1; min-width: 0;
+    font: 400 14px/1 var(--sans);
+    padding: 10px 14px;
+    background: var(--bg);
+    border: 1px solid var(--rule);
+    border-radius: 6px; color: var(--ink);
+    outline: none;
+  }
+  .alert-form input[type="email"]::placeholder { color: var(--muted); }
+  .alert-form input[type="email"]:focus { border-color: var(--accent); }
+  .alert-form button[type="submit"] {
+    font: 700 13px/1 var(--sans);
+    padding: 10px 18px;
+    background: var(--accent); color: #fff;
+    border: 0; border-radius: 6px; cursor: pointer;
+    transition: opacity 0.12s;
+    white-space: nowrap;
+  }
+  .alert-form button[type="submit"]:hover { opacity: 0.88; }
+  .alert-hp { display: none; }
+
+  /* Taxonomy links */
+  .all-cuisines, .all-districts, .all-neighborhoods {
+    font: 400 12px/1.8 var(--sans); color: var(--muted);
+    margin: 28px auto 6px; max-width: 1100px; padding: 0 24px;
+  }
+  .all-cuisines-label { font-weight: 700; color: var(--ink2); margin-right: 6px; text-transform: uppercase; letter-spacing: 0.04em; font-size: 10px; }
+  .all-cuisines a, .all-districts a, .all-neighborhoods a { color: var(--muted); text-decoration: none; margin-right: 2px; }
+  .all-cuisines a:hover, .all-districts a:hover, .all-neighborhoods a:hover { color: var(--accent); }
+  .all-cuisines a + a::before, .all-districts a + a::before, .all-neighborhoods a + a::before { content: ' · '; color: var(--line); }
+  .all-districts { margin-top: 8px; }
+  .all-neighborhoods { margin-top: 8px; margin-bottom: 28px; }
+
+  /* Footer */
+  .site-footer {
+    max-width: 1100px; margin: 40px auto 0;
+    padding: 24px 24px 48px;
+    border-top: 1px solid var(--line);
+  }
+  .footer-methodology { font: 400 12.5px/1.6 var(--sans); color: var(--muted); margin: 0 0 12px; }
+  .footer-methodology a { color: var(--muted); text-decoration: underline dotted; text-underline-offset: 2px; }
+  .footer-methodology a:hover { color: var(--ink2); }
+  .footer-links { display: flex; gap: 20px; flex-wrap: wrap; }
+  .footer-links a { font: 500 12px/1 var(--sans); color: var(--muted); text-decoration: none; }
+  .footer-links a:hover { color: var(--ink); }
+
+  main.wrap { padding-bottom: 60px; }
+
+  @media (max-width: 600px) {
+    .brand { font-size: 28px; }
+    .mast-meta { font-size: 10px; }
+    .open-row { grid-template-columns: 76px 1fr auto; column-gap: 10px; padding: 12px 16px; }
+    .on > a { font-size: 17px; }
+    .filters { gap: 6px; flex-wrap: wrap; }
+    .filters .cuisine-picker { flex: 1 1 calc(50% - 3px); min-width: 0; }
+    .filters .cuisine-picker .cp-trigger { min-width: 0; width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="demo-bar">Design demo &mdash; not live &nbsp;|&nbsp; <a href="/">View current site</a></div>
+
+<header class="mast">
+  <div class="wrap">
+    <div class="mast-lockup">
+      <a href="/demo.html" class="brand">NowServingTO</a>
+      <div class="mast-meta" aria-hidden="true">
+        <span class="mast-issue">DAILY EDITION</span>
+        <span class="mast-date">2026.06.25</span>
+        <a href="/dispatch/latest" class="mast-dispatch">June Dispatch &rsaquo;</a>
+      </div>
+    </div>
+    <h1 class="sub">Tracking Toronto's <span class="hl">newest, independent, registered</span> restaurants</h1>
+    <p class="home-methodology">Sourced from <a href="https://open.toronto.ca/dataset/municipal-licensing-and-standards-business-licences-and-permits/" rel="noopener">City of Toronto permits</a>, cross-referenced with <a href="https://open.toronto.ca/dataset/dinesafe/" rel="noopener">DineSafe</a> and Google Places. Chains excluded.</p>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div class="filters">
+    <div class="cuisine-picker">
+      <button class="cp-trigger" aria-label="Filter by cuisine">All cuisines</button>
+    </div>
+    <div class="cuisine-picker region">
+      <button class="cp-trigger" aria-label="Filter by district">All Toronto</button>
+    </div>
+    <button class="map-btn" type="button">&#128205; Near me</button>
+    <button class="map-btn" type="button">&#9825; Saved</button>
+    <div class="view-toggle">
+      <button class="vt-btn vt-active">List</button>
+      <button class="vt-btn">Map</button>
+    </div>
+    <details class="data-note-tip">
+      <summary aria-label="About dates"><span>&#9432;</span> About dates</summary>
+    </details>
+  </div>
+
+  <div class="open-feed" id="open-feed">
+
+    <div class="feed-section"><span class="fs-label">THIS WEEK</span><span class="fs-rule"></span><span class="fs-count">3 new</span></div>
+
+    <div class="open-row" style="--row-accent:#4a8b8b">
+      <div class="od"><a href="/r/banh-mi-journey-yonge-st-2409">10 days</a></div>
+      <div class="on">
+        <a href="https://banhmijourney.com/" target="_blank" rel="noopener">BANH MI JOURNEY YONGE ST<span class="ext-arrow" aria-hidden="true">&#8599;</span></a>
+        <span class="oad"><a href="https://maps.google.com/?cid=16914829042805828698" target="_blank" rel="noopener">2409 Yonge St<span style="opacity:.5">, Toronto ON</span></a><span class="oad-d"> &middot; East Toronto</span></span>
+      </div>
+      <div class="oc">
+        <a class="pill" href="/cuisine/vietnamese" style="background:#4a8b8b">Vietnamese</a>
+        <button class="row-fav">&#9825;</button>
+      </div>
+      <p class="row-blurb">Vietnamese sandwich counter on Yonge St in East Toronto, built around the Banh Mi itself rather than a broader menu.</p>
+    </div>
+
+    <div class="open-row" style="--row-accent:#d63d2a">
+      <div class="od"><a href="/r/dulzura-mexican-desserts-260">18 days</a></div>
+      <div class="on">
+        <a href="https://www.instagram.com/dulzura.desserts/" target="_blank" rel="noopener">DULZURA MEXICAN DESSERTS<span class="ext-arrow" aria-hidden="true">&#8599;</span></a>
+        <span class="oad"><a href="https://maps.google.com/?cid=11721201115895907522" target="_blank" rel="noopener">260 Dupont St<span style="opacity:.5">, Toronto ON</span></a><span class="oad-d"> &middot; Downtown</span></span>
+      </div>
+      <div class="oc">
+        <a class="pill" href="/cuisine/mexican" style="background:#d63d2a">Mexican</a>
+        <button class="row-fav">&#9825;</button>
+      </div>
+      <p class="row-blurb">Counter-service bakery on Dupont St specializing entirely in Mexican sweets and pastries.</p>
+    </div>
+
+    <div class="open-row" style="--row-accent:#c83624">
+      <div class="od"><a href="/r/gelateria-dolce-mia-690">20 days</a></div>
+      <div class="on">
+        <a href="https://www.instagram.com/gelateriadolcemia/" target="_blank" rel="noopener">GELATERIA DOLCE MIA<span class="ext-arrow" aria-hidden="true">&#8599;</span></a>
+        <span class="oad"><a href="https://maps.google.com/?cid=9077943669739640139" target="_blank" rel="noopener">690 Bloor St W<span style="opacity:.5">, Toronto ON</span></a><span class="oad-d"> &middot; West Toronto</span></span>
+        <span class="rating">4.6<span class="rc">(38)</span></span>
+      </div>
+      <div class="oc">
+        <a class="pill" href="/cuisine/italian" style="background:#c83624">Italian</a>
+        <button class="row-fav">&#9825;</button>
+      </div>
+      <p class="row-blurb">Take-out gelato counter on Bloor St W, operating as a dedicated ice cream shop rather than a caf&eacute; hybrid.</p>
+    </div>
+
+    <div class="feed-section"><span class="fs-label">MAY 2026</span><span class="fs-rule"></span><span class="fs-count">21 new</span></div>
+
+    <div class="open-row" style="--row-accent:#8a5d20">
+      <div class="od"><a href="/r/thirumalai-eats-5637">26 days</a></div>
+      <div class="on">
+        <a href="https://thirumalaieats.com/" target="_blank" rel="noopener">THIRUMALAI EATS<span class="ext-arrow" aria-hidden="true">&#8599;</span></a>
+        <span class="oad"><a href="https://maps.google.com/?cid=537055014607149824" target="_blank" rel="noopener">5637 Finch Ave E<span style="opacity:.5">, Scarborough ON</span></a><span class="oad-d"> &middot; Scarborough</span></span>
+      </div>
+      <div class="oc">
+        <a class="pill" href="/cuisine/tamil" style="background:#8a5d20">Tamil</a>
+        <button class="row-fav">&#9825;</button>
+      </div>
+      <p class="row-blurb">Tamil cuisine on Finch Ave E in Scarborough, a neighbourhood kitchen built around South Indian street food and breakfast staples.</p>
+    </div>
+
+    <div class="open-row" style="--row-accent:#b13e6a">
+      <div class="od"><a href="/r/happy-panda-20">28 days</a></div>
+      <div class="on">
+        <a href="http://www.happypanda.ca/" target="_blank" rel="noopener">HAPPY PANDA<span class="ext-arrow" aria-hidden="true">&#8599;</span></a>
+        <span class="oad"><a href="https://maps.google.com/?cid=6376048323323346877" target="_blank" rel="noopener">20 Lockport Ave<span style="opacity:.5">, Etobicoke ON</span></a><span class="oad-d"> &middot; Etobicoke</span></span>
+      </div>
+      <div class="oc">
+        <a class="pill" href="/cuisine/chinese" style="background:#b13e6a">Chinese</a>
+        <a class="pill" href="/cuisine/indian" style="background:#e88e2c">Indian</a>
+        <button class="row-fav">&#9825;</button>
+      </div>
+      <p class="row-blurb">Halal Hakka and Indo-Chinese takeaway on Lockport Ave in Etobicoke, specializing in the diaspora cuisine that sits between Chinese technique and South Asian spice.</p>
+    </div>
+
+    <div class="open-row" style="--row-accent:#2f3aa3">
+      <div class="od"><a href="/r/tonton-on-bloor-1005">29 days</a></div>
+      <div class="on">
+        <a href="http://tontonmatcha.com/" target="_blank" rel="noopener">TONTON ON BLOOR<span class="ext-arrow" aria-hidden="true">&#8599;</span></a>
+        <span class="oad"><a href="https://maps.google.com/?cid=16456773959645853909" target="_blank" rel="noopener">1005 Bloor St W<span style="opacity:.5">, Toronto ON</span></a><span class="oad-d"> &middot; West Toronto</span></span>
+        <span class="rating">4.4<span class="rc">(122)</span></span>
+      </div>
+      <div class="oc">
+        <a class="pill" href="/cuisine/japanese" style="background:#2f3aa3">Japanese</a>
+        <button class="row-fav">&#9825;</button>
+      </div>
+      <p class="row-blurb">Japanese matcha and coffee caf&eacute; on Bloor St W, dual-focus counter service built around ceremonial-grade matcha.</p>
+    </div>
+
+    <div class="open-row" style="--row-accent:#5a3a7a">
+      <div class="od"><a href="/r/jardin-noir-3401">18 days</a></div>
+      <div class="on">
+        <a href="https://maps.google.com/?cid=10496014573193590524" target="_blank" rel="noopener">JARDIN NOIR</a>
+        <span class="oad"><a href="https://maps.google.com/?cid=10496014573193590524" target="_blank" rel="noopener">3401 Dufferin St<span style="opacity:.5">, North York ON</span></a><span class="oad-d"> &middot; West Toronto</span></span>
+      </div>
+      <div class="oc">
+        <a class="pill" href="/cuisine/french" style="background:#5a3a7a">French</a>
+        <button class="row-fav">&#9825;</button>
+      </div>
+      <p class="row-blurb">French patisserie-caf&eacute; on Dufferin St, counter-service focused on handmade pastries and baked goods. <span class="row-fresh">No website yet.</span></p>
+    </div>
+
+    <div class="open-row" style="--row-accent:#6b2456">
+      <div class="od"><a href="/r/gyopo-brewery-1456">1 month</a></div>
+      <div class="on">
+        <a href="https://www.gyopobrewery.com/" target="_blank" rel="noopener">GYOPO BREWERY<span class="ext-arrow" aria-hidden="true">&#8599;</span></a>
+        <span class="oad"><a href="https://maps.google.com/?cid=4190551299678485058" target="_blank" rel="noopener">1456 Dundas St W<span style="opacity:.5">, Toronto ON</span></a><span class="oad-d"> &middot; West Toronto</span></span>
+        <span class="rating">4.8<span class="rc">(54)</span></span>
+      </div>
+      <div class="oc">
+        <a class="pill" href="/cuisine/korean" style="background:#6b2456">Korean</a>
+        <button class="row-fav">&#9825;</button>
+      </div>
+      <p class="row-blurb">Korean makgeolli brewery and restaurant on Dundas St W, brewing craft makgeolli in-house rather than importing.</p>
+    </div>
+
+    <div class="feed-section"><span class="fs-label">APRIL 2026</span><span class="fs-rule"></span><span class="fs-count">9 new</span></div>
+
+    <div class="open-row" style="--row-accent:#c83624">
+      <div class="od"><a href="/r/ariete-e-toro-1229">1 month</a></div>
+      <div class="on">
+        <a href="https://www.arietetoro.com/" target="_blank" rel="noopener">ARIETE E TORO<span class="ext-arrow" aria-hidden="true">&#8599;</span></a>
+        <span class="oad"><a href="https://maps.google.com/?cid=13333792010969594332" target="_blank" rel="noopener">1229 Dundas St W<span style="opacity:.5">, Toronto ON</span></a><span class="oad-d"> &middot; West Toronto</span></span>
+      </div>
+      <div class="oc">
+        <a class="pill" href="/cuisine/italian" style="background:#c83624">Italian</a>
+        <a class="row-cta" href="https://www.arietetoro.com/" target="_blank" rel="noopener">Website &#8599;</a>
+        <button class="row-fav">&#9825;</button>
+      </div>
+      <p class="row-blurb">Florentine focaccia-sandwich counter on Dundas St W, operating takeout-focused around the schiacciata.</p>
+    </div>
+
+    <div class="open-row" style="--row-accent:#4a8b8b">
+      <div class="od"><a href="/r/botanic-coffee-caphe-662">2 months</a></div>
+      <div class="on">
+        <a href="https://www.instagram.com/botaniccoffeeandcaphe/" target="_blank" rel="noopener">BOTANIC COFFEE &amp; CAPHE<span class="ext-arrow" aria-hidden="true">&#8599;</span></a>
+        <span class="oad"><a href="https://maps.google.com/?cid=9109470703761865041" target="_blank" rel="noopener">662 Queen St W<span style="opacity:.5">, Toronto ON</span></a><span class="oad-d"> &middot; West Toronto</span></span>
+        <span class="rating">4.7<span class="rc">(89)</span></span>
+      </div>
+      <div class="oc">
+        <a class="pill" href="/cuisine/vietnamese" style="background:#4a8b8b">Vietnamese</a>
+        <button class="row-fav">&#9825;</button>
+      </div>
+      <p class="row-blurb">Vietnamese caf&eacute; on Queen St W serving espresso drinks and Vietnamese coffee alongside pastries and light fare.</p>
+    </div>
+
+    <div class="open-row" style="--row-accent:#7a8a3a">
+      <div class="od"><a href="/r/som-tum-jinda-356">2 months</a></div>
+      <div class="on">
+        <a href="https://somtumjinda.ca/" target="_blank" rel="noopener">SOM TUM JINDA<span class="ext-arrow" aria-hidden="true">&#8599;</span></a>
+        <span class="oad"><a href="https://maps.google.com/?cid=6126613450006914978" target="_blank" rel="noopener">356 College St<span style="opacity:.5">, Toronto ON</span></a><span class="oad-d"> &middot; Downtown</span></span>
+      </div>
+      <div class="oc">
+        <a class="pill" href="/cuisine/thai" style="background:#7a8a3a">Thai</a>
+        <button class="row-fav">&#9825;</button>
+      </div>
+      <p class="row-blurb">Isaan Thai kitchen on College St, specializing in the fiery, sour-forward cuisine of northeast Thailand.</p>
+    </div>
+
+    <button class="show-more">Show older openings</button>
+  </div>
+
+  <section class="nbhd-browse" aria-label="Browse by neighbourhood">
+    <h2 class="nbhd-browse-h">Browse by neighbourhood</h2>
+    <p class="nbhd-browse-sub">21 iconic Toronto food corridors, updated daily.</p>
+    <nav class="nbhd-browse-nav">
+      <a href="/neighborhood/agincourt">Agincourt</a><a href="/neighborhood/chinatown">Chinatown</a><a href="/neighborhood/corso-italia">Corso Italia</a><a href="/neighborhood/greektown">Greektown</a><a href="/neighborhood/kensington-market">Kensington Market</a><a href="/neighborhood/king-west">King West</a><a href="/neighborhood/koreatown">Koreatown</a><a href="/neighborhood/leslieville">Leslieville</a><a href="/neighborhood/little-italy">Little Italy</a><a href="/neighborhood/little-jamaica">Little Jamaica</a><a href="/neighborhood/little-portugal">Little Portugal</a><a href="/neighborhood/roncesvalles">Roncesvalles</a><a href="/neighborhood/the-beaches">The Beaches</a><a href="/neighborhood/the-junction">The Junction</a><a href="/neighborhood/thorncliffe-park">Thorncliffe Park</a><a href="/neighborhood/west-queen-west">West Queen West</a><a href="/neighborhood/yorkville">Yorkville</a>
+    </nav>
+  </section>
+
+  <section class="newsletter-cta" aria-label="Email signup">
+    <div class="nl-pitch">
+      <h2>The week's newest Toronto restaurants, in your inbox</h2>
+      <p>Every Sunday, the top 5 restaurants newly registered with the City of Toronto. One email a week, never more.</p>
+    </div>
+    <form class="alert-form" novalidate>
+      <input type="email" placeholder="you@example.com" aria-label="Email address">
+      <button type="submit">Subscribe</button>
+      <div class="alert-hp" aria-hidden="true"><label>Website: <input type="text" tabindex="-1"></label></div>
+    </form>
+  </section>
+
+  <nav class="all-cuisines" aria-label="Browse all cuisines">
+    <span class="all-cuisines-label">All cuisines:</span>
+    <a href="/cuisine/afghan">Afghan</a><a href="/cuisine/argentinian">Argentinian</a><a href="/cuisine/bangladeshi">Bangladeshi</a><a href="/cuisine/caribbean">Caribbean</a><a href="/cuisine/chinese">Chinese</a><a href="/cuisine/eritrean">Eritrean</a><a href="/cuisine/ethiopian">Ethiopian</a><a href="/cuisine/filipino">Filipino</a><a href="/cuisine/french">French</a><a href="/cuisine/greek">Greek</a><a href="/cuisine/indian">Indian</a><a href="/cuisine/italian">Italian</a><a href="/cuisine/jamaican">Jamaican</a><a href="/cuisine/japanese">Japanese</a><a href="/cuisine/korean">Korean</a><a href="/cuisine/lebanese">Lebanese</a><a href="/cuisine/mexican">Mexican</a><a href="/cuisine/middle_east">Middle Eastern</a><a href="/cuisine/nigerian">Nigerian</a><a href="/cuisine/pakistani">Pakistani</a><a href="/cuisine/persian">Persian</a><a href="/cuisine/portuguese">Portuguese</a><a href="/cuisine/sri_lankan">Sri Lankan</a><a href="/cuisine/tamil">Tamil</a><a href="/cuisine/thai">Thai</a><a href="/cuisine/tibetan">Tibetan</a><a href="/cuisine/turkish">Turkish</a><a href="/cuisine/vietnamese">Vietnamese</a>
+  </nav>
+  <nav class="all-districts" aria-label="Browse all districts">
+    <span class="all-cuisines-label">Districts:</span>
+    <a href="/district/downtown">Downtown</a><a href="/district/east-toronto">East Toronto</a><a href="/district/etobicoke">Etobicoke</a><a href="/district/north-york">North York</a><a href="/district/scarborough">Scarborough</a><a href="/district/west-toronto">West Toronto</a>
+  </nav>
+
+  <footer class="site-footer">
+    <p class="footer-methodology"><a href="https://open.toronto.ca/dataset/municipal-licensing-and-standards-business-licences-and-permits/" rel="noopener">Permits</a> sourced from the <a href="https://open.toronto.ca/" rel="noopener">City of Toronto Open Data Portal</a>, cross-referenced with <a href="https://open.toronto.ca/dataset/dinesafe/" rel="noopener">DineSafe</a> and social media.</p>
+    <nav class="footer-links">
+      <a href="/press">How we verify</a>
+      <a href="/crawlers">Crawlers &amp; Cost</a>
+      <a href="/contribute">Submit a tip</a>
+    </nav>
+  </footer>
+
+</main>
+</body>
+</html>
