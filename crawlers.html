@@ -95,6 +95,24 @@
  /* ---- Charts (inline SVG, no library) ---- */
  .chart-card { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); margin: 14px 0; }
  .chart-card .ch-title { font: 700 12px/1 var(--sans); color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin: 0 0 12px; }
+ /* Colored accent headings for specific chart-card sections, matching the
+ crawl-group h3 treatment: full-bleed left border + tinted background.
+ Negative margins pull the heading out to card edges; padding restores room. */
+ .chart-card.cc-pages .ch-title,
+ .chart-card.cc-search .ch-title,
+ .chart-card.cc-ai .ch-title,
+ .chart-card.cc-other .ch-title {
+ margin: -18px -20px 14px; padding: 14px 20px 14px 18px;
+ border-left: 4px solid; border-bottom: 1px solid var(--line);
+ border-radius: 12px 12px 0 0; letter-spacing: 0.06em;
+ }
+ .chart-card.cc-pages .ch-title { border-left-color: #1a7f5a; color: #1a7f5a; background: #f0faf5; }
+ .chart-card.cc-search .ch-title { border-left-color: #0e7186; color: #0e7186; background: #f0f9fb; }
+ .chart-card.cc-ai .ch-title { border-left-color: #7c3aed; color: #5b21b6; background: #f5f3ff; }
+ .chart-card.cc-other .ch-title { border-left-color: #b45309; color: #92400e; background: #fffbeb; }
+ /* Bot bar charts inside crawl-groups: wider label + padded rows */
+ .bar-h-bot { padding: 7px 20px; }
+ .bar-h-bot .bh-label { width: 210px; }
  .chart-card .ch-svg { width: 100%; height: auto; display: block; }
  .chart-card .ch-foot { font: 500 12px/1.4 var(--mono); color: var(--muted); margin-top: 8px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
  /* Donut + legend layout */
@@ -186,16 +204,16 @@
  <div class="chart-card">
  <h3 class="ch-title">Every crawler, by type</h3>
  <div id="crawl-detail"></div>
- <div class="ch-foot">Type: search index (Google/Bing) &middot; AI search (cited live) &middot; AI training (scraped for models) &middot; live user fetch (a real person's prompt). Verification checks the source IP against the operator.</div>
+ <div class="ch-foot">Bars show 30-day hit count. Groups: search index (Google/Bing), AI search (cited live), AI training (scraped for models), live user fetch (a real person's prompt). "Newly seen" bots are auto-classified by Haiku from the user-agent; IPs not verified.</div>
  </div>
 
- <div class="chart-card">
+ <div class="chart-card cc-pages">
  <h3 class="ch-title">Top 25 most-crawled pages, last 30 days</h3>
  <div id="top-paths"></div>
  <div class="ch-foot">Counts all search engine and AI bot hits. Only page paths with at least one hit are listed; query strings stripped.</div>
  </div>
 
- <div class="chart-card">
+ <div class="chart-card cc-search">
  <h3 class="ch-title">Search engines, share of crawl</h3>
  <div class="donut-wrap">
  <svg id="ch-donut-search" class="ch-svg" viewBox="0 0 200 200" style="max-width: 180px" aria-label="Search engine crawl share"></svg>
@@ -203,7 +221,7 @@
  </div>
  </div>
 
- <div class="chart-card">
+ <div class="chart-card cc-ai">
  <h3 class="ch-title">AI &amp; LLM crawlers, share of crawl</h3>
  <div class="donut-wrap">
  <svg id="ch-donut-ai" class="ch-svg" viewBox="0 0 200 200" style="max-width: 180px" aria-label="AI crawler share"></svg>
@@ -211,7 +229,7 @@
  </div>
  </div>
 
- <div class="chart-card" id="ch-bot-farms-card" hidden>
+ <div class="chart-card cc-other" id="ch-bot-farms-card" hidden>
  <h3 class="ch-title">Bot farms, exploit-scanner probes by country</h3>
  <div class="donut-wrap">
  <svg id="ch-donut-farms" class="ch-svg" viewBox="0 0 200 200" style="max-width: 180px" aria-label="Exploit scanner geographic share"></svg>
@@ -439,35 +457,29 @@ fetch('/data/bot_traffic.json?v=' + Date.now()).then(r => r.json()).then(data =>
  `${seCount} search engine${seCount===1?'':'s'} (blue) · ${aiCount} AI crawler${aiCount===1?'':'s'} (red) · top ${top.length} by 30-day hits`;
  })();
 
- // ---- Detailed crawler list: name + type chip + IP verification + hits ----
+ // ---- Detailed crawler list: horizontal bar charts per group ----
  (function renderCrawlDetail() {
- const TYPE_LABEL = {'search':'search index','ai-search':'AI search','ai-training':'AI training','live-user':'live user fetch','other':'unclassified'};
- function badge(v) {
- if (!v || !v.sampled) return '<span class="bot-verify partial" title="no verified-IP sample yet">no IP data</span>';
- const r = v.rate;
- if (r >= 0.9) return '<span class="bot-verify ok">verified</span>';
- if (r >= 0.3) return `<span class="bot-verify partial">${Math.round(r*100)}% verified</span>`;
- return `<span class="bot-verify partial" title="source IPs did not resolve to ${v.expected} - may be cloud-hosted (e.g. OpenAI on Azure) or spoofed">unverified IP</span>`;
- }
- function rowsHtml(list, isOther) {
- return (list||[]).map(b => {
- const tl = TYPE_LABEL[b.type] || '';
- const op = isOther && b.operator ? ` &middot; ${b.operator}` : '';
- const vb = isOther ? '<span class="bot-verify partial" title="auto-classified by Haiku from the user-agent; IP not verified">auto</span>' : badge(b.verification);
- const last = b.lastSeen ? new Date(b.lastSeen).toISOString().slice(0,10) : '-';
- return `<div class="bot-row"><span class="bot-name">${b.bot}${tl?` <span class="bot-type t-${b.type}">${tl}</span>`:''}${op} ${vb}</span><span class="bot-hits">${fmt(b.hits30d)}<span class="lbl-inline">30d</span></span><span class="bot-hits">${fmt(b.hits7d)}<span class="lbl-inline">7d</span></span><span class="bot-last">${last}</span></div>`;
+ const GRP_COLOR = {'grp-search':'#0e7186','grp-ai':'#7c3aed','grp-other':'#b45309'};
+ function barsHtml(list, isOther, color) {
+ if (!list || !list.length) return '';
+ const maxH = Math.max(...list.map(b => b.hits30d || 0), 1);
+ return list.map(b => {
+ const pct = ((b.hits30d || 0) / maxH * 100).toFixed(1);
+ const label = (isOther && b.operator) ? `${b.bot} \xb7 ${b.operator}` : b.bot;
+ return `<div class="bar-h bar-h-bot"><span class="bh-label" title="${label}">${label}</span><div class="bh-track"><div class="bh-fill" style="width:${pct}%;background:${color}"></div></div><span class="bh-val">${fmt(b.hits30d)}</span></div>`;
  }).join('');
  }
  function grp(title, list, isOther, cls) {
  if (!list || !list.length) return '';
+ const color = GRP_COLOR[cls] || 'var(--ink)';
  const LIMIT = 10;
  if (isOther && list.length > LIMIT) {
- const shownHtml = rowsHtml(list.slice(0, LIMIT), isOther);
- const hiddenHtml = rowsHtml(list.slice(LIMIT), isOther);
+ const shownHtml = barsHtml(list.slice(0, LIMIT), isOther, color);
+ const hiddenHtml = barsHtml(list.slice(LIMIT), isOther, color);
  const n = list.length;
  return `<div class="crawl-group${cls?' '+cls:''}"><h3>${title}</h3>${shownHtml}<div id="other-bots-more" style="display:none">${hiddenHtml}</div><div class="expand-row"><button class="expand-btn" onclick="document.getElementById('other-bots-more').style.display='block';this.parentNode.style.display='none'">Show all ${n} crawlers &#9660;</button></div></div>`;
  }
- return `<div class="crawl-group${cls?' '+cls:''}"><h3>${title}</h3>${rowsHtml(list, isOther)}</div>`;
+ return `<div class="crawl-group${cls?' '+cls:''}"><h3>${title}</h3>${barsHtml(list, isOther, color)}</div>`;
  }
  const el = document.getElementById('crawl-detail');
  if (!el) return;
