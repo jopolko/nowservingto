@@ -811,6 +811,22 @@
      while every other block on the page used the full column. */
   .page-intro { margin: 4px 0 18px; }
   .page-intro p { font: 400 14.5px/1.55 var(--sans); margin: 0; color: var(--ink2); letter-spacing: -0.002em; }
+  /* intro-details: the collapsible cuisine editorial block. summary should
+     read at the same visual weight as the h2 Q&A headings inside it. */
+  details.intro-details { border: 1px solid var(--line); border-radius: 6px; margin: 0 0 28px; }
+  details.intro-details summary { font: 700 22px/1.25 var(--serif); letter-spacing: -0.02em; color: var(--ink); padding: 14px 20px; cursor: pointer; list-style: none; display: flex; align-items: center; gap: 10px; }
+  details.intro-details summary::-webkit-details-marker { display: none; }
+  details.intro-details summary::before { content: "▸"; font-size: 13px; color: var(--muted); flex-shrink: 0; }
+  details.intro-details[open] summary::before { content: "▾"; }
+  details.intro-details[open] summary { border-bottom: 1px solid var(--line); }
+  details.intro-details > p,
+  details.intro-details > .page-intro-data,
+  details.intro-details h2.page-intro-q { padding-left: 20px; padding-right: 20px; }
+  details.intro-details > p { margin-top: 14px; margin-bottom: 14px; }
+  details.intro-details > p:last-child { margin-bottom: 20px; }
+  details.intro-details > .page-intro-data { margin-top: 16px; margin-bottom: 10px; }
+  details.intro-details h2.page-intro-q { margin-top: 20px; margin-bottom: 8px; }
+  details.intro-details h2.page-intro-q + p { margin-top: 0; margin-bottom: 20px; }
   /* Mobile editorial collapse: .intro-body hidden by default on small screens;
      toggled open by .intro-toggle button. Content stays in DOM for crawlers. */
   .intro-toggle { display: none; }
