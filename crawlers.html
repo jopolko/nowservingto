@@ -54,7 +54,10 @@
  /* Crawl section - same card chrome as .providers so the page reads
  as one document with two ledgers, not two unrelated widgets. */
  .crawl-group { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); overflow: hidden; margin-top: 14px; }
- .crawl-group h3 { font: 700 13px/1 var(--sans); color: var(--ink); margin: 0; padding: 14px 20px; border-bottom: 1px solid var(--line); text-transform: uppercase; letter-spacing: 0.06em; }
+ .crawl-group h3 { font: 700 15px/1 var(--sans); color: var(--ink); margin: 0; padding: 14px 20px 14px 18px; border-bottom: 1px solid var(--line); text-transform: uppercase; letter-spacing: 0.06em; border-left: 4px solid var(--line); }
+ .crawl-group.grp-search h3 { border-left-color: #0e7186; color: #0e7186; background: #f0f9fb; }
+ .crawl-group.grp-ai h3 { border-left-color: #7c3aed; color: #5b21b6; background: #f5f3ff; }
+ .crawl-group.grp-other h3 { border-left-color: #b45309; color: #92400e; background: #fffbeb; }
  .bot-row { display: grid; grid-template-columns: 1fr auto auto auto; gap: 14px; padding: 12px 20px; border-bottom: 1px solid var(--line); align-items: baseline; font-variant-numeric: tabular-nums; }
  .bot-row:last-child { border-bottom: 0; }
  .bot-name { font: 700 14px/1 var(--mono); color: var(--ink); }
@@ -441,13 +444,13 @@ fetch('/data/bot_traffic.json?v=' + Date.now()).then(r => r.json()).then(data =>
  return `<div class="bot-row"><span class="bot-name">${b.bot}${tl?` <span class="bot-type t-${b.type}">${tl}</span>`:''}${op} ${vb}</span><span class="bot-hits">${fmt(b.hits30d)}<span class="lbl-inline">30d</span></span><span class="bot-hits">${fmt(b.hits7d)}<span class="lbl-inline">7d</span></span><span class="bot-last">${last}</span></div>`;
  }).join('');
  }
- function grp(title, list, isOther) {
+ function grp(title, list, isOther, cls) {
  if (!list || !list.length) return '';
- return `<div class="crawl-group"><h3>${title}</h3>${rowsHtml(list, isOther)}</div>`;
+ return `<div class="crawl-group${cls?' '+cls:''}"><h3>${title}</h3>${rowsHtml(list, isOther)}</div>`;
  }
  const el = document.getElementById('crawl-detail');
  if (!el) return;
- el.innerHTML = (grp('Search engines', data.searchEngines) + grp('AI crawlers', data.aiBots) + grp('Newly seen &middot; auto-classified', data.otherBots, true))
+ el.innerHTML = (grp('Search engines', data.searchEngines, false, 'grp-search') + grp('AI crawlers', data.aiBots, false, 'grp-ai') + grp('Newly seen \xb7 auto-classified', data.otherBots, true, 'grp-other'))
  || '<div class="crawl-empty">No crawler detail yet.</div>';
  })();
 

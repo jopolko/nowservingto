@@ -4985,6 +4985,18 @@ for c in cuisines_out:
         f'open data (Municipal Licensing and Standards).{_n30_clause}{_newest_clause} '
         f'The list updates every morning; chains are excluded.'
     )
+    # Second data Q&A: directly answers "what is the newest/latest [cuisine] restaurant"
+    _newest_days = (_newest_entry.get('daysOpen') or 0) if _newest_entry else 0
+    _days_phrase = _ago_long(_newest_days) if _newest_days else ''
+    _newest_q = f'What is the newest {label} restaurant in Toronto right now?'
+    _newest_a = (
+        f'{_newest_name}{_newest_loc} is the most recently licensed {label} restaurant '
+        f'in Toronto tracked by NowServingTO'
+        + (f', first seen {_days_phrase} ago' if _days_phrase else '')
+        + f'. It received a City of Toronto food service licence and is confirmed operating. '
+        f'NowServingTO updates daily from the City\'s open data feed; the list reflects '
+        f'the {n365} {label} restaurants licensed in the past 12 months, chains excluded.'
+    ) if _newest_name else ''
     _we_faq_raw = _WIRE_EDITORIAL.get(key, '')
     if isinstance(_we_faq_raw, list) and _we_faq_raw:
         _editorial_pairs = [
@@ -5001,7 +5013,10 @@ for c in cuisines_out:
              f"of active business licences, cross-checked against DineSafe inspections "
              f"and social media signals to confirm the business is currently operating."),
         ]
-    _faq_pairs = [(_data_q, _data_a)] + _editorial_pairs
+    _data_pairs = [(_data_q, _data_a)]
+    if _newest_a:
+        _data_pairs.append((_newest_q, _newest_a))
+    _faq_pairs = _data_pairs + _editorial_pairs
     cuisine_faq = build_ld_faq(_faq_pairs, page_url=canonical)
     # Cross-axis district nav strip: links to /cuisine/{key}/{district-slug}
     # pages for each district that has at least one entry. Each target is a
@@ -5141,20 +5156,33 @@ for label, entries in by_district.items():
         ('Home', 'https://nowservingto.com/'),
         (f'Restaurants in {place}', canonical),
     ])
-    district_faq = build_ld_faq([
-        (f"How often is the {place} restaurant list updated?",
-         f"Daily. We pull fresh City of Toronto business-licences data every "
-         f"morning and re-classify any new entries."),
-        (f"What counts as {place} in this directory?",
-         f"We use the postal-code prefix on each business licence (FSA) to "
-         f"map every restaurant to one of six Toronto districts: Downtown, "
-         f"East Toronto, West Toronto, North York, Scarborough, or Etobicoke."),
+    _dist_newest_days = (_dist_freshest.get('daysOpen') or 0) if _dist_freshest else 0
+    _dist_days_phrase = _ago_long(_dist_newest_days) if _dist_newest_days else ''
+    _dist_newest_cuisine = CUISINE_LABEL.get(_df_ck, '') if _df_ck else ''
+    _dist_newest_q = f'What is the newest restaurant in {place} right now?'
+    _dist_newest_a = (
+        f'{_df_name} ({_dist_newest_cuisine}{(", " + _df_street) if _df_street else ""}) '
+        f'is the most recently licensed restaurant in {place} tracked by NowServingTO'
+        + (f', first seen {_dist_days_phrase} ago' if _dist_days_phrase else '')
+        + f'. It is confirmed operating and holds a current City of Toronto food service '
+        f'licence. The {place} list covers {n365} newly licensed independent restaurants '
+        f'and updates every morning; chains are excluded.'
+    ) if _df_name else ''
+    _dist_faq_pairs = []
+    if _dist_newest_a:
+        _dist_faq_pairs.append((_dist_newest_q, _dist_newest_a))
+    _dist_faq_pairs += [
+        (f"How many new restaurants opened in {place} this year?",
+         f"{n365} restaurants have received City of Toronto food service licences in "
+         f"{place} in the past 12 months, tracked daily by NowServingTO from the City's "
+         f"open data. The list updates every morning; chains are excluded."),
         (f"Where does the {place} restaurant data come from?",
          f"The City of Toronto's Municipal Licensing and Standards open "
          f"dataset of active business licences, cross-checked against "
          f"DineSafe inspections and social media signals to confirm "
          f"operating status."),
-    ], page_url=canonical)
+    ]
+    district_faq = build_ld_faq(_dist_faq_pairs, page_url=canonical)
     # Cross-axis compound-query nav strip removed 2026-05-20 (same reason
     # as the cuisine-page version above - UX-redundant, SEO inert).
     _district_lede = _area_data_lede(label, entries)
@@ -5328,10 +5356,28 @@ for nbhd_slug, nbhd_entries in by_nbhd.items():
         ('Home', 'https://nowservingto.com/'),
         (f'Restaurants in {label}', canonical),
     ])
-    faq_pairs = [
-        (f"How often is the {label} restaurant list updated?",
-         f"Daily. The City of Toronto open licence file refreshes each morning, "
-         f"and this directory regenerates around 1:17 AM Toronto time."),
+    _mf_days = (_meta_freshest.get('daysOpen') or 0) if _meta_freshest else 0
+    _mf_days_phrase = _ago_long(_mf_days) if _mf_days else ''
+    _mf_cuisine = CUISINE_LABEL.get((_meta_freshest.get('cuisine') or ''), '') if _meta_freshest else ''
+    _nbhd_newest_a = (
+        f'{_mf_name}'
+        + (f' on {_mf_street}' if _mf_street else '')
+        + (f' ({_mf_cuisine})' if _mf_cuisine else '')
+        + f' is the most recently licensed restaurant in {label}, Toronto tracked by NowServingTO'
+        + (f', first seen {_mf_days_phrase} ago' if _mf_days_phrase else '')
+        + f'. It holds a current City of Toronto food service licence and is confirmed '
+        f'operating. The {label} list covers {n365} newly registered restaurant'
+        + ('s' if n365 != 1 else '')
+        + f' and updates every morning; chains are excluded.'
+    ) if _mf_name else ''
+    faq_pairs = []
+    if _nbhd_newest_a:
+        faq_pairs.append((f"What is the newest restaurant in {label} right now?", _nbhd_newest_a))
+    faq_pairs += [
+        (f"How many new restaurants opened in {label} this year?",
+         f"{n365} restaurant{'s have' if n365 != 1 else ' has'} received City of Toronto "
+         f"food service licence{'s' if n365 != 1 else ''} in {label} in the past 12 months, "
+         f"tracked daily from the City's open data. The list refreshes every morning; chains excluded."),
         (f"Where does the {label} restaurant data come from?",
          f"The City of Toronto's Municipal Licensing and Standards open dataset "
          f"of active business licences, cross-checked against DineSafe inspections "
@@ -5493,23 +5539,39 @@ for (cuisine_key, district), x_entries in intersection_data.items():
     # parent cuisine pages, but with district-specific phrasing so AI engines
     # extracting passages get an answer matched to the user's exact intent.
     _x_freshest = x_entries_sorted[0] if x_entries_sorted else None
-    _x_freshest_name = (_x_freshest or {}).get('operatingName', '') if _x_freshest else ''
-    x_faq = build_ld_faq([
-        (f"What {label} restaurants have opened recently in {district}?",
+    _x_freshest_name = (_x_freshest.get('operatingName') or '').strip() if _x_freshest else ''
+    _x_freshest_street = _street_name_only(_x_freshest) if _x_freshest else ''
+    _x_freshest_days = (_x_freshest.get('daysOpen') or 0) if _x_freshest else 0
+    _x_days_phrase = _ago_long(_x_freshest_days) if _x_freshest_days else ''
+    _x_newest_q = f'What is the newest {label} restaurant in {district}?'
+    _x_newest_a = (
+        f'{_x_freshest_name}'
+        + (f' on {_x_freshest_street}' if _x_freshest_street else '')
+        + f' is the most recently licensed {label} restaurant in {district}, Toronto'
+        + (f', first seen {_x_days_phrase} ago' if _x_days_phrase else '')
+        + f'. It holds a current City of Toronto food service licence and is confirmed '
+        f'operating. NowServingTO tracks {n_total} newly registered {label} '
+        f'restaurant{"s" if n_total != 1 else ""} in {district} and updates daily; '
+        f'chains are excluded.'
+    ) if _x_freshest_name else ''
+    _x_faq_pairs = []
+    if _x_newest_a:
+        _x_faq_pairs.append((_x_newest_q, _x_newest_a))
+    _x_faq_pairs += [
+        (f"How many {label} restaurants are there in {district}?",
          f"There are {n_total} newly registered {label} "
-         f"restaurant{'s' if n_total != 1 else ''} in {district}, Toronto. "
-         f"The most recent is {_x_freshest_name}. The list is updated daily "
-         f"from the City of Toronto's business licence registry."),
-        (f"How many {label} restaurants opened in {district} in the last 30 days?",
-         f"{n_30d} {label} restaurant{'s' if n_30d != 1 else ''} registered with the City of Toronto in "
-         f"{district} during the past 30 days."),
+         f"restaurant{'s' if n_total != 1 else ''} in {district}, Toronto tracked "
+         f"by NowServingTO in the past 12 months. "
+         f"{n_30d} opened in the last 30 days. "
+         f"The list updates daily from the City of Toronto's business licence registry."),
         (f"How does NowServingTO verify these {label} restaurants in {district} are operating?",
          f"Each entry must have a current City of Toronto business licence and be confirmed "
          f"open through DineSafe public-health inspections and social media signals. "
          f"Where DineSafe inspection data exists, "
          f"the earlier of the two dates is shown as 'first seen.' Closed and permanently-closed "
          f"places are filtered out."),
-    ], page_url=f'https://nowservingto.com/cuisine/{cuisine_key}/{district_slug}')
+    ]
+    x_faq = build_ld_faq(_x_faq_pairs, page_url=f'https://nowservingto.com/cuisine/{cuisine_key}/{district_slug}')
     page = inject_into_html(
         page,
         static_block=x_static,
