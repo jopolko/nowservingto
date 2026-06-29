@@ -273,7 +273,8 @@
   }
   .mast .brand:hover { color: var(--accent); text-decoration: none; }
   @media (max-width: 560px) {
-    .mast .brand { font-size: 28px; letter-spacing: -0.022em; }
+    .mast { padding-top: 48px; }
+    .mast .brand { font-size: 28px; letter-spacing: -0.022em; line-height: 1.15; }
   }
   .mast .mast-meta {
     display: flex; flex-direction: row; align-items: baseline; gap: 10px;
@@ -686,8 +687,8 @@
   .open-feed .show-more:hover { background: var(--bg); border-color: var(--rule); color: var(--ink); }
 
   /* ── Ticket card (JS-rendered: paintFeed → buildRowEl) ─── */
-  .ticket { background: var(--paper); border-bottom: 1px solid var(--line); padding: 20px 24px; position: relative; transition: background 0.12s; }
-  .ticket:last-of-type, .ticket:last-child { border-bottom: 0; }
+  .ticket { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; margin-bottom: 8px; overflow: hidden; padding: 20px 24px; position: relative; transition: background 0.12s, box-shadow 0.12s; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .ticket:last-of-type, .ticket:last-child { margin-bottom: 0; }
   body:not(.page-listing) .ticket[data-slug] { cursor: pointer; }
   .ticket[data-slug]:hover { background: rgba(0,0,0,.018); }
   .tk-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
@@ -723,6 +724,7 @@
     .ticket { padding: 16px 18px; }
     .tk-name { font-size: 16px; }
     .tk-actions { flex-wrap: wrap; }
+    .tk-addr { flex: 0 0 100%; }
   }
 
   main.wrap { padding-bottom: 60px; }

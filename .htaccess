@@ -99,6 +99,9 @@ RewriteRule ^cuisine/([a-z_-]+)/?$ /cuisine/$1.html [L]
 # A-Z restaurant index: /all → /all.html
 RewriteRule ^all/?$ /all.html [L]
 
+# Discovery page: /new → /new.html (newest openings across all cuisines)
+RewriteRule ^new/?$ /new.html [L]
+
 # Cuisine × district intersection pages — /cuisine/<key>/<district-slug>
 # rewrites to the static file at /cuisine/<key>/<district-slug>.html
 RewriteCond %{DOCUMENT_ROOT}/cuisine/$1/$2.html -f

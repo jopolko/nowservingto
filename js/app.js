@@ -235,6 +235,7 @@ fetch('/data/corridors.json?v=' + Date.now(), { priority: 'low' }).then(r => r.j
     else if (isRecent) row.setAttribute('data-fresh', 'recent');
     else if (r.daysOpen != null && r.daysOpen <= 365) row.setAttribute('data-fresh', 'aged');
     if (cuisineKeys.length > 1) row.setAttribute('data-multi', '');
+    if (accentBg) row.style.setProperty('--row-accent', accentBg);
     const trustMatch = !r.matchedName || nameJaccard(r.operatingName, r.matchedName) >= 0.34;
     // Name link precedence: own website (when trust gate passes) > Places
     // deep-link > our own /r/<slug> listing page. The listing page is the
@@ -259,10 +260,10 @@ fetch('/data/corridors.json?v=' + Date.now(), { priority: 'low' }).then(r => r.j
     // visitor that the click leaves NowServingTO for the restaurant's
     // actual site.
     const isOwnerSite = !!ownSite;
-    const extArrow = isOwnerSite ? '<span class="ext-arrow" aria-hidden="true">↗</span>' : '';
+    const extArrow = (link && !link.startsWith('/r/')) ? '<span class="ext-arrow" aria-hidden="true">↗</span>' : '';
     const nameHtml = link
-      ? `<a class="${linkClass}" href="${link}"${tgt} rel="noopener">${r.operatingName}${extArrow}</a>`
-      : r.operatingName;
+      ? `<a class="${linkClass}" href="${link}"${tgt} rel="noopener">${titleCase(r.operatingName)}${extArrow}</a>`
+      : titleCase(r.operatingName);
     // Rating display removed 2026-06-04 — Maps Platform ToS §5.3 restricts
     // caching of Places-derived ratings. Row shows name + address + date only.
     const ratingHtml = '';

@@ -90,11 +90,43 @@ GEO_KW = {'ai overview', 'ai overviews', 'ai mode', 'chatgpt', 'perplexity',
           'generative engine', 'aeo', 'answer engine', 'llms.txt', 'schema',
           'structured data', 'e-e-a-t', 'eeat', 'get cited', 'ai search',
           'indexnow', 'sge', 'zero-click', 'featured snippet'}
+
+# r/buildinpublic: weekly megathreads where Josh can post an nsto update.
+# Titles don't always have '?', so engage=True bypasses is_question.
+BIP_KW = {'what are you working on', 'show and tell', 'share your project',
+          'just launched', 'launched today', 'what did you build', 'what have you shipped',
+          'introduce yourself', 'side project', 'makers', 'build in public',
+          'just shipped', 'weekly thread', 'show your work', 'what are you building'}
+
+# r/toronto: posts requesting new restaurant/cuisine info where nsto data
+# is a direct, useful reply. Looser than FOOD_KW - catches "looking for"
+# posts that don't frame as a question with '?'.
+TORONTO_ENGAGE_KW = {
+    'new restaurant', 'new spot', 'new place', 'just opened', 'recently opened',
+    'opening soon', 'looking for', 'where to find', 'what opened', "what's new",
+    'whats new', 'any new', 'new ethiopian', 'new indian', 'new chinese',
+    'new vietnamese', 'new korean', 'new japanese', 'new thai', 'new mexican',
+    'new italian', 'new greek', 'new middle eastern', 'new caribbean',
+    'new filipino', 'new nigerian', 'new jamaican', 'new pakistani',
+    'new bangladeshi', 'new sri lankan', 'new tamil', 'new afghan', 'new persian',
+    'new restaurants', 'restaurant opened', 'cuisine toronto',
+}
 PATOIS_KW = {'patois', 'patwa', 'creole', 'jamaica', 'jamaican', 'caribbean',
              'low-resource', 'low resource', 'minority language', 'dialect',
              'tokeniz', 'language model', 'llm', 'nlp'}
 
 LANES = {
+    # engage: threads to reply in directly with nsto data/link.
+    # engage=True bypasses the is_question filter (megathreads + "looking for"
+    # posts don't always have '?').
+    'engage': [
+        {'feed': 'r/buildinpublic/new', 'must_match': BIP_KW, 'engage': True},
+        {'feed': 'r/buildinpublic/hot', 'must_match': BIP_KW, 'engage': True},
+        {'feed': 'r/SideProject/new',   'must_match': BIP_KW, 'engage': True},
+        {'feed': 'r/SideProject/hot',   'must_match': BIP_KW, 'engage': True},
+        {'feed': 'r/toronto/new',       'must_match': TORONTO_ENGAGE_KW, 'must_geo': TORONTO_KW, 'engage': True},
+        {'feed': 'r/toronto/hot',       'must_match': TORONTO_ENGAGE_KW, 'must_geo': TORONTO_KW, 'engage': True},
+    ],
     'nowservingto': [
         {'feed': 'search:new restaurant toronto', 'must_match': FOOD_KW, 'must_geo': TORONTO_KW},
         {'feed': 'search:where to eat toronto', 'must_match': FOOD_KW, 'must_geo': TORONTO_KW},
@@ -126,6 +158,7 @@ LANES = {
 
 # property -> short answer-angle template
 ANGLE = {
+    'engage': "Reply in this thread directly. For r/buildinpublic: share joshuaopolko.com/geo-observatory/ as a data post - 'been tracking which AI crawlers hit my sites and what they read, built a live dashboard from Apache logs, some interesting patterns if you care about AI visibility.' Data-share, not a pitch. For r/toronto food posts: drop the relevant nsto cuisine page URL with one line on what it shows. Don't pitch - share the data.",
     'nowservingto': "Make/extend a NowServingTO /answers entry that answers this in one canonical sentence, then the supporting list. Match the asker's exact phrasing.",
     'kidsevents': "Add a kidsevents answer-surface block (or calendar filter) that directly resolves this. Lead with the single best pick, then alternatives.",
     'geo': "This is GEO-Field-Manual fuel. Answer it as a falsifiable, first-party how-to (your real numbers), not generic advice. That earns the citation.",
@@ -133,11 +166,12 @@ ANGLE = {
 }
 
 # property -> display label / accent colour / render order (patois dropped for now)
-PROP_LABEL = {'geo': 'joshuaopolko.com / GEO Field Manual',
+PROP_LABEL = {'engage': 'Engage opportunities (reply here)',
+              'geo': 'joshuaopolko.com / GEO Field Manual',
               'nowservingto': 'NowServingTO',
               'kidsevents': 'kidsevents'}
-PROP_ACCENT = {'geo': '#6366f1', 'nowservingto': '#0d9488', 'kidsevents': '#d97706'}
-PROP_ORDER = ['geo', 'nowservingto', 'kidsevents']
+PROP_ACCENT = {'engage': '#059669', 'geo': '#6366f1', 'nowservingto': '#0d9488', 'kidsevents': '#d97706'}
+PROP_ORDER = ['engage', 'geo', 'nowservingto', 'kidsevents']
 
 QUESTION_WORDS = ('how', 'what', 'where', 'when', 'which', 'who', 'why',
                   'anyone', 'recommend', 'suggestion', 'best ', 'worth it',
@@ -382,10 +416,13 @@ def harvest(lanes, user, token, per_feed, dry_run=False, verbose=False):
             xml = fetch(url)
             entries = parse_atom(xml)
             kept_here = 0
+            engage_mode = spec.get('engage', False)
             for it in entries:
                 if is_noise(it):
                     continue
-                if not is_question(it['title']):
+                # engage lanes surface megathreads + "looking for" posts that
+                # may not have '?' - skip the question gate for those.
+                if not engage_mode and not is_question(it['title']):
                     continue
                 if mm and kw_hits(it['title'] + ' ' + it['body'], mm) == 0:
                     continue

@@ -2886,7 +2886,7 @@ def build_static_rows(entries, link_to_listing=False, group_by_date=False, show_
         row_accent = (PALETTE_HEX.get(primary_key) or cuisine_color(primary_key)
                       if primary_key else None)
         accent_style = f' style="--row-accent: {row_accent}"' if row_accent else ''
-        name = _esc(r['operatingName'])
+        name = _esc(_ns_title(r['operatingName']))
         addr = _esc(r.get('address') or '')
         district = _esc(r.get('district') or '')
         # Address link ladder:
@@ -2941,7 +2941,7 @@ def build_static_rows(entries, link_to_listing=False, group_by_date=False, show_
         # Tells the visitor "this opens the actual restaurant's site, not
         # another listing or Maps result." Same convention as the .lx-near-cta
         # rows below.
-        ext_arrow = '<span class="ext-arrow" aria-hidden="true">↗</span>' if link and link == site else ''
+        ext_arrow = '<span class="ext-arrow" aria-hidden="true">↗</span>' if link and not link.startswith('/r/') else ''
         name_html = f'<a href="{_esc(link)}"{name_ext_tgt}>{name}{ext_arrow}</a>' if link else name
         multi_attr = ' data-multi' if len(cuisine_keys) > 1 else ''
         thumb = r.get('thumb')
@@ -3023,7 +3023,7 @@ def build_static_rows(entries, link_to_listing=False, group_by_date=False, show_
         _cta_html = (f'<a class="tk-cta" href="/r/{_esc(slug)}">Full listing →</a>'
                      if slug and show_cta else '')
         out.append(
-            f'<article class="ticket"{slug_attr}{fresh_attr}{multi_attr}{_bare_attr}>'
+            f'<article class="ticket"{slug_attr}{fresh_attr}{multi_attr}{_bare_attr} style="--row-accent:{_badge_bg}">'
             f'<div class="tk-head">'
             f'<span class="tk-badge" style="background:{_badge_bg}">{_cuisine_label_str}</span>'
             f'<span class="tk-freshness">{_days_html} {_fresh_u} ago</span>'
@@ -4872,26 +4872,23 @@ for c in cuisines_out:
     _title_dishes_str = ', '.join(d.title() for d in _title_dishes)
 
     title_year = REFERENCE_DATE.year
-    # Build title with dish-keyword tail when length allows. Hard cap 70
-    # chars before Google truncates with an ellipsis.
+    # Build title targeting "new [cuisine] restaurants toronto" discovery queries.
+    # Hard cap 70 chars before Google truncates with an ellipsis.
     BRAND = ' · NowServingTO'
     MAX_TITLE = 70
-    _base = f"Toronto's {n365} Newest {label} Restaurants" if n365 != 1 else f"Toronto's Newest {label} Restaurant"
+    _base = f"New {label} Restaurants Opening in Toronto"
     candidates = []
     if _title_dishes_str:
-        candidates.append(f"{_base} — {_title_dishes_str} ({title_year}){BRAND}")
-        candidates.append(f"{_base} — {_title_dishes_str}{BRAND}")
+        candidates.append(f"{_base} ({title_year}): {_title_dishes_str}{BRAND}")
+        candidates.append(f"{_base} ({title_year}){BRAND}")
+        candidates.append(f"{_base}: {_title_dishes_str}{BRAND}")
     candidates.append(f"{_base} ({title_year}){BRAND}")
     candidates.append(f"{_base}{BRAND}")
     title = next((c for c in candidates if len(c) <= MAX_TITLE), candidates[-1])
 
-    # Meta description: front-load the named freshest entity + first-seen
-    # days for AI-extractor citation lift. Meta descriptions are the single
-    # most-verbatim-quoted text by ChatGPT / Perplexity / Claude / Gemini
-    # SERP snippets; leading with the named answer beats the generic
-    # "N restaurants tracked" framing. ~155-char budget before Google
-    # truncates. Honest fallback to the original framing if the freshest
-    # entry data isn't available.
+    # Meta description: lead with the discovery query ("new [cuisine] restaurants
+    # in Toronto") then ground with the freshest named entry for specificity.
+    # ~155-char budget before Google truncates.
     _meta_freshest = entries[0] if entries else None
     _mf_name = (_meta_freshest.get('operatingName') or '').strip() if _meta_freshest else ''
     _mf_street = _street_name_only(_meta_freshest) if _meta_freshest else ''
@@ -4905,23 +4902,19 @@ for c in cuisines_out:
             _mf_loc = f' ({_mf_street})'
         elif _mf_district:
             _mf_loc = f' ({_mf_district})'
-        # Primary form: named freshest + count + recency. Optional dish tail.
-        desc = (f"{_mf_name}{_mf_loc} — newest of Toronto's {n365} {label} "
-                f"restaurants, first seen {_mf_days_phrase} ago. Daily refresh, "
-                f"chains excluded.")
-        if _title_dishes_str and len(desc) + len(_title_dishes_str) + 3 <= 148:
-            desc = (f"{_mf_name}{_mf_loc} — newest of Toronto's {n365} {label} "
-                    f"restaurants ({_title_dishes_str}), first seen {_mf_days_phrase} ago. "
-                    f"Daily refresh, chains excluded.")
+        desc = (f"New {label} restaurants opening in Toronto: {n365} tracked daily "
+                f"from city licence data. Latest: {_mf_name}{_mf_loc}, "
+                f"first seen {_mf_days_phrase} ago. Chains excluded.")
     elif _title_dishes_str:
-        desc = (f"{n365} newly registered {label} restaurants in Toronto — including spots for "
-                f"{_title_dishes_str}. Updated daily from the City of Toronto's licence registry.")
+        desc = (f"New {label} restaurants opening in Toronto: {n365} tracked daily "
+                f"from the City of Toronto's licence registry, including {_title_dishes_str}. "
+                f"Chains excluded.")
         if len(desc) > 158:
-            desc = (f"{n365} newly registered {label} restaurants in Toronto — "
-                    f"{_title_dishes_str}, and more. Updated daily.")
+            desc = (f"New {label} restaurants opening in Toronto: {n365} tracked daily. "
+                    f"Updated from city licence data. Chains excluded.")
     else:
-        desc = (f"Every newly registered {label} restaurant in Toronto over the past 365 "
-                f"days, updated daily. {n365} entries tracked, {n30} from the last 30 days.")
+        desc = (f"New {label} restaurants opening in Toronto: {n365} tracked from city "
+                f"licence data, updated daily. {n30} opened in the last 30 days. Chains excluded.")
     canonical = f"https://nowservingto.com/cuisine/{key}/"
 
     page = template
@@ -4939,14 +4932,10 @@ for c in cuisines_out:
         page = re.sub(sel, lambda m, v=val: m.group(1) + _esc(v) + m.group(2),
                       page, count=1)
 
-    # Replace the homepage's <h1 class="sub"> with a cuisine-specific
-    # one. "Newest registered" anchors the row date labels ("5d ago")
-    # to the City business-licence registration date. Avoided "licensed"
-    # because in Ontario that colloquially means LLBO/alcohol-licensed,
-    # which most entries on the site aren't. Targets "newest <Label>
-    # restaurants Toronto" SEO.
-    cuisine_h1 = (f'<h1 class="sub">Toronto\'s <span class="hl">newest registered</span> '
-                  f'{_esc(label)} restaurants</h1>')
+    # Replace the homepage's <h1 class="sub"> with a cuisine-specific one
+    # targeting "new [cuisine] restaurants toronto" discovery queries.
+    cuisine_h1 = (f'<h1 class="sub">New <span class="hl">{_esc(label)}</span> '
+                  f'restaurants opening in Toronto</h1>')
     page = re.sub(r'<h1 class="sub">[\s\S]*?</h1>',
                   lambda m: cuisine_h1, page, count=1)
 
@@ -4970,18 +4959,40 @@ for c in cuisines_out:
         ('Home', 'https://nowservingto.com/'),
         (f'{label} restaurants', canonical),
     ])
-    # FAQ schema: prefer cuisine-specific Q+A from wire_editorial.json (new list
-    # format) over the generic boilerplate, which answers methodology questions
-    # nobody asks LLMs and dilutes the cuisine-specific citation signal.
+    # FAQ schema: always lead with a data-specific Q&A (count + newest name)
+    # so AI assistants can cite an authoritative passage for discovery queries
+    # like "how many new Ethiopian restaurants opened in Toronto this year".
+    # Follow with cuisine-education Q&As from wire_editorial.json if available.
+    import re as _re_faq
+    _newest_entry = entries[0] if entries else None
+    _newest_name = (_newest_entry.get('operatingName') or '').strip() if _newest_entry else ''
+    _newest_street = _street_name_only(_newest_entry) if _newest_entry else ''
+    _newest_dist = (_newest_entry.get('district') or '').strip() if _newest_entry else ''
+    _newest_loc = ''
+    if _newest_street and _newest_dist:
+        _newest_loc = f' on {_newest_street} in {_newest_dist}'
+    elif _newest_street:
+        _newest_loc = f' on {_newest_street}'
+    elif _newest_dist:
+        _newest_loc = f' in {_newest_dist}'
+    _n30_clause = (f' {n30} of those opened in the last 30 days.' if n30 else '')
+    _newest_clause = (f' The most recently licensed is {_newest_name}{_newest_loc}.'
+                      if _newest_name else '')
+    _data_q = f'How many new {label} restaurants opened in Toronto in {REFERENCE_DATE.year}?'
+    _data_a = (
+        f'{n365} new {label} restaurants have received Toronto food service licences '
+        f'in the past 12 months, tracked daily by NowServingTO from City of Toronto '
+        f'open data (Municipal Licensing and Standards).{_n30_clause}{_newest_clause} '
+        f'The list updates every morning; chains are excluded.'
+    )
     _we_faq_raw = _WIRE_EDITORIAL.get(key, '')
     if isinstance(_we_faq_raw, list) and _we_faq_raw:
-        import re as _re_faq
-        _faq_pairs = [
+        _editorial_pairs = [
             (item['q'], _re_faq.sub(r'<[^>]+>', ' ', item.get('a', '')).strip())
             for item in _we_faq_raw
         ]
     else:
-        _faq_pairs = [
+        _editorial_pairs = [
             (f"How often is the {label} restaurant list updated?",
              f"Daily. Every morning we pull the latest City of Toronto business "
              f"licences open data and re-classify any new entries."),
@@ -4989,11 +5000,8 @@ for c in cuisines_out:
              f"The City of Toronto's Municipal Licensing and Standards open dataset "
              f"of active business licences, cross-checked against DineSafe inspections "
              f"and social media signals to confirm the business is currently operating."),
-            (f"How is a restaurant classified as {label}?",
-             f"An AI model (Anthropic Claude) reviews the operating name, website "
-             f"content, and any available menu information to determine the cuisine. "
-             f"Multi-cuisine spots get tagged with every applicable cuisine."),
         ]
+    _faq_pairs = [(_data_q, _data_a)] + _editorial_pairs
     cuisine_faq = build_ld_faq(_faq_pairs, page_url=canonical)
     # Cross-axis district nav strip: links to /cuisine/{key}/{district-slug}
     # pages for each district that has at least one entry. Each target is a
@@ -5619,6 +5627,94 @@ if 'all-page-body' not in all_page:
 all_page = all_page.replace('<body class="page-home">', '<body class="page-all">', 1)
 all_index_path.write_text(all_page)
 print(f"  wrote /all.html — alphabetical index of {len(alpha_entries)} restaurants")
+
+
+# ---------------------------------------------------------------------------
+# /new page — "new restaurants toronto" discovery page. Top 30 most recent
+# openings across all cuisines. Targets the head term that cuisine pages
+# can't capture individually. Rebuilds daily so freshness is always real.
+# ---------------------------------------------------------------------------
+_new_page_entries = all_recent[:30]
+_new_n30 = sum(1 for e in _new_page_entries if (e.get('daysOpen') or 9999) <= 30)
+_new_canonical = 'https://nowservingto.com/new'
+_new_title = f'New Restaurants Opening in Toronto ({REFERENCE_DATE.year}) · NowServingTO'
+_new_desc = (
+    f'The {len(_new_page_entries)} most recently opened restaurants in Toronto, '
+    f'updated daily. Every cuisine, every neighbourhood, chains excluded. '
+    f'{_new_n30} opened in the last 30 days.'
+)
+_new_page = _strip_home_methodology(open(INDEX_PATH).read())
+_new_page = re.sub(r'<title>[^<]*</title>', f'<title>{_esc(_new_title)}</title>', _new_page, count=1)
+for _sel, _val in [
+    (r'(<meta name="description" content=")[^"]*(")',         _new_desc),
+    (r'(<meta property="og:title" content=")[^"]*(")',        _new_title),
+    (r'(<meta property="og:description" content=")[^"]*(")',  _new_desc),
+    (r'(<meta property="og:url" content=")[^"]*(")',          _new_canonical),
+    (r'(<meta name="twitter:title" content=")[^"]*(")',       _new_title),
+    (r'(<meta name="twitter:description" content=")[^"]*(")', _new_desc),
+    (r'(<link rel="canonical" href=")[^"]*(")',               _new_canonical),
+]:
+    _new_page = re.sub(_sel, lambda m, v=_val: m.group(1) + _esc(v) + m.group(2), _new_page, count=1)
+
+_new_h1 = '<h1 class="sub">New restaurants <span class="hl">opening in Toronto</span></h1>'
+_new_page = re.sub(r'<h1 class="sub">[\s\S]*?</h1>', lambda m: _new_h1, _new_page, count=1)
+
+_new_static = build_static_rows(_new_page_entries, link_to_listing=True, group_by_date=True)
+_new_itemlist = build_ld_itemlist(
+    _new_page_entries,
+    name='New restaurants opening in Toronto',
+    description=_new_desc,
+)
+_new_collection = build_ld_collectionpage(
+    _new_itemlist, url=_new_canonical, dateModified=REFERENCE_DATE.isoformat(),
+    datePublished='2026-05-13',
+)
+_new_breadcrumb_ld = build_ld_breadcrumb([
+    ('Home', 'https://nowservingto.com/'),
+    ('New restaurants', _new_canonical),
+])
+_new_faq_pairs = [
+    ('What restaurants just opened in Toronto?',
+     f'The {len(_new_page_entries)} most recently opened restaurants in Toronto are listed here, '
+     f'updated every morning from City of Toronto business-licence data. '
+     f'{_new_n30} opened in the last 30 days.'),
+    ('How do I find new restaurants opening in Toronto?',
+     'NowServingTO tracks every new restaurant licence issued by the City of Toronto, '
+     'cross-checks each one against DineSafe inspections and the restaurant\'s own website '
+     'to confirm it is operating, and publishes the results daily. Chains are excluded.'),
+    ('Which Toronto neighbourhoods have the most new restaurants opening?',
+     'Use the district pages (Downtown, East Toronto, Scarborough, North York, Etobicoke, '
+     'West Toronto) to see new openings by area, or the cuisine pages to filter by food type.'),
+    ('How often is this list of new Toronto restaurants updated?',
+     'Every morning. The pipeline pulls the latest City of Toronto open data, verifies each '
+     'new entry is operating, and regenerates this page before 6 AM Toronto time.'),
+]
+_new_faq_ld = build_ld_faq(_new_faq_pairs, page_url=_new_canonical)
+_new_intro = (
+    f'<div class="page-intro">'
+    f'<p>The <b>{len(_new_page_entries)}</b> most recently opened restaurants in Toronto, '
+    f'tracked daily from City of Toronto licence data. '
+    f'Every cuisine and neighbourhood, chains excluded. '
+    f'<b>{_new_n30}</b> opened in the last 30 days.</p>'
+    f'<p>Browse by <a href="/cuisine/chinese">cuisine</a> or '
+    f'<a href="/district/downtown">district</a> for a focused view.</p>'
+    f'</div>'
+)
+_new_page = inject_into_html(
+    _new_page,
+    static_block=_new_static,
+    ld_payloads=[_new_collection, _new_breadcrumb_ld, _new_faq_ld],
+    breadcrumb_html=build_breadcrumb_html([
+        ('Home', 'https://nowservingto.com/'),
+        ('New restaurants', None),
+    ]),
+    page_intro_html=_new_intro,
+    lcp_preload_url=(_new_page_entries[0].get('thumb') or '') if _new_page_entries else '',
+)
+_new_page = swap_newsletter_cta(_new_page, build_alert_section('digest_all', 'toronto', 'Toronto'))
+_new_page = _new_page.replace('<body class="page-home">', '<body class="page-new">', 1)
+(Path(ROOT) / 'new.html').write_text(_new_page)
+print(f"  wrote /new.html — {len(_new_page_entries)} most recent openings across all cuisines")
 
 
 # ---------------------------------------------------------------------------
@@ -8428,6 +8524,7 @@ url_blocks = [
     _sitemap_url(f'{SITE_BASE}/answers',    _today_iso),
     _sitemap_url(f'{SITE_BASE}/press',      _today_iso),
     _sitemap_url(f'{SITE_BASE}/all',        _today_iso),
+    _sitemap_url(f'{SITE_BASE}/new',        _today_iso),
     _sitemap_url(f'{SITE_BASE}/usage',      _today_iso),
     # /contribute omitted: it is noindex (contribution form), so it must not be in the sitemap
     _sitemap_url(f'{SITE_BASE}/game',       _today_iso),
