@@ -30,6 +30,11 @@ LARGE_RUN_THRESHOLD = 500  # require --confirm above this many lookups
 SCRIPT = 'enrich_places'   # tag for usage_log so spikes attribute back here
 
 def load_api_key():
+    if not str(ROOT).startswith('/var/www/'):
+        sys.exit(
+            "Google Places API calls are restricted to the VPS IP.\n"
+            "Run this script via SSH or push and let cron handle it."
+        )
     if not SECRETS.exists():
         sys.exit(f"missing {SECRETS}")
     for line in SECRETS.read_text().splitlines():
