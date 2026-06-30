@@ -871,8 +871,7 @@ fetch('/data/corridors.json?v=' + Date.now(), { priority: 'low' }).then(r => r.j
     }
     currentRows = rows;
     currentShown = INITIAL_SHOW;
-    const homeView = currentCuisine === '__all' && currentRegion === '__all' && !nearMeActive && !savedOnly && !currentNeighborhood;
-    if (homeView) nsRenderHome(); else paintFeed();
+    paintFeed();
   }
   // Build the row set that would result from a given (cuisine, region, nearMe) tuple.
   // Mirrors the logic in renderFeed() so option counts agree with what the user sees.
