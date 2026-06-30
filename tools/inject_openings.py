@@ -3601,7 +3601,7 @@ def build_home_feed(rows, scope_label='new spots', scoped=False, limit=30):
 # Inject into the HOMEPAGE (index.html).
 # ---------------------------------------------------------------------------
 top_for_static = all_recent[:30]
-static_block = build_static_rows(all_recent[:30], link_to_listing=True, group_by_date=True, show_cta=True)
+static_block = build_home_feed(all_recent)
 home_url = 'https://nowservingto.com/'
 
 

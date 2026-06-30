@@ -12,7 +12,7 @@ the full batch. Otherwise fails fast with a clear error.
 
 Reads ANTHROPIC_API_KEY from /var/secrets/nowservingto.env.
 """
-import os, sys, csv, json, time
+import os, sys, csv, json, time, re
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from urllib.request import urlopen, Request
@@ -27,6 +27,15 @@ MODEL = 'claude-haiku-4-5-20251001'
 POLL_INTERVAL_SEC = 30
 RECHECK_DAYS = 7
 CSV_PATH = '/tmp/business_licences_alt.csv'
+
+# Names that signal a western-only concept unlikely to have an ethnic cuisine
+# signal even with web_search. Kept very conservative: false negatives (missing
+# a real immigrant spot) cost a listing; false positives (sending a burger joint
+# to web_search) cost $0.005 and the verifier returns unknown anyway.
+_WESTERN_SKIP_RE = re.compile(
+    r'\b(BURGERS?|POUTINE|HOT\s*DOGS?|WING\s+(SHACK|HOUSE|KING|STOP))\b',
+    re.IGNORECASE,
+)
 
 # Cuisine taxonomy is the canonical one from cuisines.py.
 import sys as _sys
@@ -417,8 +426,10 @@ def main():
             # with the classify-side stub since chains can slip in via direct
             # web_verify_cache writes or pre-existing cuisine classifications.
             if is_known_chain(name): continue
-            llm_e = llm.get(k)
-            if not (llm_e and llm_e.get('status') == 'ok' and llm_e.get('cuisine') and llm_e.get('cuisine') != 'unknown'): continue
+            if _WESTERN_SKIP_RE.search(name): continue
+            # No cuisine gate: web_search sees everything that isn't a known chain
+            # or an obviously western-only name. Entries the name-only pass returned
+            # 'unknown' for are the whole point -- web_search can read actual menus.
             p = places.get(k)
             # Skip web_verify ONLY when both Places confirms operating AND
             # we already have a populated verify cache entry. If verify cache

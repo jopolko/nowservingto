@@ -614,6 +614,52 @@ fetch('/data/corridors.json?v=' + Date.now(), { priority: 'low' }).then(r => r.j
     const scopeWhere = (currentRegion !== '__all') ? ' in ' + currentRegion : '';
     const scoped = (currentCuisine !== '__all') || (currentRegion !== '__all') || (nearMeActive && userLatLng);
     feed.classList.add('ns-feed-wide');
+    // Hydration guard: if the server pre-rendered the ns-hero-card layout, skip
+    // the innerHTML swap to eliminate CLS and LCP delay. Only fires on the
+    // unfiltered, default home view — filtered/freshOnly views always re-render.
+    if (!scoped && !freshOnly && feed.querySelector('.ns-hero-card')) {
+      const _sbar = feed.querySelector('.ns-streak-bar');
+      if (_sbar) {
+        const _c30 = rows.filter(r => typeof r.daysOpen === 'number' && r.daysOpen <= 30).length;
+        _sbar.classList.add('ns-tappable');
+        _sbar.setAttribute('role', 'button');
+        _sbar.setAttribute('tabindex', '0');
+        _sbar.setAttribute('aria-pressed', 'false');
+        _sbar.setAttribute('aria-label', `Show the ${_c30} new this month`);
+        const _toggle = () => { freshOnly = !freshOnly; currentShown = INITIAL_SHOW; nsRenderHome(); };
+        _sbar.addEventListener('click', _toggle);
+        _sbar.addEventListener('keydown', e => {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); _toggle(); }
+        });
+      }
+      feed.querySelectorAll('.ns-save-btn').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.preventDefault(); e.stopPropagation();
+          const slug = btn.getAttribute('data-slug'); if (!slug) return;
+          const nowSaved = toggleSaved(slug);
+          btn.classList.toggle('saved', nowSaved);
+          if (nowSaved) nsSparkle(btn);
+          btn.textContent = nowSaved ? '♥ Saved' : '♡ Save';
+          refreshSavedToggle();
+        });
+      });
+      feed.querySelectorAll('.ns-act').forEach(b => {
+        b.addEventListener('click', e => {
+          e.preventDefault(); e.stopPropagation();
+          if (b.dataset.url) window.open(b.dataset.url, '_blank', 'noopener');
+        });
+      });
+      const _preShown = feed.querySelectorAll('.ns-hero-card, .ns-gc').length;
+      if (rows.length > _preShown) {
+        const remaining = rows.length - _preShown;
+        const more = document.createElement('button');
+        more.className = 'show-more'; more.type = 'button';
+        more.textContent = `Show ${Math.min(PAGE_SIZE, remaining)} more`;
+        more.addEventListener('click', () => { currentShown += PAGE_SIZE; paintFeed(); });
+        feed.appendChild(more);
+      }
+      return;
+    }
     // Streak bar is a home-only flourish; on scoped views it's redundant. It
     // summarizes the FULL scope (count + "N tracked" total). freshOnly is a tap
     // drill-down that filters only the feed below — so the bar's total stays
