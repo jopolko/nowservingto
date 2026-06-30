@@ -937,6 +937,27 @@ LICENCE_NO_COUNT_BY_KEY = {k: len(v) for k, v in LICENCE_NO_COUNT_BY_KEY.items()
 _multi_cat = sum(1 for v in CLIENT_ADDR_CATEGORIES.values() if len(v) > 1)
 print(f"  pre-pass: {sum(1 for v in LICENCE_NO_COUNT_BY_KEY.values() if v > 1):,} of {len(LICENCE_NO_COUNT_BY_KEY):,} name+address pairs have >1 Licence No.; {_multi_cat:,} client+address pairs span >1 category (category-upgrade candidates)")
 
+# CSV row-count sanity guard. Normal daily delta is 2-6 pairs. A spike
+# of 300+ almost certainly means a bad data dump from the City feed, not
+# legitimate new licences. Abort before any Places API spend occurs.
+_CSV_ROW_COUNT_PATH = f'{ROOT}/tools/cache/csv_row_count.json'
+_csv_row_count_now = len(LICENCE_NO_COUNT_BY_KEY)
+try:
+    _csv_row_count_prev = json.load(open(_CSV_ROW_COUNT_PATH)).get('count', 0)
+except (FileNotFoundError, ValueError, KeyError):
+    _csv_row_count_prev = 0
+_csv_delta = _csv_row_count_now - _csv_row_count_prev
+if _csv_row_count_prev and _csv_delta > 300:
+    print(f"\nABORT: CSV row count jumped {_csv_delta:+,} in one day "
+          f"({_csv_row_count_prev:,} -> {_csv_row_count_now:,}). "
+          f"Likely bad data from City feed. Halting before Places API spend. "
+          f"Re-run with --allow-csv-spike to override.")
+    if '--allow-csv-spike' not in sys.argv:
+        sys.exit(3)
+    print("  --allow-csv-spike passed, continuing.")
+json.dump({'count': _csv_row_count_now, 'date': str(REFERENCE_DATE)},
+          open(_CSV_ROW_COUNT_PATH, 'w'))
+
 with open(CSV_PATH, encoding='utf-8', errors='replace') as f:
     rdr = csv.DictReader(f)
     for row in rdr:

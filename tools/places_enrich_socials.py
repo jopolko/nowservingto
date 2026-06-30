@@ -51,6 +51,11 @@ def main():
     print(f"  NEW Places lookups to run:       {len(to_enrich)}")
     print(f"  estimated cost:                  ${len(to_enrich)*0.017:.2f}\n")
 
+    MAX_LOOKUPS = 75  # ~$1.28/run ceiling; normal daily need is 0-5
+    if len(to_enrich) > MAX_LOOKUPS:
+        print(f"  capping at {MAX_LOOKUPS} lookups (found {len(to_enrich)}); remainder deferred to next run")
+        to_enrich = to_enrich[:MAX_LOOKUPS]
+
     n_op = n_closed = n_missing = n_err = 0
     t0 = time.time()
     for i, (k, e) in enumerate(to_enrich, 1):

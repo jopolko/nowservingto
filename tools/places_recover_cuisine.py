@@ -69,6 +69,11 @@ def main():
     if not targets:
         return
 
+    MAX_LOOKUPS = 50  # ~$0.85/run ceiling; normal daily need is 0-3
+    if len(targets) > MAX_LOOKUPS:
+        print(f"  capping at {MAX_LOOKUPS} lookups (found {len(targets)}); remainder deferred to next run")
+        targets = targets[:MAX_LOOKUPS]
+
     n_with_site = n_no_site = n_closed = n_err = 0
     t0 = time.time()
     for i, (k, e) in enumerate(targets, 1):
