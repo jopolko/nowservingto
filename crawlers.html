@@ -111,8 +111,8 @@
  .chart-card.cc-ai .ch-title { border-left-color: #7c3aed; color: #5b21b6; background: #f5f3ff; }
  .chart-card.cc-other .ch-title { border-left-color: #b45309; color: #92400e; background: #fffbeb; }
  /* Bot bar charts inside crawl-groups: wider label + padded rows */
- .bar-h-bot { padding: 7px 20px; }
- .bar-h-bot .bh-label { width: 210px; }
+ .bar-h-bot { padding: 7px 20px; grid-template-columns: 200px 1fr 64px; }
+ @media (max-width: 500px) { .bar-h-bot { grid-template-columns: 110px 1fr 50px; } }
  .chart-card .ch-svg { width: 100%; height: auto; display: block; }
  .chart-card .ch-foot { font: 500 12px/1.4 var(--mono); color: var(--muted); margin-top: 8px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
  /* Donut + legend layout */
