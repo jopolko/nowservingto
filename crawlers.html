@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The receipts: what it costs to run a daily-fresh restaurant directory · NowServingTO</title>
-<meta name="description" content="Daily-itemized API spend behind NowServingTO. Google Places, Anthropic Haiku, Jina Reader, Google Street View. About $0.35 a day to track every newly registered Toronto restaurant. Open ledger, updated nightly.">
-<meta property="og:title" content="The receipts: what it costs to run NowServingTO">
-<meta property="og:description" content="Daily-itemized API spend behind a daily-fresh Toronto restaurant directory. About $0.35 a day. Open ledger, updated nightly.">
+<title>Who's reading NowServingTO · AI crawlers, search bots, real visitors</title>
+<meta name="description" content="Live crawler intelligence for NowServingTO: which AI crawlers, search bots, and real visitors are reading the directory. Updated nightly from Apache logs.">
+<meta property="og:title" content="Who's reading NowServingTO">
+<meta property="og:description" content="AI crawlers, search bots, and real visitors tracked daily from Apache logs. NowServingTO crawler intelligence.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://nowservingto.com/crawlers">
 <meta name="twitter:card" content="summary_large_image">
@@ -238,183 +238,14 @@
  <div class="ch-foot"><span id="ch-farms-foot">-</span></div>
  </div>
  <p class="stamp" style="margin-top: 36px">Snapshot: <span id="stamp">-</span></p>
-
- <section style="margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--line);">
- <p style="font: 700 11px/1 var(--sans); color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin: 0 0 14px;">API running costs</p>
- <div style="display: flex; gap: 28px; flex-wrap: wrap; margin-bottom: 18px; align-items: flex-end;">
- <div><span style="font: 700 11px/1 var(--sans); color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 4px;">Today</span><span id="today-cost" style="font: 700 22px/1 var(--sans); font-variant-numeric: tabular-nums;">-</span>&ensp;<span id="today-calls" style="font: 500 12px/1 var(--mono); color: var(--muted);">-</span></div>
- <div><span style="font: 700 11px/1 var(--sans); color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 4px;">All time</span><span id="all-cost" style="font: 700 22px/1 var(--sans); font-variant-numeric: tabular-nums;">-</span>&ensp;<span id="all-calls" style="font: 500 12px/1 var(--mono); color: var(--muted);">-</span></div>
- </div>
- <div style="display: grid; grid-template-columns: minmax(120px, 140px) 1fr; gap: 18px; align-items: center; max-width: 480px;">
- <svg id="ch-donut" class="ch-svg" viewBox="0 0 200 200" style="max-width: 130px" aria-label="API cost share by provider"></svg>
- <div id="ch-donut-legend" class="donut-legend"></div>
- </div>
- </section>
 </main>
-
-<!-- JSON-LD: Article schema so search + AI engines can categorize this
- correctly as an editorial piece (not a thin admin page). Boosts the
- odds of it being cited for cost-transparency / "how much does X cost"
- queries. -->
-<script type="application/ld+json">
-{
- "@context": "https://schema.org",
- "@type": "Article",
- "headline": "The receipts: what it costs to run a daily-fresh restaurant directory",
- "description": "Daily-itemized API spend behind NowServingTO. Google Places, Anthropic Haiku, Jina Reader, Google Street View. About $0.35 a day to track every newly registered Toronto restaurant.",
- "author": {"@type": "Person", "name": "Josh Opolko"},
- "publisher": {"@type": "Organization", "name": "NowServingTO", "url": "https://nowservingto.com/"},
- "url": "https://nowservingto.com/crawlers",
- "mainEntityOfPage": "https://nowservingto.com/crawlers",
- "about": ["API cost transparency", "Open data project economics", "Toronto restaurant directory", "Anthropic Haiku cost", "Google Places API cost"]
-}
-</script>
 
 <script>
 fetch('/data/usage.json?v=' + Date.now()).then(r => r.json()).then(data => {
- const fmt = n => '$' + (Math.round((n||0) * 100) / 100).toFixed(2);
- const fmtFine = n => '$' + (Math.round((n||0) * 10000) / 10000).toFixed(4);
- const fmtCalls = n => (n||0).toLocaleString();
- document.getElementById('all-cost').textContent = fmt(data.totals?.all?.cost);
- document.getElementById('all-calls').innerHTML = `${fmtCalls(data.totals?.all?.calls)} calls since <span id="first-day">${data.first || '-'}</span>`;
- document.getElementById('today-cost').textContent = fmt(data.totals?.today?.cost);
- document.getElementById('today-calls').textContent= `${fmtCalls(data.totals?.today?.calls)} calls today`;
  document.getElementById('stamp').textContent = (data.generatedAt || '-').replace('T', ' ').slice(0, 19) + ' UTC';
- const labels = {
- google_places: 'Google Places',
- google_streetview: 'Google Street View',
- anthropic: 'Anthropic (Claude Haiku)',
- jina: 'Jina Reader',
- x: 'X / Twitter',
- other: 'Other',
- };
- // Per-provider/SKU table removed - the donut chart + legend below
- // already shows provider costs at a glance; the SKU-level breakdown
- // was overflowing detail that nobody needed on a public page.
 
- // ---- Charts ----------------------------------------------------------
 
- // Provider palette - deterministic per-provider colour for donut + bars.
- // Keeps the same provider in the same colour across page renders.
- const PROV_COLOURS = {
- google_places: '#1a73e8',
- google_streetview:'#34a853',
- anthropic: '#c83624',
- jina: '#9c27b0',
- x: '#15110d',
- other: '#74787c',
- };
- const colourFor = p => PROV_COLOURS[p] || '#888';
-
- // Daily-spend multi-line chart - one line per provider, plus an
- // aggregate total line drawn slightly heavier so the day's overall
- // spend stays the dominant read.
- (function renderDaily() {
- const days = data.byDay || [];
- const byDayProv = data.byDayProvider || [];
- if (!days.length) return;
- const svg = document.getElementById('ch-daily');
- if (!svg) return;
- const W = 600, H = 180, PAD_L = 32, PAD_R = 8, PAD_T = 10, PAD_B = 22;
- const innerW = W - PAD_L - PAD_R, innerH = H - PAD_T - PAD_B;
- const last30 = days.slice(-30);
- const last30Prov = byDayProv.slice(-30);
- // Index providers seen in the window (preserve donut palette colours)
- const provSet = new Set();
- last30Prov.forEach(d => Object.keys(d.providers || {}).forEach(p => provSet.add(p)));
- const provs = Array.from(provSet);
- // Per-day per-provider lookup
- const provCost = (i, p) => (last30Prov[i] && last30Prov[i].providers && last30Prov[i].providers[p]) || 0;
- // Y-axis scales to the max per-provider single-day value (was scaling
- // to daily total, but with the total line removed that left every
- // provider line crammed into the bottom third of the chart). Now each
- // provider's peak hits roughly the top of the plot.
- let maxC = 0.001;
- last30Prov.forEach(d => {
- Object.values(d.providers || {}).forEach(v => { if (v > maxC) maxC = v; });
- });
- const stepX = innerW / Math.max(1, last30.length - 1);
- const ptX = i => PAD_L + i * stepX;
- const ptY = c => PAD_T + innerH - (c / maxC) * innerH;
- // Build per-provider polylines (no aggregate total line - each provider
- // gets its own stroke at full weight, easier to read individual signals).
- let lines = '';
- provs.forEach(p => {
- const path = last30.map((d, i) => `${i===0?'M':'L'}${ptX(i).toFixed(1)},${ptY(provCost(i, p)).toFixed(1)}`).join(' ');
- lines += `<path d="${path}" fill="none" stroke="${colourFor(p)}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><title>${p}</title></path>`;
- });
- const dots = '';
- // Y-axis ticks: 0, mid, max
- const yTicks = [0, maxC/2, maxC].map(v => {
- const y = ptY(v);
- const lbl = '$' + v.toFixed(v < 1 ? 2 : (v < 10 ? 1 : 0));
- return `<line x1="${PAD_L}" x2="${W-PAD_R}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="#ebecef" stroke-width="0.8"/>` +
- `<text class="ch-axis" x="${PAD_L-4}" y="${(y+3).toFixed(1)}" text-anchor="end">${lbl}</text>`;
- }).join('');
- // X-axis tick labels for first / mid / last day
- const xTicks = [0, Math.floor((last30.length-1)/2), last30.length-1].map(i => {
- const dd = last30[i].day.slice(5);
- return `<text class="ch-axis" x="${ptX(i).toFixed(1)}" y="${H-6}" text-anchor="${i===0?'start':i===last30.length-1?'end':'middle'}">${dd}</text>`;
- }).join('');
- svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
- svg.innerHTML = yTicks + lines + dots + xTicks;
- // Provider legend swatches inline above the chart's footer
- const labels = {
- google_places: 'Google Places',
- google_streetview: 'Street View',
- anthropic: 'Anthropic',
- jina: 'Jina',
- x: 'X',
- other: 'Other',
- };
- const legendHtml = provs.map(p =>
- `<span style="display:inline-flex;align-items:center;gap:5px;margin-right:14px;font:600 11px/1 var(--sans)"><span style="width:14px;height:3px;background:${colourFor(p)};display:inline-block;border-radius:1px"></span>${labels[p] || p}</span>`
- ).join('');
- const total = last30.reduce((s,d)=>s+d.cost,0);
- const avg = total / last30.length;
- document.getElementById('ch-daily-range').innerHTML = legendHtml;
- document.getElementById('ch-daily-stats').innerHTML =
- `peak $${maxC.toFixed(2)} · avg $${avg.toFixed(2)}/day · 30d total $${total.toFixed(2)}`;
- })();
-
- // Provider cost-share donut (pure-SVG; no library)
- (function renderDonut() {
- const provs = data.byProvider || [];
- if (!provs.length) return;
- const total = provs.reduce((s,p)=>s+p.cost,0);
- if (total <= 0) return;
- const cx=100, cy=100, r=72, sw=24; // ring centre, radius, stroke width
- const C = 2 * Math.PI * r;
- let offset = 0;
- let segs = '';
- provs.forEach(p => {
- const frac = p.cost / total;
- const len = C * frac;
- segs += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${colourFor(p.provider)}" stroke-width="${sw}" stroke-dasharray="${len.toFixed(2)} ${(C-len).toFixed(2)}" stroke-dashoffset="${(-offset).toFixed(2)}" transform="rotate(-90 ${cx} ${cy})"><title>${p.provider}: $${p.cost.toFixed(2)} (${(frac*100).toFixed(0)}%)</title></circle>`;
- offset += len;
- });
- // Centre label - total spend
- segs += `<text x="${cx}" y="${cy-4}" text-anchor="middle" font-family="-apple-system,sans-serif" font-weight="800" font-size="22" fill="#131516">$${total.toFixed(2)}</text>`;
- segs += `<text x="${cx}" y="${cy+14}" text-anchor="middle" font-family="-apple-system,sans-serif" font-weight="600" font-size="10" fill="#74787c" letter-spacing="0.5">TOTAL SPEND</text>`;
- document.getElementById('ch-donut').innerHTML = segs;
- // Legend
- const labels = {
- google_places: 'Google Places',
- google_streetview: 'Google Street View',
- anthropic: 'Anthropic Haiku',
- jina: 'Jina Reader',
- x: 'X / Twitter',
- other: 'Other',
- };
- document.getElementById('ch-donut-legend').innerHTML = provs.map(p => {
- const pct = (p.cost/total*100).toFixed(0);
- return `<div class="lg-row"><span class="lg-swatch" style="background:${colourFor(p.provider)}"></span><span>${labels[p.provider]||p.provider}</span><span class="lg-pct">${pct}%</span><span class="lg-cost">$${p.cost.toFixed(2)}</span></div>`;
- }).join('');
- })();
-}).catch(e => {
- const donut = document.getElementById('ch-donut-legend');
- if (donut) donut.innerHTML = '<div class="lg-row">Could not load /data/usage.json</div>';
-});
+}).catch(() => {});
 
 // Crawl section - separate file so this whole block degrades cleanly
 // if bot_traffic.json hasn't been generated yet.
