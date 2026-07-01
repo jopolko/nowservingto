@@ -222,15 +222,15 @@ def _validator_best_website(w):
 
 
 def url_is_alive(url):
-    """True if URL not in health cache, or last check said ok. False if known-broken.
-    Looks up under both the raw URL and a normalized form (lowercased,
-    www. stripped, tracking params dropped) so the entry's stored
-    website variant and the cache's canonical variant collide correctly."""
+    """True if URL is reachable. Checks URL_HEALTH_CACHE first (both raw and
+    normalised forms). For URLs not yet in the cache, does a live HEAD probe
+    with a 6s timeout rather than returning optimistically — catches dead
+    domains that web_search indexed while the site was still alive.
+    Caches the live-probe result in-memory so repeated calls within one run
+    are free. Does not write back to disk (check_link_health.py owns that)."""
     if not url: return False
     h = URL_HEALTH_CACHE.get(url)
     if h is None:
-        # Try the normalized form - cache keys may have been canonicalized
-        # by check_link_health.py's migration.
         try:
             from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
             s = urlsplit(url.strip())
@@ -243,8 +243,25 @@ def url_is_alive(url):
             h = URL_HEALTH_CACHE.get(norm)
         except Exception:
             pass
-    if not h: return True   # never checked → optimistic
-    return bool(h.get('ok'))
+    if h is not None:
+        return bool(h.get('ok'))
+    # Not in health cache — live probe instead of optimistic default.
+    from urllib.request import Request as _Req, urlopen as _urlopen
+    from urllib.error import HTTPError as _HTTPError
+    import ssl as _ssl
+    ok = False
+    try:
+        req = _Req(url, method='HEAD',
+                   headers={'User-Agent': 'Mozilla/5.0 (compatible; NowServingTO/1.0)'})
+        ctx = _ssl.create_default_context()
+        with _urlopen(req, timeout=6, context=ctx):
+            ok = True   # 2xx/3xx = alive
+    except _HTTPError:
+        ok = True       # 4xx/5xx = server responded = domain is live
+    except Exception:
+        ok = False      # DNS failure, connection refused, timeout = dead
+    URL_HEALTH_CACHE[url] = {'ok': ok, 'checked_at': 'inject_live_probe'}
+    return ok
 
 _SOCIAL_HOSTS = frozenset({
     'instagram.com', 'www.instagram.com',
