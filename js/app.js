@@ -211,16 +211,7 @@ fetch('/data/corridors.json?v=' + Date.now(), { priority: 'low' }).then(r => r.j
   // re-render would show all-Toronto entries on top of the static feed.
   let currentNeighborhood = null;
   function buildRowEl(r) {
-    // Multi-cuisine entries render one pill per declared cuisine; legacy single-
-    // cuisine entries fall back to `r.cuisine`.
     const cuisineKeys = (r.cuisines && r.cuisines.length) ? r.cuisines : [r.cuisine];
-    const pillsHtml = cuisineKeys
-      .map(k => {
-        const meta = CUISINE_META[k];
-        const bg = (meta && meta.color) || CUISINE_PALETTE[k] || '#999';
-        const lab = (meta && meta.label) || CUISINE_LABEL[k] || k;
-        return `<a class="pill" href="/cuisine/${k}" style="background:${bg}" aria-label="See newest ${lab} restaurants">${lab}</a>`;
-      }).join('');
     const isHot = r.daysOpen <= 30;
     const isRecent = !isHot && r.daysOpen <= 90;
     // Primary cuisine colour → left-edge accent strip (mirrors the
@@ -347,11 +338,14 @@ fetch('/data/corridors.json?v=' + Date.now(), { priority: 'low' }).then(r => r.j
     const blurbHtml = (r.blurb || bare)
       ? `<p class="row-blurb">${escHtml(r.blurb || '')}${bareTag}</p>`
       : '';
-    // Primary cuisine badge for ticket header
+    // Cuisine badges for ticket header — one per cuisine key for multi-cuisine entries
     const primaryKey = cuisineKeys[0];
-    const primaryMeta = primaryKey ? CUISINE_META[primaryKey] : null;
-    const badgeBg = (primaryMeta && primaryMeta.color) || (primaryKey && CUISINE_PALETTE[primaryKey]) || '#888';
-    const badgeLabel = (primaryMeta && primaryMeta.label) || CUISINE_LABEL[primaryKey] || primaryKey || '';
+    const badgesHtml = cuisineKeys.map(k => {
+      const m = CUISINE_META[k];
+      const bg = (m && m.color) || (k && CUISINE_PALETTE[k]) || '#888';
+      const lab = (m && m.label) || CUISINE_LABEL[k] || k || '';
+      return `<span class="tk-badge" style="background:${bg}">${lab}</span>`;
+    }).join('');
     const daysNum = r.daysOpen != null ? r.daysOpen : '?';
     // Freshness: days under a month, months once it's over (matches nsAgo).
     const _fd = r.daysOpen;
@@ -373,7 +367,7 @@ fetch('/data/corridors.json?v=' + Date.now(), { priority: 'low' }).then(r => r.j
     const ctaHtml = (r.slug && !onListingPage) ? `<a class="tk-cta" href="/r/${r.slug}">Full listing →</a>` : '';
     row.innerHTML = `
       <div class="tk-head">
-        <span class="tk-badge" style="background:${badgeBg}">${badgeLabel}</span>
+        ${badgesHtml}
         <span class="tk-freshness"><span class="days">${freshN}</span> ${freshU} ago</span>
       </div>
       <div class="tk-body">
@@ -1514,6 +1508,16 @@ fetch('/data/corridors.json?v=' + Date.now(), { priority: 'low' }).then(r => r.j
     applyFilters(currentCuisine, '__all', true);
   }
 
+  function showLocateErr(btn, originalLabel, msg) {
+    btn.textContent = originalLabel;
+    btn.disabled = false;
+    const tip = document.createElement('span');
+    tip.className = 'locate-err';
+    tip.textContent = msg;
+    btn.parentNode.insertBefore(tip, btn.nextSibling);
+    setTimeout(() => tip.remove(), 6000);
+  }
+
   function locateUser() {
     // Already active? Treat the click as a toggle-off.
     if (nearMeActive) { setNearMeActive(false); return; }
@@ -1587,7 +1591,7 @@ fetch('/data/corridors.json?v=' + Date.now(), { priority: 'low' }).then(r => r.j
         if (!navigator.geolocation) {
           btn.textContent = originalLabel;
           btn.disabled = false;
-          alert('Could not get your location.');
+          showLocateErr(btn, originalLabel, 'Location not supported.');
           return;
         }
         const slowTimer = setTimeout(() => { if (btn.disabled) btn.textContent = 'still locating…'; }, 2500);
@@ -1596,13 +1600,11 @@ fetch('/data/corridors.json?v=' + Date.now(), { priority: 'low' }).then(r => r.j
           applyFix([pos.coords.latitude, pos.coords.longitude], true);
         }, err => {
           clearTimeout(slowTimer);
-          btn.textContent = originalLabel;
-          btn.disabled = false;
           const msg = err.code === 1
-            ? 'Location blocked for this site. Click the lock icon in your address bar, set Location to "Allow", then try again.'
-            : err.code === 2 ? 'Location unavailable right now.'
-            : err.code === 3 ? 'Timed out - try again.' : 'Could not get location.';
-          alert(msg);
+            ? 'Location blocked — tap the lock icon in your browser and set Location to Allow'
+            : err.code === 2 ? 'Location unavailable right now'
+            : err.code === 3 ? 'Timed out — try again' : 'Could not get location';
+          showLocateErr(btn, originalLabel, msg);
         }, { enableHighAccuracy: false, timeout: 8000, maximumAge: 30 * 60 * 1000 });
       });
   }
