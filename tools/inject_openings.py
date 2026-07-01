@@ -246,20 +246,23 @@ def url_is_alive(url):
     if h is not None:
         return bool(h.get('ok'))
     # Not in health cache — live probe instead of optimistic default.
+    # Mirrors the ok/dead logic in check_link_health.py (minus the Haiku
+    # content-sniff, which is too expensive to run at inject time).
     from urllib.request import Request as _Req, urlopen as _urlopen
     from urllib.error import HTTPError as _HTTPError
     import ssl as _ssl
+    _SOFT_FAIL = {401, 403, 405, 429, 451, 503}  # alive but blocking our probe
     ok = False
     try:
         req = _Req(url, method='HEAD',
                    headers={'User-Agent': 'Mozilla/5.0 (compatible; NowServingTO/1.0)'})
         ctx = _ssl.create_default_context()
-        with _urlopen(req, timeout=6, context=ctx):
-            ok = True   # 2xx/3xx = alive
-    except _HTTPError:
-        ok = True       # 4xx/5xx = server responded = domain is live
+        with _urlopen(req, timeout=6, context=ctx) as resp:
+            ok = resp.status < 400
+    except _HTTPError as e:
+        ok = e.code in _SOFT_FAIL  # 404/500/etc → dead; 403/405/429 → alive
     except Exception:
-        ok = False      # DNS failure, connection refused, timeout = dead
+        ok = False                  # DNS failure, connection refused, timeout → dead
     URL_HEALTH_CACHE[url] = {'ok': ok, 'checked_at': 'inject_live_probe'}
     return ok
 
