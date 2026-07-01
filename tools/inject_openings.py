@@ -3054,8 +3054,12 @@ def build_static_rows(entries, link_to_listing=False, group_by_date=False, show_
                          if _bare else '')
             _blurb_html = f'<p class="row-blurb">{_esc(_blurb)}{_bare_tag}</p>'
         # Ticket card — matches the demo aesthetic.
-        _cuisine_label_str = _esc(CUISINE_LABEL.get(primary_key, (primary_key or '').replace('_', ' ').title()))
         _badge_bg = row_accent or '#888888'
+        _badges_html = ''.join(
+            f'<span class="tk-badge" style="background:{_esc(str(PALETTE_HEX.get(k) or cuisine_color(k) or "#888888"))}">'
+            f'{_esc(CUISINE_LABEL.get(k, k.replace("_", " ").title()))}</span>'
+            for k in cuisine_keys
+        ) or f'<span class="tk-badge" style="background:{_badge_bg}"></span>'
         _nbhd_data = r.get('neighborhood')
         _nbhd_label = (_nbhd_data.get('label', '') if isinstance(_nbhd_data, dict) else '') or ''
         if _nbhd_label and district:
@@ -3082,7 +3086,7 @@ def build_static_rows(entries, link_to_listing=False, group_by_date=False, show_
         out.append(
             f'<article class="ticket"{slug_attr}{fresh_attr}{multi_attr}{_bare_attr} style="--row-accent:{_badge_bg}">'
             f'<div class="tk-head">'
-            f'<span class="tk-badge" style="background:{_badge_bg}">{_cuisine_label_str}</span>'
+            f'{_badges_html}'
             f'<span class="tk-freshness">{_days_html} {_fresh_u} ago</span>'
             f'</div>'
             f'<div class="tk-body">'

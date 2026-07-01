@@ -211,16 +211,7 @@ fetch('/data/corridors.json?v=' + Date.now(), { priority: 'low' }).then(r => r.j
   // re-render would show all-Toronto entries on top of the static feed.
   let currentNeighborhood = null;
   function buildRowEl(r) {
-    // Multi-cuisine entries render one pill per declared cuisine; legacy single-
-    // cuisine entries fall back to `r.cuisine`.
     const cuisineKeys = (r.cuisines && r.cuisines.length) ? r.cuisines : [r.cuisine];
-    const pillsHtml = cuisineKeys
-      .map(k => {
-        const meta = CUISINE_META[k];
-        const bg = (meta && meta.color) || CUISINE_PALETTE[k] || '#999';
-        const lab = (meta && meta.label) || CUISINE_LABEL[k] || k;
-        return `<a class="pill" href="/cuisine/${k}" style="background:${bg}" aria-label="See newest ${lab} restaurants">${lab}</a>`;
-      }).join('');
     const isHot = r.daysOpen <= 30;
     const isRecent = !isHot && r.daysOpen <= 90;
     // Primary cuisine colour → left-edge accent strip (mirrors the
@@ -346,11 +337,14 @@ fetch('/data/corridors.json?v=' + Date.now(), { priority: 'low' }).then(r => r.j
     const blurbHtml = (r.blurb || bare)
       ? `<p class="row-blurb">${escHtml(r.blurb || '')}${bareTag}</p>`
       : '';
-    // Primary cuisine badge for ticket header
+    // Cuisine badges for ticket header — one per cuisine key for multi-cuisine entries
     const primaryKey = cuisineKeys[0];
-    const primaryMeta = primaryKey ? CUISINE_META[primaryKey] : null;
-    const badgeBg = (primaryMeta && primaryMeta.color) || (primaryKey && CUISINE_PALETTE[primaryKey]) || '#888';
-    const badgeLabel = (primaryMeta && primaryMeta.label) || CUISINE_LABEL[primaryKey] || primaryKey || '';
+    const badgesHtml = cuisineKeys.map(k => {
+      const m = CUISINE_META[k];
+      const bg = (m && m.color) || (k && CUISINE_PALETTE[k]) || '#888';
+      const lab = (m && m.label) || CUISINE_LABEL[k] || k || '';
+      return `<span class="tk-badge" style="background:${bg}">${lab}</span>`;
+    }).join('');
     const daysNum = r.daysOpen != null ? r.daysOpen : '?';
     // Freshness: days under a month, months once it's over (matches nsAgo).
     const _fd = r.daysOpen;
@@ -372,7 +366,7 @@ fetch('/data/corridors.json?v=' + Date.now(), { priority: 'low' }).then(r => r.j
     const ctaHtml = (r.slug && !onListingPage) ? `<a class="tk-cta" href="/r/${r.slug}">Full listing →</a>` : '';
     row.innerHTML = `
       <div class="tk-head">
-        <span class="tk-badge" style="background:${badgeBg}">${badgeLabel}</span>
+        ${badgesHtml}
         <span class="tk-freshness"><span class="days">${freshN}</span> ${freshU} ago</span>
       </div>
       <div class="tk-body">
