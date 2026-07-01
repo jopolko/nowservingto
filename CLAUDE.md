@@ -86,6 +86,30 @@ Specific country buckets are preferred over umbrellas. Where a cuisine is meanin
 - File ownership `john:www-data`. `.htaccess` default-denies everything except the explicit allow-list.
 - Crontab on VPS: `17 5 * * * /var/www/html/nowservingto/tools/cron_daily_openings.sh` (UTC; runs ~1:17 AM Toronto)
 
+## VPS webroot layout
+
+The local repo root maps to `/var/www/html/nowservingto/` on the VPS. Key paths:
+
+```
+/var/www/html/nowservingto/
+  index.html          # main page (baked static hero cards + JS feed shell)
+  answers.html        # /answers citation surface
+  app.js              # NOT SERVED — legacy/dev copy, ignored by Apache
+  js/
+    app.js            # THE SERVED JS bundle (index.html loads /js/app.js?v=...)
+    lib/              # third-party libs
+  data/
+    corridors.json    # wire file fetched client-side; rebuilt by inject_openings.py
+    observatory.json  # GEO observatory data
+  tools/
+    inject_openings.py
+    cache/            # web_verify_cache.json, evidence_rewrite_cache.json, etc. (gitignored)
+  cuisine/            # static cuisine hub pages (cuisine/haitian.html, etc.)
+  r/                  # static listing pages (/r/<slug>.html)
+```
+
+**IMPORTANT:** Always deploy JS changes to `js/app.js`, not the root `app.js`. When deploying `js/app.js`, bump the `?v=` query string in `index.html` by 1 to bust the Cloudflare CDN cache.
+
 ## Survey reference
 
 `data/ckan_survey.md` (CSV/JSON datasets) and `data/ckan_survey_supplement.md` (non-CSV formats) are the structural inventory of every Toronto CKAN dataset. They verify file integrity, not semantic fitness. Always spot-check a dataset before trusting it for a new use case. (Both gitignored; only relevant during ETL development.)
