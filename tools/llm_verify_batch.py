@@ -320,31 +320,42 @@ def build_request(name, address):
     return {
         'params': {
             'model': MODEL,
-            'max_tokens': 400,
+            'max_tokens': 800,
             'system': [{'type': 'text', 'text': SYSTEM_PROMPT, 'cache_control': {'type': 'ephemeral'}}],
             'tools': [{'type': 'web_search_20250305', 'name': 'web_search', 'max_uses': 1}],
             'messages': [{
                 'role': 'user',
-                'content': f"Restaurant: {name}\nAddress: {address}\n\nIs this place currently operating? What's its website if any?"
+                'content': (
+                    f"Restaurant: {name}\nAddress: {address}\n\n"
+                    "Search for this place. After the search, your ENTIRE response must be "
+                    "a single JSON object on one line — no prose before or after it:\n"
+                    '{"operating":"yes|no|unclear","cuisines":[...],"website":"...or null","evidence":"..."}'
+                ),
             }],
         },
     }
 
 def parse_result_msg(msg):
-    """Pull JSON from final text + count searches + tokens."""
+    """Pull JSON from any text block + count searches + tokens."""
     usage = msg.get('usage', {})
     server_tool = usage.get('server_tool_use') or {}
     text_blocks = [b.get('text', '') for b in msg.get('content', []) if b.get('type') == 'text']
-    text = (text_blocks[-1] if text_blocks else '').strip()
+    # Search all blocks last-to-first: Haiku often emits JSON in an earlier block
+    # when web_search produces multiple interleaved text segments.
     parsed = None
-    for line in text.split('\n'):
-        s = line.strip().lstrip('`').strip()
-        if s.startswith('{') and s.endswith('}'):
-            try: parsed = json.loads(s); break
-            except: continue
+    for block in reversed(text_blocks):
+        block = block.strip()
+        for line in block.split('\n'):
+            s = line.strip().lstrip('`').strip()
+            if s.startswith('{') and s.endswith('}'):
+                try: parsed = json.loads(s); break
+                except: continue
+        if parsed is not None:
+            break
+        try: parsed = json.loads(block); break
+        except: pass
     if parsed is None:
-        try: parsed = json.loads(text)
-        except: parsed = {'operating': 'unclear', 'website': None, 'evidence': 'parse_failed'}
+        parsed = {'operating': 'unclear', 'website': None, 'evidence': 'parse_failed'}
     cuisines = parse_cuisines_from_llm(parsed)  # list, may contain 'unknown'
     primary = cuisines[0] if cuisines else None
     return {

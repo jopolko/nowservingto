@@ -602,8 +602,26 @@ When content evaluation says approve:
   business's own marketing/menu/story - approve regardless of the host.
   - Return null if no good website exists - entry falls back to Places mapsUrl.
 
-evidence - one short sentence quoting the strongest signal that justified the
-above judgments (a review excerpt, an editorial line, a menu phrase)."""
+evidence - one 1-3 sentence factual description of the restaurant that will
+appear VERBATIM on the public listing page. Write like a food editor, not a
+verifier logging what you found.
+
+HARD RULES for the evidence field:
+- NEVER start with attribution: no "Website confirms...", "Own website says...",
+  "According to...", "Google Places shows...", "Search results indicate...",
+  "Web search confirms...", or any phrasing that reveals the source.
+- NEVER include operational metadata: no "8 days old", "no Places match",
+  "licence issued on <date>", "registered January 9, 2026", "X days since
+  licence", age fragments, or verification-process notes of any kind.
+- Write WHAT the restaurant serves (specific dish names from menus/reviews),
+  WHERE it is (neighbourhood, street, context), and WHO runs it if notable.
+- Dishes are the best signal. "Serves tiropita, spanakopita, and bougatsa"
+  beats "authentic Greek café". Specifics beat adjectives.
+- Write in present tense. No hedges ("appears to", "seems to be").
+- 1-3 sentences. Dense with facts. No filler.
+
+Good: "Greek café on Lakeshore Blvd W in Etobicoke serving tiropita, spanakopita, and bougatsa."
+Bad:  "Website confirms authentic Greek café with tiropita; opened January 9, 2026 at the exact licence address; 8 days old, no Places match yet." """
 
 SYSTEM_PROMPT = SYSTEM_PROMPT.replace('__TAXONOMY__', _TAXONOMY_FORMATTED)
 

@@ -363,18 +363,17 @@ def main():
         wv_e = wv.get(ck) or {}
         ev = (wv_e.get('validator_evidence') or wv_e.get('evidence') or '').strip()
         ev_src = 'verify'
+        # Prefer own-website text when it's meaningfully richer than the
+        # validator_evidence. This covers web_search-only entries (no Places
+        # match) whose evidence is a single thin sentence, and any entry
+        # whose website has menu/dish detail the verifier didn't capture.
+        site = (r.get('website') or '').strip()
+        wt_text = ((wt.get(site) or {}).get('text') or '') if site else ''
+        wt_text = wt_text.replace('HOMEPAGE (jina-rendered):', '').replace('HOMEPAGE:', '').strip()
+        if len(wt_text) >= 300 and len(wt_text) > len(ev) * 2:
+            ev, ev_src = wt_text[:2000], 'website'
         if not ev:
-            # No web_verify evidence yet (brand-new entry that hasn't been
-            # through a web_search pass). Fall back to the restaurant's OWN
-            # website text we already cache via Jina — gives same-cycle, real
-            # site-derived blurbs (actual dishes/vibe) instead of waiting a
-            # full web_verify cycle. Truncated to keep the input token cost low.
-            site = (r.get('website') or '').strip()
-            wt_text = ((wt.get(site) or {}).get('text') or '') if site else ''
-            wt_text = wt_text.replace('HOMEPAGE (jina-rendered):', '').strip()
-            if len(wt_text) >= 200:
-                ev, ev_src = wt_text[:1500], 'website'
-        if not ev: continue
+            continue
         keys = r.get('cuisines') or ([r['cuisine']] if r.get('cuisine') else [])
         cuisine_label = labels.get(keys[0], keys[0].title()) if keys else 'restaurant'
         addr = (r.get('address') or '').strip()

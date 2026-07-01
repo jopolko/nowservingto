@@ -256,6 +256,19 @@ _SOCIAL_HOSTS = frozenset({
     'youtube.com', 'www.youtube.com',
 })
 
+_AGGREGATOR_HOSTS = frozenset({
+    'ubereats.com', 'www.ubereats.com',
+    'doordash.com', 'www.doordash.com',
+    'skipthedishes.com', 'www.skipthedishes.com',
+    'grubhub.com', 'www.grubhub.com',
+    'yelp.com', 'www.yelp.com',
+    'tripadvisor.com', 'www.tripadvisor.com', 'tripadvisor.ca', 'www.tripadvisor.ca',
+    'blogto.com', 'www.blogto.com',
+    'opentable.com', 'www.opentable.com',
+    'zomato.com', 'www.zomato.com',
+    'foursquare.com', 'www.foursquare.com',
+})
+
 def _is_social_url(url):
     """True for Instagram / Facebook / TikTok / etc. links. These are never
     used as the primary restaurant link; visitors should land on a real website
@@ -267,6 +280,18 @@ def _is_social_url(url):
         return urlsplit(url.strip()).netloc.lower() in _SOCIAL_HOSTS
     except Exception:
         return False
+
+def _is_third_party_url(url):
+    """True for social profiles AND aggregator/review sites - neither makes a
+    good primary link for a Places-free entry."""
+    if not url:
+        return True
+    try:
+        from urllib.parse import urlsplit
+        host = urlsplit(url.strip()).netloc.lower()
+        return host in _SOCIAL_HOSTS or host in _AGGREGATOR_HOSTS
+    except Exception:
+        return True
 
 WINDOW_365 = REFERENCE_DATE - timedelta(days=365)
 WINDOW_30  = REFERENCE_DATE - timedelta(days=30)
@@ -564,26 +589,22 @@ def verification_for(name, address):
             return out
         if bs in ('CLOSED_TEMPORARILY', 'CLOSED_PERMANENTLY'):
             return None
-    # Source 2 DISABLED 2026-05-27: previously a web_search-only fallback let
-    # entries through when Places returned not_found. User directive: if we
-    # can't verify the business via Places, we can't direct visitors to it
-    # via Maps either, so it shouldn't appear. Keeping the legacy code below
-    # behind a flag in case of later policy reversal. Currently 7 entries
-    # got dropped by this tightening; the trade is that we don't surface
-    # restaurants we can't link to a real Maps profile.
-    ALLOW_WEB_SEARCH_ONLY = False
+    # Source 2: web_search-only fallback for entries Places hasn't indexed yet.
+    # Allowed only when the business has a Tier-1 website (own domain - not
+    # social, not aggregator/review site). These get a website link instead of
+    # a Maps profile; the row links to their own site rather than Google Maps.
+    # Re-enabled 2026-07-01 after tightening the URL gate to exclude aggregators.
     w = WEB_VERIFY_CACHE.get(key)
-    if ALLOW_WEB_SEARCH_ONLY and w and w.get('status') == 'ok' and w.get('operating') == 'yes':
-        out = {'businessStatus': 'OPERATIONAL', 'verifiedBy': 'web_search'}
+    if w and w.get('status') == 'ok' and w.get('operating') == 'yes':
         wv_site = _validator_best_website(w)
-        if wv_site and url_is_alive(wv_site) and not _is_social_url(wv_site):
-            out['website'] = wv_site
-        if p and p.get('status') == 'ok':
-            for k in ('mapsUrl', 'rating', 'reviewCount', 'matchedName', 'lat', 'lng'):
-                if p.get(k) is not None: out.setdefault(k, p[k])
-        if out.get('lat') is None and geo_coords[0] is not None:
-            out['lat'], out['lng'] = geo_coords
-        return out
+        if wv_site and url_is_alive(wv_site) and not _is_third_party_url(wv_site):
+            out = {'businessStatus': 'OPERATIONAL', 'verifiedBy': 'web_search', 'website': wv_site}
+            if p and p.get('status') == 'ok':
+                for k in ('mapsUrl', 'rating', 'reviewCount', 'matchedName', 'lat', 'lng'):
+                    if p.get(k) is not None: out.setdefault(k, p[k])
+            if out.get('lat') is None and geo_coords[0] is not None:
+                out['lat'], out['lng'] = geo_coords
+            return out
     return None
 
 from urllib.parse import quote_plus
@@ -1785,6 +1806,16 @@ def _scrub_blurb(text):
     # plain factual description, not meta-commentary about where we looked
     # ("the website says…", "according to their social media", "appears to be").
     # Strip the attribution clause; keep the fact that follows it.
+    #
+    # Leading "Website confirms [authentic] ..." / "Own website and X confirm ..."
+    # pattern — Haiku validator_evidence starts with this preamble; strip it so
+    # only the factual content remains.
+    text = _re.sub(
+        r'^(?:(?:Own|The|Its|A)\s+)?'
+        r'(?:website|site|(?:own\s+)?website\s+and\s+\w+)\s+'
+        r'(?:confirms?|shows?|indicates?|verifies?|states?)\s+'
+        r'(?:authentic\s+|that\s+(?:this\s+is\s+(?:an?\s+)?(?:authentic\s+)?)?)?',
+        '', text, flags=_re.I)
     text = _re.sub(
         r'\b[Aa]ccording to (?:its|their|the)?\s*(?:own\s+)?'
         r'(?:website|site|social\s+media(?:\s+presence)?|online\s+presence|instagram|facebook|tiktok|posts?|listing|profile)[^,.;]*,?\s*',
@@ -1808,10 +1839,15 @@ def _scrub_blurb(text):
     text = _re.sub(r'\bbased on (?:the\s+)?(?:available|current)\s+(?:information|evidence|data)\b,?\s*', '', text, flags=_re.I)
     # 9) "opened" → "registered" everywhere (we know licence date, not actual open date).
     text = _re.sub(r'\bopened\b', 'registered', text, flags=_re.I)
-    # 10) Strip dangling "no Places match" / "yet crawled" verification leakage.
+    # 10) Strip dangling "no Places match" / "yet crawled" / age-fragment leakage.
     text = _re.sub(
-        r'\s*(?:with|and)?\s*no\s+(?:Places?\s+match|website\s+content\s+(?:yet\s+)?crawled|maps?\s+listing)\b[^.;]*',
+        r'[;,]?\s*(?:with|and)?\s*no\s+(?:Places?\s+match|website\s+content\s+(?:yet\s+)?crawled|maps?\s+listing)\b[^.;]*',
         '', text, flags=_re.I)
+    # Belt-and-suspenders: if a bare ", no" or "; no" somehow survives to
+    # end-of-string (period) after the above, kill it.  Covers e.g. the
+    # "8 days old, no Places match yet." pattern where the age chunk was
+    # stripped first and the comma+no remains as a fragment.
+    text = _re.sub(r'[;,]\s+no\s*\.?\s*$', '.', text, flags=_re.I)
     # 11) Em/en-dashes → comma (we don't ship them).
     text = _re.sub(r'\s*[—–]\s*', ', ', text)
     # 12) Cleanup: stranded punctuation, dangling connectives, sentence joins.
