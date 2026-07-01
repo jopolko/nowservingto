@@ -246,12 +246,13 @@ def url_is_alive(url):
     if h is not None:
         return bool(h.get('ok'))
     # Not in health cache — live probe instead of optimistic default.
-    # Mirrors the ok/dead logic in check_link_health.py (minus the Haiku
-    # content-sniff, which is too expensive to run at inject time).
+    # Only 2xx/3xx are linkable. check_link_health.py uses soft-fail codes
+    # (403/405/429) as ok because it pairs them with a Haiku content sniff;
+    # without that sniff we can't confirm the page is the right business, so
+    # any non-2xx/3xx response is treated as dead here. Sites that block HEAD
+    # probes legitimately will be picked up by check_link_health.py next run.
     from urllib.request import Request as _Req, urlopen as _urlopen
-    from urllib.error import HTTPError as _HTTPError
     import ssl as _ssl
-    _SOFT_FAIL = {401, 403, 405, 429, 451, 503}  # alive but blocking our probe
     ok = False
     try:
         req = _Req(url, method='HEAD',
@@ -259,10 +260,8 @@ def url_is_alive(url):
         ctx = _ssl.create_default_context()
         with _urlopen(req, timeout=6, context=ctx) as resp:
             ok = resp.status < 400
-    except _HTTPError as e:
-        ok = e.code in _SOFT_FAIL  # 404/500/etc → dead; 403/405/429 → alive
     except Exception:
-        ok = False                  # DNS failure, connection refused, timeout → dead
+        ok = False  # HTTPError (4xx/5xx), DNS failure, timeout → not linkable
     URL_HEALTH_CACHE[url] = {'ok': ok, 'checked_at': 'inject_live_probe'}
     return ok
 
