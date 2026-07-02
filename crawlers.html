@@ -373,8 +373,9 @@ fetch('/data/bot_traffic.json?v=' + Date.now()).then(r => r.json()).then(data =>
  const GRP_COLOR = {'grp-search':'#0e7186','grp-ai':'#7c3aed','grp-other':'#b45309'};
  function barsHtml(list, isOther, color) {
  if (!list || !list.length) return '';
- const maxH = Math.max(...list.map(b => b.hits7d || 0), 1);
- return list.map(b => {
+ const sorted = [...list].sort((a, b) => (b.hits7d || 0) - (a.hits7d || 0));
+ const maxH = Math.max(...sorted.map(b => b.hits7d || 0), 1);
+ return sorted.map(b => {
  const pct = ((b.hits7d || 0) / maxH * 100).toFixed(1);
  const label = (isOther && b.operator) ? `${b.bot} \xb7 ${b.operator}` : b.bot;
  return `<div class="bar-h bar-h-bot"><span class="bh-label" title="${label}">${label}</span><div class="bh-track"><div class="bh-fill" style="width:${pct}%;background:${color}"></div></div><span class="bh-val">${fmt(b.hits7d)}</span></div>`;
@@ -383,14 +384,15 @@ fetch('/data/bot_traffic.json?v=' + Date.now()).then(r => r.json()).then(data =>
  function grp(title, list, isOther, cls) {
  if (!list || !list.length) return '';
  const color = GRP_COLOR[cls] || 'var(--ink)';
+ const sorted = [...list].sort((a, b) => (b.hits7d || 0) - (a.hits7d || 0));
  const LIMIT = 10;
- if (isOther && list.length > LIMIT) {
- const shownHtml = barsHtml(list.slice(0, LIMIT), isOther, color);
- const hiddenHtml = barsHtml(list.slice(LIMIT), isOther, color);
+ if (isOther && sorted.length > LIMIT) {
+ const shownHtml = barsHtml(sorted.slice(0, LIMIT), isOther, color);
+ const hiddenHtml = barsHtml(sorted.slice(LIMIT), isOther, color);
  const n = list.length;
  return `<div class="crawl-group${cls?' '+cls:''}"><h3>${title}</h3>${shownHtml}<div id="other-bots-more" style="display:none">${hiddenHtml}</div><div class="expand-row"><button class="expand-btn" onclick="document.getElementById('other-bots-more').style.display='block';this.parentNode.style.display='none'">Show all ${n} crawlers &#9660;</button></div></div>`;
  }
- return `<div class="crawl-group${cls?' '+cls:''}"><h3>${title}</h3>${barsHtml(list, isOther, color)}</div>`;
+ return `<div class="crawl-group${cls?' '+cls:''}"><h3>${title}</h3>${barsHtml(sorted, isOther, color)}</div>`;
  }
  const el = document.getElementById('crawl-detail');
  if (!el) return;
