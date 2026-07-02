@@ -61,6 +61,7 @@ CACHE_DIR = '/var/www/html/nowservingto/tools/cache'
 RANGES_CACHE = CACHE_DIR + '/crawler_stats_ranges.json'
 RDNS_CACHE = CACHE_DIR + '/crawler_stats_rdns.json'
 RANGE_TTL_DAYS = 7
+WINDOW_DAYS = 7  # rolling log window for all charts and totals
 
 AI = [
     ('OAI-SearchBot','ChatGPT search'),('ChatGPT-User','ChatGPT user-fetch'),('GPTBot','OpenAI GPTBot'),
@@ -127,7 +128,19 @@ RDNS_PATTERN = {
 PROBE = re.compile(r'\.git|\.env|/storage/|/vendor/|/wp-|wp-login|wp-admin|laravel\.log|phpinfo|/api/|\.sql|/backup|/\.aws|/\.ssh|/config\.|/\.vscode|/owa/|/cgi-bin|/phpmyadmin|/\.DS_Store|/server-status|/actuator',re.I)
 LOG_LINE_RE = re.compile(
     r'\S+ \S+ \S+ \[(?P<time>[^\]]+)\] "\S+ (?P<path>\S+)[^"]*" (?P<status>\d+) \S+ '
-    r'"[^"]*" "(?P<ua>[^"]*)"(?: "(?P<cfip>[^"]*)")?')
+    r'"(?P<ref>[^"]*)" "(?P<ua>[^"]*)"(?: "(?P<cfip>[^"]*)")?')
+
+# AI platforms that send human click-through referrers
+AI_REFERRERS = {
+    'chatgpt.com':           'ChatGPT',
+    'chat.openai.com':       'ChatGPT',
+    'perplexity.ai':         'Perplexity',
+    'gemini.google.com':     'Gemini',
+    'claude.ai':             'Claude.ai',
+    'copilot.microsoft.com': 'Copilot',
+    'bing.com':              'Copilot/Bing',
+}
+GEO_CACHE_PATH = CACHE_DIR + '/ai_referrals_geo.json'
 MON = {m:i+1 for i,m in enumerate(['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'])}
 IGNORE_PATH = re.compile(r'\.(css|js|png|jpe?g|gif|webp|svg|ico|woff2?|ttf|map|xml|txt|json)(\?|$)|/favicon|/assets/', re.I)
 
@@ -230,6 +243,7 @@ def collect():
     sc = {'total':0,'paths':collections.Counter(),'spoofed':0,'spoof_ua':collections.Counter()}
     nets = load_ranges(); rc = _load_json(RDNS_CACHE, {}); memo = {}
     total = 0; first = last = None
+    cutoff = (dt.date.today() - dt.timedelta(days=WINDOW_DAYS)).isoformat()
     def op(p): return gzip.open(p,'rt',errors='replace') if p.endswith('.gz') else open(p,errors='replace')
     for fp in LOGS:
         try: f = op(fp)
@@ -244,6 +258,8 @@ def collect():
                 t = m.group('time'); day = ''
                 if t and len(t) >= 11:
                     day = f"{t[7:11]}-{MON.get(t[3:6],0):02d}-{t[0:2]}"
+                    if day < cutoff:
+                        continue
                     first = min(first or day, day); last = max(last or day, day)
                 botlab = classify(ua, AI) or classify(ua, SEARCH)
                 if PROBE.search(path):
@@ -276,6 +292,67 @@ def collect():
         os.makedirs(CACHE_DIR, exist_ok=True); open(RDNS_CACHE, 'w').write(json.dumps(rc))
     except Exception: pass
     return bots, pages, sc, total, first, last
+
+
+def collect_ai_referrals():
+    """Return list of human click-throughs from AI platforms, newest first.
+    Skips bot UAs. Only looks at entries with a real IP (cfip field present)."""
+    BOT_TOKENS = [t for t, _ in AI + SEARCH]
+    events = []
+    def op(p): return gzip.open(p, 'rt', errors='replace') if p.endswith('.gz') else open(p, errors='replace')
+    for fp in LOGS:
+        try: f = op(fp)
+        except Exception: continue
+        with f:
+            for ln in f:
+                m = LOG_LINE_RE.search(ln)
+                if not m: continue
+                ua = m.group('ua')
+                if any(t.lower() in ua.lower() for t in BOT_TOKENS): continue
+                ref = m.group('ref') or ''
+                if not ref or ref == '-': continue
+                ref_host = re.sub(r'^https?://([^/?#]+).*', r'\1', ref).lower().lstrip('www.')
+                platform = None
+                for dom, name in AI_REFERRERS.items():
+                    if ref_host == dom or ref_host.endswith('.' + dom):
+                        platform = name; break
+                if not platform: continue
+                path = m.group('path').split('?', 1)[0]
+                if IGNORE_PATH.search(path): continue
+                # drop scanner bait: env files, login pages, admin panels, wp paths, encoded traversals, Java probes
+                if re.search(r'(?:\.env|wp-|/login|/admin|\.sql|\.php|/xmlrpc|/proc/|%2e%2e|%252e|%c0%ae|WEB-INF|\.properties|/wordpress/|/site/$)', path, re.I): continue
+                cfip = m.group('cfip') or ''
+                t = m.group('time')
+                day = f"{t[7:11]}-{MON.get(t[3:6],0):02d}-{t[0:2]}" if t and len(t) >= 11 else ''
+                events.append({'day': day, 'platform': platform, 'path': path, 'ip': cfip, 'ref': ref})
+    events.sort(key=lambda e: e['day'], reverse=True)
+    return events
+
+
+def geo_lookup(ips):
+    """Batch-lookup IPs at ip-api.com; returns {ip: {country, countryCode, city, org}} from cache."""
+    cache = _load_json(GEO_CACHE_PATH, {})
+    pending = [ip for ip in ips if ip and ip not in cache]
+    if pending:
+        print(f'  geo-lookup: {len(pending)} new IPs via ip-api.com...')
+        for i in range(0, len(pending), 100):
+            chunk = pending[i:i + 100]
+            body = [{'query': ip, 'fields': 'status,query,country,countryCode,city,org,isp'} for ip in chunk]
+            req = urllib.request.Request('http://ip-api.com/batch',
+                data=json.dumps(body).encode(), headers={'Content-Type': 'application/json'}, method='POST')
+            try:
+                with urllib.request.urlopen(req, timeout=15) as r:
+                    for res in json.loads(r.read()):
+                        ip = res.get('query', '')
+                        cache[ip] = ({'country': res.get('country',''), 'countryCode': res.get('countryCode',''),
+                                      'city': res.get('city',''), 'org': res.get('org') or res.get('isp','')}
+                                     if res.get('status') == 'success' else None)
+            except Exception as e:
+                print(f'  ip-api batch failed: {e}')
+        try:
+            os.makedirs(CACHE_DIR, exist_ok=True); open(GEO_CACHE_PATH, 'w').write(json.dumps(cache))
+        except Exception: pass
+    return cache
 
 
 # ── styling + client layer (shared by render_page) ────────────────────────
@@ -658,8 +735,9 @@ def render_page(data, nav, srv):
             '<ul class="blind">' + srv['blind_rows'] + '</ul>\n'
             '<h2>Freshness: how fast AI picks up updates</h2>\n'
             '<table class="cs"><thead><tr><th>Page</th><th>Updated</th><th>First AI fetch</th><th class="n">Lag</th></tr></thead><tbody>' + srv['fresh_rows'] + '</tbody></table>\n'
+            + srv['referrals']
             # ── who is crawling: search engines + verification ──
-            '<h2>Who is crawling</h2>\n'
+            + '<h2>Who is crawling</h2>\n'
             '<div class="grid2">\n'
             '<div class="panelbox">\n'
             '<h3>Search engines</h3>\n<p class="sub">Classic index crawlers, by hits.</p>\n'
@@ -692,6 +770,7 @@ def render_page(data, nav, srv):
                 '</div>\n'
                 '</div>\n'
                 '<details class="raw"><summary>Full probed-path table</summary>\n' + srv['scan'] + '\n</details>\n') if srv['scanner_total'] else '')
+            + srv.get('ip_intel', '')
             + srv.get('cost', '')
             + (('<p class="refnote" style="font:400 13px/1.6 var(--sans);color:var(--muted);margin-top:1.6em">Verified counts cover traffic since real-IP logging was enabled, filling in daily. Log retention is ~2 weeks, so "blind spots" means "not fetched recently." The playbook: <a href="/geo-field-manual/">GEO Field Manual</a>, and the answers it produces: <a href="/geo-answers/">GEO answers</a>.</p>\n')
                if CFG['chrome'] == 'jo' else
@@ -705,6 +784,9 @@ def render_page(data, nav, srv):
 # ── data.json + html ──────────────────────────────────────────────────────
 def build():
     bots, pages, sc, total, first, last = collect()
+    referrals = collect_ai_referrals()
+    ref_ips = list({e['ip'] for e in referrals if e['ip']})
+    geo = geo_lookup(ref_ips) if ref_ips else {}
     sm = load_sitemap()
     ai_total = sum(v['hits'] for k, v in bots.items() if k[0] == 'ai')
     se_total = sum(v['hits'] for k, v in bots.items() if k[0] == 'se')
@@ -738,7 +820,7 @@ def build():
         typ = TYPE.get(k[1], '')
         for d2, c in v['days'].items():
             daymap[d2][typ] += c
-    seqdays = sorted(daymap)[-14:]
+    seqdays = sorted(daymap)[-WINDOW_DAYS:]
     series = [dict({'d': d2}, **{tp: daymap[d2].get(tp, 0) for tp in ('live-user', 'ai-search', 'ai-training', 'search')}) for d2 in seqdays]
 
     # weekly movers: activity in the most recent 7 days of the window (drives the
@@ -921,13 +1003,108 @@ def build():
         except Exception:
             return ''
 
+    FLAG = {'US':'🇺🇸','CA':'🇨🇦','GB':'🇬🇧','AU':'🇦🇺','DE':'🇩🇪','FR':'🇫🇷','IN':'🇮🇳','JP':'🇯🇵',
+            'NL':'🇳🇱','SE':'🇸🇪','NO':'🇳🇴','BR':'🇧🇷','MX':'🇲🇽','IT':'🇮🇹','ES':'🇪🇸','KR':'🇰🇷',
+            'SG':'🇸🇬','ZA':'🇿🇦','NG':'🇳🇬','PH':'🇵🇭','PK':'🇵🇰','BD':'🇧🇩','PL':'🇵🇱','UA':'🇺🇦',
+            'RO':'🇷🇴','NZ':'🇳🇿','IE':'🇮🇪','PT':'🇵🇹','AR':'🇦🇷','CL':'🇨🇱','CO':'🇨🇴','PE':'🇵🇪',
+            'TR':'🇹🇷','IL':'🇮🇱','SA':'🇸🇦','AE':'🇦🇪','EG':'🇪🇬','KE':'🇰🇪','GH':'🇬🇭',}
+
+    def referral_section():
+        if not referrals: return ''
+        # dedupe: same IP+path within same day counts once
+        seen = set(); rows = []
+        for e in referrals:
+            key = (e['day'], e['ip'] or e['ref'], e['path'])
+            if key in seen: continue
+            seen.add(key)
+            g = geo.get(e['ip']) or {} if e['ip'] else {}
+            cc = g.get('countryCode', '')
+            flag = FLAG.get(cc, '')
+            country = g.get('country', cc)
+            city = g.get('city', '')
+            org = g.get('org', '')
+            # strip AS number prefix ("AS12345 Comcast" -> "Comcast")
+            org = re.sub(r'^AS\d+\s+', '', org)
+            location = ', '.join(filter(None, [city, country]))
+            rows.append((e['day'], e['platform'], e['path'], flag, location, org))
+            if len(rows) >= 100: break
+        if not rows: return ''
+        # last-7-days subset
+        import datetime as _dt
+        cutoff = (_dt.date.today() - _dt.timedelta(days=7)).isoformat()
+        week_rows = [r for r in rows if r[0] >= cutoff]
+        week_by_platform = collections.Counter(r[1] for r in week_rows)
+        # summary stats for the heading
+        by_platform = collections.Counter(r[1] for r in rows)
+        top = by_platform.most_common(1)[0]
+        summary = f'{len(rows)} click-through{"s" if len(rows)!=1 else ""} from AI platforms'
+        if len(by_platform) > 1:
+            summary += f' — {top[0]} leads with {top[1]}'
+        week_detail = ', '.join(f'{n} {p}' for p, n in week_by_platform.most_common()) if week_by_platform else 'none'
+        week_total = sum(week_by_platform.values())
+        tr = ''.join(
+            f'<tr>'
+            f'<td class="d">{html.escape(r[0])}</td>'
+            f'<td><b>{html.escape(r[1])}</b></td>'
+            f'<td class="p"><a href="{html.escape(r[2])}">{html.escape(r[2][:50])}</a></td>'
+            f'<td>{html.escape(r[3])} {html.escape(r[4])}</td>'
+            f'<td class="eng">{html.escape(r[5][:40])}</td>'
+            f'</tr>'
+            for r in rows)
+        return (f'<h2>AI referrals: humans who clicked through</h2>\n'
+                f'<p>{html.escape(summary)}. <b>Last 7 days: {week_total} ({html.escape(week_detail)})</b>. '
+                f'These are real visitors whose browser sent a <code>Referer</code> '
+                f'header from an AI platform — proof the citation converted to a visit. '
+                f'Country and ISP come from the real visitor IP (via Cloudflare).</p>\n'
+                f'<table class="cs"><thead><tr>'
+                f'<th>Date</th><th>Platform</th><th>Page</th><th>Location</th><th>ISP / Org</th>'
+                f'</tr></thead><tbody>{tr}</tbody></table>\n')
+
+    def ip_intel_panel():
+        intel_path = os.path.join(CFG['outdir'], 'ip_intel.json')
+        try:
+            intel = json.load(open(intel_path))
+        except (FileNotFoundError, json.JSONDecodeError):
+            return ''
+        cats = intel.get('categories', [])
+        total = intel.get('totalIPs', 0)
+        gen = intel.get('generatedAt', '')[:10]
+        if not cats or not total:
+            return ''
+        CAT_COLOR = {'Rank-tracking / residential proxy': '#e84e3a',
+                     'Cloud / VPS scraper': '#f59e0b',
+                     'AI / SEO crawler (verified)': '#7c3aed',
+                     'Real visitor (residential ISP)': '#10b981'}
+        bars = ''
+        for c in cats:
+            pct = c.get('pct', 0)
+            color = CAT_COLOR.get(c['label'], '#9ca3af')
+            orgs = ', '.join(c.get('orgs', [])[:3])
+            orgs_note = f' <span style="font-weight:400;color:#888">({orgs})</span>' if orgs else ''
+            bars += (f'<div style="display:grid;grid-template-columns:200px 1fr 44px;align-items:center;'
+                     f'gap:10px;padding:6px 0;border-top:1px dashed var(--line,#e0ddd6)">'
+                     f'<span style="font:600 12px/1.3 var(--sans,sans-serif);color:var(--ink2,#333)">'
+                     f'{html.escape(c["label"])}{orgs_note}</span>'
+                     f'<div style="background:#f0ede6;border-radius:4px;height:10px;overflow:hidden">'
+                     f'<div style="width:{pct}%;height:100%;background:{color};border-radius:4px"></div></div>'
+                     f'<span style="font:700 12px/1 monospace;text-align:right">{pct}%</span></div>')
+        narrative = html.escape(intel.get('narrative', ''))
+        narrative_html = f'<p style="font:400 13.5px/1.65 var(--sans,sans-serif);color:var(--ink2,#333);background:var(--bg,#f8f5ec);border-radius:8px;border-left:3px solid var(--line,#e0ddd6);padding:14px 16px;margin:12px 0 0">{narrative}</p>' if narrative else ''
+        return (f'<h2>Who\'s actually visiting</h2>\n'
+                f'<p>Real IP analysis: ip-api.com org lookup on non-bot request IPs, classified by network type. '
+                f'{total:,} unique IPs in the past 7 days. Updated weekly (Sundays) &middot; data as of {html.escape(gen)}.</p>\n'
+                f'<div style="background:var(--panel,#fff);border:1px solid var(--line,#e0ddd6);border-radius:12px;padding:20px;margin:14px 0">'
+                f'{bars}{narrative_html}</div>\n')
+
     srv = {'cards': cards(), 'bot_ai': bot_rows('ai'), 'bot_se': bot_rows('se'), 'cost': cost_panel(),
+           'ip_intel': ip_intel_panel(),
            'top_pages': top_pages, 'blind_rows': blind_rows, 'fresh_rows': fresh_rows,
            'daily_fallback': daily_fallback(), 'eng_fallback': eng_fallback(),
            'mix_fallback': mix_fallback(), 'scan': scan, 'live_desk': live_desk(),
            'se_fallback': se_fallback(), 'reality_fallback': reality_fallback(),
            'spath_fallback': spath_fallback(), 'scat_fallback': scat_fallback(),
-           'scanner_total': sc['total'], 'scanner_spoofed': sc['spoofed']}
+           'scanner_total': sc['total'], 'scanner_spoofed': sc['spoofed'],
+           'referrals': referral_section()}
 
     open(os.path.join(OUTDIR, CFG['outfile']), 'w').write(render_page(data, nav, srv))
     print(f"wrote observatory: {len(ai_pages)} AI-fetched pages, {len(blind)} blind spots, {vok}/{vtot} verified, {sc['total']:,} scanner probes")

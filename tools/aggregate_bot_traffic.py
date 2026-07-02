@@ -551,6 +551,7 @@ def main():
     exploit_hits_30d = 0
     exploit_hits_7d = 0
     exploit_unique = set()
+    exploit_unique_7d = set()
     exploit_path_counts = defaultdict(int)
     # IP collection: for legit bots we'll sample top IPs for verification;
     # for exploits we'll aggregate by host label so the bot-farm section
@@ -594,6 +595,7 @@ def main():
                 exploit_hits_30d += 1
                 if t >= cutoff_7d:
                     exploit_hits_7d += 1
+                    exploit_unique_7d.add(path)
                 exploit_unique.add(path)
                 # Strip query string off so /.env?cb=123 buckets with /.env
                 exploit_path_counts[path.split('?', 1)[0]] += 1
@@ -802,6 +804,7 @@ def main():
             'hits30d': exploit_hits_30d,
             'hits7d': exploit_hits_7d,
             'uniquePaths30d': len(exploit_unique),
+            'uniquePaths7d': len(exploit_unique_7d),
             'topPaths': sorted(
                 [{'path': p, 'hits': n} for p, n in exploit_path_counts.items()],
                 key=lambda r: r['hits'], reverse=True,

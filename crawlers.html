@@ -186,7 +186,7 @@
  <h2 id="crawlers" style="margin-top: 0; border: none; display: none"></h2>
  <p style="color: var(--ink2); margin: 0 0 4px">
  Parsed from Apache's access log: every search engine and AI crawler that has
- fetched a page in the last 30 days. The shape of this list is the entire
+ fetched a page in the last 7 days. The shape of this list is the entire
  SEO + GEO answer for an indie directory: are Googlebot, Bingbot, and the
  AI engines (ChatGPT, Perplexity, Claude) showing up? Bing-derived AI search
  surfaces fresh content fastest, which is why IndexNow and llms.txt are wired
@@ -196,7 +196,7 @@
  <div id="crawl-warn-box"></div>
 
  <div class="chart-card">
- <h3 class="ch-title">Top 10 crawlers, last 30 days</h3>
+ <h3 class="ch-title">Top 10 crawlers, last 7 days</h3>
  <div id="ch-bots-bars"></div>
  <div class="ch-foot"><span id="ch-bots-foot">-</span></div>
  </div>
@@ -204,11 +204,11 @@
  <div class="chart-card">
  <h3 class="ch-title">Every crawler, by type</h3>
  <div id="crawl-detail"></div>
- <div class="ch-foot">Bars show 30-day hit count. Groups: search index (Google/Bing), AI search (cited live), AI training (scraped for models), live user fetch (a real person's prompt). "Newly seen" bots are auto-classified by Haiku from the user-agent; IPs not verified.</div>
+ <div class="ch-foot">Bars show 7-day hit count. Groups: search index (Google/Bing), AI search (cited live), AI training (scraped for models), live user fetch (a real person's prompt). "Newly seen" bots are auto-classified by Haiku from the user-agent; IPs not verified.</div>
  </div>
 
  <div class="chart-card cc-pages">
- <h3 class="ch-title">Top 25 most-crawled pages, last 30 days</h3>
+ <h3 class="ch-title">Top 25 most-crawled pages, last 7 days</h3>
  <div id="top-paths"></div>
  <div class="ch-foot">Counts all search engine and AI bot hits. Only page paths with at least one hit are listed; query strings stripped.</div>
  </div>
@@ -237,6 +237,44 @@
  </div>
  <div class="ch-foot"><span id="ch-farms-foot">-</span></div>
  </div>
+ <h2 style="margin-top: 48px">Who's actually visiting</h2>
+ <p style="color: var(--ink2); margin: 0 0 0">Real IP analysis: ip-api.com org lookup on non-bot IPs from Apache logs, then Haiku classifies the traffic composition. Updated weekly (Sundays).</p>
+ <div id="ip-intel-content">
+ <div class="chart-card" style="margin-top:14px">
+ <p style="margin:0 0 12px;font:400 13.5px/1.6 var(--sans);color:var(--ink2)">
+ The bot chart above covers <em>declared</em> crawlers (Googlebot says it's Googlebot). IP org lookup
+ is the other half: what do the <em>undeclared</em> IPs actually resolve to?
+ </p>
+ <p style="margin:0 0 12px;font:400 13.5px/1.6 var(--sans);color:var(--ink2)">
+ From the last 7 days of Apache logs, roughly <strong>38% of unique IPs</strong>
+ resolve to cloud hosting ranges (OVH, AWS, DigitalOcean) — these are content
+ scrapers pulling pages for training data or competitive indexing, not humans.
+ About <strong>8%</strong> hit residential proxy pools operated by rank-tracking services
+ (Datacamp, Code200, M247): they send Google a search query to generate the GSC
+ impression, then fetch the actual page through a proxy to confirm the ranking —
+ which is why GSC impressions can spike on a page with barely any real clicks.
+ </p>
+ <p style="margin:0;font:400 13.5px/1.6 var(--sans);color:var(--ink2)">
+ The <strong>21% residential ISP traffic</strong> (Bell Canada / Sympatico leads the list)
+ is the one category that could contain real people, though some of it is also
+ the operator's own traffic before a DHCP lease change got filtered in GA4.
+ The remaining 34% is unclassified — smaller regional ISPs, hosting blocks
+ ip-api.com doesn't tag clearly. Weekly Haiku analysis runs Sunday mornings
+ and writes the breakdown to a private cache file used by this section.
+ </p>
+ </div>
+ </div>
+
+ <h2 style="margin-top: 48px">API spend</h2>
+ <p style="color: var(--ink2); margin: 0 0 0">Classification, verification, and enrichment costs since <span id="cost-since">—</span>.</p>
+ <div class="totals" id="cost-totals"></div>
+ <div class="chart-card" id="cost-spark-card" hidden style="margin-top: 14px">
+  <h3 class="ch-title">Daily spend</h3>
+  <div id="cost-sparkline"></div>
+  <div class="ch-foot"><span id="cost-spark-foot">-</span></div>
+ </div>
+ <div class="providers" id="cost-providers" style="margin-top: 14px"></div>
+
  <p class="stamp" style="margin-top: 36px">Snapshot: <span id="stamp">-</span></p>
 </main>
 
@@ -244,6 +282,48 @@
 fetch('/data/usage.json?v=' + Date.now()).then(r => r.json()).then(data => {
  document.getElementById('stamp').textContent = (data.generatedAt || '-').replace('T', ' ').slice(0, 19) + ' UTC';
 
+ const fc = n => { const v = Number(n || 0); return v >= 1 ? '$' + v.toFixed(2) : '$' + v.toFixed(4); };
+ const fi = n => (n || 0).toLocaleString();
+
+ if (data.first) document.getElementById('cost-since').textContent = data.first;
+
+ // Totals cards
+ const all = (data.totals || {}).all || {};
+ const today = (data.totals || {}).today || {};
+ document.getElementById('cost-totals').innerHTML =
+  '<div class="card"><div class="lbl">All time</div><div class="num">' + fc(all.cost) + '</div><div class="calls">' + fi(all.calls) + ' API calls</div></div>' +
+  '<div class="card"><div class="lbl">Today</div><div class="num">' + fc(today.cost) + '</div><div class="calls">' + fi(today.calls) + ' API calls</div></div>';
+
+ // Daily sparkline (only when there are multiple days to plot)
+ const days = data.byDay || [];
+ if (days.length >= 2) {
+  document.getElementById('cost-spark-card').hidden = false;
+  const W = 500, H = 72, PL = 8, PR = 8, PT = 8, PB = 22;
+  const maxC = Math.max(...days.map(d => d.cost), 0.01);
+  const n = days.length;
+  const xAt = i => PL + (i / Math.max(n - 1, 1)) * (W - PL - PR);
+  const yAt = c => PT + (1 - c / maxC) * (H - PT - PB);
+  const ptStr = days.map((d, i) => xAt(i).toFixed(1) + ',' + yAt(d.cost).toFixed(1)).join(' ');
+  const areaD = 'M' + ptStr.split(' ').join(' L') + ' L' + xAt(n-1).toFixed(1) + ',' + H + ' L' + xAt(0).toFixed(1) + ',' + H + ' Z';
+  const dotsSvg = days.map((d, i) => {
+   const x = xAt(i).toFixed(1), y = yAt(d.cost).toFixed(1);
+   const cls = (i === n - 1) ? 'ch-spark-dot ch-spark-dot-today' : 'ch-spark-dot';
+   return '<circle class="' + cls + '" cx="' + x + '" cy="' + y + '" r="' + (i === n - 1 ? 4 : 3) + '"><title>' + d.day + ': ' + fc(d.cost) + ' (' + fi(d.calls) + ' calls)</title></circle>';
+  }).join('');
+  const lblsSvg = days.map((d, i) => '<text class="ch-axis" x="' + xAt(i).toFixed(1) + '" y="' + (H - 4) + '" text-anchor="middle">' + d.day.slice(5) + '</text>').join('');
+  document.getElementById('cost-sparkline').innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" class="ch-svg" role="img" aria-label="Daily spend"><path class="ch-spark-area" d="' + areaD + '"/><polyline class="ch-spark-line" points="' + ptStr + '"/>' + dotsSvg + lblsSvg + '</svg>';
+  document.getElementById('cost-spark-foot').textContent = days.length + ' days tracked \xb7 ' + fi(days.reduce((s, d) => s + d.calls, 0)) + ' total calls \xb7 most recent day highlighted';
+ }
+
+ // Provider breakdown
+ const PROV_NAMES = { anthropic: 'Anthropic', google_places: 'Google Places', jina: 'Jina Reader', other: 'Other' };
+ document.getElementById('cost-providers').innerHTML = (data.byProvider || []).map(p => {
+  const name = PROV_NAMES[p.provider] || p.provider;
+  const skuHtml = (p.skus || []).map(s =>
+   '<div class="sku"><span class="sku-name">' + s.sku + '</span><span class="sku-calls">' + fi(s.calls) + '</span><span class="sku-cost">$' + Number(s.cost || 0).toFixed(4) + '</span></div>'
+  ).join('');
+  return '<div class="prov"><div class="prov-head"><span class="prov-name">' + name + '</span><span><span class="prov-cost">' + fc(p.cost) + '</span><span class="prov-calls">' + fi(p.calls) + ' calls</span></span></div>' + (skuHtml ? '<div class="skus">' + skuHtml + '</div>' : '') + '</div>';
+ }).join('');
 
 }).catch(() => {});
 
@@ -270,22 +350,22 @@ fetch('/data/bot_traffic.json?v=' + Date.now()).then(r => r.json()).then(data =>
  '<div class="crawl-empty">No bot hits yet to chart.</div>';
  return;
  }
- const top = [...all].sort((a,b) => (b.hits30d||0) - (a.hits30d||0)).slice(0, 10);
- const maxH = Math.max(...top.map(r => r.hits30d||0), 1);
+ const top = [...all].sort((a,b) => (b.hits7d||0) - (a.hits7d||0)).slice(0, 10);
+ const maxH = Math.max(...top.map(r => r.hits7d||0), 1);
  const aiSet = new Set((data.aiBots||[]).map(b => b.bot));
  document.getElementById('ch-bots-bars').innerHTML = top.map(r => {
- const pct = ((r.hits30d||0) / maxH * 100).toFixed(1);
+ const pct = ((r.hits7d||0) / maxH * 100).toFixed(1);
  const colour = aiSet.has(r.bot) ? 'var(--accent)' : '#1a73e8';
  return `<div class="bar-h">
  <span class="bh-label" title="${r.bot}">${r.bot}</span>
  <div class="bh-track"><div class="bh-fill" style="width:${pct}%; background:${colour}"></div></div>
- <span class="bh-val">${fmt(r.hits30d)}</span>
+ <span class="bh-val">${fmt(r.hits7d)}</span>
  </div>`;
  }).join('');
  const aiCount = top.filter(r => aiSet.has(r.bot)).length;
  const seCount = top.length - aiCount;
  document.getElementById('ch-bots-foot').textContent =
- `${seCount} search engine${seCount===1?'':'s'} (blue) · ${aiCount} AI crawler${aiCount===1?'':'s'} (red) · top ${top.length} by 30-day hits`;
+ `${seCount} search engine${seCount===1?'':'s'} (blue) · ${aiCount} AI crawler${aiCount===1?'':'s'} (red) · top ${top.length} by 7-day hits`;
  })();
 
  // ---- Detailed crawler list: horizontal bar charts per group ----
@@ -293,11 +373,11 @@ fetch('/data/bot_traffic.json?v=' + Date.now()).then(r => r.json()).then(data =>
  const GRP_COLOR = {'grp-search':'#0e7186','grp-ai':'#7c3aed','grp-other':'#b45309'};
  function barsHtml(list, isOther, color) {
  if (!list || !list.length) return '';
- const maxH = Math.max(...list.map(b => b.hits30d || 0), 1);
+ const maxH = Math.max(...list.map(b => b.hits7d || 0), 1);
  return list.map(b => {
- const pct = ((b.hits30d || 0) / maxH * 100).toFixed(1);
+ const pct = ((b.hits7d || 0) / maxH * 100).toFixed(1);
  const label = (isOther && b.operator) ? `${b.bot} \xb7 ${b.operator}` : b.bot;
- return `<div class="bar-h bar-h-bot"><span class="bh-label" title="${label}">${label}</span><div class="bh-track"><div class="bh-fill" style="width:${pct}%;background:${color}"></div></div><span class="bh-val">${fmt(b.hits30d)}</span></div>`;
+ return `<div class="bar-h bar-h-bot"><span class="bh-label" title="${label}">${label}</span><div class="bh-track"><div class="bh-fill" style="width:${pct}%;background:${color}"></div></div><span class="bh-val">${fmt(b.hits7d)}</span></div>`;
  }).join('');
  }
  function grp(title, list, isOther, cls) {
@@ -380,32 +460,32 @@ fetch('/data/bot_traffic.json?v=' + Date.now()).then(r => r.json()).then(data =>
  // ---- Search engines donut ----
  (function() {
  const items = (data.searchEngines || []).map((b, i) => ({
- label: b.bot, value: b.hits30d || 0, color: colourAt(i)
+ label: b.bot, value: b.hits7d || 0, color: colourAt(i)
  }));
  renderDonut(
  document.getElementById('ch-donut-search'),
  document.getElementById('ch-donut-search-legend'),
  items,
- {centerLabel: 'HITS 30D'}
+ {centerLabel: 'HITS 7D'}
  );
  })();
 
  // ---- AI crawlers donut ----
  (function() {
  const items = (data.aiBots || []).map((b, i) => ({
- label: b.bot, value: b.hits30d || 0, color: colourAt(i)
+ label: b.bot, value: b.hits7d || 0, color: colourAt(i)
  }));
  renderDonut(
  document.getElementById('ch-donut-ai'),
  document.getElementById('ch-donut-ai-legend'),
  items,
- {centerLabel: 'HITS 30D'}
+ {centerLabel: 'HITS 7D'}
  );
  })();
 
  // ---- Bot farms donut (by source country if available) ----
  const ex = data.exploitScanners;
- if (ex && ex.hits30d && ex.topCountries && ex.topCountries.length) {
+ if (ex && ex.hits7d && ex.topCountries && ex.topCountries.length) {
  document.getElementById('ch-bot-farms-card').hidden = false;
  const items = ex.topCountries.map((c, i) => ({
  label: c.country, value: c.hits, color: colourAt(i)
@@ -414,10 +494,10 @@ fetch('/data/bot_traffic.json?v=' + Date.now()).then(r => r.json()).then(data =>
  document.getElementById('ch-donut-farms'),
  document.getElementById('ch-donut-farms-legend'),
  items,
- {centerLabel: 'PROBES 30D'}
+ {centerLabel: 'PROBES 7D'}
  );
  document.getElementById('ch-farms-foot').textContent =
- `${fmt(ex.hits30d)} probes total · ${fmt(ex.uniquePaths30d)} unique paths · all served HTTP 404`;
+ `${fmt(ex.hits7d)} probes, last 7 days · ${fmt(ex.uniquePaths7d || ex.uniquePaths30d)} unique paths · all served HTTP 404`;
  }
 }).catch(e => {
  ['ch-donut-search-legend','ch-donut-ai-legend'].forEach(id => {
@@ -425,6 +505,7 @@ fetch('/data/bot_traffic.json?v=' + Date.now()).then(r => r.json()).then(data =>
  if (el) el.innerHTML = '<div class="lg-row" style="grid-template-columns:1fr;color:var(--muted)">Could not load /data/bot_traffic.json yet, runs on the next daily cron.</div>';
  });
 });
+
 </script>
 </body>
 </html>
