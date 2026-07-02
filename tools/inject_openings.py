@@ -5780,6 +5780,7 @@ _district_picker_html = (
 _nav_subs = [
     (r'(<!-- ALL-CUISINES-START -->).*?(<!-- ALL-CUISINES-END -->)', _all_cuisines_html),
     (r'(<!-- ALL-DISTRICTS-START -->).*?(<!-- ALL-DISTRICTS-END -->)', _all_districts_html),
+    (r'(<!-- ALL-NEIGHBORHOODS-START -->).*?(<!-- ALL-NEIGHBORHOODS-END -->)', _all_neighborhoods_html),
     (r'(<!-- CUISINE-DROPDOWN-START -->).*?(<!-- CUISINE-DROPDOWN-END -->)', _cuisine_picker_html),
     (r'(<!-- DISTRICT-DROPDOWN-START -->).*?(<!-- DISTRICT-DROPDOWN-END -->)', _district_picker_html),
     # /all was orphaned (sitemap-only) until 2026-06-11; every page now links
