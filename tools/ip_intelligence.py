@@ -28,12 +28,15 @@ SITE_CFG = {
     'nsto': {
         'log_glob': 'nowservingto-access.log*',
         'out_path': CACHE_DIR / 'ip_intel_nsto.json',  # not web-accessible
+        'gsc_host': 'https://nowservingto.com/',
     },
     'jo': {
         'log_glob': 'access.log*',
         'out_path': Path('/var/www/html/geo-observatory/ip_intel.json'),
+        'gsc_host': 'https://joshuaopolko.com/',
     },
 }
+GSC_HOST = SITE_CFG[_SITE]['gsc_host']
 LOG_GLOB = SITE_CFG[_SITE]['log_glob']
 OUT_PATH = SITE_CFG[_SITE]['out_path']
 
@@ -111,6 +114,56 @@ def apache_ts(date_str, time_str):
         return calendar.timegm((int(y), mon, int(d), int(h), int(m), int(s), 0, 0, 0))
     except Exception:
         return None
+
+
+def fetch_gsc_pages(env, days=7):
+    """Pull top pages by impression from GSC for the past N days.
+    Returns list of {page, impressions, clicks, ctr, position} sorted by impressions desc.
+    Returns [] on any failure (graceful: IP analysis still runs without it).
+    Requires google-auth + google-api-python-client in the active venv.
+    """
+    try:
+        import json as _json
+        from googleapiclient.discovery import build
+        from google.oauth2 import service_account
+
+        raw = env.get('GOOGLE_SERVICE_ACCOUNT_JSON', '')
+        if not raw:
+            return []
+        info = _json.loads(raw)
+        creds = service_account.Credentials.from_service_account_info(
+            info,
+            scopes=['https://www.googleapis.com/auth/webmasters.readonly'],
+        )
+        sc = build('searchconsole', 'v1', credentials=creds, cache_discovery=False)
+
+        # Find the matching property (URL-prefix or sc-domain)
+        host = GSC_HOST.rstrip('/')
+        wanted = {GSC_HOST, host, host.replace('https://', 'sc-domain:')}
+        props = [s['siteUrl'] for s in sc.sites().list().execute().get('siteEntry', [])]
+        prop = next((p for p in props if p.rstrip('/') in {w.rstrip('/') for w in wanted}), None)
+        if not prop:
+            print(f'  GSC: no property found for {GSC_HOST} (available: {props[:3]})')
+            return []
+
+        end = (dt.date.today() - dt.timedelta(days=2)).isoformat()  # GSC lags ~2d
+        start = (dt.date.today() - dt.timedelta(days=days + 2)).isoformat()
+        body = {'startDate': start, 'endDate': end, 'dimensions': ['page'],
+                'rowLimit': 25, 'dataState': 'all'}
+        rows = sc.searchanalytics().query(siteUrl=prop, body=body).execute().get('rows', [])
+        return [
+            {
+                'page': r['keys'][0].replace(GSC_HOST.rstrip('/'), ''),
+                'impressions': r.get('impressions', 0),
+                'clicks': r.get('clicks', 0),
+                'ctr': round(r.get('ctr', 0) * 100, 1),
+                'position': round(r.get('position', 0), 1),
+            }
+            for r in sorted(rows, key=lambda x: x.get('impressions', 0), reverse=True)
+        ]
+    except Exception as e:
+        print(f'  GSC fetch skipped: {e}')
+        return []
 
 
 def parse_logs(window_start):
@@ -299,7 +352,7 @@ def build_notable_ips(top_ips, ip_pages, ip_times, org_cache):
     return notable
 
 
-def llm_narrative(categories, total_ips, notable_ips, api_key):
+def llm_narrative(categories, total_ips, notable_ips, gsc_pages, api_key):
     """Ask Haiku for a named-IP breakdown. Uses 'this site', not 'your site'."""
     if not api_key:
         return ''
@@ -315,19 +368,33 @@ def llm_narrative(categories, total_ips, notable_ips, api_key):
         for c in categories
     )
 
+    gsc_block = ''
+    if gsc_pages:
+        gsc_lines = '\n'.join(
+            f"  {g['page'] or '/'}: {g['impressions']:,} impressions, "
+            f"{g['clicks']} clicks, CTR {g['ctr']}%, pos {g['position']}"
+            for g in gsc_pages[:15]
+        )
+        gsc_block = f"\nGSC page performance (last 7 days, by impression):\n{gsc_lines}\n"
+
     prompt = (
         f"You're writing an IP traffic breakdown for a developer's internal crawler analysis page. "
         f"This site received {total_ips:,} unique non-bot IPs in the past 7 days. "
         f"Overall breakdown: {cat_summary}.\n\n"
-        f"Notable IPs (top by hit count, with org and behavior):\n{ip_lines}\n\n"
+        f"Notable IPs (top by hit count, with org and behavior):\n{ip_lines}\n"
+        f"{gsc_block}\n"
         f"Write a bullet-point named-IP breakdown. For each notable IP, one bullet: "
-        f"start with the IP address in parentheses, then the hit count, org, country, "
-        f"and a plain-English interpretation of what the behavior pattern suggests "
+        f"start with the IP address in parentheses, then hit count, org, country, "
+        f"and a plain-English interpretation of what the behavior suggests "
         f"(content harvester, parallel SEO auditor, legitimate AI crawler, rank tracker, "
         f"real human visitor, etc.). "
+        f"Where GSC data is available, cross-reference: if a page has many impressions "
+        f"but near-zero clicks, and the IPs fetching it are rank-tracking proxies, "
+        f"call that out explicitly (e.g. '/page has 500 impressions, 1 click — "
+        f"rank trackers inflating GSC, not real searchers'). "
         f"ALWAYS say 'this site', never 'your site'. "
-        f"Be specific and concrete. After the per-IP bullets, add one short sentence "
-        f"summarizing real human traffic. No intro sentence, no headers, no markdown bold."
+        f"Be specific. After the per-IP bullets, one short sentence on real human traffic. "
+        f"No intro sentence, no headers, no markdown bold."
     )
     try:
         req = urllib.request.Request(
@@ -382,8 +449,12 @@ def main():
     notable_ips = build_notable_ips(top_ips, ip_pages, ip_times, org_cache)
     print(f'  {len(notable_ips)} notable IPs for named breakdown')
 
+    print('  fetching GSC page performance...')
+    gsc_pages = fetch_gsc_pages(env, days=WINDOW_DAYS)
+    print(f'  {len(gsc_pages)} GSC pages retrieved')
+
     print('  requesting named-IP breakdown from Haiku...')
-    narrative = llm_narrative(categories, total_ips, notable_ips, api_key)
+    narrative = llm_narrative(categories, total_ips, notable_ips, gsc_pages, api_key)
 
     out = {
         'generatedAt': now.strftime('%Y-%m-%dT%H:%M:%S'),
@@ -392,6 +463,7 @@ def main():
         'categories': categories,
         'narrative': narrative,
         'notableIPs': notable_ips,
+        'gscPages': gsc_pages,
     }
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     OUT_PATH.write_text(json.dumps(out, indent=2))

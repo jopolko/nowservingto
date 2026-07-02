@@ -1061,7 +1061,8 @@ def build():
                 f'</tr></thead><tbody>{tr}</tbody></table>\n')
 
     def ip_intel_panel():
-        intel_path = os.path.join(CFG['outdir'], 'ip_intel.json')
+        intel_path = (os.path.join(OUTDIR, 'ip_intel.json') if SITE == 'jo'
+                      else os.path.join(CACHE_DIR, 'ip_intel_nsto.json'))
         try:
             intel = json.load(open(intel_path))
         except (FileNotFoundError, json.JSONDecodeError):
@@ -1092,11 +1093,35 @@ def build():
         # Convert newlines to <br> so bullet-per-line format renders correctly
         narrative = '<br>'.join(html.escape(ln) for ln in narrative_raw.splitlines())
         narrative_html = f'<p style="font:400 13.5px/1.65 var(--sans,sans-serif);color:var(--ink2,#333);background:var(--bg,#f8f5ec);border-radius:8px;border-left:3px solid var(--line,#e0ddd6);padding:14px 16px;margin:12px 0 0;line-height:1.8">{narrative}</p>' if narrative else ''
+
+        gsc_pages = intel.get('gscPages', [])
+        gsc_html = ''
+        if gsc_pages:
+            def _gsc_row(g):
+                ctr_warn = ' style="color:#e84e3a"' if g['clicks'] > 0 and g['ctr'] < 1.5 else ''
+                pg = html.escape((g.get('page') or '/'))
+                return (f'<tr><td class="p"><a href="{pg}">{pg[:52]}</a></td>'
+                        f'<td class="n">{g["impressions"]:,}</td>'
+                        f'<td class="n">{g["clicks"]:,}</td>'
+                        f'<td class="n"{ctr_warn}>{g["ctr"]}%</td>'
+                        f'<td class="n">{g["position"]}</td></tr>')
+            rows_html = ''.join(_gsc_row(g) for g in gsc_pages[:15])
+            gsc_html = (
+                f'<h3 style="margin:18px 0 6px;font:700 11.5px/1.3 var(--sans,sans-serif);'
+                f'text-transform:uppercase;letter-spacing:.07em;color:var(--muted,#888)">Search Console: top pages by impression (last 7 days)</h3>'
+                f'<table class="cs" style="margin:0 0 4px"><thead><tr>'
+                f'<th>Page</th><th class="n">Impressions</th><th class="n">Clicks</th>'
+                f'<th class="n">CTR</th><th class="n">Avg pos</th>'
+                f'</tr></thead><tbody>{rows_html}</tbody></table>'
+                f'<p style="font:400 12px/1.4 var(--sans,sans-serif);color:var(--muted,#888);margin:4px 0 12px">'
+                f'Red CTR = impression volume likely inflated by rank trackers (they query Google, not real searchers).</p>'
+            )
+
         return (f'<h2>Who\'s actually visiting</h2>\n'
                 f'<p>Real IP analysis: ip-api.com org lookup on non-bot request IPs, classified by network type. '
                 f'{total:,} unique IPs in the past 7 days. Updated weekly (Sundays) &middot; data as of {html.escape(gen)}.</p>\n'
                 f'<div style="background:var(--panel,#fff);border:1px solid var(--line,#e0ddd6);border-radius:12px;padding:20px;margin:14px 0">'
-                f'{bars}{narrative_html}</div>\n')
+                f'{bars}{narrative_html}{gsc_html}</div>\n')
 
     srv = {'cards': cards(), 'bot_ai': bot_rows('ai'), 'bot_se': bot_rows('se'), 'cost': cost_panel(),
            'ip_intel': ip_intel_panel(),
