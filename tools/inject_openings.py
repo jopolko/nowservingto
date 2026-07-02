@@ -737,93 +737,6 @@ def _check_pre_existing_llm(ck, issued_date_str, review_count, reviews_detail):
         return False
 
 
-# DineSafe lookup, loaded once at module import. Maps "<streetnum>
-# <streetword> <postalcode>" -> list of per-name inspection summaries.
-# Source: tools/fetch_dinesafe.py (Toronto Public Health open data).
-DINESAFE_LOOKUP_PATH = f'{ROOT}/tools/cache/dinesafe_lookup.json'
-try:
-    _ds_payload = json.load(open(DINESAFE_LOOKUP_PATH))
-    DINESAFE_LOOKUP = _ds_payload.get('lookup') or {}
-except FileNotFoundError:
-    DINESAFE_LOOKUP = {}
-
-
-def _dinesafe_key(addr_str):
-    """Normalize a licence-feed address to match DineSafe's keying scheme.
-    Standard addresses ('1871 O'Connor Dr, Toronto, ON M4A 1X1') get keyed by
-    the leading 'streetnum streetword'. Mall / food-court / plaza entries
-    ('Eplace RU-04, 6 Eglinton Ave E, Toronto, ON M4P 1A6') don't start with
-    the street number - their internal unit prefix sits in front. Fallback:
-    find the LAST 'digits + alpha-word' pair before the postal code, which
-    naturally picks out the real street number even when the unit code came
-    first."""
-    s = (addr_str or '').upper()
-    s = _re.sub(r'\s+(NONE|UNIT.*|SUITE.*)\s+', ' ', s)
-    s = _re.sub(r"[^A-Z0-9 ]+", ' ', s)
-    s = _re.sub(r'\s+', ' ', s).strip()
-    postal_m = _re.search(r'([A-Z]\d[A-Z] ?\d[A-Z]\d)', s)
-    if not postal_m: return None
-    postal = postal_m.group(1).replace(' ', '')
-    pre = s[:postal_m.start()].strip()
-    # Letter-suffix street numbers ("457A Danforth", "2088A Lawrence") are
-    # common in Toronto. Treat them as the same street number — DineSafe's
-    # data doesn't carry the letter suffix consistently, so dropping it
-    # widens matches without false positives (the street word disambiguates).
-    m = _re.match(r'^(\d+)[A-Z]? (\w+)', pre)
-    if m:
-        return f"{m.group(1)} {m.group(2)} {postal}"
-    pairs = _re.findall(r'(\d+)[A-Z]?\s+([A-Z]\w*)', pre)
-    if not pairs: return None
-    num, word = pairs[-1]
-    return f"{num} {word} {postal}"
-
-
-# Secondary DineSafe index keyed by (streetnum, street_word) only — no
-# postal. Catches entries whose licence-feed address omits the postal
-# code (~16% of currently-shown entries: mall units, food courts, etc.).
-# Built once at module load from DINESAFE_LOOKUP. Coverage gain: lifts
-# DineSafe-match rate from 52.5% → 70.5% per the 2026-06-05 audit.
-DINESAFE_LOOKUP_SECONDARY = {}
-for _k, _v in DINESAFE_LOOKUP.items():
-    _parts = _k.split()
-    if len(_parts) >= 2:
-        _sec_key = (_parts[0], _parts[1])
-        DINESAFE_LOOKUP_SECONDARY.setdefault(_sec_key, []).extend(_v)
-
-
-def _dinesafe_key_secondary(addr_str):
-    """Postal-less fallback key — (streetnum, street_word) tuple. Used by
-    _dinesafe_match() when the primary postal-keyed lookup fails. Same
-    letter-suffix tolerance as the primary key."""
-    s = (addr_str or '').upper()
-    s = _re.sub(r'\s+(NONE|UNIT.*|SUITE.*)\s+', ' ', s)
-    s = _re.sub(r"[^A-Z0-9 ]+", ' ', s)
-    s = _re.sub(r'\s+', ' ', s).strip()
-    m = _re.match(r'^(\d+)[A-Z]? (\w+)', s)
-    if m: return (m.group(1), m.group(2))
-    pairs = _re.findall(r'(\d+)[A-Z]?\s+([A-Z]\w*)', s)
-    if pairs:
-        num, word = pairs[-1]
-        return (num, word)
-    return None
-
-
-def _dinesafe_lookup_entries(addr_str):
-    """Return the list of DineSafe entries at this address, trying the
-    postal-strict primary key first and falling back to the postal-less
-    secondary key. Unified so all callers (_pre_existing_dinesafe,
-    _prior_tenant_at_address, date-swap loop) benefit from the extra
-    coverage automatically."""
-    pkey = _dinesafe_key(addr_str)
-    if pkey:
-        entries = DINESAFE_LOOKUP.get(pkey) or []
-        if entries: return entries
-    skey = _dinesafe_key_secondary(addr_str)
-    if skey:
-        return DINESAFE_LOOKUP_SECONDARY.get(skey) or []
-    return []
-
-
 def _name_tokens_for_match(n):
     """Strip generic restaurant words so name overlap reflects the
     distinctive part of the name (MAKILALA, KENKOU SUSHI -> {KENKOU,
@@ -873,50 +786,6 @@ def _name_overlap(a, b):
     return max(tier1, tier2, tier3)
 
 
-def _pre_existing_dinesafe(operating_name, addr_str, issued_date_str):
-    """Returns (is_pre_existing, gap_days, earliest_inspection, matched_name)
-    or (False, None, None, None) when no DineSafe match found.
-
-    Matches by address THEN requires name-overlap >= 0.3 with at least
-    one DineSafe inspection at that address. Without the name filter we'd
-    suppress new restaurants opening in former-tenant spaces (PROFOUND
-    PIZZA opened where THE SWEET POTATO used to be - same address,
-    different business, NOT pre-existing)."""
-    if not DINESAFE_LOOKUP: return (False, None, None, None)
-    entries = _dinesafe_lookup_entries(addr_str)
-    if not entries: return (False, None, None, None)
-    matching = [e for e in entries if _name_overlap(operating_name, e.get('name', '')) >= 0.3]
-    if not matching: return (False, None, None, None)
-    earliest = min(e['earliest'] for e in matching)
-    try:
-        gap = (datetime.strptime(issued_date_str, '%Y-%m-%d')
-               - datetime.strptime(earliest, '%Y-%m-%d')).days
-    except Exception:
-        return (False, None, None, None)
-    return (gap > PRE_EXISTING_GAP_DAYS, gap, earliest, matching[0]['name'])
-
-
-def _prior_tenant_at_address(operating_name, addr_str):
-    """Returns (prior_name, earliest_date) when DineSafe shows
-    inspections at this address under a DIFFERENT business name from
-    the current operator. (None, None) when no prior-tenant evidence.
-
-    Mirror of _pre_existing_dinesafe but INVERTED: we want the address
-    matches whose names DON'T overlap with the current operator. That's
-    the "fresh tenant in an old kitchen" signal — high-confidence proof
-    that a real new restaurant just took over an existing space (think
-    Osteria Alba moving into the Vivoli room, or Wilbur Taco opening
-    inside a Petro Canada that already had a different food operator).
-    Editorially powerful as a "took over from X" badge."""
-    if not DINESAFE_LOOKUP: return (None, None)
-    entries = _dinesafe_lookup_entries(addr_str)
-    if not entries: return (None, None)
-    different = [e for e in entries
-                 if _name_overlap(operating_name, e.get('name', '')) < 0.3
-                 and e.get('earliest')]
-    if not different: return (None, None)
-    different.sort(key=lambda e: e['earliest'])
-    return (different[0]['name'], different[0]['earliest'])
 
 
 # first_seen cache: maps cache_key → ISO date the cacheKey first
@@ -1278,18 +1147,10 @@ with open(CSV_PATH, encoding='utf-8', errors='replace') as f:
                 n_dropped_brand_new_unverified += 1
                 continue
 
-        # Pre-existing-restaurant gate (Phase A + B, 2026-06-01):
-        # EITHER signal triggers suppression:
-        #   A) Places-returned review > 180 days before licence
-        #   B) DineSafe inspection (TPH inspector visited this address +
-        #      name) > 180 days before licence - authoritative gov data
-        # B catches what A misses (MAKILALA-class: recent reviews crowd
-        # out old ones in the 5-review Places sample) and vice versa.
+        # Pre-existing-restaurant gate: Places-returned review > 180 days
+        # before licence triggers suppression.
         is_pre, _, _ = _pre_existing_evidence(cache_key(op_raw, address_full),
                                               iss.isoformat())
-        if not is_pre:
-            is_pre, _, _, _ = _pre_existing_dinesafe(op_raw, address_full,
-                                                     iss.isoformat())
         if not is_pre:
             _ck = cache_key(op_raw, address_full)
             _pc = PLACES_CACHE.get(_ck) or {}
@@ -1342,66 +1203,31 @@ for _pid, _keys in _pid_groups.items():
 if _n_dedup_pid:
     print(f"  place_id dedup: collapsed {_n_dedup_pid} extra entries (same operator + same Places match - commissary/storefront pairs)")
 
-# Date-source swap (2026-06-01): when a stronger operating-since signal
-# exists than the licence-issued date, surface it as the displayed
-# "registered" date. The licence event answers "when did paperwork
-# happen"; the swap targets answer "when was the place definitely
-# operating." Priority order:
-#   1. DineSafe earliest inspection at this (address, name).
-#      Authoritative gov data; if Toronto Public Health inspected on
-#      date X, the place was serving food on date X.
-#   2. Oldest Places-returned review timestamp.
-#      Fallback for entries DineSafe can't match (mall/food-court
-#      addresses, no inspections yet, etc.). The pre-existing gate
-#      already drops any entry whose oldest review predates the
-#      licence by >180d, so any review we'd swap to here is known
-#      to post-date the licence event (real operating-since signal,
-#      not a re-licensing of a long-running place).
-# Original licence date preserved as `licenceIssuedDate` for audit.
+# Date-source swap: when the oldest Places review (complete set only,
+# reviewCount <= 5) post-dates the licence, surface it as the displayed
+# date — slightly more precise than the paperwork date. The pre-existing
+# gate already ensures any review we swap to post-dates the licence by
+# <= 180d. Original licence date preserved as licenceIssuedDate for audit.
 _n_date_swapped = 0
-_n_swap_dinesafe = 0
 _n_swap_review = 0
 for _e in seen_entries.values():
-    _name = _e.get('operatingName') or ''
-    _addr = _e.get('address') or ''
     _licence_iso = _e['issuedDate']
-    # Evidence ranking (per user 2026-06-03): DineSafe is the trusted
-    # opening signal — TPH inspects at/near opening, no sampling bias.
-    # Places review timestamps are an airy heuristic — the API only
-    # returns up to 5 reviews per fetch, so for any popular spot the
-    # "earliest review we see" is the earliest of the SAMPLE, not the
-    # actual first review (could miss months/years of earlier reviews).
-    # New rule: use DineSafe unconditionally when present; fall back to
-    # review only when no DineSafe AND reviewCount ≤ 5 (full set, no
-    # sampling bias). Licence is the implicit default when no other
-    # evidence — no swap needed.
-    _candidates = []
-    _, _, _ds_earliest, _ = _pre_existing_dinesafe(_name, _addr, _licence_iso)
-    if _ds_earliest:
-        _candidates.append((_ds_earliest, 'dinesafe'))
-    else:
-        _, _, _rev_earliest = _pre_existing_evidence(_e.get('_cacheKey') or '', _licence_iso)
-        _rev_count = _e.get('reviewCount') or 0
-        if _rev_earliest and _rev_count <= 5:
-            _candidates.append((_rev_earliest, 'review'))
-    if not _candidates: continue
-    _candidates.sort()
-    _swap_date, _swap_src = _candidates[0]
-    if _swap_date == _licence_iso: continue  # already matches, no-op swap
+    _, _, _rev_earliest = _pre_existing_evidence(_e.get('_cacheKey') or '', _licence_iso)
+    _rev_count = _e.get('reviewCount') or 0
+    if not (_rev_earliest and _rev_count <= 5): continue
+    if _rev_earliest == _licence_iso: continue
     try:
-        _swap_dt = datetime.strptime(_swap_date, '%Y-%m-%d').date()
+        _swap_dt = datetime.strptime(_rev_earliest, '%Y-%m-%d').date()
     except Exception:
         continue
-    if _swap_dt > REFERENCE_DATE: continue  # future-dated, skip
+    if _swap_dt > REFERENCE_DATE: continue
     _e['licenceIssuedDate'] = _licence_iso
-    _e['issuedDate'] = _swap_date
+    _e['issuedDate'] = _rev_earliest
     _e['daysOpen'] = max(0, (REFERENCE_DATE - _swap_dt).days)
-    _e['dateSource'] = _swap_src   # 'dinesafe' | 'review' — drives badge label
+    _e['dateSource'] = 'review'
     _n_date_swapped += 1
-    if _swap_src == 'dinesafe': _n_swap_dinesafe += 1
-    else: _n_swap_review += 1
-print(f"  date swap: {_n_date_swapped} entries reassigned 'registered' date "
-      f"({_n_swap_dinesafe} via DineSafe, {_n_swap_review} via oldest Places review)")
+    _n_swap_review += 1
+print(f"  date swap: {_n_date_swapped} entries reassigned date via oldest Places review")
 
 # >1yr drop (post-swap): the existing pre-existing gate compares licence
 # date vs evidence and drops if evidence predates licence by >180d. That
@@ -1423,44 +1249,26 @@ if _n_dropped_over_1yr:
     print(f"  >1yr drop: {_n_dropped_over_1yr} entries cut (operating evidence dates back >365d, "
           f"licence is recent but the place isn't actually new)")
 
-# Attach firstSeen + priorTenant signals to each surviving entry (runs
+# Attach firstSeen + neighborhood signals to each surviving entry (runs
 # after all the drop gates so we don't bother computing for entries
 # that won't make the final feed).
 _today_iso_for_firstseen = REFERENCE_DATE.isoformat()
 _n_first_seen_new = 0
-_n_prior_tenant = 0
 for _k, _e in seen_entries.items():
     # firstSeen cache is keyed by the canonical _cacheKey string (the
     # same key shared with places_cache / web_verify_cache), NOT the
     # in-memory tuple key seen_entries uses for dedup. Falls back to
     # the entry name+addr if _cacheKey wasn't set.
     _fs_key = _e.get('_cacheKey') or f'{(_e.get("operatingName") or "").upper()}||{(_e.get("address") or "").upper()}'
-    # firstSeen: seed = swapped issuedDate (best evidence — DineSafe-first
-    # when available via the date-swap step above; falls back to licence
-    # date when no DineSafe match). NEW keys → seed once. EXISTING keys
-    # → BACKFILL by moving the cached value EARLIER when stronger
-    # evidence emerges (e.g. the 2026-06-05 secondary-key DineSafe match
-    # rate went 52.5%→70.5%, and entries previously stuck on licence date
-    # now have an actually-inspected date). Cache stays monotonic in
-    # accuracy direction (only moves toward earlier/more-authoritative
-    # dates, never forward). The cap at today prevents future-dated junk.
     # firstSeen = the date we FIRST listed this entry (true sighting), seeded
     # to TODAY for genuinely-new keys and then frozen. This feeds schema
     # dateModified + sitemap lastmod, so it must reflect when the page actually
     # appeared on the site — NOT the licence/operating date (that lives in
-    # issuedDate / daysOpen / dateSource). Previously seeded to issuedDate,
-    # which told Google a brand-new page was "modified" on its old licence date.
+    # issuedDate / daysOpen / dateSource).
     if _fs_key not in FIRST_SEEN_CACHE:
         FIRST_SEEN_CACHE[_fs_key] = _today_iso_for_firstseen
         _n_first_seen_new += 1
     _e['firstSeen'] = FIRST_SEEN_CACHE[_fs_key]
-    # priorTenant: address has DineSafe history under different names →
-    # this is a fresh tenant in an old kitchen, editorial gold.
-    _pt_name, _pt_date = _prior_tenant_at_address(
-        _e.get('operatingName') or '', _e.get('address') or '')
-    if _pt_name:
-        _e['priorTenant'] = {'name': _pt_name, 'since': _pt_date}
-        _n_prior_tenant += 1
     # neighborhood: lat/lng point-in-polygon against the 158 official
     # Toronto neighbourhood polygons + iconic-corridor overrides for
     # popular names (Greektown, Little Italy, Wexford, etc.). Used by
@@ -1476,7 +1284,7 @@ if _n_first_seen_new:
     with open(FIRST_SEEN_PATH, 'w') as _f:
         json.dump(FIRST_SEEN_CACHE, _f, sort_keys=True, separators=(',', ':'))
 print(f"  signals: firstSeen={_n_first_seen_new} new entries cached today "
-      f"({len(FIRST_SEEN_CACHE)} total), priorTenant flagged on {_n_prior_tenant} entries, "
+      f"({len(FIRST_SEEN_CACHE)} total), "
       f"neighborhood tagged on {_n_neighborhood} entries ({_n_iconic} in iconic corridors)")
 
 # Now bucket the deduped entries by cuisine and compute counts.
@@ -3525,24 +3333,16 @@ def _ns_chip(r):
 # needed. Mirrors NS_FIRSTSEEN in app.js.
 _NS_FIRSTSEEN = ('<details class="ns-firstseen"><summary>First seen <span class="ns-i" aria-hidden="true">i</span></summary>'
                  "<p>Each listing's date is when the spot was <strong>first seen in official Toronto records</strong>: "
-                 "its Toronto Public Health (DineSafe) inspection date when there is one (the most reliable sign it was "
-                 "actually serving), otherwise the City of Toronto business-licence date. Every listing is also "
-                 "confirmed open via its website or social media.</p></details>")
+                 "the City of Toronto business-licence date, confirmed open via its website or social media.</p></details>")
 
 def _ns_status(r):
     # Tag labels the DATE shown, not open/closed — every listing already passed
-    # the Places OPERATIONAL gate. Mirrors nsStatus() in app.js. dateSource
-    # 'dinesafe' = shown date is a Toronto Public Health inspection
-    # ("Operating"); otherwise it's the City licence date ("Registered").
-    if r.get('dateSource') == 'dinesafe':
-        return ('<span class="ns-status operating" title="Operating date — confirmed by a '
-                'Toronto Public Health (DineSafe) inspection">Operating</span>')
+    # the Places OPERATIONAL gate. Mirrors nsStatus() in app.js.
     return ('<span class="ns-status registered" title="Registered date — City of '
             'Toronto business licence">Registered</span>')
 
 _NS_LEGEND = ('<p class="ns-legend">'
-              '<span class="ns-status operating">Operating</span> date confirmed by a Toronto Public Health inspection'
-              ' · <span class="ns-status registered">Registered</span> date from the City licence'
+              '<span class="ns-status registered">Registered</span> date from the City licence'
               ' · every listing is open &amp; verified</p>')
 
 def build_home_feed(rows, scope_label='new spots', scoped=False, limit=30):
@@ -4655,17 +4455,14 @@ def build_answers_corpus(cuisines_out, opens_365_by_cuisine, by_district,
          '<a href="https://open.toronto.ca/dataset/municipal-licensing-and-standards-business-licences-and-permits/" '
          'target="_blank" rel="noopener">City of Toronto Municipal Licensing and Standards '
          'Business Licences and Permits</a> open dataset, refreshed daily. Each entry is '
-         'verified currently open by cross-checking the City registry, '
-         '<a href="https://open.toronto.ca/dataset/dinesafe/" target="_blank" rel="noopener">DineSafe</a> '
-         'inspections, social media signals, and the operator\'s own website. Cuisine '
-         'classification is generated by Anthropic Claude reading the operating name '
-         'and website content.'),
+         'verified currently open via Google Places, social media signals, and the '
+         'operator\'s own website. Cuisine classification is generated by Anthropic Claude '
+         'reading the operating name and website content.'),
         ('Restaurant data is sourced directly from the City of Toronto Municipal '
          'Licensing and Standards Business Licences and Permits open dataset, refreshed '
-         'daily. Each entry is verified currently open by cross-checking the City '
-         'registry, DineSafe inspections, social media signals, and the operator\'s own '
-         'website. Cuisine classification is generated by Anthropic Claude reading the '
-         'operating name and website content.'),
+         'daily. Each entry is verified currently open via Google Places, social media '
+         'signals, and the operator\'s own website. Cuisine classification is generated '
+         'by Anthropic Claude reading the operating name and website content.'),
     )
     _emit(
         "Why are chain restaurants excluded from NowServingTO?",
@@ -5931,11 +5728,11 @@ _sorted_cuisines = sorted(cuisines_out, key=lambda c: c['label'].lower())
 _sorted_districts = sorted({e.get('district') for e in seen_entries.values()
                             if e.get('district')})
 
-_all_cuisines_html = ''.join(
+_all_cuisines_html = ' · '.join(
     f'<a href="/cuisine/{c["key"]}">{_esc(c["label"])}</a>'
     for c in _sorted_cuisines
 )
-_all_districts_html = ''.join(
+_all_districts_html = ' · '.join(
     f'<a href="/district/{_district_slug(d)}">{_esc(d)}</a>'
     for d in _sorted_districts
 )
@@ -5943,7 +5740,7 @@ _all_districts_html = ''.join(
 # landing page, sorted by label. Built from _nbhd_nav_items (collected as the
 # pages were written above) so the nav links exactly the set of pages that
 # exist — no dead links to corridors with zero current openings.
-_all_neighborhoods_html = ''.join(
+_all_neighborhoods_html = ' · '.join(
     f'<a href="/neighborhood/{_slug}">{_esc(_label)}</a>'
     for _label, _slug in sorted(_nbhd_nav_items, key=lambda it: it[0].lower())
 )
@@ -5983,7 +5780,6 @@ _district_picker_html = (
 _nav_subs = [
     (r'(<!-- ALL-CUISINES-START -->).*?(<!-- ALL-CUISINES-END -->)', _all_cuisines_html),
     (r'(<!-- ALL-DISTRICTS-START -->).*?(<!-- ALL-DISTRICTS-END -->)', _all_districts_html),
-    (r'(<!-- ALL-NEIGHBORHOODS-START -->).*?(<!-- ALL-NEIGHBORHOODS-END -->)', _all_neighborhoods_html),
     (r'(<!-- CUISINE-DROPDOWN-START -->).*?(<!-- CUISINE-DROPDOWN-END -->)', _cuisine_picker_html),
     (r'(<!-- DISTRICT-DROPDOWN-START -->).*?(<!-- DISTRICT-DROPDOWN-END -->)', _district_picker_html),
     # /all was orphaned (sitemap-only) until 2026-06-11; every page now links
@@ -5994,7 +5790,7 @@ _nav_subs = [
 for _pat, _html in _nav_subs:
     listing_template = re.sub(_pat,
         lambda m, h=_html: m.group(1) + h + m.group(2),
-        listing_template, count=1, flags=re.DOTALL)
+        listing_template, count=0, flags=re.DOTALL)
 
 # Also write back to source index.html so the homepage gets the same nav
 _idx_disk = open(INDEX_PATH).read()
@@ -6577,36 +6373,16 @@ for entry in seen_entries.values():
         # dateModified: per-entity last CHANGE (first-seen); matches sitemap lastmod.
         'dateModified': _norm_lastmod(entry.get('firstSeen')) or REFERENCE_DATE.isoformat(),
     }
-    # verifiedBy: authoritative sourcing for the operating-status claim.
-    # All visible entries are gated as operationally-verified (the policy
-    # gate requires Places-match + OPERATIONAL status), but the source of
-    # the displayed first-seen date differs:
-    #   - 'dinesafe' (~72%): inspection by a Toronto Public Health officer
-    #   - else: City of Toronto business licence + ongoing operator
-    #     verification (operator website / social media presence). Per
-    #     the public-facing voice policy, we name DineSafe explicitly
-    #     when it backs the date; for the remainder we cite the City
-    #     registry as the primary source without naming Places internally.
-    # Both `subjectOf` payloads strengthen the citation graph for AI
-    # assistants weighting authority on per-entity sourcing claims.
-    if entry.get('dateSource') == 'dinesafe':
-        listing_ld['subjectOf'] = {
-            '@type': 'CreativeWork',
-            'name': 'Toronto Public Health DineSafe inspection record',
-            'url': 'https://open.toronto.ca/dataset/dinesafe/',
-            'creator': {'@type': 'GovernmentOrganization',
-                        'name': 'Toronto Public Health',
-                        'url': 'https://www.toronto.ca/community-people/health-wellness-care/health-programs-advice/dinesafe/'},
-        }
-    else:
-        listing_ld['subjectOf'] = {
-            '@type': 'CreativeWork',
-            'name': 'City of Toronto Municipal Licensing and Standards business licence record',
-            'url': 'https://open.toronto.ca/dataset/municipal-licensing-and-standards-business-licences-and-permits/',
-            'creator': {'@type': 'GovernmentOrganization',
-                        'name': 'City of Toronto',
-                        'url': 'https://www.toronto.ca/'},
-        }
+    # subjectOf: cite the City licence registry as the authoritative source
+    # for the displayed date. Strengthens the citation graph for AI assistants.
+    listing_ld['subjectOf'] = {
+        '@type': 'CreativeWork',
+        'name': 'City of Toronto Municipal Licensing and Standards business licence record',
+        'url': 'https://open.toronto.ca/dataset/municipal-licensing-and-standards-business-licences-and-permits/',
+        'creator': {'@type': 'GovernmentOrganization',
+                    'name': 'City of Toronto',
+                    'url': 'https://www.toronto.ca/'},
+    }
     # operatingStatus credential — emits on EVERY entry because the
     # operational-verification gate runs on every entry (an entry that's
     # not currently confirmed operational gets dropped before reaching
@@ -8482,7 +8258,7 @@ _pro_header = (
     '<div class="pro-header"><div class="pro-header-row">'
     '<span class="pro-header-tag">CUISINE.VELOCITY</span>'
     f'<span class="pro-header-meta">UPD {_iso_now}</span>'
-    '<span class="pro-header-meta">SRC: TORONTO MLS + DINESAFE</span>'
+    '<span class="pro-header-meta">SRC: TORONTO MLS + PLACES</span>'
     f'<span class="pro-header-meta">N={_y3_total:,}</span>'
     '</div></div>'
 )
