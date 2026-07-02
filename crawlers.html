@@ -193,6 +193,34 @@
  in. The chart below is the receipt.
  </p>
 
+ <h2 style="margin-top: 28px">Who's actually visiting</h2>
+ <p style="color: var(--ink2); margin: 0 0 0">Real IP analysis: ip-api.com org lookup on non-bot IPs from Apache logs, then Haiku classifies the traffic composition. Updated weekly (Sundays).</p>
+ <div id="ip-intel-content">
+ <div class="chart-card" style="margin-top:14px">
+ <p style="margin:0 0 12px;font:400 13.5px/1.6 var(--sans);color:var(--ink2)">
+ The bot charts below cover <em>declared</em> crawlers (Googlebot says it's Googlebot). IP org lookup
+ is the other half: what do the <em>undeclared</em> IPs actually resolve to?
+ </p>
+ <p style="margin:0 0 12px;font:400 13.5px/1.6 var(--sans);color:var(--ink2)">
+ From the last 7 days of Apache logs, roughly <strong>38% of unique IPs</strong>
+ resolve to cloud hosting ranges (OVH, AWS, DigitalOcean) — these are content
+ scrapers pulling pages for training data or competitive indexing, not humans.
+ About <strong>8%</strong> hit residential proxy pools operated by rank-tracking services
+ (Datacamp, Code200, M247): they send Google a search query to generate the GSC
+ impression, then fetch the actual page through a proxy to confirm the ranking —
+ which is why GSC impressions can spike on a page with barely any real clicks.
+ </p>
+ <p style="margin:0;font:400 13.5px/1.6 var(--sans);color:var(--ink2)">
+ The <strong>21% residential ISP traffic</strong> (Bell Canada / Sympatico leads the list)
+ is the one category that could contain real people, though some of it is also
+ the operator's own traffic before a DHCP lease change got filtered in GA4.
+ The remaining 34% is unclassified — smaller regional ISPs, hosting blocks
+ ip-api.com doesn't tag clearly. Weekly Haiku analysis runs Sunday mornings
+ and writes the breakdown to a private cache file used by this section.
+ </p>
+ </div>
+ </div>
+
  <div id="crawl-warn-box"></div>
 
  <div class="chart-card">
@@ -237,34 +265,6 @@
  </div>
  <div class="ch-foot"><span id="ch-farms-foot">-</span></div>
  </div>
- <h2 style="margin-top: 48px">Who's actually visiting</h2>
- <p style="color: var(--ink2); margin: 0 0 0">Real IP analysis: ip-api.com org lookup on non-bot IPs from Apache logs, then Haiku classifies the traffic composition. Updated weekly (Sundays).</p>
- <div id="ip-intel-content">
- <div class="chart-card" style="margin-top:14px">
- <p style="margin:0 0 12px;font:400 13.5px/1.6 var(--sans);color:var(--ink2)">
- The bot chart above covers <em>declared</em> crawlers (Googlebot says it's Googlebot). IP org lookup
- is the other half: what do the <em>undeclared</em> IPs actually resolve to?
- </p>
- <p style="margin:0 0 12px;font:400 13.5px/1.6 var(--sans);color:var(--ink2)">
- From the last 7 days of Apache logs, roughly <strong>38% of unique IPs</strong>
- resolve to cloud hosting ranges (OVH, AWS, DigitalOcean) — these are content
- scrapers pulling pages for training data or competitive indexing, not humans.
- About <strong>8%</strong> hit residential proxy pools operated by rank-tracking services
- (Datacamp, Code200, M247): they send Google a search query to generate the GSC
- impression, then fetch the actual page through a proxy to confirm the ranking —
- which is why GSC impressions can spike on a page with barely any real clicks.
- </p>
- <p style="margin:0;font:400 13.5px/1.6 var(--sans);color:var(--ink2)">
- The <strong>21% residential ISP traffic</strong> (Bell Canada / Sympatico leads the list)
- is the one category that could contain real people, though some of it is also
- the operator's own traffic before a DHCP lease change got filtered in GA4.
- The remaining 34% is unclassified — smaller regional ISPs, hosting blocks
- ip-api.com doesn't tag clearly. Weekly Haiku analysis runs Sunday mornings
- and writes the breakdown to a private cache file used by this section.
- </p>
- </div>
- </div>
-
  <h2 style="margin-top: 48px">API spend</h2>
  <p style="color: var(--ink2); margin: 0 0 0">Classification, verification, and enrichment costs since <span id="cost-since">—</span>.</p>
  <div class="totals" id="cost-totals"></div>

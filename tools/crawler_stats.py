@@ -690,6 +690,7 @@ def render_page(data, nav, srv):
             f'<p class="byline" style="font:400 14px/1.5 var(--sans);color:var(--muted);margin:.2em 0 0">A live dashboard of which AI and search engines crawl this site, which pages they pull for answers, and what they ignore. Parsed from raw server logs, verified against operator IP ranges. {win}. Generated {now}.</p>\n'
             '<div class="post-body">\n'
             + lede
+            + srv.get('ip_intel', '')
             # ── stat cards ──
             + srv['cards'] +
             fresh_chip +
@@ -770,7 +771,6 @@ def render_page(data, nav, srv):
                 '</div>\n'
                 '</div>\n'
                 '<details class="raw"><summary>Full probed-path table</summary>\n' + srv['scan'] + '\n</details>\n') if srv['scanner_total'] else '')
-            + srv.get('ip_intel', '')
             + srv.get('cost', '')
             + (('<p class="refnote" style="font:400 13px/1.6 var(--sans);color:var(--muted);margin-top:1.6em">Verified counts cover traffic since real-IP logging was enabled, filling in daily. Log retention is ~2 weeks, so "blind spots" means "not fetched recently." The playbook: <a href="/geo-field-manual/">GEO Field Manual</a>, and the answers it produces: <a href="/geo-answers/">GEO answers</a>.</p>\n')
                if CFG['chrome'] == 'jo' else
