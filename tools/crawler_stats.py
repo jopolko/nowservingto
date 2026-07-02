@@ -1088,8 +1088,10 @@ def build():
                      f'<div style="background:#f0ede6;border-radius:4px;height:10px;overflow:hidden">'
                      f'<div style="width:{pct}%;height:100%;background:{color};border-radius:4px"></div></div>'
                      f'<span style="font:700 12px/1 monospace;text-align:right">{pct}%</span></div>')
-        narrative = html.escape(intel.get('narrative', ''))
-        narrative_html = f'<p style="font:400 13.5px/1.65 var(--sans,sans-serif);color:var(--ink2,#333);background:var(--bg,#f8f5ec);border-radius:8px;border-left:3px solid var(--line,#e0ddd6);padding:14px 16px;margin:12px 0 0">{narrative}</p>' if narrative else ''
+        narrative_raw = intel.get('narrative', '')
+        # Convert newlines to <br> so bullet-per-line format renders correctly
+        narrative = '<br>'.join(html.escape(ln) for ln in narrative_raw.splitlines())
+        narrative_html = f'<p style="font:400 13.5px/1.65 var(--sans,sans-serif);color:var(--ink2,#333);background:var(--bg,#f8f5ec);border-radius:8px;border-left:3px solid var(--line,#e0ddd6);padding:14px 16px;margin:12px 0 0;line-height:1.8">{narrative}</p>' if narrative else ''
         return (f'<h2>Who\'s actually visiting</h2>\n'
                 f'<p>Real IP analysis: ip-api.com org lookup on non-bot request IPs, classified by network type. '
                 f'{total:,} unique IPs in the past 7 days. Updated weekly (Sundays) &middot; data as of {html.escape(gen)}.</p>\n'
