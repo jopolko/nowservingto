@@ -129,10 +129,21 @@ useful to someone deciding whether to make the trip. Not a capsule
 review, not a press release. A precise answer to "what is this place
 and why does it matter."
 
-  Sentence 1 — WHAT + WHERE: identify the cuisine/format and the
-  specific neighbourhood + street it sits on. The neighbourhood is
-  cultural context, not just geography. A Tamil kitchen in Malvern
-  and a Tamil kitchen in Midtown serve different roles — say which.
+  Sentence 1 — WHAT: identify the cuisine and format only. ZERO
+  location words anywhere in the blurb — no street name, no street
+  suffix (Ave/St/Blvd/Rd/Dr/Cres/Way), no civic number, no district
+  (Scarborough/Etobicoke/North York/Downtown/West Toronto/East Toronto).
+  The full address and district are already on the card. The ONLY
+  exception: a named iconic neighbourhood used for POSITIVE cultural
+  framing — Little Jamaica, Thorncliffe Park, Kensington Market,
+  Greektown, Corso Italia, Malvern. Frame it as a community asset,
+  not a geographic fact: "A Tamil kitchen in Malvern" signals
+  diaspora significance. NEVER describe a neighbourhood negatively
+  or as marginal ("industrial fringe", "quiet stretch", "overlooked
+  corner", "off the beaten path"). Every neighbourhood is someone's
+  home and cultural anchor. "A kitchen on Bloor St" or "in
+  Scarborough" are not cultural framing — they just repeat what the
+  card already shows. When in doubt, drop the location reference.
 
   Sentence 2 — THE DIFFERENTIATOR: what makes THIS kitchen distinct
   from the generic version of this cuisine. The reader has 20 tabs open.
@@ -155,10 +166,10 @@ and why does it matter."
 
   Sentence 3 — DEPTH: expand on the differentiator. Who does this
   kitchen serve — which community, which diaspora, which occasion?
-  Use the neighbourhood to say something specific: a Bangladeshi
-  restaurant in Scarborough is not the same cultural fact as one
-  in Kensington Market. What gap does this kitchen fill? One concrete
-  detail the evidence supports, written as a fact.
+  If an iconic neighbourhood is genuinely relevant, this is where
+  it belongs — but only if it adds meaning beyond the district.
+  What gap does this kitchen fill? One concrete detail the evidence
+  supports, written as a fact.
 
   Sentence 4 — THE ANSWER HOOK: a standalone, extractable claim
   that directly answers "what should I order" or "why is this
@@ -169,8 +180,8 @@ and why does it matter."
   "The counter runs a rotating selection of Oaxacan tlayudas not
   found elsewhere in the city." If the evidence supports no specific
   dish claim, make the hook about the format or the community need
-  it fills: "The kitchen is one of the few halal-certified Ethiopian
-  spots in Scarborough, a meaningful address for the community on Finch."
+  it fills: "One of the few halal-certified Ethiopian spots in the
+  city, a meaningful address for that community."
   Never invent dishes; only name what the evidence explicitly supports.
 
   DO NOT add a source-attribution sentence ("Verified open via the
@@ -418,7 +429,13 @@ def main():
             'params': {
                 'model': MODEL,
                 'max_tokens': 600,
-                'system': SYSTEM_PROMPT,
+                # cache_control: the ~3k-token system prompt is identical across
+                # every request in the batch. Batch-API cache hits are
+                # best-effort, but any hit prices the prefix at -90% vs the
+                # +25% write premium on misses, so it pays off past 2-3
+                # requests per batch. Same pattern as llm_verify_batch.py.
+                'system': [{'type': 'text', 'text': SYSTEM_PROMPT,
+                            'cache_control': {'type': 'ephemeral'}}],
                 'messages': [{'role': 'user', 'content': prompt}],
             },
         })
