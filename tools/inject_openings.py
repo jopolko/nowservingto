@@ -8591,6 +8591,85 @@ def _cleanup(directory, live_keys, suffix='.html'):
                 print(f"  WARN: failed to remove stale {f}: {ex}")
     return removed
 
+# ---------------------------------------------------------------------------
+# Slug-alias pass - runs before the listing sweep below deletes anything.
+# Two ways a /r/<slug> URL dies while still holding search equity:
+#   1. Rename churn: the Places-corrected address (or a permit change)
+#      moves the street-number suffix, so the same restaurant lands on a
+#      new slug and the indexed old URL would 410. (GSC: busan-deck-1030
+#      pulled 253 impressions/month while 410ing.)
+#   2. Ageing out of the 365-day window while name queries still resolve
+#      to the page. (GSC: old-soul-pizzeria-1940, ~900 impressions/month.)
+# Case 1 gets a 301 to the new slug; case 2 a 301 to the cuisine hub,
+# read from the page's BreadcrumbList before deletion. Aliases persist in
+# tools/cache/slug_aliases.json and are rewritten into .htaccess between
+# the SLUG-ALIASES markers. Anything unresolvable keeps the 410.
+# ---------------------------------------------------------------------------
+_ALIAS_STORE    = Path(ROOT) / 'tools' / 'cache' / 'slug_aliases.json'
+_ALIAS_TTL_DAYS = 548          # ~18 months of 301, then the 410 takes over
+try:
+    _aliases = json.loads(_ALIAS_STORE.read_text()) if _ALIAS_STORE.exists() else {}
+except Exception:
+    _aliases = {}
+
+_live_by_name = {}             # slug minus street-number suffix -> live slug
+for _s in live_slugs:
+    _live_by_name.setdefault(_re.sub(r'-\d+$', '', _s), _s)
+
+for _f in (LISTING_DIR.iterdir() if LISTING_DIR.exists() else []):
+    if not _f.is_file() or not _f.name.endswith('.html'):
+        continue
+    _old = _f.name[:-5]
+    if _old in live_slugs:
+        continue
+    _new = _live_by_name.get(_re.sub(r'-\d+$', '', _old))
+    if _new:
+        _target = f'/r/{_new}'
+    else:
+        _m = _re.search(r'"position":2[^}]*?/cuisine/([a-z_]+)/',
+                        _f.read_text(errors='replace'))
+        _target = f'/cuisine/{_m.group(1)}/' if _m else None
+    if _target:
+        _aliases[_old] = {'target': _target, 'since': _today_iso}
+
+# Prune: expired aliases, slugs that came back to life, and one level of
+# chain flattening (old -> dead middle slug -> that slug's own target).
+_alias_cutoff = (REFERENCE_DATE - timedelta(days=_ALIAS_TTL_DAYS)).isoformat()
+for _old in list(_aliases):
+    _a = _aliases[_old]
+    if _old in live_slugs or _a.get('since', '9999') < _alias_cutoff:
+        del _aliases[_old]
+        continue
+    _t = _a.get('target', '')
+    if _t.startswith('/r/') and _t[3:] not in live_slugs:
+        _next = _aliases.get(_t[3:], {}).get('target')
+        if _next:
+            _a['target'] = _next
+        else:
+            del _aliases[_old]     # dead end - let the 410 handle it
+
+_ALIAS_STORE.parent.mkdir(parents=True, exist_ok=True)
+_ALIAS_STORE.write_text(json.dumps(_aliases, indent=1, sort_keys=True))
+
+# Rewrite the marker block in .htaccess. Refuses to touch the file when
+# the markers are missing - never guess at .htaccess structure.
+_HT_PATH = Path(ROOT) / '.htaccess'
+_HT_START, _HT_END = '# SLUG-ALIASES-START', '# SLUG-ALIASES-END'
+if _HT_PATH.exists():
+    _ht = _HT_PATH.read_text()
+    if _HT_START in _ht and _HT_END in _ht:
+        _alias_rules = '\n'.join(
+            f'RewriteRule ^r/{_o}/?$ {_a["target"]} [R=301,L]'
+            for _o, _a in sorted(_aliases.items()))
+        _pre, _rest = _ht.split(_HT_START, 1)
+        _mid, _post = _rest.split(_HT_END, 1)
+        _new_ht = f'{_pre}{_HT_START}\n{_alias_rules}\n{_HT_END}{_post}'
+        if _new_ht != _ht:
+            _HT_PATH.write_text(_new_ht)
+            print(f"  slug aliases: {len(_aliases)} 301(s) written to .htaccess")
+    else:
+        print("  WARN: SLUG-ALIASES markers missing from .htaccess; aliases not written")
+
 n_cuisine_stale  = _cleanup(CUISINE_DIR,  live_cuisines)
 n_district_stale = _cleanup(DISTRICT_DIR, live_districts)
 n_neighborhood_stale = _cleanup(NEIGHBORHOOD_DIR, live_neighborhoods)

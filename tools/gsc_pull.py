@@ -99,7 +99,7 @@ def section(title):
 
 def run(days, output_fmt):
     if not TOKEN_FILE.exists():
-        sys.exit(f'Missing {SECRETS_FILE} — deploy the service account key first.')
+        sys.exit(f'Missing {TOKEN_FILE} - run ga4_auth.py locally, then deploy the token to the VPS.')
 
     svc = build_service()
     start, end = date_range(days)

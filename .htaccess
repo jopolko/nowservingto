@@ -83,6 +83,27 @@ RewriteRule ^api/(.*)$ http://127.0.0.1:8080/api/$1 [P,L]
 RewriteCond %{HTTP_HOST} ^www\.nowservingto\.com$ [NC]
 RewriteRule ^(.*)$ https://nowservingto.com/$1 [R=301,L]
 
+# Raw .html duplicates: 301 external requests to the clean canonical URL.
+# GSC flagged "Duplicate, Google chose different canonical than user"
+# because every page was fetchable at both its clean URL and the raw
+# .html path (both returned 200). THE_REQUEST matches only the original
+# client request line, never the result of an internal rewrite, so the
+# clean-URL -> .html rewrites further down cannot loop through these.
+RewriteCond %{THE_REQUEST} \s/index\.html[?\s]
+RewriteRule ^ / [R=301,L]
+RewriteCond %{THE_REQUEST} \s/(cuisine|district)/([a-z_-]+)\.html[?\s]
+RewriteRule ^ /%1/%2/ [R=301,L]
+RewriteCond %{THE_REQUEST} \s/cuisine/([a-z_-]+)/([a-z-]+)\.html[?\s]
+RewriteRule ^ /cuisine/%1/%2 [R=301,L]
+RewriteCond %{THE_REQUEST} \s/(r|neighborhood|wire|trends|dispatch)/([a-z0-9_-]+)\.html[?\s]
+RewriteRule ^ /%1/%2 [R=301,L]
+RewriteCond %{THE_REQUEST} \s/press/data\.html[?\s]
+RewriteRule ^ /press/data [R=301,L]
+RewriteCond %{THE_REQUEST} \s/usage\.html[?\s]
+RewriteRule ^ /crawlers [R=301,L]
+RewriteCond %{THE_REQUEST} \s/(answers|all|new|press|crawlers|game|contribute|trends)\.html[?\s]
+RewriteRule ^ /%1 [R=301,L]
+
 # SEO landing pages: /cuisine/{key} → cuisine/{key}.html when present.
 # This runs FIRST so that a key which gains entries tomorrow (e.g. a brand
 # new "Uyghur" cuisine the validator just registered) starts serving its
@@ -211,6 +232,17 @@ RewriteRule ^dispatch/?$ / [R=301,L]
 # Dated monthly dispatch archive: /dispatch/{yyyy-mm} → dispatch/{yyyy-mm}.html
 RewriteCond %{DOCUMENT_ROOT}/dispatch/$1.html -f
 RewriteRule ^dispatch/([a-z0-9-]+)/?$ /dispatch/$1.html [L]
+
+# Slug-churn aliases: when an address correction or permit change moves
+# a listing to a new slug, or a listing with real search traffic ages out
+# of the 365-day window, the old indexed URL 301s here instead of falling
+# through to the 410 below. This block is GENERATED - inject_openings.py
+# rewrites everything between the markers on each daily run from
+# tools/cache/slug_aliases.json. Do not hand-edit inside the markers.
+# SLUG-ALIASES-START
+RewriteRule ^r/busan-deck-1030/?$ /r/busan-deck-4914 [R=301,L]
+RewriteRule ^r/old-soul-pizzeria-1940/?$ /cuisine/italian/ [R=301,L]
+# SLUG-ALIASES-END
 
 # Per-listing share links: /r/{slug} → r/{slug}.html when present
 # (pre-rendered with per-listing title/og:image so X / FB / iMessage
