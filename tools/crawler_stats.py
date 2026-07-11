@@ -835,6 +835,36 @@ def build():
             vdaymap[d2] += c
     wk_ver = sum(vdaymap.get(d2, 0) for d2 in last7)
 
+    # AI referral click-throughs (humans arriving from AI platforms)
+    ref_cutoff = last7[0] if last7 else ''
+    ref_total = len(referrals)
+    ref_7d = sum(1 for e in referrals if e.get('day', '') >= ref_cutoff)
+
+    # GSC totals from ip_intel.json (written weekly by ip_intelligence.py)
+    gsc_clicks = 0
+    gsc_impressions = 0
+    if SITE == 'jo':
+        try:
+            intel = json.loads(open(os.path.join(OUTDIR, 'ip_intel.json')).read())
+            for g in intel.get('gscPages', []):
+                gsc_clicks += g.get('clicks', 0)
+                gsc_impressions += g.get('impressions', 0)
+        except Exception:
+            pass
+
+    # Bing WMT AI citations. The AI Performance report (public preview, Feb 2026)
+    # has no API yet, so the number is read off the dashboard and recorded with
+    # tools/set_bing_citations.py; this just folds the cached value in.
+    ai_cit = None
+    ai_cit_wk = None
+    if SITE == 'jo':
+        try:
+            bc = json.loads(open(os.path.join(CACHE_DIR, 'bing_ai_citations.json')).read())
+            ai_cit = bc.get('citations')
+            ai_cit_wk = bc.get('citations7d')
+        except Exception:
+            pass
+
     # scanner probe categories (what the hostile traffic hunts for)
     def scan_cat(p):
         pl = p.lower()
@@ -851,6 +881,9 @@ def build():
         'generated': now, 'window': [first, last],
         'totals': {'ai': ai_total, 'se': se_total, 'live': lu_total, 'verified': f'{vok}/{vtot}',
                    'vok': vok, 'vtot': vtot, 'scanners': sc['total'], 'spoofed': sc['spoofed'],
+                   'referrals': ref_total, 'referrals7d': ref_7d,
+                   'gscClicks': gsc_clicks, 'gscImpressions': gsc_impressions,
+                   'aiCitations': ai_cit, 'aiCitationsWk': ai_cit_wk,
                    'week': {'ai': wk_ai, 'live': wk_live, 'vok': wk_ver}},
         'byType': {tp: bytype.get(tp, 0) for tp in ('live-user', 'ai-search', 'ai-training', 'search') if bytype.get(tp)},
         'byEngine': byengine,
@@ -1137,19 +1170,29 @@ def build():
     print(f"wrote observatory: {len(ai_pages)} AI-fetched pages, {len(blind)} blind spots, {vok}/{vtot} verified, {sc['total']:,} scanner probes")
 
     # keep the homepage's featured-observatory stats fresh for no-JS / AI readers (jo only;
-    # browsers already self-update from data.json on load). Patches only the 3 <b id="obs-*"> spans.
+    # browsers already self-update from data.json on load). Patches the <b id="obs-*"> spans.
     if SITE == 'jo':
         try:
             hp = WEBROOT + '/index.html'
             hs = open(hp).read()
-            for sid, val in [('obs-live', lu_total), ('obs-ai', ai_total), ('obs-ver', vok)]:
+            stats = [('obs-live', lu_total), ('obs-ai', ai_total), ('obs-ver', vok),
+                     ('obs-gsc', gsc_clicks), ('obs-ref', ref_total)]
+            if ai_cit is not None:
+                stats.append(('obs-cite', ai_cit))
+                hs = hs.replace('id="obs-cite-wrap" style="display:none"', 'id="obs-cite-wrap"')
+            for sid, val in stats:
                 hs = re.sub(r'(<b id="' + sid + r'">)[^<]*(</b>)',
                             lambda m, v=val: m.group(1) + f'{v:,}' + m.group(2), hs)
-            for sid, val in [('obs-live-wk', wk_live), ('obs-ai-wk', wk_ai), ('obs-ver-wk', wk_ver)]:
+            weeks = [('obs-live-wk', wk_live), ('obs-ai-wk', wk_ai), ('obs-ver-wk', wk_ver),
+                     ('obs-ref-wk', ref_7d)]
+            if ai_cit is not None:
+                weeks.append(('obs-cite-wk', ai_cit_wk or 0))
+            for sid, val in weeks:
                 hs = re.sub(r'(<i class="obs-wk" id="' + sid + r'">)[^<]*(</i>)',
                             lambda m, v=val: m.group(1) + (f'+{v:,} this week' if v else '') + m.group(2), hs)
             open(hp, 'w').write(hs)
             print(f"  patched homepage obs-stats: live={lu_total} ai={ai_total} verified={vok} "
+                  f"gsc={gsc_clicks} refs={ref_total} citations={ai_cit} "
                   f"(week +{wk_live}/+{wk_ai}/+{wk_ver})")
         except Exception as e:
             print(f"  homepage obs-stats patch skipped: {e}")
