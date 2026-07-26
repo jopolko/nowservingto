@@ -434,6 +434,21 @@ details.raw[open]>summary::before{content:"▾ "}
 details.raw[open]>summary{border-bottom:1px solid var(--line)}
 details.raw>div,details.raw>h3{padding:0 16px}details.raw .cs{margin:.6em 0}
 .callout{font:500 13.5px/1.5 var(--sans);color:var(--ink2);margin:.7em 0 0}.callout b{color:var(--ink)}
+.impact-panel{background:linear-gradient(135deg,#fff 0,#f5fbfc 100%);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:14px;padding:20px 24px;margin:0 0 22px}
+.impact-kicker{font:700 11px/1 var(--sans);text-transform:uppercase;letter-spacing:.12em;color:var(--accent);margin:0 0 13px}
+.impact-stats{display:flex;flex-wrap:wrap;gap:10px 32px;margin:0 0 16px}
+.istat{display:flex;flex-direction:column}
+.iv{font:700 30px/1 var(--sans);color:var(--accent-ink,#16273f);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.il{font:600 11px/1.3 var(--sans);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:.35em 0 .2em}
+.isub{font:400 11px/1.2 var(--sans);color:var(--muted)}
+.istat-stale .iv{color:var(--muted)}
+.istat-stale .isub{color:#a8681e}
+.cited-pages{border-top:1px solid var(--line);padding-top:13px;margin-top:2px}
+.cited-hd{font:700 10.5px/1 var(--sans);text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin:0 0 8px}
+ol.cited-list{margin:0;padding:0 0 0 18px;font:400 13.5px/1.6 var(--sans)}
+.cited-list a{color:var(--accent-ink);text-decoration:none}.cited-list a:hover{text-decoration:underline}
+.cit-n{font:700 12px var(--sans);color:var(--muted);margin-left:5px}
+.cit-p{font:400 11.5px var(--sans);color:var(--muted)}
 @media(max-width:600px){
   .cs{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
   .ebar{grid-template-columns:118px 1fr 78px}
@@ -690,6 +705,7 @@ def render_page(data, nav, srv):
             f'<p class="byline" style="font:400 14px/1.5 var(--sans);color:var(--muted);margin:.2em 0 0">A live dashboard of which AI and search engines crawl this site, which pages they pull for answers, and what they ignore. Parsed from raw server logs, verified against operator IP ranges. {win}. Generated {now}.</p>\n'
             '<div class="post-body">\n'
             + lede
+            + srv.get('ai_impact', '')
             + srv.get('ip_intel', '')
             # ── stat cards ──
             + srv['cards'] +
@@ -840,30 +856,66 @@ def build():
     ref_total = len(referrals)
     ref_7d = sum(1 for e in referrals if e.get('day', '') >= ref_cutoff)
 
+    # Top cited pages from referral click-throughs, past 7 days only (deduped same as referral_section)
+    _cite_seen: set = set()
+    _cite_by_page: dict = collections.defaultdict(collections.Counter)
+    for _e in referrals:
+        if _e.get('day', '') < ref_cutoff: continue
+        _k = (_e['day'], _e['ip'] or _e['ref'], _e['path'])
+        if _k in _cite_seen: continue
+        _cite_seen.add(_k)
+        _cite_by_page[_e['path']][_e['platform']] += 1
+    top_cited = sorted(
+        [{'path': p, 'count': sum(c.values()), 'platforms': dict(c.most_common(3))}
+         for p, c in _cite_by_page.items()],
+        key=lambda x: -x['count']
+    )[:10]
+
     # GSC totals from ip_intel.json (written weekly by ip_intelligence.py)
     gsc_clicks = 0
     gsc_impressions = 0
+    real_visits = 0      # hits from residential-ISP IPs, i.e. actual humans
+    real_days = None     # window those hits cover, so the homepage can label it
     if SITE == 'jo':
         try:
             intel = json.loads(open(os.path.join(OUTDIR, 'ip_intel.json')).read())
             for g in intel.get('gscPages', []):
                 gsc_clicks += g.get('clicks', 0)
                 gsc_impressions += g.get('impressions', 0)
+            # the classifier separates residential ISPs from cloud/VPS scrapers;
+            # that bucket is the closest thing this site has to a human count.
+            for c in intel.get('categories', []):
+                if 'Real visitor' in c.get('label', ''):
+                    real_visits = c.get('count', 0)
+            real_days = intel.get('windowDays')
         except Exception:
             pass
 
     # Bing WMT AI citations. The AI Performance report (public preview, Feb 2026)
-    # has no API yet, so the number is read off the dashboard and recorded with
-    # tools/set_bing_citations.py; this just folds the cached value in.
+    # has no API yet, so numbers are read off the dashboard and recorded with
+    # tools/set_bing_citations.py; this folds the cached values in.
     ai_cit = None
     ai_cit_wk = None
+    ai_cit_at = None   # date the dashboard was last read (manual entry)
+    ai_cit_age = None  # days since that reading
+    bc_pages = []   # per-page citation counts from Bing WMT
+    bc_queries = [] # per-query data from Bing WMT
     if SITE == 'jo':
         try:
             bc = json.loads(open(os.path.join(CACHE_DIR, 'bing_ai_citations.json')).read())
             ai_cit = bc.get('citations')
             ai_cit_wk = bc.get('citations7d')
+            ai_cit_at = bc.get('updated')
+            bc_pages = bc.get('pages', [])
+            bc_queries = bc.get('queries', [])
         except Exception:
             pass
+    if ai_cit_at:
+        try:
+            ai_cit_age = (dt.date.today()
+                          - dt.date.fromisoformat(ai_cit_at)).days
+        except Exception:
+            ai_cit_age = None
 
     # scanner probe categories (what the hostile traffic hunts for)
     def scan_cat(p):
@@ -883,6 +935,7 @@ def build():
                    'vok': vok, 'vtot': vtot, 'scanners': sc['total'], 'spoofed': sc['spoofed'],
                    'referrals': ref_total, 'referrals7d': ref_7d,
                    'gscClicks': gsc_clicks, 'gscImpressions': gsc_impressions,
+                   'realVisits': real_visits, 'realVisitDays': real_days,
                    'aiCitations': ai_cit, 'aiCitationsWk': ai_cit_wk,
                    'week': {'ai': wk_ai, 'live': wk_live, 'vok': wk_ver}},
         'byType': {tp: bytype.get(tp, 0) for tp in ('live-user', 'ai-search', 'ai-training', 'search') if bytype.get(tp)},
@@ -895,6 +948,7 @@ def build():
         'scanners': {'total': sc['total'], 'spoofed': sc['spoofed'],
                      'paths': sc['paths'].most_common(12),
                      'cats': {k: scat[k] for k in ('WordPress', 'Secrets & config', 'Git exposure', 'Admin / RCE', 'Other') if scat[k]}},
+        'citedPages': bc_pages if bc_pages else top_cited,
     }
     os.makedirs(os.path.dirname(CFG['datafile']), exist_ok=True)
     open(CFG['datafile'], 'w').write(json.dumps(data, separators=(',', ':')))
@@ -1141,9 +1195,9 @@ def build():
             rows_html = ''.join(_gsc_row(g) for g in gsc_pages[:15])
             gsc_html = (
                 f'<h3 style="margin:18px 0 6px;font:700 11.5px/1.3 var(--sans,sans-serif);'
-                f'text-transform:uppercase;letter-spacing:.07em;color:var(--muted,#888)">Search Console: top pages by impression (last 7 days)</h3>'
+                f'text-transform:uppercase;letter-spacing:.07em;color:var(--muted,#888)">Search Console: Top 10 Pages by Impression (last 7 days)</h3>'
                 f'<table class="cs" style="margin:0 0 4px"><thead><tr>'
-                f'<th>Page</th><th class="n">Impressions</th><th class="n">Clicks</th>'
+                f'<th>Page</th><th class="n">Imp.</th><th class="n">Clck.</th>'
                 f'<th class="n">CTR</th><th class="n">Avg pos</th>'
                 f'</tr></thead><tbody>{rows_html}</tbody></table>'
                 f'<p style="font:400 12px/1.4 var(--sans,sans-serif);color:var(--muted,#888);margin:4px 0 12px">'
@@ -1156,8 +1210,70 @@ def build():
                 f'<div style="background:var(--panel,#fff);border:1px solid var(--line,#e0ddd6);border-radius:12px;padding:20px;margin:14px 0">'
                 f'{bars}{narrative_html}{gsc_html}</div>\n')
 
+    def ai_impact_panel():
+        if SITE != 'jo': return ''
+        stats = (
+            f'<div class="istat"><div class="iv">{ref_7d:,}</div>'
+            f'<div class="il">AI click-throughs</div>'
+            f'<div class="isub">past 7 days, from AI platforms</div></div>'
+            f'<div class="istat"><div class="iv">{gsc_clicks:,}</div>'
+            f'<div class="il">search clicks (GSC)</div>'
+            f'<div class="isub">past 7 days</div></div>'
+        )
+        if ai_cit is not None:
+            # Unlike every other number here, this one is hand-entered from the
+            # Bing WMT dashboard (no API), so it can go stale silently. Say when
+            # it was read rather than letting a frozen figure look live.
+            if ai_cit_wk:
+                wk = f'+{ai_cit_wk:,} this week'
+            elif ai_cit_at:
+                wk = f'read {ai_cit_at}'
+                if ai_cit_age is not None and ai_cit_age >= 7:
+                    wk += f' &middot; {ai_cit_age}d old'
+            else:
+                wk = 'dashboard window'
+            cls = ' istat-stale' if (ai_cit_age is not None and ai_cit_age >= 7) else ''
+            stats += (f'<div class="istat{cls}"><div class="iv">{ai_cit:,}</div>'
+                      f'<div class="il">AI citations (Bing/ChatGPT)</div>'
+                      f'<div class="isub">{wk}</div></div>')
+        # Pages table: prefer Bing WMT per-page data; fall back to referrer counts
+        cited = ''
+        pages_src = bc_pages if bc_pages else []
+        if pages_src:
+            rows = ''
+            for item in pages_src[:10]:
+                p = html.escape(item['path'])
+                rows += (f'<tr><td class="p"><a href="{p}">{p}</a></td>'
+                         f'<td class="n">{item["count"]:,}</td></tr>')
+            cited += (f'<div class="cited-pages">'
+                      f'<p class="cited-hd">Top 10 Cited Pages (Bing/ChatGPT)</p>'
+                      f'<table class="cs" style="margin:.4em 0 0"><thead><tr>'
+                      f'<th>Page</th><th class="n">Citations</th>'
+                      f'</tr></thead><tbody>{rows}</tbody></table></div>')
+        # Queries table from Bing WMT
+        if bc_queries:
+            rows = ''
+            for q in bc_queries[:15]:
+                qtext = html.escape(q.get('query', ''))
+                imp = q.get('impressions', 0)
+                rate = q.get('citationRate', 0)
+                topic = html.escape(q.get('topic', ''))
+                rows += (f'<tr><td>{qtext}</td>'
+                         f'<td class="n">{imp:,}</td>'
+                         f'<td class="n">{rate:.0f}%</td>'
+                         f'<td class="tg">{topic}</td></tr>')
+            cited += (f'<div class="cited-pages" style="margin-top:16px">'
+                      f'<p class="cited-hd">Top 10 Queries Driving Citations (Bing/ChatGPT)</p>'
+                      f'<table class="cs" style="margin:.4em 0 0"><thead><tr>'
+                      f'<th>Query</th><th class="n">Impr.</th><th class="n">Citation rate</th><th>Topic</th>'
+                      f'</tr></thead><tbody>{rows}</tbody></table></div>')
+        return (f'<div class="impact-panel">'
+                f'<div class="impact-kicker">AI impact &middot; Bing/ChatGPT</div>'
+                f'<div class="impact-stats">{stats}</div>'
+                f'{cited}</div>\n')
+
     srv = {'cards': cards(), 'bot_ai': bot_rows('ai'), 'bot_se': bot_rows('se'), 'cost': cost_panel(),
-           'ip_intel': ip_intel_panel(),
+           'ip_intel': ip_intel_panel(), 'ai_impact': ai_impact_panel(),
            'top_pages': top_pages, 'blind_rows': blind_rows, 'fresh_rows': fresh_rows,
            'daily_fallback': daily_fallback(), 'eng_fallback': eng_fallback(),
            'mix_fallback': mix_fallback(), 'scan': scan, 'live_desk': live_desk(),
@@ -1176,7 +1292,8 @@ def build():
             hp = WEBROOT + '/index.html'
             hs = open(hp).read()
             stats = [('obs-live', lu_total), ('obs-ai', ai_total), ('obs-ver', vok),
-                     ('obs-gsc', gsc_clicks), ('obs-ref', ref_total)]
+                     ('obs-gsc', gsc_clicks), ('obs-ref', ref_total),
+                     ('obs-real', real_visits)]
             if ai_cit is not None:
                 stats.append(('obs-cite', ai_cit))
                 hs = hs.replace('id="obs-cite-wrap" style="display:none"', 'id="obs-cite-wrap"')
@@ -1190,9 +1307,23 @@ def build():
             for sid, val in weeks:
                 hs = re.sub(r'(<i class="obs-wk" id="' + sid + r'">)[^<]*(</i>)',
                             lambda m, v=val: m.group(1) + (f'+{v:,} this week' if v else '') + m.group(2), hs)
+            cited_source = bc_pages if bc_pages else top_cited
+            if cited_source:
+                rows_html = ''
+                for _item in cited_source[:10]:
+                    _p = html.escape(_item['path'])
+                    _count = _item['count']
+                    _plat = html.escape(', '.join(_item.get('platforms', {}).keys()))
+                    rows_html += (f'<tr><td class="ocp"><a href="{_p}">{_p}</a></td>'
+                                  f'<td class="ocn">{_count:,}</td>'
+                                  f'<td class="ocv">{_plat}</td></tr>')
+                hs = re.sub(
+                    r'<tbody id="obs-cited-tbody">.*?</tbody>',
+                    f'<tbody id="obs-cited-tbody">{rows_html}</tbody>',
+                    hs, flags=re.DOTALL)
             open(hp, 'w').write(hs)
             print(f"  patched homepage obs-stats: live={lu_total} ai={ai_total} verified={vok} "
-                  f"gsc={gsc_clicks} refs={ref_total} citations={ai_cit} "
+                  f"gsc={gsc_clicks} refs={ref_total} real={real_visits} citations={ai_cit} "
                   f"(week +{wk_live}/+{wk_ai}/+{wk_ver})")
         except Exception as e:
             print(f"  homepage obs-stats patch skipped: {e}")
