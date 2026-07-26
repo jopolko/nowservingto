@@ -1126,7 +1126,7 @@ def build():
         top = by_platform.most_common(1)[0]
         summary = f'{len(rows)} click-through{"s" if len(rows)!=1 else ""} from AI platforms'
         if len(by_platform) > 1:
-            summary += f' — {top[0]} leads with {top[1]}'
+            summary += f'. {top[0]} leads with {top[1]}'
         week_detail = ', '.join(f'{n} {p}' for p, n in week_by_platform.most_common()) if week_by_platform else 'none'
         week_total = sum(week_by_platform.values())
         tr = ''.join(
@@ -1141,7 +1141,7 @@ def build():
         return (f'<h2>AI referrals: humans who clicked through</h2>\n'
                 f'<p>{html.escape(summary)}. <b>Last 7 days: {week_total} ({html.escape(week_detail)})</b>. '
                 f'These are real visitors whose browser sent a <code>Referer</code> '
-                f'header from an AI platform — proof the citation converted to a visit. '
+                f'header from an AI platform: proof the citation converted to a visit. '
                 f'Country and ISP come from the real visitor IP (via Cloudflare).</p>\n'
                 f'<table class="cs"><thead><tr>'
                 f'<th>Date</th><th>Platform</th><th>Page</th><th>Location</th><th>ISP / Org</th>'
