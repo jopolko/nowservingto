@@ -78,6 +78,31 @@ _BANNED_PRIOR = {'and','or','but','to','of','in','at','on','with','for',
                  'from','by','as','than','that','about','around','through',
                  'over','under','across','near','beyond','via','per','off'}
 
+# When Haiku's reply isn't clean JSON, the fallback below uses the raw text
+# verbatim as the blurb - which is fine for plain unwrapped prose, but has
+# shipped a refusal ("I cannot write this blurb responsibly.") and a bare
+# "```json" straight into a live <meta description> at least twice. Reject
+# anything that looks like a refusal or a code-fence/JSON leak instead of
+# trusting raw model output unconditionally.
+_REFUSAL_MARKERS = (
+    "i cannot", "i can't", "i can not", "as an ai", "i apologize", "i'm sorry",
+    "i am sorry", "i don't have enough", "i do not have enough", "i won't",
+    "i'm not able", "i am not able", "i must decline", "i'm unable",
+    "i am unable", "without more information", "i'm not comfortable",
+)
+
+
+def _looks_like_bad_blurb(text):
+    """True if `text` is a refusal, a code-fence/JSON artifact, or too
+    short to be a real editorial sentence - reject rather than cache it."""
+    t = text.strip()
+    if not t or len(t) < 15:
+        return True
+    if '```' in t or t.startswith('{') or t.startswith('['):
+        return True
+    tl = t.lower()
+    return any(marker in tl for marker in _REFUSAL_MARKERS)
+
 
 def _scrub_timebombs(text):
     """Run the defensive scrubber + period-restoration pass on a blurb.
@@ -493,25 +518,45 @@ def main():
         total_out += usage.get('output_tokens', 0)
         text_out = ''.join(b.get('text', '') for b in msg.get('content', [])
                            if b.get('type') == 'text').strip()
-        # Parse JSON; if Haiku didn't wrap it in JSON, treat the raw text
-        # as the blurb directly (defensive fallback).
+        # Parse JSON. Strip a ```json ... ``` fence first (Haiku wraps
+        # multi-line JSON in one even when told not to - the old
+        # single-line-only parser missed those and fell through to the
+        # raw-text fallback below, which is how a literal "```json" ended
+        # up in a live meta description). Try the whole cleaned text, then
+        # a regex pull of the "blurb" field, before giving up.
         blurb = ''
         parsed = None
-        for ln in text_out.split('\n'):
-            s = ln.strip().lstrip('`').strip()
-            if s.startswith('{') and s.endswith('}'):
-                try: parsed = json.loads(s); break
-                except Exception: continue
+        fenced = _re.sub(r'^```\w*\s*', '', text_out)
+        fenced = _re.sub(r'\s*```\s*$', '', fenced).strip()
+        try:
+            parsed = json.loads(fenced)
+        except Exception:
+            for ln in text_out.split('\n'):
+                s = ln.strip().lstrip('`').strip()
+                if s.startswith('{') and s.endswith('}'):
+                    try: parsed = json.loads(s); break
+                    except Exception: continue
         if parsed and isinstance(parsed.get('blurb'), str):
             blurb = parsed['blurb'].strip()
         else:
-            # Fallback: use the raw text minus any leading "blurb:" prefix
-            blurb = text_out.strip().strip('"\'')
-            if blurb.lower().startswith('blurb:'):
-                blurb = blurb[6:].strip().strip('"\'')
+            m = _re.search(r'"blurb"\s*:\s*"((?:[^"\\]|\\.)*)"', fenced)
+            if m:
+                blurb = m.group(1).replace('\\"', '"').replace('\\n', ' ').strip()
+            else:
+                # No JSON at all - use the raw text minus a leading
+                # "blurb:" prefix. Still runs through _looks_like_bad_blurb
+                # below, so a refusal or stray fence can't slip through.
+                blurb = text_out.strip().strip('"\'')
+                if blurb.lower().startswith('blurb:'):
+                    blurb = blurb[6:].strip().strip('"\'')
         if not blurb:
             n_err += 1
             cache[ck] = {'status': 'error', 'error': 'empty-blurb',
+                         'raw': text_out[:200], 'rewrote_at': rewrote_at}
+            continue
+        if _looks_like_bad_blurb(blurb):
+            n_err += 1
+            cache[ck] = {'status': 'error', 'error': 'bad-blurb-format',
                          'raw': text_out[:200], 'rewrote_at': rewrote_at}
             continue
         # Defensive cleanup: capitalize first letter, strip em/en-dashes,
