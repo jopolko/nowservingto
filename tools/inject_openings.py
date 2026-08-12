@@ -2147,6 +2147,30 @@ def _ago_long(days):
     return 'over a year'
 
 
+def _cap_meta_desc(desc, limit=158):
+    """Safety-net truncation for <meta description>. Google's SERP snippet
+    cuts off around 155-160 chars; a page-specific desc (long restaurant
+    name + street + district baked in) can blow past that even when the
+    template that built it looked short in the common case. Trims at
+    whichever clause boundary (period or comma) sits closest to the limit,
+    so the cut uses the available budget instead of dropping back to the
+    first sentence."""
+    if len(desc) <= limit:
+        return desc
+    cut = desc[:155]
+    last_period = cut.rfind('. ')
+    last_comma = cut.rfind(', ')
+    boundary = max(last_period, last_comma)
+    if boundary >= 80:
+        cut = cut[:boundary] if boundary == last_comma else cut[:boundary + 1]
+    else:
+        cut = cut.rsplit(' ', 1)[0]
+    desc = cut.rstrip(',.;: ')
+    if not desc.endswith('.'):
+        desc += '.'
+    return desc
+
+
 def _ago(days):
     # Time-only labels. Kept for backward compatibility with the X tweet
     # snippet builder and any other prose paths; the row pill no longer
@@ -3559,6 +3583,11 @@ try:
         f'<h1 class="sub">{masthead_sub}</h1>',
         home_html, count=1,
     )
+    home_html = re.sub(
+        r'<h1 id="main-h1"[^>]*>[\s\S]*?</h1>|<p id="main-h1"[^>]*>[\s\S]*?</p>',
+        f'<p id="main-h1" class="sr-only">{masthead_sub}</p>',
+        home_html, count=1,
+    )
     # Masthead date — the daily-edition signal in the lockup. Refreshed on
     # every cron run so the visible date matches the JSON-LD dateModified.
     _mast_date_iso = REFERENCE_DATE.strftime('%Y.%m.%d')
@@ -4792,6 +4821,7 @@ for c in cuisines_out:
     else:
         desc = (f"New {label} restaurants opening in Toronto: {n365} tracked from city "
                 f"licence data, updated daily. {n30} opened in the last 30 days. Chains excluded.")
+    desc = _cap_meta_desc(desc)
     canonical = f"https://nowservingto.com/cuisine/{key}/"
 
     page = template
@@ -4989,6 +5019,7 @@ for label, entries in by_district.items():
     else:
         desc = (f"{n365} newly registered independent restaurants in {place}. "
                 f"Verified open, chains excluded. Daily refresh from the City of Toronto.")
+    desc = _cap_meta_desc(desc)
     canonical = f"https://nowservingto.com/district/{slug}/"
 
     page = district_template
@@ -5145,6 +5176,7 @@ for nbhd_slug, nbhd_entries in by_nbhd.items():
                 f"{n365} entries tracked"
                 + (f"; {n30} from the last 30 days." if n30 else ".")
                 + " Daily refresh from the City of Toronto licence registry. Chains excluded.")
+    desc = _cap_meta_desc(desc)
     canonical = f"https://nowservingto.com/neighborhood/{nbhd_slug}"
 
     page = neighborhood_template
@@ -5944,13 +5976,79 @@ def _build_owner_contributions(entry):
     return ''.join(parts)
 
 
+def _build_freshness_capsule(entry, all_entries):
+    """Return an lx-card HTML block asserting freshness for AI citation.
+
+    AI bots need a clear, extractable passage to cite when answering
+    'newest Tamil restaurant in Toronto'. The ticket card shows '2 days ago'
+    in a small span with no surrounding context; this block makes the
+    freshness claim explicit and self-contained.
+
+    Only emitted for entries <=30 days old with a known cuisine."""
+    days = entry.get('daysOpen')
+    if not isinstance(days, int) or days > 30:
+        return ''
+    cuisines = entry.get('cuisines') or ([entry['cuisine']] if entry.get('cuisine') else [])
+    primary = cuisines[0] if cuisines else None
+    if not primary or primary == 'unknown':
+        return ''
+
+    cuisine_lbl = CUISINE_LABEL.get(primary, primary.title())
+
+    # Minimum daysOpen among all active entries of this primary cuisine.
+    same_cuisine = [
+        e for e in all_entries
+        if isinstance(e.get('daysOpen'), int)
+        and (e.get('cuisines') or [e.get('cuisine')])[0:1] == [primary]
+    ]
+    if not same_cuisine:
+        return ''
+    min_days = min(e['daysOpen'] for e in same_cuisine)
+    # Entries tied for fewest days are all "the newest".
+    is_newest = (days == min_days)
+
+    # Human-readable date from issuedDate (e.g. "July 15, 2026").
+    issued = entry.get('issuedDate') or ''
+    try:
+        dt = datetime.strptime(issued, '%Y-%m-%d')
+        date_str = dt.strftime('%B %-d, %Y')
+    except (ValueError, TypeError):
+        date_str = issued
+
+    if is_newest:
+        claim = f'The newest {cuisine_lbl} restaurant registered in Toronto'
+    else:
+        claim = f'One of Toronto\'s newest {cuisine_lbl} kitchens'
+    if date_str:
+        claim += f', as of {date_str}'
+    claim += '.'
+
+    provenance = 'First seen in official City of Toronto records'
+    if date_str:
+        provenance += f' on {date_str}'
+    provenance += '.'
+
+    return (
+        '<div class="lx-card lx-provenance">'
+        f'<p class="lx-provenance-claim"><strong>{_esc(claim)}</strong> {_esc(provenance)}</p>'
+        '</div>'
+    )
+
+
 def build_listing_extra(entry, all_entries, cuisines_index):
     """Render the differentiated-content block for /r/<slug>.html: verifier
     evidence + license/provenance line + cohort framing + nearby-same-cuisine
     grid. `cuisines_index` is {key: cuisines_out_row}; lets us pull
     count365d / count30d without rescanning."""
     blocks = []
-    # Owner contributions get the top slot when present - first-person
+    # Freshness capsule: explicit, AI-citable sentence asserting "newest
+    # [Cuisine] restaurant in Toronto" when true. Appears before all other
+    # content so AI crawlers encounter it in the first screenful.
+    _freshness_html = _build_freshness_capsule(entry, all_entries)
+    if _freshness_html:
+        blocks.append(_freshness_html)
+
+    # Owner contributions get the next slot when present - first-person
     # content from the operator outranks machine-generated editorial.
     _oc_html = _build_owner_contributions(entry)
     if _oc_html:
@@ -6446,6 +6544,39 @@ for entry in seen_entries.values():
         if _ld_desc:
             _ld_desc = re.sub(r',?\s*\blicensed in \d{4}\.?', '', _ld_desc, flags=re.I)
             _ld_desc = re.sub(r'\s*\bIt was licensed in \d{4}\.?', '', _ld_desc, flags=re.I).strip()
+            # Prepend the freshness claim to the JSON-LD description so AI
+            # extractors encounter it in the structured-data pass before
+            # body HTML. Only added for entries <=30 days old.
+            _ld_days = entry.get('daysOpen')
+            _ld_cuisines = entry.get('cuisines') or ([entry.get('cuisine')] if entry.get('cuisine') else [])
+            _ld_primary = _ld_cuisines[0] if _ld_cuisines else None
+            if (isinstance(_ld_days, int) and _ld_days <= 30
+                    and _ld_primary and _ld_primary != 'unknown'):
+                _ld_lbl = CUISINE_LABEL.get(_ld_primary, _ld_primary.title())
+                _ld_same = [
+                    e for e in all_recent
+                    if isinstance(e.get('daysOpen'), int)
+                    and (e.get('cuisines') or [e.get('cuisine')])[0:1] == [_ld_primary]
+                ]
+                _ld_min = min((e['daysOpen'] for e in _ld_same), default=9999)
+                _ld_is_newest = (_ld_days == _ld_min)
+                _ld_issued = entry.get('issuedDate') or ''
+                try:
+                    _ld_dt = datetime.strptime(_ld_issued, '%Y-%m-%d')
+                    _ld_date = _ld_dt.strftime('%B %-d, %Y')
+                except (ValueError, TypeError):
+                    _ld_date = _ld_issued
+                if _ld_is_newest:
+                    _freshness_prefix = (
+                        f'The newest {_ld_lbl} restaurant registered in Toronto'
+                        + (f' as of {_ld_date}' if _ld_date else '') + '. '
+                    )
+                else:
+                    _freshness_prefix = (
+                        f'One of Toronto\'s newest {_ld_lbl} kitchens'
+                        + (f', registered {_ld_date}' if _ld_date else '') + '. '
+                    )
+                _ld_desc = _freshness_prefix + _ld_desc
             listing_ld['description'] = _capitalize_proper_nouns(_ld_desc)
     # geo: GeoCoordinates lets Google/AI parse exact location without
     # text-mining the address. Standard schema.org Restaurant field.

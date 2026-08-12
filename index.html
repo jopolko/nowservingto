@@ -8,6 +8,7 @@
 <!-- meta keywords removed 2026-05-18: Google ignores the tag and a generic
      cuisine-stuffed list reused across every generated page reads as spam. -->
 <meta name="author" content="NowServingTO">
+<meta name="indexnow-key" content="23031e66a61c4cb883f85168446f7db0">
 <link rel="canonical" href="https://nowservingto.com/">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="apple-touch-icon" href="/favicon.svg">
@@ -777,7 +778,7 @@
      feed. SEO + AI-crawler discovery without visual heft. */
   .all-cuisines, .all-districts, .all-neighborhoods { font: 400 12px/1.7 var(--sans); color: var(--muted); margin: 32px auto 6px; max-width: 1100px; padding: 0 24px; }
   .all-cuisines-label { font-weight: 700; color: var(--ink2); margin-right: 6px; text-transform: uppercase; letter-spacing: 0.04em; font-size: 10px; }
-  .all-cuisines a, .all-districts a, .all-neighborhoods a { color: var(--muted); text-decoration: none; border-bottom: 1px dotted transparent; }
+  .all-cuisines a, .all-districts a, .all-neighborhoods a { color: var(--muted); text-decoration: none; border-bottom: 1px dotted transparent; margin-right: 6px; }
   .all-cuisines a:hover, .all-districts a:hover, .all-neighborhoods a:hover { color: var(--accent); border-bottom-color: var(--accent); }
   .all-districts { margin-top: 8px; }
   .all-neighborhoods { margin-top: 8px; margin-bottom: 32px; }
@@ -1297,6 +1298,14 @@
   /* Content cards: single neutral cream-grey, tighter radius for
      editorial-magazine feel (was 12px, too friendly/blogspot). */
   .listing-extra .lx-card { background: #f4f0e6; border: 1px solid #d9d1ba; border-radius: 4px; padding: 20px 22px; box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.03); }
+  /* Freshness capsule: green left-border distinguishes it from the blurb
+     card so it reads as provenance/date metadata, not editorial copy.
+     The <strong> inside carries the headline claim; the trailing sentence
+     is the provenance note. Both sit in the same <p> so AI crawlers
+     extract them as a single passage. */
+  .listing-extra .lx-card.lx-provenance { border-left: 4px solid var(--fresh); background: #f0f4ed; border-color: #c2cebc; }
+  .listing-extra .lx-provenance-claim { font: 400 14.5px/1.55 var(--sans); color: var(--ink2); margin: 0; }
+  .listing-extra .lx-provenance-claim strong { color: var(--fresh); font-weight: 700; }
   /* Nearby grid wrapper: lighter vellum to nest cleanly. */
   .listing-extra .lx-card.lx-near-wrap { background: #faf6ec; border-color: #ddd2b8; }
   /* "Try the..." dish line — rendered inline inside the editorial blurb
@@ -1637,6 +1646,7 @@
   @keyframes ns-spark { 0% { transform:translate(0,0) scale(.3) rotate(0); opacity:1; }
     100% { transform:translate(var(--dx),var(--dy)) scale(1) rotate(160deg); opacity:0; } }
   @media (prefers-reduced-motion: reduce) { .ns-hero-card.rank-1::after, .ns-rank-badge.r1, .ns-spark { animation:none; } }
+  .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
 </style>
 </head>
 <body class="page-home">
@@ -1655,6 +1665,7 @@
 </header>
 
 <main class="wrap">
+  <p id="main-h1" class="sr-only">Tracking Toronto's newest, independent, registered restaurants</p>
   <!-- BREADCRUMB-START --><!-- BREADCRUMB-END -->
   <!-- PAGE-INTRO-START --><!-- PAGE-INTRO-END -->
   <!-- DISTRICT-CARDS-START --><!-- DISTRICT-CARDS-END -->
@@ -1776,6 +1787,6 @@
 </main>
 
 
-<script defer src="/js/app.js?v=1782914593"></script>
+<script defer src="/js/app.js?v=20260714"></script>
 </body>
 </html>
