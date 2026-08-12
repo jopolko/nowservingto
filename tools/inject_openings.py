@@ -2152,23 +2152,48 @@ def _cap_meta_desc(desc, limit=158):
     cuts off around 155-160 chars; a page-specific desc (long restaurant
     name + street + district baked in) can blow past that even when the
     template that built it looked short in the common case. Trims at
-    whichever clause boundary (period or comma) sits closest to the limit,
-    so the cut uses the available budget instead of dropping back to the
-    first sentence."""
+    whichever clause boundary (period or comma) uses the most of the
+    budget, never inside a "(street, district)" parenthetical - an
+    unmatched '(' left dangling reads as broken/truncated garbage in the
+    SERP, worse than a shorter-but-clean sentence."""
     if len(desc) <= limit:
         return desc
-    cut = desc[:155]
-    last_period = cut.rfind('. ')
-    last_comma = cut.rfind(', ')
-    boundary = max(last_period, last_comma)
-    if boundary >= 80:
-        cut = cut[:boundary] if boundary == last_comma else cut[:boundary + 1]
-    else:
-        cut = cut.rsplit(' ', 1)[0]
-    desc = cut.rstrip(',.;: ')
-    if not desc.endswith('.'):
-        desc += '.'
-    return desc
+
+    def _balanced(s):
+        return s.count('(') == s.count(')')
+
+    positions = []
+    for m in re.finditer(r'(\. )|(, )', desc[:limit + 2]):
+        end = m.start() + 1 if m.group(1) else m.start()
+        positions.append(end)
+    positions.sort(reverse=True)
+
+    chosen = None
+    for end in positions:
+        candidate = desc[:end]
+        if len(candidate) >= 80 and _balanced(candidate):
+            chosen = candidate
+            break
+
+    if chosen is None:
+        # Every boundary inside the budget sits mid-parenthetical. Rather
+        # than drop the "(street, district)" detail, look a little past
+        # the limit for its closing ')' and cut right after that instead.
+        cut = desc[:limit]
+        if cut.count('(') > cut.count(')'):
+            close = desc.find(')', limit)
+            if close != -1 and close < limit + 15:
+                cut = desc[:close + 1]
+        chosen = cut if _balanced(cut) else cut.rsplit(' ', 1)[0]
+        if not _balanced(chosen):
+            idx = chosen.rfind('(')
+            if idx != -1:
+                chosen = chosen[:idx].rstrip()
+
+    result = chosen.rstrip(',.;: ')
+    if not result.endswith('.'):
+        result += '.'
+    return result
 
 
 def _ago(days):
