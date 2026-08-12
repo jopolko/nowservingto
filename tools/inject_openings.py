@@ -5425,6 +5425,7 @@ for (cuisine_key, district), x_entries in intersection_data.items():
     else:
         x_desc = (f"{n_total} newly registered {label} restaurant{'s' if n_total != 1 else ''} "
                   f"in {district}, Toronto. Updated daily from the City's licence registry.")
+    x_desc = _cap_meta_desc(x_desc)
 
     x_canonical = f"https://nowservingto.com/cuisine/{cuisine_key}/{district_slug}"
 
@@ -7029,9 +7030,8 @@ _trends_label = _cal.month_name[_dm_month] + f' {_dm_year}'
 _today_label = _dispatch_today.strftime('%B %-d, %Y')  # e.g. "June 1, 2026"
 _trends_canonical = f'{SITE_BASE}/trends'
 _trends_title = f'Toronto\'s Freshest Restaurants, updated daily | NowServingTO ({_today_label})'
-_trends_desc = (f'The newest restaurants licensed in Toronto, by cuisine and neighbourhood, '
-                f'including the Uyghur, Tamil, and Salvadoran spots the mainstream food press never covers. '
-                f'Updated {_today_label} from City open data.')
+_trends_desc = ("Toronto's newest restaurants by cuisine and neighbourhood, including Uyghur, "
+                "Tamil, and Salvadoran spots the mainstream food press skips. Updated daily.")
 # Twitter intent: prefilled tweet with summary + URL. Numbers match the
 # Last-3-months treemap on the page so a user clicking Share doesn't get
 # a different leaderboard than the one they're looking at. Tweet text is
