@@ -110,6 +110,8 @@ The local repo root maps to `/var/www/html/nowservingto/` on the VPS. Key paths:
 
 **IMPORTANT:** Always deploy JS changes to `js/app.js`, not the root `app.js`. When deploying `js/app.js`, bump the `?v=` query string in `index.html` by 1 to bust the Cloudflare CDN cache.
 
+**`requirements.txt` is NOT synced by `tools/deploy.sh`.** It's outside that script's tracked file set entirely. Changing it locally only takes effect on prod if you manually `scp requirements.txt` to the VPS AND run `.venv/bin/python -m pip install -r requirements.txt` there, both steps, scp alone doesn't install anything. This gap let the `anthropic` SDK be installed ad hoc on prod once (never pinned), then silently disappear with no log trail, breaking LLM-dependent `inject_openings.py` steps (pre-existing-business gate, cuisine editorial backfill) for about a month before anyone noticed (found and fixed 2026-08-20).
+
 ## Survey reference
 
 `data/ckan_survey.md` (CSV/JSON datasets) and `data/ckan_survey_supplement.md` (non-CSV formats) are the structural inventory of every Toronto CKAN dataset. They verify file integrity, not semantic fitness. Always spot-check a dataset before trusting it for a new use case. (Both gitignored; only relevant during ETL development.)

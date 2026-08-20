@@ -16,6 +16,14 @@
 #   - prod-authoritative: tools/cache/  (LLM/Places caches live on prod;
 #                         pushing dev copies would clobber production blurbs)
 #   - runtime junk      : tools/logs/  *.lock  __pycache__/
+#   - requirements.txt  : NOT in the synced file set at all. If you change
+#                         it (e.g. pinning a new dependency), scp it to prod
+#                         by hand and reinstall into .venv there, or the venv
+#                         will silently drift from what git tracks. Bit us on
+#                         2026-08-20 (anthropic SDK): the pkg was installed
+#                         ad hoc on prod, never pinned, then vanished with no
+#                         log trail, breaking LLM-dependent inject steps for
+#                         ~a month before anyone noticed.
 #
 # Usage:
 #   tools/deploy.sh              # sync source; nightly cron rebuilds artifacts
@@ -26,6 +34,9 @@
 #   - Pushing index.html / llms.txt reverts the cron-injected feed/date until
 #     the next cron tick. Use --rebuild if you need the change live immediately.
 #   - Host alias `nowservingto` must be in ~/.ssh/config (it is — see CLAUDE.md).
+#   - After scp'ing requirements.txt to prod, run on the VPS:
+#       .venv/bin/python -m pip install -r requirements.txt
+#     to actually apply it (scp alone doesn't touch the installed packages).
 
 set -euo pipefail
 
