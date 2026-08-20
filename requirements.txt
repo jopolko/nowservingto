@@ -3,6 +3,7 @@
 # (Python 3.10), where the latest available numpy version differs.
 # Daily signals refresh on prod uses requests + shapely; full rebuild on
 # the workstation needs the full set including pyproj + pyshp + numpy.
+anthropic>=0.125.0
 certifi>=2024.0.0
 charset-normalizer>=3.0
 et_xmlfile>=2.0
